@@ -19,6 +19,33 @@ interface LatexRendererProps {
     className?: string;
 }
 
+// Control characters left where JSON decoded an unescaped LaTeX command
+// ("\frac" -> form feed + "rac", "\text" -> tab + "ext", "\beta" -> backspace + "eta").
+function restoreDecodedCommands(text: string): string {
+    return text
+        // eslint-disable-next-line no-control-regex -- matching these control characters is the point
+        .replace(/\x0c(?=[A-Za-z])/g, '\\f')
+        // eslint-disable-next-line no-control-regex -- as above
+        .replace(/\x08(?=[A-Za-z])/g, '\\b')
+        .replace(/\t(ext|extbf|extit|extrm|imes|heta|an|anh|au|frac|ilde|o|op|riangle|herefore)(?![A-Za-z])/g, '\\t$1')
+        .replace(/\r(ight|ho|ightarrow|angle|ceil|floor|m)(?![A-Za-z])/g, '\\r$1');
+}
+
+/**
+ * Math written with every command over-escaped ("\\frac", "47^\\circ") renders as a line
+ * break followed by the plain word, or as a red error. When a block has such commands and
+ * no correctly escaped ones, halve each even run of backslashes. Mirrors the importer's
+ * backend normaliser, so questions saved before that fix display correctly too.
+ */
+function repairOverEscapedMath(tex: string): string {
+    if (!/(?<!\\)\\\\[A-Za-z]{2}/.test(tex) || /(?<!\\)\\[A-Za-z]{2}/.test(tex)) return tex;
+    return tex.replace(/\\+/g, run => (run.length % 2 === 0 ? run.slice(0, run.length / 2) : run));
+}
+
+// Only real image addresses become <img>; a tag pointing at nothing ("image_4", "fig")
+// would show a broken image.
+const isImageSrc = (src: string) => /^(https?:|data:image\/|blob:|\/)/i.test(src.trim());
+
 /**
  * Custom LaTeX renderer that uses katex directly (not react-latex-next)
  * so that the mhchem extension is properly registered.
@@ -31,7 +58,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
         if (!children) return '';
 
         try {
-            let result = children;
+            let result = restoreDecodedCommands(children);
             // Pre-process & sanitize LaTeX/mhchem input
             // 1. Fix unescaped ce{...} -> \ce{...}
             result = result.replace(/(?<!\\)\bce\{/g, '\\ce{');
@@ -47,6 +74,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             let imgIndex = 0;
 
             const makeImgTag = (src: string, alt: string) => {
+                if (!isImageSrc(src)) return '';
                 const escapedSrc = src.replace(/"/g, '&quot;');
                 const escapedAlt = alt.replace(/"/g, '&quot;');
                 // Using max-height/width in pixels since percentage max-widths collapse inside KaTeX table cells.
@@ -198,7 +226,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
             const processMathBlock = (tex: string, displayMode: boolean): string => {
                 try {
-                    let processedTex = extractImagesFromTex(tex);
+                    let processedTex = extractImagesFromTex(repairOverEscapedMath(tex));
 
                     // Add support for \vspace in math blocks
                     // LaTeX uses \vspace for vertical spacing, but KaTeX requires environments to stack correctly.

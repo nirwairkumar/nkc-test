@@ -28,6 +28,7 @@ from typing import Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
+from ai_preview_importer.latex_json import repair_json_escapes, normalize_question_latex
 
 
 logger = get_logger(__name__)
@@ -69,7 +70,7 @@ except Exception as e:
 # Prompts
 # ---------------------------------------------------------------------------
 
-EXTRACT_PROMPT = """
+EXTRACT_PROMPT = r"""
 ROLE:
 You are an AI document parser, OCR analyst, and exam-content extractor.
 
@@ -92,7 +93,7 @@ ABSOLUTE OUTPUT RULES
 6. DO NOT include keys if their value is null or truly absent
 7. Question IDs must be sequential integers (1,2,3,...)
 8. Deeply scan mathematical syntax before finalizing
-9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+9. BACKSLASHES: every LaTeX example in this prompt is written exactly as it must appear in your raw JSON output. JSON escapes a backslash as two characters, so a LaTeX command is written \\frac, \\sqrt, \\alpha, \\text{...}, \\ce{...} (this decodes to one backslash, which is what the platform needs). A LaTeX line break between rows of an array or matrix is written \\\\. Never add more backslashes than that: "\\\\frac" is WRONG, it shows up as a line break followed by the word "frac".
 10. ALL mathematical expressions MUST be wrapped in $...$ (inline) or $$...$$ (block). Never output bare LaTeX commands.
 11. DO NOT include any citation markers like [cite: ...] or [cite:N] in the output. Strip them completely.
 
@@ -141,7 +142,7 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
 
 6. Preserve original wording (do NOT rewrite).
 
-7. Attach diagrams/images to the correct question using imagePlaceholder.
+7. Attach diagrams/images to the correct question (see IMAGE/DIAGRAM QUESTION HANDLING).
 
 8. FOR PASSAGE/COMPREHENSION QUESTIONS:
    - Extract the passage text ONCE.
@@ -177,29 +178,29 @@ IMAGE/DIAGRAM QUESTION HANDLING (CRITICAL - DO NOT SKIP):
    - The question text
    - All options
    - The correct answer
-   - Set imagePlaceholder to the matching "image_X"
+   - Its location in "diagram_bbox" (rule 5)
 3. Even if the question is ONLY a diagram with no text, create an entry with:
    - question: "[Refer to the diagram]"
-   - imagePlaceholder: "image_X"
+   - its "diagram_bbox"
 4. Questions with diagrams are JUST AS IMPORTANT as text-only questions
-5. CRITICAL - DIAGRAM VISUAL COORDINATES (DIAGRAM BOUNDING BOX):
-   If a question, its options, or its context contains any diagram, graph, chemical structure, geometry figure, table, or illustration on a page:
-   - You MUST detect its exact 2D bounding box on the page.
-   - Include a "diagram_bbox" object in the question JSON in the format:
-     "diagram_bbox": {
-       "page_number": <1-based page number where the diagram is located>,
-       "box_2d": [ymin, xmin, ymax, xmax]
-     }
-   - The coordinates in "box_2d" MUST be normalized integers from 0 to 1000 relative to the height and width of that page (e.g. top-left corner is [0, 0] and bottom-right corner is [1000, 1000]).
-   - If a question has no diagrams or tables, set "diagram_bbox": null.
-   - If a question has multiple diagrams, return the bounding box that encompasses all of them on that page.
+5. CRITICAL - DIAGRAM LOCATION ("diagram_bbox"):
+   If the question stem or its options contain a diagram, graph or plot, circuit, chemical structure, reaction scheme, geometry figure or picture:
+   - Include "diagram_bbox": {"page_number": N, "box_2d": [ymin, xmin, ymax, xmax]}
+   - page_number is the N of the "--- PAGE N of M ---" label of the page where the figure is printed.
+   - box_2d holds integers from 0 to 1000 relative to that page image (top-left corner is [0, 0], bottom-right corner is [1000, 1000]).
+   - The box covers ALL figures of the question, including every drawing used as an option (e.g. all four graphs labelled (1) to (4)), and as little text as possible: never the question paragraph, the option lines, or "Ans."/"Sol." lines.
+   - A table made only of text is not a figure: write it as a LaTeX array (see TABLE rules).
+   - If a question has no figure, set "diagram_bbox": null.
 6. CRITICAL - DO NOT EXTRACT SOLUTION/EXPLANATION DIAGRAMS:
-   - If a diagram is located within the "Solution", "Explanation", or "Hint" section of a question (e.g., under headings/labels like "Sol.", "Solution", "Hint", "Explanation", "Answer (1)"), do NOT extract it, do NOT assign it an imagePlaceholder, and set "diagram_bbox": null (unless the question stem itself also has a diagram).
+   - If a diagram is located within the "Solution", "Explanation", or "Hint" section of a question (e.g., under headings/labels like "Sol.", "Solution", "Hint", "Explanation", "Answer (1)"), do NOT extract it and set "diagram_bbox": null (unless the question stem itself also has a diagram).
    - Only extract diagrams that are part of the question stem or option choices.
 7. ACCURATE DIAGRAM-TO-QUESTION MAPPING:
-   - Make sure the "page_number" in "diagram_bbox" is EXACTLY the page where the question stem/options are printed.
-   - The diagram for a question is physically adjacent (usually directly below or beside the question text and above options).
-   - NEVER map a diagram from a different page or from a different question. Ensure the ymin/ymax bounds contain only the diagram belonging to the question.
+   - The diagram for a question is physically adjacent (usually directly below or beside the question text and above options), in the same column as the question on two-column pages.
+   - NEVER map a diagram from a different page or from a different question.
+8. FIGURES INSIDE THE TEXT:
+   - When the question text places a figure at a specific spot (e.g. "Compound (X), shown below," followed by a structure, then more text and another structure), write ![figure](fig) at each such spot, in reading order.
+   - When the options themselves are drawings (structures, graphs), write ![figure](fig) as that option's value, after any printed text of the option.
+   - These figures still need "diagram_bbox" covering them.
 
 --------------------------------------------------
 
@@ -249,11 +250,11 @@ TABLE & LIST DETECTION RULE (CRITICAL):
 If a question contains a table (rows/columns/grid structure) or match-the-following:
 
 - NEVER output a Markdown table (e.g. | Header 1 | Header 2 |). Markdown tables are FORBIDDEN as they break rendering.
-- ALWAYS convert tables into KaTeX \begin{array} format embedded in the "question" field.
-- \begin{array} MUST be at the root of a math block: $$\begin{array}{|c|c|c|} ... \end{array}$$.
-- NEVER wrap \begin{array} inside \text{...}.
-- The column specifier in \begin{array}{|c|c|...|} MUST EXACTLY match the number of columns in the table (e.g., 6 columns -> {|c|c|c|c|c|c|}).
-- Wrap individual cell text in \text{...} INSIDE cells (e.g., \text{गणित} & \text{भौतिकी}). Never wrap \text{...} across row or array boundaries.
+- ALWAYS convert tables into a KaTeX \\begin{array} embedded in the "question" field.
+- \\begin{array} MUST be at the root of a math block: $$\\begin{array}{|c|c|c|} ... \\end{array}$$.
+- NEVER wrap \\begin{array} inside \\text{...}.
+- The column specifier in \\begin{array}{|c|c|...|} MUST EXACTLY match the number of columns in the table (e.g., 6 columns -> {|c|c|c|c|c|c|}).
+- Wrap individual cell text in \\text{...} INSIDE cells (e.g., \\text{गणित} & \\text{भौतिकी}). Never wrap \\text{...} across row or array boundaries.
 
 --------------------------------------------------
 
@@ -261,12 +262,12 @@ MATCH-THE-FOLLOWING RULE (CRITICAL):
 
 If question is "Match the Following" OR contains two-column pairing:
 
-- Convert the two columns into structured LaTeX array format ($$\begin{array}{ll} ... \end{array}$$). NEVER use Markdown tables.
+- Convert the two columns into structured LaTeX array format ($$\\begin{array}{ll} ... \\end{array}$$). NEVER use Markdown tables.
 - Keep original numbering/labels.
 - Embed inside the "question" field.
 
 Example:
-$$\\\\begin{array}{ll} \\\\text{Column I} & \\\\text{Column II} \\\\\\\\ A.\\\\ \\\\text{Apple} & 1.\\\\ \\\\text{Fruit} \\\\\\\\ B.\\\\ \\\\text{Car} & 2.\\\\ \\\\text{Vehicle} \\\\end{array}$$
+$$\\begin{array}{ll} \\text{Column I} & \\text{Column II} \\\\ A.\\ \\text{Apple} & 1.\\ \\text{Fruit} \\\\ B.\\ \\text{Car} & 2.\\ \\text{Vehicle} \\end{array}$$
 
 --------------------------------------------------
 
@@ -276,51 +277,50 @@ If content appears vertically aligned (like vector, matrix, determinant):
 
 Convert to proper LaTeX:
 
-Matrix: $$\\\\begin{pmatrix} a & b \\\\\\\\ c & d \\\\end{pmatrix}$$
-Determinant: $$\\\\begin{vmatrix} a & b \\\\\\\\ c & d \\\\end{vmatrix}$$
+Matrix: $$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$$
+Determinant: $$\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$$
 
 --------------------------------MATH & FORMATTING RULES (CRITICAL):
 
-- Use LaTeX for ALL math: \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
-- CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands inside the JSON strings.
+- Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc. (backslashes exactly as in rule 9).
+- Example of a correct question value in the raw JSON: "question": "If $x = \\frac{1}{\\sqrt{2}}$ and $\\theta = 30^\\circ$, find $\\sin\\theta$."
 - ALL math MUST be wrapped in $...$ for inline or $$...$$ for block. Never write bare LaTeX.
 - Inline math: $...$
 - Block math: $$...$$
 - Do NOT simplify expressions.
 - Preserve spacing and symbols exactly.
-- NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
+- NEVER use align environments, use \\begin{aligned} ... \\end{aligned} instead.
 - CRITICAL: Apply these mathematical and formatting rules to BOTH the question text AND all option values. Ensure NO options are missing or omitted.
 
 CHEMISTRY FORMATTING (mhchem) - CRITICAL:
-- ALWAYS put a backslash '\\' before 'ce', i.e., \\\\ce{CsOH}, \\\\ce{KOH}, \\\\ce{NaOH}, \\\\ce{LiOH}. NEVER write 'ceCsOH' or 'ceNaOH' without '\\\\ce{}'.
-- Wrap ALL chemical formulas and equations in \\\\ce{...} inside $...$ or $$...$$: $\\\\ce{H2O}$, $\\\\ce{2H2 + O2 -> 2H2O}$
-- Reversible reactions: $\\\\ce{N2 + 3H2 <=> 2NH3}$
-- Ions: $\\\\ce{Na+}$, $\\\\ce{SO4^{2-}}$, $\\\\ce{Fe^{3+}}$
-- Organic: $\\\\ce{CH3-CH2-OH}$, $\\\\ce{C6H12O6}$
-- State symbols: $\\\\ce{H2O (l)}$, $\\\\ce{CO2 (g)}$, $\\\\ce{NaCl (aq)}$
-- Isotopes: $\\\\ce{^{14}C}$, $\\\\ce{^{235}U}$
-- IMPORTANT: Always wrap \\\\ce{...} inside $...$
-- CRITICAL: Apply chemistry formatting strictly to option values as well (e.g. $\\\\ce{CsOH > KOH > NaOH > LiOH}$).
+- ALWAYS write the backslash of \\ce{...}: \\ce{CsOH}, \\ce{KOH}, \\ce{NaOH}, \\ce{LiOH}. NEVER write 'ceCsOH' or 'ceNaOH' without '\\ce{}'.
+- Wrap ALL chemical formulas and equations in \\ce{...} inside $...$ or $$...$$: $\\ce{H2O}$, $\\ce{2H2 + O2 -> 2H2O}$
+- Reversible reactions: $\\ce{N2 + 3H2 <=> 2NH3}$
+- Ions: $\\ce{Na+}$, $\\ce{SO4^{2-}}$, $\\ce{Fe^{3+}}$
+- Organic: $\\ce{CH3-CH2-OH}$, $\\ce{C6H12O6}$
+- State symbols: $\\ce{H2O (l)}$, $\\ce{CO2 (g)}$, $\\ce{NaCl (aq)}$
+- Isotopes: $\\ce{^{14}C}$, $\\ce{^{235}U}$
+- IMPORTANT: Always wrap \\ce{...} inside $...$
+- CRITICAL: Apply chemistry formatting strictly to option values as well (e.g. $\\ce{CsOH > KOH > NaOH > LiOH}$).
 
 --------------------------------TEXT & LINE-BREAK RULES:
-- Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
+- Use \n (the standard JSON newline escape) for line breaks in questions, options, and passageContent.
 - DO NOT use <br> tags.
-- Ensure proper escaping of newlines as \n inside the JSON strings.
 - BOLD, ITALIC, AND UNDERLINE FORMATTING:
-  - If the original document has underlined text, you MUST wrap that text in LaTeX/KaTeX underline format inside inline math $...$: $\\\\underline{\\\\text{underlined text}}$ (e.g. $\\\\underline{\\\\text{recapture}}$).
-  - If the original document has bold text, you MUST wrap that text in LaTeX/KaTeX bold format inside inline math $...$: $\\\\textbf{bold text}$ (e.g. $\\\\textbf{कथन:}$).
-  - If the original document has italic text, you MUST wrap that text in LaTeX/KaTeX italic format inside inline math $...$: $\\\\textit{italic text}$.
+  - If the original document has underlined text, you MUST wrap that text in LaTeX/KaTeX underline format inside inline math $...$: $\\underline{\\text{underlined text}}$ (e.g. $\\underline{\\text{recapture}}$).
+  - If the original document has bold text, you MUST wrap that text in LaTeX/KaTeX bold format inside inline math $...$: $\\textbf{bold text}$ (e.g. $\\textbf{कथन:}$).
+  - If the original document has italic text, you MUST wrap that text in LaTeX/KaTeX italic format inside inline math $...$: $\\textit{italic text}$.
   - DO NOT use HTML tags (like <u>, <strong>, <em>, etc.) or markdown formatting (like ** or _ or *) under any circumstances.
 
 --------------------------------------------------
 
-DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
-- If a diagram/image (including chemical structures, geometric drawings, graphs, inline formula diagrams) appears near or inside a question, map it to the corresponding "image_X" identifier.
-- The visual order "image_1", "image_2", etc. corresponds to the order of the extracted diagram/structure images appended to this message.
-- Compare the content of each extracted diagram image with the page content to identify its correct location.
-- If a diagram is a large standalone figure for a question, set its "imagePlaceholder" to "image_X".
-- If a diagram/chemical structure is located inline within the question text or option text, insert a markdown image tag: ![image](image_X) at the exact place inside the question or option text.
-- IMPORTANT: Ignore any corporate logo, header branding, or footer page-number/institution logos that appear in the document. Do NOT assign them an "image_X" identifier or map them to any question. If a logo is extracted, ignore it.
+REFERENCE IMAGES ("EXTRACTED DIAGRAMS"):
+- Some messages end with labelled reference images "image_1", "image_2", ... cut from the document. Only then:
+  - Compare each reference image with the page content to find where it is printed.
+  - If a reference image is the figure of a question, set that question's "imagePlaceholder" to its ID ("image_X").
+  - If it sits inline inside the question or option text, insert ![image](image_X) at that exact spot.
+- NEVER invent an image_X ID that is not attached to this message. Without reference images, use "diagram_bbox" and ![figure](fig) as described above.
+- IMPORTANT: Ignore any corporate logo, header branding, or footer page-number/institution logos that appear in the document. Do NOT map them to any question.
 
 --------------------------------------------------
 
@@ -438,8 +438,9 @@ Internally verify:
 ✔ Multiple → array correctAnswer
 ✔ Numerical → object correctAnswer
 ✔ ALL math wrapped in $...$ or $$...$$
-✔ ALL LaTeX commands use double backslashes (\\\\)
-✔ ALL chemical formulas use $\\\\ce{...}$
+✔ Every LaTeX command written with exactly two backslashes in the raw JSON (\\frac), never four
+✔ ALL chemical formulas use $\\ce{...}$
+✔ Every question with a figure has "diagram_bbox" with the right page_number
 ✔ NO citation markers [cite: ...] remain
 ✔ NO option values start with numbering like "1.", "(a)", "(1)"
 ✔ Valid JSON
@@ -455,7 +456,7 @@ Pay special attention to:
 • Match-the-following → LaTeX arrays
 • Comprehension blocks
 • Mixed question types
-• Chemical formulas with \\\\ce{}
+• Chemical formulas with \\ce{}
 • Remove any [cite:...] artifacts
 
 Return ONLY RAW JSON.
@@ -485,7 +486,7 @@ Rules:
 Return ONLY valid JSON. No markdown, no explanations.
 """
 
-GENERATE_PROMPT = """
+GENERATE_PROMPT = r"""
 ROLE:
 You are an expert educational content author, exam setter, and test creator.
 
@@ -503,7 +504,7 @@ ABSOLUTE OUTPUT RULES
 5. JSON must be syntactically valid
 6. Question IDs must be sequential integers (1,2,3,...)
 7. Deeply scan mathematical syntax before finalizing
-8. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+8. BACKSLASHES: every LaTeX example in this prompt is written exactly as it must appear in your raw JSON output. JSON escapes a backslash as two characters, so a LaTeX command is written \\frac, \\sqrt, \\alpha, \\text{...}, \\ce{...} (this decodes to one backslash, which is what the platform needs). A LaTeX line break between rows of an array or matrix is written \\\\. Never add more backslashes than that: "\\\\frac" is WRONG, it shows up as a line break followed by the word "frac".
 9. ALL mathematical expressions MUST be wrapped in $...$ (inline) or $$...$$ (block). Never output bare LaTeX commands.
 10. DO NOT include any citation markers like [cite: ...] in the output. Strip them completely.
 
@@ -520,16 +521,16 @@ QUESTION GENERATION RULES:
 
 TABLE & LIST DETECTION RULE (CRITICAL):
 - NEVER output Markdown tables (e.g. | Header 1 | Header 2 |).
-- ALWAYS convert tables, matrices, and two-column pairings into KaTeX \\begin{array} format embedded in the "question" field.
+- ALWAYS convert tables, matrices, and two-column pairings into a KaTeX \\begin{array} embedded in the "question" field.
 - \\begin{array} MUST be at the root of a math block: $$\\begin{array}{|c|c|} ... \\end{array}$$.
 
 --------------------------------------------------
 
 CHEMISTRY FORMATTING (mhchem) - CRITICAL:
-- ALWAYS put a backslash '\\' before 'ce', i.e., \\\\ce{CsOH}, \\\\ce{KOH}, \\\\ce{NaOH}.
-- Wrap ALL chemical formulas and equations in \\\\ce{...} inside $...$ or $$...$$: $\\\\ce{H2O}$, $\\\\ce{2H2 + O2 -> 2H2O}$
-- Reversible reactions: $\\\\ce{N2 + 3H2 <=> 2NH3}$
-- Ions: $\\\\ce{Na+}$, $\\\\ce{SO4^{2-}}$
+- ALWAYS write the backslash of \\ce{...}: \\ce{CsOH}, \\ce{KOH}, \\ce{NaOH}.
+- Wrap ALL chemical formulas and equations in \\ce{...} inside $...$ or $$...$$: $\\ce{H2O}$, $\\ce{2H2 + O2 -> 2H2O}$
+- Reversible reactions: $\\ce{N2 + 3H2 <=> 2NH3}$
+- Ions: $\\ce{Na+}$, $\\ce{SO4^{2-}}$
 
 --------------------------------------------------
 
@@ -541,7 +542,7 @@ Analyze the content density and decide if the exam should be structured section-
 {
   "title": "Descriptive test title auto-generated from topics",
   "description": "AI-generated questions based on document content",
-  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2",
+  "revision_notes": "# Key Concepts\n* Point 1\n* Point 2",
   "enable_section_mode": true,
   "sections": [
     {
@@ -577,7 +578,7 @@ Analyze the content density and decide if the exam should be structured section-
 {
   "title": "Generated: [Topic/Subject]",
   "description": "AI-generated questions based on content",
-  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2",
+  "revision_notes": "# Key Concepts\n* Point 1\n* Point 2",
   "questions": [
     {
       "id": 1,
@@ -737,121 +738,22 @@ def build_page_sources(file_data: List[Dict]) -> List[Dict]:
     return page_sources
 
 
-async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]) -> None:
+async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict], locate: bool = False) -> None:
     """
-    Looks for "diagram_bbox" inside each question. If found, crops the diagram region 
-    from the corresponding page image, uploads it to Cloudinary, and sets it as the 
-    question's "image" field.
+    Crop each question's figures from its page, upload them, and attach them: the main figure
+    becomes "image", figures marked inline with image tags are filled in where they stand, and
+    tags that cannot be filled are removed. `locate` asks Gemini for a tight box per figure
+    (one call per page with figures) before cropping; see figure_crops for the details.
     """
-    from PIL import Image
-    import io
-    import asyncio
-    import fitz
-    
-    if not page_sources:
-        return
-
-    crop_tasks = []
-
-    async def _crop_and_upload(vq: Dict):
-        # If the question already has a valid image resolved from an embedded placeholder, do NOT crop/overwrite it
-        if vq.get("image"):
-            return
-            
-        bbox_info = vq.get("diagram_bbox")
-        if not bbox_info or not isinstance(bbox_info, dict):
-            return
-            
-        page_num = bbox_info.get("page_number")
-        box_2d = bbox_info.get("box_2d")
-        
-        if not page_num or not box_2d or len(box_2d) != 4:
-            return
-            
-        try:
-            page_idx = int(page_num) - 1
-            if page_idx < 0 or page_idx >= len(page_sources):
-                logger.warning(f"Invalid page_number {page_num} in diagram_bbox. Total pages: {len(page_sources)}")
-                return
-                
-            source = page_sources[page_idx]
-            
-            # Render page or load image
-            if source["type"] == "pdf":
-                # Render page at 300 DPI for high resolution cropping
-                pdf_bytes = source["content"]
-                page_in_pdf = source["page_idx"]
-                
-                def _render_page():
-                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-                    page = doc[page_in_pdf]
-                    rect = page.rect
-                    max_dim = 2048
-                    scale = min(max_dim / rect.width, max_dim / rect.height)
-                    if scale > (300/72):
-                        scale = 300/72
-                    mat = fitz.Matrix(scale, scale)
-                    pix = page.get_pixmap(matrix=mat, alpha=False)
-                    img_bytes = pix.tobytes("png")
-                    doc.close()
-                    return img_bytes
-                    
-                page_img_bytes = await asyncio.to_thread(_render_page)
-            else:
-                page_img_bytes = convert_image_to_bytes(source["content"])
-            
-            # Crop using Pillow
-            img = Image.open(io.BytesIO(page_img_bytes))
-            width, height = img.size
-            
-            # BBox coordinates [ymin, xmin, ymax, xmax] (0-1000 scale)
-            ymin, xmin, ymax, xmax = box_2d
-            
-            ymin = max(0, min(1000, int(ymin)))
-            xmin = max(0, min(1000, int(xmin)))
-            ymax = max(0, min(1000, int(ymax)))
-            xmax = max(0, min(1000, int(xmax)))
-            
-            if ymin >= ymax or xmin >= xmax:
-                logger.warning(f"Invalid bbox dimensions for question {vq.get('id')}: {box_2d}")
-                return
-                
-            # Convert to actual pixels
-            left = int(xmin * width / 1000)
-            top = int(ymin * height / 1000)
-            right = int(xmax * width / 1000)
-            bottom = int(ymax * height / 1000)
-            
-            # Add a small padding (15 pixels)
-            padding = 15
-            left = max(0, left - padding)
-            top = max(0, top - padding)
-            right = min(width, right + padding)
-            bottom = min(height, bottom + padding)
-            
-            if (right - left) < 10 or (bottom - top) < 10:
-                logger.warning(f"Cropped region too small: {right - left}x{bottom - top}")
-                return
-                
-            cropped_img = img.crop((left, top, right, bottom))
-            
-            out_io = io.BytesIO()
-            cropped_img.save(out_io, format="PNG")
-            cropped_bytes = out_io.getvalue()
-            
-            # Upload to Cloudinary
-            cloudinary_url = await upload_image_to_cloudinary(cropped_bytes)
-            if cloudinary_url:
-                vq["image"] = cloudinary_url
-                logger.info(f"Successfully cropped diagram for Q{vq.get('id')} and uploaded to Cloudinary: {cloudinary_url}")
-        except Exception as e:
-            logger.error(f"Failed to crop diagram for question {vq.get('id')}: {e}")
-
-    for vq in questions:
-        crop_tasks.append(_crop_and_upload(vq))
-        
-    if crop_tasks:
-        await asyncio.gather(*crop_tasks)
+    from ai_preview_importer.figure_crops import crop_question_figures, drop_unresolved_tags
+    try:
+        await crop_question_figures(questions, page_sources, locate=locate)
+    except Exception as e:
+        # The questions matter more than their pictures: never fail the import here.
+        logger.error(f"Diagram cropping failed, keeping the questions without new crops: {e}")
+        for q in questions:
+            if isinstance(q, dict):
+                drop_unresolved_tags(q)
 
 
 def sanitize_latex_and_mhchem(text: str) -> str:
@@ -1513,11 +1415,11 @@ async def process_files(
         try:
             raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
             logger.info(f"Single batch response received. Length: {len(raw_text)}")
-            
+
             batch_result = await _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
-            
-            await process_diagram_bboxes(unique_questions, page_sources)
+
+            await process_diagram_bboxes(unique_questions, page_sources, locate=True)
             
             if not unique_questions:
                 raise ValueError("No questions could be extracted in single batch mode.")
@@ -1622,19 +1524,9 @@ async def process_files(
                 first_batch_desc = batch_result.get("description")
             
             if questions:
-                # Adjust relative page numbers to global ones
-                for q in questions:
-                    bbox = q.get("diagram_bbox")
-                    if bbox and isinstance(bbox, dict):
-                        p_num = bbox.get("page_number")
-                        if p_num is not None:
-                            try:
-                                p_num = int(p_num)
-                                if p_num <= actual_batch_size and batch_start_page > 0:
-                                    bbox["page_number"] = batch_start_page + p_num
-                                    logger.info(f"Adjusted relative page_number {p_num} to global {batch_start_page + p_num} for Q {q.get('id')}")
-                            except (ValueError, TypeError):
-                                pass
+                # Diagram page numbers -> document pages (the batch overlaps the previous one).
+                from ai_preview_importer.figure_crops import normalize_bbox_pages
+                normalize_bbox_pages(questions, batch_start_page, actual_batch_size)
                 logger.info(f"Extracted {len(questions)} questions from batch {batch_num}")
                 all_questions.extend(questions)
             else:
@@ -1657,7 +1549,7 @@ async def process_files(
     unique_questions = merge_cross_page_questions(all_questions)
     logger.info(f"Total questions after merging: {len(unique_questions)}")
 
-    await process_diagram_bboxes(unique_questions, page_sources)
+    await process_diagram_bboxes(unique_questions, page_sources, locate=True)
 
     # Step 5: Match answer key with questions if provided (PRIORITY)
     if answer_key_mappings:
@@ -1786,24 +1678,11 @@ def _sanitize_gemini_json(text: str) -> str:
     # Fix 1: Quote unquoted IMG references if any
     text = re.sub(r':\s*(IMG_\d+)\s*([,}\]])', r': "\1"\2', text)
 
-    # Fix 2: Handle LaTeX backslashes.
-    # Gemini should double-escape (\\frac), but sometimes uses single (\frac).
-    # Strategy: any \<letters> where letters form 2+ chars → escape the backslash
-    def fix_backslash(match):
-        word = match.group(1)
-        if len(word) >= 2:
-            return '\\\\' + word
-        elif word in 'bfnrtu':
-            return '\\' + word
-        else:
-            return '\\\\' + word
+    # Fix 2: LaTeX written with single backslashes ("\frac", "\sqrt", "\(") inside strings.
+    # Escape-aware, so correctly escaped LaTeX and real "\n" line breaks stay as they are.
+    text = repair_json_escapes(text)
 
-    text = re.sub(r'(?<!\\)\\([a-zA-Z]+)', fix_backslash, text)
-
-    # Fix 3: Handle \( and \) LaTeX delimiters
-    text = text.replace('\\(', '(').replace('\\)', ')')
-
-    # Fix 4: Handle truncated JSON — try to close it
+    # Fix 3: Handle truncated JSON — try to close it
     text = text.rstrip()
     if not text.endswith('}'):
         # Try to find the last complete question and close the JSON
@@ -1873,6 +1752,11 @@ def _extract_questions_regex(text: str) -> List[Dict]:
         try:
             q_text = match.group(1)
             if q_text:
+                # The capture is still JSON-escaped ("\\frac", "\n"): decode it.
+                try:
+                    q_text = json.loads(f'"{q_text}"')
+                except json.JSONDecodeError:
+                    pass
                 q_dict = {"question": q_text.strip()}
                 questions.append(q_dict)
         except:
@@ -1944,9 +1828,10 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         clean = clean[:-3]
     clean = clean.strip()
 
-    # Try parsing raw first, then sanitize if needed
+    # Parse with LaTeX backslashes repaired first (single-backslash "\frac" would otherwise
+    # fail, or silently decode to a form feed); fall back to the heavier sanitiser.
     try:
-        data = json.loads(clean)
+        data = json.loads(repair_json_escapes(clean))
     except json.JSONDecodeError as e:
         logger.info(f"Raw JSON parse failed: {e}. Applying sanitization...")
         sanitized = _sanitize_gemini_json(clean)
@@ -1994,17 +1879,26 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         # Don't raise error, just return empty so batch can fail gracefully without breaking pipeline
         return {"questions": []}
 
+    # Over-escaped LaTeX ("\\frac" in the decoded text) renders as a line break plus the
+    # plain word; put every command back to a single backslash.
+    for q in questions:
+        normalize_question_latex(q)
+
     # Identify referenced image placeholders from the parsed questions
     referenced_placeholders = set()
     for q in questions:
         if not isinstance(q, dict):
             continue
-        
-        # Check in question text
+
+        # Check in question and option text
         question_text = q.get("question") or q.get("questionText") or ""
-        for match in re.findall(r'(image_\d+)', question_text):
-            referenced_placeholders.add(match)
-            
+        option_texts = []
+        if isinstance(q.get("options"), dict):
+            option_texts = [v if isinstance(v, str) else str((v or {}).get("text") or "") for v in q["options"].values()]
+        for text in [question_text, *option_texts]:
+            for match in re.findall(r'(image_\d+)', text or ""):
+                referenced_placeholders.add(match)
+
         # Check in imagePlaceholder field
         image_placeholder = q.get("imagePlaceholder")
         if image_placeholder and isinstance(image_placeholder, str):
@@ -2036,10 +1930,12 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     def replace_placeholders(text: str) -> str:
         if not text:
             return text
-        for placeholder, url in placeholder_map.items():
-            text = text.replace(f"![image]({placeholder})", f"![image]({url})")
-            text = text.replace(f"![diagram]({placeholder})", f"![image]({url})")
-        return text
+        # Any alt text ("image", "diagram", "figure"); unknown IDs are left for the crop step.
+        return re.sub(
+            r'!\[[^\]]*\]\((image_\d+)\)',
+            lambda m: f"![image]({placeholder_map[m.group(1)]})" if placeholder_map.get(m.group(1)) else m.group(0),
+            text,
+        )
 
     # Validate and match diagrams
     validated = []

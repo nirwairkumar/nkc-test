@@ -737,8 +737,9 @@ RULES
    "उत्तर: ग" ("answer_key"). With no such evidence, correctAnswer is null and answerSource is
    "none". NEVER work out the answer yourself.
 7. Maths goes in LaTeX inside $...$, e.g. $\\frac{1}{2}$, $x^{2}$, $\\sqrt{3}$. Chemical formulas
-   and reactions use mhchem inside $...$: $\\ce{H2SO4}$, $\\ce{2H2 + O2 -> 2H2O}$. Use double
-   backslashes because this is JSON.
+   and reactions use mhchem inside $...$: $\\ce{H2SO4}$, $\\ce{2H2 + O2 -> 2H2O}$. These examples
+   are written exactly as they must appear in the raw JSON: two backslash characters before a
+   command (\\frac), which JSON decodes to one. Never write four (\\\\frac).
 8. Tables and match-the-column lists go inside the question text as
    $$\\begin{array}{|c|c|} ... \\end{array}$$ with each cell's words in \\text{...}. Never use
    markdown tables.
@@ -759,10 +760,11 @@ QUESTION_NUMBER_PREFIX = re.compile(r'^\s*(?:Q(?:ue(?:stion)?)?\.?\s*\d{1,3}\s*[
 def _normalize_photo_question(data: Dict[str, Any]) -> Dict[str, Any]:
     """Coerce Gemini's single-question JSON into the builder's question shape."""
     from ai_preview_importer.pdf_vision_pipeline import sanitize_latex_and_mhchem
+    from ai_preview_importer.latex_json import normalize_latex
 
     q_type = data.get("type") if data.get("type") in PHOTO_TYPES else "single"
     question_text = QUESTION_NUMBER_PREFIX.sub('', str(data.get("question") or "").strip(), count=1)
-    question_text = sanitize_latex_and_mhchem(question_text)
+    question_text = sanitize_latex_and_mhchem(normalize_latex(question_text))
 
     options: Dict[str, str] = {}
     raw_options = data.get("options")
@@ -771,7 +773,7 @@ def _normalize_photo_question(data: Dict[str, Any]) -> Dict[str, Any]:
             value = raw_options[key]
             label = str(key).strip().upper()[:1]
             if label.isalpha() and value is not None and str(value).strip():
-                options[label] = sanitize_latex_and_mhchem(str(value).strip())
+                options[label] = sanitize_latex_and_mhchem(normalize_latex(str(value).strip()))
 
     if q_type != "numerical" and not options:
         # No options were readable: a bare number question is the only thing that fits.
@@ -858,6 +860,7 @@ async def read_question_from_photo(
     from ai_preview_importer.pdf_vision_pipeline import (  # lazy import: heavy OCR deps
         _call_gemini_with_retry, _sanitize_gemini_json, convert_image_to_bytes, process_diagram_bboxes,
     )
+    from ai_preview_importer.latex_json import repair_json_escapes
 
     jpeg = await asyncio.to_thread(convert_image_to_bytes, content)
     prompt = PHOTO_QUESTION_PROMPT
@@ -882,7 +885,7 @@ async def read_question_from_photo(
     clean = clean_json(clean.strip())
 
     try:
-        data = json.loads(clean)
+        data = json.loads(repair_json_escapes(clean))
     except json.JSONDecodeError:
         try:
             data = json.loads(_sanitize_gemini_json(clean))
