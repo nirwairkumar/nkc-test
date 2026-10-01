@@ -366,6 +366,19 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: NEET online test software (https://testoza.com/neet-online-test-software)
+
+A long-form guide for NEET faculty, coaching institutes and NEET aspirants on running full NEET mocks online.
+
+- **The paper:** NEET-UG has 180 compulsory single-correct questions for 720 marks: 45 each in Physics, Chemistry, Botany and Zoology; +4 right, −1 wrong, 0 blank; normally 3 hours (the 21 June 2026 re-exam ran 2:00–5:15 p.m.); 13 languages. 2021–2024 papers had an optional Section B (10 of 15) and 200 questions in 200 minutes. Formats include statement I/II, assertion–reason, match List-I with List-II, diagram and "choose the incorrect" questions.
+- **The numbers (NTA, 16 July 2026):** close to 20 lakh appeared in the re-exam and 11.21 lakh qualified; 90,780 scored 500 or more and 10,160 scored 600 or more, roughly 800 candidates per mark in that band.
+- **OMR or CBT:** the 3 May 2026 exam was cancelled on 12 May after a leak; on 15 May the Education Minister said NEET would move to computer-based testing from 2027; on 5 August the Centre told the Supreme Court the move is "under active consideration" pending a task force led by Nandan Nilekani, with adequate notice promised; the report was still awaited on 30 September 2026. The guide recommends practising both.
+- **On TestoZa:** NTA-style Standard Mode (five palette states, Save & Next, Review, Ans & Review, hideable timer that stays visible in the last five minutes); answers kept on the device and synced for signed-in students; AI Extract (with a separate answer key) and Generate (Easy, Moderate, Tough) from PDFs, Word, slides and photos, in English, Hindi or both; Match List tables, cropped diagrams and chemistry notation; sections with +4/−1 and attempt control for old Section B papers; teacher analysis with a speed-vs-accuracy quadrant and per-question accuracy, option split, average time and discrimination index; student results with subject marks, a time matrix, an AI mentor and a rank estimate for tests tagged NEET.
+- **Guessing:** a blind guess among four options is worth +0.25 marks on average, +0.67 after ruling out one option and +1.5 after two; break-even is a 20% chance of being right.
+- **Limits:** no OMR printing or scanning; a browser is not a test centre; AI needs a human check; the rank estimate is an AI estimate; exam-security rules, scheduling, branding and Excel export are on paid plans.
+
+---
+
 ## Guide: JEE mock test platform (https://testoza.com/jee-mock-test-platform)
 
 A long-form guide for JEE faculty, coaching institutes and JEE aspirants on building JEE Main and JEE Advanced mock tests without learning LaTeX.

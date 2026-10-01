@@ -52,6 +52,7 @@ STATIC_PAGES = [
     {"loc": "/cbt-exam-software", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/jee-mock-test-platform", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/ai-test-generator", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/neet-online-test-software", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
     {"loc": "/more-tests", "priority": "0.85", "changefreq": "daily"},

@@ -32,7 +32,14 @@ export type GuideWidget =
     | 'settings-lab'
     | 'review-screen'
     | 'material-picker'
-    | 'time-saved';
+    | 'time-saved'
+    // neet-online-test-software
+    | 'neet-time-planner'
+    | 'neet-exam-demo'
+    | 'neet-ai-import'
+    | 'neet-batch-audit'
+    | 'neet-score-lab'
+    | 'neet-student-result';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

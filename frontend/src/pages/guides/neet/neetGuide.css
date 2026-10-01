@@ -1,0 +1,2502 @@
+/*
+ * testoza.com/neet-online-test-software: the page shell, the guide text and the
+ * frames around the product replicas. Scoped to .ng and independent of the other
+ * guides' styles.
+ *
+ * iOS / apple.com patterns on a compact type scale: system type (SF on Apple
+ * devices, Inter elsewhere), 16px body, grouped inset lists with hairlines, a
+ * frosted chapter bar, system colours, and spring motion. The product replicas
+ * keep the product's own Tailwind classes and always render light, like
+ * screenshots (.ng-screen resets the theme tokens). Dark mode follows the site's
+ * .dark class; reduced motion stops every animation.
+ */
+
+.ng {
+    --ng-bg: #f5f5f7;
+    --ng-card: #ffffff;
+    --ng-card-2: #fafafc;
+    --ng-ink: #1d1d1f;
+    --ng-ink-2: #424245;
+    --ng-ink-3: #6e6e73;
+    --ng-ink-4: #86868b;
+    --ng-sep: rgba(60, 60, 67, 0.13);
+    --ng-sep-strong: rgba(60, 60, 67, 0.24);
+    --ng-fill: rgba(118, 118, 128, 0.12);
+    --ng-fill-2: rgba(118, 118, 128, 0.07);
+    --ng-blue: #0071e3;
+    --ng-blue-hover: #0077ed;
+    --ng-link: #0066cc;
+    --ng-blue-soft: rgba(0, 113, 227, 0.09);
+    --ng-green: #34c759;
+    --ng-green-ink: #1d7f3a;
+    --ng-orange: #ff9500;
+    --ng-orange-ink: #b25000;
+    --ng-red: #ff3b30;
+    --ng-red-ink: #d70015;
+    --ng-indigo: #5856d6;
+    --ng-purple: #af52de;
+    --ng-pink: #ff2d55;
+    --ng-teal: #30b0c7;
+    --ng-physics: #007aff;
+    --ng-chemistry: #ff9500;
+    --ng-biology: #34c759;
+    --ng-botany: #34c759;
+    --ng-zoology: #ff2d55;
+    --ng-glass: rgba(245, 245, 247, 0.78);
+    --ng-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px -8px rgba(0, 0, 0, 0.1);
+    --ng-shadow-lg: 0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.04), 0 30px 60px -28px rgba(0, 0, 0, 0.28);
+    --ng-r: 18px;
+    --ng-r-sm: 12px;
+    --ng-f: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --ng-fd: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI Variable Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --ng-deva: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+    --ng-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --ng-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --ng-nav: 65px;
+
+    background: var(--ng-bg);
+    color: var(--ng-ink);
+    font-family: var(--ng-f);
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+}
+.dark .ng {
+    --ng-bg: #000000;
+    --ng-card: #1c1c1e;
+    --ng-card-2: #232325;
+    --ng-ink: #f5f5f7;
+    --ng-ink-2: #d2d2d7;
+    --ng-ink-3: #a1a1a6;
+    --ng-ink-4: #8e8e93;
+    --ng-sep: rgba(84, 84, 88, 0.55);
+    --ng-sep-strong: rgba(120, 120, 128, 0.6);
+    --ng-fill: rgba(118, 118, 128, 0.24);
+    --ng-fill-2: rgba(118, 118, 128, 0.14);
+    --ng-blue: #0a84ff;
+    --ng-blue-hover: #2b95ff;
+    --ng-link: #2997ff;
+    --ng-blue-soft: rgba(10, 132, 255, 0.16);
+    --ng-green: #30d158;
+    --ng-green-ink: #4ae07a;
+    --ng-orange: #ff9f0a;
+    --ng-orange-ink: #ffb340;
+    --ng-red: #ff453a;
+    --ng-red-ink: #ff6961;
+    --ng-glass: rgba(22, 22, 23, 0.78);
+    --ng-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+    --ng-shadow-lg: 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 30px 60px -28px rgba(0, 0, 0, 0.9);
+}
+.ng *,
+.ng *::before,
+.ng *::after {
+    box-sizing: border-box;
+}
+.ng :where(button) {
+    font: inherit;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+.ng a:focus-visible,
+.ng button:focus-visible,
+.ng summary:focus-visible,
+.ng input:focus-visible {
+    outline: 2px solid var(--ng-blue);
+    outline-offset: 2px;
+}
+.ng-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Icons (Lucide paths) used by the guide's HTML: white strokes on a tinted tile. */
+.ng {
+    --ng-i-doc: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3Cpath d='M16 13H8'/%3E%3Cpath d='M16 17H8'/%3E%3Cpath d='M10 9H8'/%3E%3C/svg%3E");
+    --ng-i-sparkles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z'/%3E%3C/svg%3E");
+    --ng-i-language: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 8 6 6'/%3E%3Cpath d='m4 14 6-6 2-3'/%3E%3Cpath d='M2 5h12'/%3E%3Cpath d='M7 2h1'/%3E%3Cpath d='m22 22-5-10-5 10'/%3E%3Cpath d='M14 18h6'/%3E%3C/svg%3E");
+    --ng-i-target: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+    --ng-i-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M18 17V9'/%3E%3Cpath d='M13 17V5'/%3E%3Cpath d='M8 17v-3'/%3E%3C/svg%3E");
+    --ng-i-layers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z'/%3E%3Cpath d='m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65'/%3E%3Cpath d='m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65'/%3E%3C/svg%3E");
+    --ng-i-book: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E");
+    --ng-i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E");
+    --ng-i-bang: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M12 6.5v7'/%3E%3Cpath d='M12 17.6v.1'/%3E%3C/svg%3E");
+    --ng-i-ruler: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z'/%3E%3Cpath d='m14.5 12.5 2-2'/%3E%3Cpath d='m11.5 9.5 2-2'/%3E%3Cpath d='m8.5 6.5 2-2'/%3E%3Cpath d='m17.5 15.5 2-2'/%3E%3C/svg%3E");
+}
+
+/* ── Reading progress ─────────────────────────────────────────────────── */
+.ng-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    height: 2px;
+    pointer-events: none;
+}
+.ng-progress > i {
+    display: block;
+    height: 100%;
+    background: var(--ng-blue);
+    transform-origin: 0 50%;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+.ng-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--ng-card) 0%, var(--ng-card) 40%, var(--ng-bg) 100%);
+}
+.ng-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(520px 420px at 82% 18%, rgba(52, 199, 89, 0.11), transparent 70%),
+        radial-gradient(560px 460px at 72% 78%, rgba(0, 113, 227, 0.09), transparent 70%),
+        radial-gradient(420px 320px at 8% 4%, rgba(88, 86, 214, 0.05), transparent 70%);
+}
+.dark .ng .ng-hero {
+    background: linear-gradient(180deg, #0a0a0b 0%, #000 100%);
+}
+.ng-hero-in {
+    display: grid;
+    gap: 44px;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 32px 20px 56px;
+}
+@media (min-width: 1024px) {
+    .ng-hero-in {
+        grid-template-columns: minmax(0, 1fr) 320px;
+        align-items: center;
+        gap: 80px;
+        padding: 44px 32px 56px;
+    }
+}
+.ng-crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--ng-ink-3);
+}
+.ng-crumbs a {
+    color: var(--ng-ink-2);
+    text-decoration: none;
+}
+.ng-crumbs a:hover {
+    color: var(--ng-link);
+}
+.ng-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--ng-ink-3);
+}
+.ng-eyebrow b {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(52, 199, 89, 0.14);
+    color: var(--ng-green-ink);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+.ng-h1 {
+    margin: 14px 0 0;
+    font-family: var(--ng-fd);
+    font-size: clamp(1.95rem, 1.35rem + 2.1vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.028em;
+    color: var(--ng-ink);
+    text-wrap: balance;
+}
+.ng-h1-key {
+    background: linear-gradient(95deg, #0a8f5a 0%, #0071e3 58%, #5e5ce6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+.dark .ng .ng-h1-key {
+    background-image: linear-gradient(95deg, #30d158 0%, #2997ff 58%, #7d7aff 100%);
+}
+.ng-dek {
+    max-width: 36rem;
+    margin: 18px 0 0;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ng-ink-3);
+    text-wrap: pretty;
+}
+@media (min-width: 640px) {
+    .ng-dek {
+        font-size: 17px;
+    }
+}
+.ng-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 22px;
+    margin-top: 26px;
+}
+.ng-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: var(--ng-blue);
+    color: #fff !important;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none !important;
+    transition:
+        background-color 0.2s ease,
+        transform 0.35s var(--ng-spring);
+}
+.ng-btn:hover {
+    background: var(--ng-blue-hover);
+}
+.ng-btn:active {
+    transform: scale(0.97);
+}
+.ng-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--ng-link) !important;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none !important;
+}
+.ng-more:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.ng-more svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.25s var(--ng-ease);
+}
+.ng-more:hover svg {
+    transform: translateX(2px);
+}
+.ng-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+    max-width: 36rem;
+    margin: 30px 0 0;
+    padding: 18px 0 0;
+    border-top: 0.5px solid var(--ng-sep-strong);
+}
+@media (min-width: 560px) {
+    .ng-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+.ng-stats div {
+    min-width: 0;
+}
+.ng-stats dt {
+    font-size: 12px;
+    color: var(--ng-ink-3);
+}
+.ng-stats dd {
+    margin: 2px 0 0;
+    font-family: var(--ng-fd);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ng-ink);
+    font-variant-numeric: tabular-nums;
+}
+.ng-stats dd small {
+    margin-left: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ng-ink-3);
+    letter-spacing: 0;
+}
+.ng-byline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--ng-ink-3);
+}
+.ng-byline img {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+}
+.ng-byline strong {
+    color: var(--ng-ink-2);
+    font-weight: 600;
+}
+
+/* ── iPhone (hero) ─────────────────────────────────────────────────────── */
+.ng-stage {
+    position: relative;
+    width: min(100%, 320px);
+    margin: 0 auto;
+}
+@media (min-width: 1024px) {
+    .ng-stage {
+        width: 300px;
+    }
+}
+.ng-iphone {
+    position: relative;
+    padding: 10px;
+    border-radius: 56px;
+    background: linear-gradient(150deg, #4a4b4f 0%, #1d1e21 18%, #0d0e10 50%, #26272b 100%);
+    box-shadow:
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
+        inset 0 0 0 4px #050506,
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 44px 70px -36px rgba(15, 23, 42, 0.55),
+        0 18px 30px -24px rgba(15, 23, 42, 0.4);
+}
+.ng-iphone-key {
+    position: absolute;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #2a2b2f, #4b4c50);
+}
+.ng-iphone-key--power {
+    right: -2px;
+    top: 24%;
+    height: 11%;
+}
+.ng-iphone-key--action {
+    left: -2px;
+    top: 16%;
+    height: 4.5%;
+}
+.ng-iphone-key--up {
+    left: -2px;
+    top: 24%;
+    height: 7.5%;
+}
+.ng-iphone-key--down {
+    left: -2px;
+    top: 33.5%;
+    height: 7.5%;
+}
+.ng-iphone-screen {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 393 / 852;
+    border-radius: 46px;
+    background: #f8fafc;
+    isolation: isolate;
+}
+.ng-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 393px;
+    height: 852px;
+    transform-origin: 0 0;
+}
+.ng-island {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    z-index: 80;
+    width: 124px;
+    height: 36px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateX(-50%);
+}
+.ng-statusbar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 54px;
+    padding: 4px 30px 0 46px;
+    font-family: var(--ng-f);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #000;
+    background: #fff;
+}
+.ng-statusbar-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ng-viewport {
+    position: absolute;
+    top: 54px;
+    left: 0;
+    right: 0;
+    bottom: 84px;
+    overflow: hidden;
+}
+/* iOS Safari's floating address bar. */
+.ng-safari {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 75;
+    height: 84px;
+    padding: 10px 14px 0;
+    background: #fff;
+    pointer-events: none;
+}
+.ng-safari-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(250, 250, 252, 0.82);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.1),
+        0 8px 24px -10px rgba(0, 0, 0, 0.25);
+    font-family: var(--ng-f);
+    font-size: 15px;
+    color: #1d1d1f;
+}
+.ng-safari-bar span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+.ng-safari-bar svg {
+    width: 18px;
+    height: 18px;
+    color: #3c3c43;
+}
+.ng-safari-home {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    width: 134px;
+    height: 5px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateX(-50%);
+}
+
+/* The caption under the phone: what the animation is showing, with page dots. */
+.ng-stage-caption {
+    margin: 20px auto 0;
+    max-width: 300px;
+    text-align: center;
+}
+.ng-stage-caption p {
+    min-height: 2.6em;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--ng-ink-3);
+}
+.ng-stage-caption p b {
+    display: block;
+    color: var(--ng-ink);
+    font-weight: 600;
+}
+.ng-stage-caption p.is-swap {
+    animation: ng-caption-in 0.45s var(--ng-ease);
+}
+.ng-dots {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 12px;
+}
+.ng-dots i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--ng-sep-strong);
+    transition:
+        width 0.4s var(--ng-ease),
+        background-color 0.3s ease;
+}
+.ng-dots i.is-on {
+    width: 20px;
+    background: var(--ng-ink);
+}
+
+/* Product replicas render light whatever the site theme (theme tokens reset). */
+.ng-screen {
+    --background: 210 20% 98%;
+    --foreground: 213 24% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 24% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 24% 10%;
+    --primary: 200 95% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 20% 95%;
+    --secondary-foreground: 213 24% 10%;
+    --muted: 160 10% 96%;
+    --muted-foreground: 213 16% 46%;
+    --accent: 160 60% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 160 20% 90%;
+    --input: 160 20% 90%;
+    --ring: 200 95% 35%;
+    color-scheme: light;
+    font-family: 'Mukta', sans-serif;
+    letter-spacing: normal;
+    line-height: 1.5;
+    color: hsl(213 24% 10%);
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+}
+.ng-screen *,
+.ng-screen *::before,
+.ng-screen *::after {
+    border-color: hsl(160 20% 90%);
+}
+.ng-screen button {
+    cursor: default;
+}
+.ng-screen.is-live button:not(:disabled) {
+    cursor: pointer;
+}
+/* A scripted tap: the pressed control dips, as a finger would make it. */
+.ng-screen .is-pressed {
+    transform: scale(0.94);
+    filter: brightness(0.94);
+    transition:
+        transform 0.12s ease,
+        filter 0.12s ease;
+}
+.ng-sheet-overlay {
+    transition: opacity 0.35s ease;
+}
+.ng-sheet {
+    transition: transform 0.5s var(--ng-ease);
+}
+.ng-dialog {
+    animation: ng-dialog-in 0.22s ease-out;
+}
+.ng-qtable {
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-family: 'KaTeX_Main', 'Times New Roman', serif;
+    font-size: 0.8em;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+.ng-qtable td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+}
+.ng-qtable tr:first-child td {
+    font-weight: 600;
+}
+
+/* ── Chapter bar (sticky) and contents menu ────────────────────────────── */
+.ng-chapter {
+    position: sticky;
+    top: var(--ng-nav);
+    z-index: 40;
+    border-bottom: 0.5px solid var(--ng-sep-strong);
+    background: var(--ng-glass);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.ng-chapter-in {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 760px;
+    height: 48px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.ng-ring {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    transform: rotate(-90deg);
+}
+.ng-ring circle {
+    fill: none;
+    stroke-width: 3;
+}
+.ng-ring .bg {
+    stroke: var(--ng-fill);
+}
+.ng-ring .fg {
+    stroke: var(--ng-blue);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s linear;
+}
+.ng-chapter-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ng-ink);
+}
+.ng-chapter-title > span {
+    display: inline-block;
+    animation: ng-title-in 0.4s var(--ng-ease);
+}
+.ng-chapter-title small {
+    margin-right: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ng-ink-4);
+    font-variant-numeric: tabular-nums;
+}
+.ng-chapter-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ng-fill);
+    color: var(--ng-ink) !important;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.3s var(--ng-spring);
+}
+.ng-chapter-btn:hover {
+    background: rgba(118, 118, 128, 0.18);
+}
+.ng-chapter-btn:active {
+    transform: scale(0.95);
+}
+.ng-chapter-btn svg {
+    width: 14px;
+    height: 14px;
+}
+.ng-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 12px;
+    z-index: 50;
+    width: min(340px, calc(100vw - 24px));
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.08),
+        0 24px 60px -16px rgba(0, 0, 0, 0.3);
+    transform-origin: top right;
+    animation: ng-menu-in 0.32s var(--ng-spring);
+}
+.dark .ng .ng-menu {
+    background: rgba(37, 37, 39, 0.9);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.1),
+        0 24px 60px -16px rgba(0, 0, 0, 0.8);
+}
+.ng-menu ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ng-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    color: var(--ng-ink);
+    font-size: 15px;
+    text-decoration: none;
+}
+.ng-menu a:hover {
+    background: var(--ng-fill-2);
+}
+.ng-menu a small {
+    width: 18px;
+    font-size: 13px;
+    color: var(--ng-ink-4);
+    font-variant-numeric: tabular-nums;
+}
+.ng-menu a span {
+    flex: 1;
+}
+.ng-menu a[aria-current='true'] {
+    color: var(--ng-blue);
+    font-weight: 600;
+}
+.ng-menu a svg {
+    width: 16px;
+    height: 16px;
+    color: var(--ng-blue);
+}
+
+/* ── Article ───────────────────────────────────────────────────────────── */
+.ng-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 36px 20px 72px;
+}
+@media (min-width: 640px) {
+    .ng-body {
+        padding: 52px 20px 96px;
+    }
+}
+/* Wide figures break out of the text column. */
+.ng-wide {
+    width: min(1000px, calc(100vw - 24px));
+    margin-left: calc((100% - min(1000px, 100vw - 24px)) / 2);
+}
+.ng-prose {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ng-ink-2);
+}
+.ng-prose p {
+    margin: 0 0 1em;
+}
+.ng-prose strong {
+    color: var(--ng-ink);
+    font-weight: 600;
+}
+.ng-prose a {
+    color: var(--ng-link);
+    text-decoration: none;
+}
+.ng-prose a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.ng-prose h3 {
+    margin: 36px 0 10px;
+    font-family: var(--ng-fd);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.016em;
+    color: var(--ng-ink);
+}
+.ng-prose code {
+    font-size: 0.9em;
+}
+.ng-lead > .ng-prose > p:first-child {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ng-ink);
+}
+
+/* The short answer: an Apple Intelligence-style gradient edge. */
+.ng-answer {
+    position: relative;
+    margin: 30px 0 28px;
+    padding: 20px 20px 18px;
+    border-radius: 20px;
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+.ng-answer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(120deg, #34c759, #0a84ff 35%, #af52de 65%, #ff9f0a);
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+@media (min-width: 640px) {
+    .ng-answer {
+        padding: 24px 26px 22px;
+    }
+}
+.ng-answer-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ng-ink-3);
+}
+.ng-answer-label svg {
+    width: 16px;
+    height: 16px;
+    color: var(--ng-purple);
+}
+.ng-answer p:last-child {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ng-ink);
+}
+
+/* "In this guide": an iOS grouped list. */
+.ng-group-label {
+    margin: 0 0 8px 16px;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--ng-ink-3);
+}
+.ng-toc {
+    margin: 0 0 8px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+    list-style: none;
+}
+.ng-toc li + li a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 52px;
+    right: 0;
+    height: 0.5px;
+    background: var(--ng-sep-strong);
+}
+.ng-toc a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+    padding: 10px 16px;
+    color: var(--ng-ink);
+    font-size: 15px;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+.ng-toc a:hover {
+    background: var(--ng-fill-2);
+}
+.ng-toc a:active {
+    background: var(--ng-fill);
+}
+.ng-toc a small {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--ng-blue-soft);
+    color: var(--ng-blue);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.ng-toc a span {
+    flex: 1;
+    min-width: 0;
+}
+.ng-toc a svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--ng-ink-4);
+}
+
+/* Sections */
+.ng-section {
+    margin-top: 72px;
+    scroll-margin-top: calc(var(--ng-nav) + 64px);
+}
+.ng-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ng-ink-3);
+}
+.ng-kicker small {
+    display: grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: var(--ng-blue-soft);
+    color: var(--ng-blue);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.ng-h2 {
+    margin: 0 0 16px;
+    font-family: var(--ng-fd);
+    font-size: clamp(1.5rem, 1.25rem + 1vw, 1.875rem);
+    font-weight: 700;
+    line-height: 1.16;
+    letter-spacing: -0.024em;
+    color: var(--ng-ink);
+    text-wrap: balance;
+}
+
+/* Reveal on scroll, only once JS runs (crawlers and no-JS readers see everything). */
+.ng.is-js .ng-reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+        opacity 0.6s ease,
+        transform 0.75s var(--ng-ease);
+}
+.ng.is-js .ng-reveal.is-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* ── Guide HTML: tables ────────────────────────────────────────────────── */
+.ng-table-wrap {
+    margin: 20px 0 14px;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+.ng-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    line-height: 1.45;
+}
+.ng-table caption {
+    padding: 14px 16px 6px;
+    caption-side: top;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ng-ink-3);
+}
+.ng-table th,
+.ng-table td {
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: top;
+}
+.ng-table thead th {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--ng-sep-strong);
+    background: var(--ng-card-2);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ng-ink-3);
+}
+.ng-table tbody tr + tr > * {
+    border-top: 0.5px solid var(--ng-sep);
+}
+.ng-table tbody th {
+    font-weight: 600;
+    color: var(--ng-ink);
+}
+.ng-table td {
+    color: var(--ng-ink-2);
+}
+.ng-table--compare th:first-child {
+    width: 132px;
+}
+.ng-table--pattern td,
+.ng-table--pattern thead th:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.ng-table--pattern tbody th::before {
+    content: '';
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 10px;
+    border-radius: 3px;
+    vertical-align: 0;
+    background: var(--ng-ink-4);
+}
+.ng-table--pattern th[data-subject='physics']::before {
+    background: var(--ng-physics);
+}
+.ng-table--pattern th[data-subject='chemistry']::before {
+    background: var(--ng-chemistry);
+}
+.ng-table--pattern th[data-subject='botany']::before {
+    background: var(--ng-botany);
+}
+.ng-table--pattern th[data-subject='zoology']::before {
+    background: var(--ng-zoology);
+}
+.ng-table--pattern tfoot > tr > * {
+    border-top: 0.5px solid var(--ng-sep-strong);
+    font-weight: 700;
+    color: var(--ng-ink);
+}
+.ng-table--pattern tfoot th {
+    padding-left: 35px;
+}
+.ng-table--check td.is-yes,
+.ng-table--check td.is-part {
+    position: relative;
+    padding-left: 44px;
+    color: var(--ng-ink);
+}
+.ng-table--check td.is-yes::before,
+.ng-table--check td.is-part::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ng-i-check) center / 12px no-repeat, var(--ng-green);
+}
+.ng-table--check td.is-part::before {
+    background: var(--ng-i-bang) center / 14px no-repeat, var(--ng-orange);
+}
+
+/* Phones: each row of the wider tables becomes a small card. */
+@media (max-width: 639px) {
+    .ng-table-wrap:has(.ng-table--compare, .ng-table--rhythm, .ng-table--check) {
+        overflow: visible;
+        background: none;
+        box-shadow: none;
+    }
+    .ng-table--compare,
+    .ng-table--compare tbody,
+    .ng-table--compare tr,
+    .ng-table--compare th,
+    .ng-table--compare td,
+    .ng-table--rhythm,
+    .ng-table--rhythm tbody,
+    .ng-table--rhythm tr,
+    .ng-table--rhythm th,
+    .ng-table--rhythm td,
+    .ng-table--check,
+    .ng-table--check tbody,
+    .ng-table--check tr,
+    .ng-table--check th,
+    .ng-table--check td {
+        display: block;
+    }
+    .ng-table--compare thead,
+    .ng-table--rhythm thead,
+    .ng-table--check thead {
+        display: none;
+    }
+    .ng-table--compare tbody tr,
+    .ng-table--rhythm tbody tr,
+    .ng-table--check tbody tr {
+        margin-bottom: 10px;
+        padding: 14px 16px 10px;
+        border-radius: 16px;
+        background: var(--ng-card);
+        box-shadow: var(--ng-shadow);
+    }
+    .ng-table--compare tbody tr + tr > *,
+    .ng-table--rhythm tbody tr + tr > *,
+    .ng-table--check tbody tr + tr > * {
+        border-top: 0;
+    }
+    .ng-table--compare tbody th,
+    .ng-table--rhythm tbody th,
+    .ng-table--check tbody th {
+        padding: 0 0 6px;
+        font-size: 16px;
+    }
+    .ng-table--compare td,
+    .ng-table--rhythm td,
+    .ng-table--check td {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 10px;
+        padding: 6px 0;
+        font-size: 15px;
+    }
+    .ng-table--compare td::before,
+    .ng-table--rhythm td::before,
+    .ng-table--check td::before {
+        content: attr(data-label);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ng-ink-3);
+        padding-top: 2px;
+    }
+    .ng-table--check td.is-yes,
+    .ng-table--check td.is-part {
+        padding-left: 0;
+    }
+    .ng-table--check td.is-yes::before,
+    .ng-table--check td.is-part::before {
+        position: static;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        background: none;
+        color: var(--ng-green-ink);
+    }
+    .ng-table--check td.is-part::before {
+        background: none;
+        color: var(--ng-orange-ink);
+    }
+}
+
+/* Spec rows under the pattern table */
+.ng-specs {
+    margin: 0 0 24px;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+.ng-specs > div {
+    position: relative;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.ng-specs > div + div::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--ng-sep);
+}
+.ng-specs dt {
+    font-weight: 600;
+    color: var(--ng-ink);
+}
+.ng-specs dd {
+    margin: 0;
+    color: var(--ng-ink-2);
+}
+
+/* Grouped list rows */
+.ng-list,
+.ng-checks,
+.ng-limits {
+    margin: 20px 0 24px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+    list-style: none;
+}
+.ng-list li,
+.ng-checks li,
+.ng-limits li {
+    position: relative;
+    padding: 13px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ng-ink-2);
+}
+.ng-list li + li::before,
+.ng-checks li + li::before,
+.ng-limits li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--ng-sep);
+}
+.ng-list strong,
+.ng-limits strong {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--ng-ink);
+    font-weight: 600;
+}
+.ng-list--num {
+    counter-reset: ng-n;
+}
+.ng-list--num li {
+    counter-increment: ng-n;
+    padding-left: 54px;
+}
+.ng-list--num li + li::before,
+.ng-checks li + li::before,
+.ng-limits li + li::before {
+    left: 54px;
+}
+.ng-list--num li::after {
+    content: counter(ng-n);
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--ng-blue-soft);
+    color: var(--ng-blue);
+    font-size: 12px;
+    font-weight: 700;
+}
+.ng-checks li,
+.ng-limits li {
+    padding-left: 54px;
+}
+.ng-checks li::after,
+.ng-limits li::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ng-i-check) center / 13px no-repeat, var(--ng-green);
+}
+.ng-limits li::after {
+    background: var(--ng-i-bang) center / 15px no-repeat, var(--ng-orange);
+}
+
+/* Timeline */
+.ng-timeline {
+    margin: 20px 0 24px;
+    padding: 6px 0;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+    list-style: none;
+}
+.ng-timeline li {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 4px;
+    padding: 0 16px;
+}
+.ng-timeline time {
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ng-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.ng-timeline span {
+    position: relative;
+    padding: 10px 0 10px 24px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ng-ink-2);
+}
+.ng-timeline span::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 16px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ng-card);
+    box-shadow: inset 0 0 0 2.5px var(--ng-blue);
+}
+.ng-timeline span::after {
+    content: '';
+    position: absolute;
+    left: 4.25px;
+    top: 28px;
+    bottom: -16px;
+    width: 1.5px;
+    background: var(--ng-sep-strong);
+}
+.ng-timeline li:last-child span::after {
+    display: none;
+}
+.ng-timeline li:nth-child(3) span {
+    color: var(--ng-ink);
+}
+.ng-timeline li:nth-child(3) span::before {
+    background: var(--ng-blue);
+}
+@media (max-width: 479px) {
+    .ng-timeline li {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .ng-timeline time {
+        padding: 12px 0 0 24px;
+    }
+    .ng-timeline span {
+        padding-top: 2px;
+    }
+    .ng-timeline span::before {
+        top: -12px;
+    }
+    .ng-timeline span::after {
+        top: 0;
+    }
+}
+
+/* Cards with an app-icon tile */
+.ng-cards {
+    display: grid;
+    gap: 12px;
+    margin: 20px 0 24px;
+}
+@media (min-width: 640px) {
+    .ng-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ng-card:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+}
+.ng-card {
+    padding: 18px 18px 16px;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+.ng-card::before,
+.ng-path::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--ng-icon, none) center / 19px no-repeat, linear-gradient(160deg, var(--c1, #64d2ff), var(--c2, #0071e3));
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+}
+.ng-prose .ng-card h3 {
+    margin: 12px 0 4px;
+    font-size: 16px;
+}
+.ng-card p {
+    margin: 0 !important;
+    font-size: 15px;
+    line-height: 1.55;
+}
+.ng [data-icon='doc'] { --ng-icon: var(--ng-i-doc); }
+.ng [data-icon='sparkles'] { --ng-icon: var(--ng-i-sparkles); }
+.ng [data-icon='language'] { --ng-icon: var(--ng-i-language); }
+.ng [data-icon='target'] { --ng-icon: var(--ng-i-target); }
+.ng [data-icon='chart'] { --ng-icon: var(--ng-i-chart); }
+.ng [data-icon='layers'] { --ng-icon: var(--ng-i-layers); }
+.ng [data-icon='book'] { --ng-icon: var(--ng-i-book); }
+.ng [data-tone='blue'] { --c1: #64d2ff; --c2: #0071e3; }
+.ng [data-tone='purple'] { --c1: #da8fff; --c2: #8e44ad; }
+.ng [data-tone='orange'] { --c1: #ffb340; --c2: #f56300; }
+.ng [data-tone='green'] { --c1: #4cd964; --c2: #1d9a48; }
+.ng [data-tone='indigo'] { --c1: #8e8cff; --c2: #4b49c9; }
+
+/* Steps */
+.ng-steps {
+    counter-reset: ng-s;
+    margin: 20px 0 24px;
+    padding: 0;
+    list-style: none;
+}
+.ng-steps li {
+    counter-increment: ng-s;
+    position: relative;
+    padding: 0 0 18px 46px;
+    font-size: 15.5px;
+    line-height: 1.6;
+}
+.ng-steps li strong {
+    display: block;
+}
+.ng-steps li::before {
+    content: counter(ng-s);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ng-card);
+    box-shadow:
+        inset 0 0 0 1.5px var(--ng-blue),
+        0 1px 2px rgba(0, 0, 0, 0.06);
+    color: var(--ng-blue);
+    font-size: 13px;
+    font-weight: 700;
+}
+.ng-steps li::after {
+    content: '';
+    position: absolute;
+    left: 13.25px;
+    top: 32px;
+    bottom: 4px;
+    width: 1.5px;
+    border-radius: 1px;
+    background: var(--ng-sep-strong);
+}
+.ng-steps li:last-child::after {
+    display: none;
+}
+
+/* Callout */
+.ng-prose .ng-note {
+    position: relative;
+    margin: 22px 0;
+    padding: 15px 18px 15px 52px;
+    border-radius: 16px;
+    background: var(--ng-blue-soft);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ng-ink-2);
+}
+.ng-note::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 15px;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--ng-i-ruler) center / 15px no-repeat, var(--ng-blue);
+}
+
+/* Closing paths */
+.ng-paths {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 22px;
+}
+@media (min-width: 720px) {
+    .ng-paths {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+.ng-prose .ng-path {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--ng-bg);
+    color: var(--ng-ink);
+    text-decoration: none;
+    transition:
+        transform 0.35s var(--ng-spring),
+        background-color 0.2s ease;
+}
+.ng-prose .ng-path:hover {
+    background: var(--ng-fill);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+.ng-path::before {
+    margin-bottom: 8px;
+}
+.ng-path:nth-child(1) { --c1: #64d2ff; --c2: #0071e3; }
+.ng-path:nth-child(2) { --c1: #8e8cff; --c2: #4b49c9; }
+.ng-path:nth-child(3) { --c1: #4cd964; --c2: #1d9a48; }
+.ng-path::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    right: 18px;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid var(--ng-ink-4);
+    border-right: 2px solid var(--ng-ink-4);
+    transform: rotate(45deg);
+}
+.ng-path-who {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ng-ink-3);
+}
+.ng-path-what {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+/* FAQ */
+.ng-faq {
+    margin: 20px 0 0;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+.ng-faq details {
+    position: relative;
+}
+.ng-faq details + details::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--ng-sep);
+}
+.ng-faq summary {
+    position: relative;
+    display: block;
+    padding: 15px 48px 15px 16px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.012em;
+    color: var(--ng-ink);
+    transition: background-color 0.15s ease;
+}
+.ng-faq summary::-webkit-details-marker {
+    display: none;
+}
+.ng-faq summary:hover {
+    background: var(--ng-fill-2);
+}
+.ng-faq summary::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin-top: -6px;
+    border-right: 2px solid var(--ng-ink-4);
+    border-bottom: 2px solid var(--ng-ink-4);
+    transform: rotate(45deg);
+    transition: transform 0.3s var(--ng-ease);
+}
+.ng-faq details[open] summary::after {
+    margin-top: -2px;
+    transform: rotate(225deg);
+}
+.ng-faq details p {
+    margin: 0;
+    padding: 0 16px 16px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ng-ink-2);
+}
+.ng-faq details[open] p {
+    animation: ng-rise 0.35s var(--ng-ease);
+}
+
+/* Closing card */
+.ng-closing {
+    margin: 72px 0 0;
+    padding: 28px 18px 14px;
+    border-radius: 24px;
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+@media (min-width: 640px) {
+    .ng-closing {
+        padding: 34px 30px 20px;
+    }
+}
+
+/* Sources */
+.ng-sources {
+    margin-top: 44px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--ng-sep-strong);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ng-ink-3);
+}
+.ng-sources h2 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ng-ink-2);
+}
+.ng-sources ul {
+    margin: 0 0 12px;
+    padding-left: 18px;
+}
+.ng-sources a {
+    color: var(--ng-ink-3);
+}
+.ng-sources a:hover {
+    color: var(--ng-link);
+}
+
+/* Floating call to action: an iOS 26 glass capsule. */
+.ng-float {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 6px 0 20px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.74);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.1),
+        0 12px 32px -12px rgba(0, 0, 0, 0.3);
+    color: var(--ng-ink) !important;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none !important;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, 150%);
+    transition:
+        transform 0.55s var(--ng-spring),
+        opacity 0.3s ease;
+}
+.dark .ng .ng-float {
+    background: rgba(44, 44, 46, 0.74);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        0 12px 32px -12px rgba(0, 0, 0, 0.8);
+}
+.ng-float.is-on {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+.ng-float i {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ng-blue);
+    color: #fff;
+}
+.ng-float i svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ── Widgets: shared pieces ────────────────────────────────────────────── */
+.ng-widget {
+    margin: 26px 0 30px;
+}
+.ng-widget > figcaption,
+.ng-caption {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ng-ink-3);
+    text-align: center;
+    text-wrap: balance;
+}
+.ng-panel {
+    padding: 18px;
+    border-radius: 22px;
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+}
+@media (min-width: 640px) {
+    .ng-panel {
+        padding: 22px 24px;
+    }
+}
+.ng-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 18px;
+}
+.ng-panel-title {
+    margin: 0;
+    font-family: var(--ng-fd);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--ng-ink);
+}
+.ng-panel-sub {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--ng-ink-3);
+}
+
+/* iOS segmented control */
+.ng-seg {
+    position: relative;
+    display: inline-grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--ng-fill);
+    isolation: isolate;
+}
+.ng-seg::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    z-index: -1;
+    width: calc((100% - 4px) / var(--n, 2));
+    border-radius: 7px;
+    background: var(--ng-card);
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.12),
+        0 3px 1px rgba(0, 0, 0, 0.04),
+        0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    transform: translateX(calc(100% * var(--i, 0)));
+    transition: transform 0.35s var(--ng-ease);
+}
+.dark .ng .ng-seg::before {
+    background: #636366;
+}
+.ng-seg button {
+    min-width: 0;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--ng-ink);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.ng-seg button[aria-pressed='true'] {
+    font-weight: 600;
+}
+
+/* iOS slider */
+.ng-slider {
+    display: grid;
+    gap: 8px;
+}
+.ng-slider-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--ng-ink);
+}
+.ng-slider-top label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+.ng-slider-top label i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--dot, var(--ng-blue));
+}
+.ng-slider-top output {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ng-ink);
+    font-variant-numeric: tabular-nums;
+}
+.ng-slider-top output small {
+    margin-left: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ng-ink-3);
+}
+.ng-range {
+    --p: 50%;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.ng-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--fill, var(--ng-blue)) var(--p), var(--ng-fill) var(--p));
+}
+.ng-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--fill, var(--ng-blue)) var(--p), var(--ng-fill) var(--p));
+}
+.ng-range::-webkit-slider-thumb {
+    width: 26px;
+    height: 26px;
+    margin-top: -11px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+        0 0.5px 4px rgba(0, 0, 0, 0.12),
+        0 6px 13px rgba(0, 0, 0, 0.12),
+        0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    -webkit-appearance: none;
+    appearance: none;
+    transition: transform 0.2s var(--ng-spring);
+}
+.ng-range::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+        0 0.5px 4px rgba(0, 0, 0, 0.12),
+        0 6px 13px rgba(0, 0, 0, 0.12);
+}
+.ng-range:active::-webkit-slider-thumb {
+    transform: scale(1.08);
+}
+.ng-range:focus-visible {
+    outline: none;
+}
+.ng-range:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+        0 0 0 3px var(--ng-blue-soft),
+        0 0 0 1px var(--ng-blue);
+}
+
+/* A browser window around in-page product replicas */
+.ng-window {
+    overflow: hidden;
+    border-radius: 14px;
+    background: #f8fafc;
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 2px 6px rgba(0, 0, 0, 0.05),
+        0 30px 60px -30px rgba(15, 23, 42, 0.35);
+}
+.dark .ng .ng-window {
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.16),
+        0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.ng-window-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 14px;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+    background: #ececee;
+    font-family: var(--ng-f);
+}
+.ng-window-lights {
+    display: flex;
+    gap: 7px;
+}
+.ng-window-lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+.ng-window-lights i:nth-child(2) {
+    background: #febc2e;
+}
+.ng-window-lights i:nth-child(3) {
+    background: #28c840;
+}
+.ng-window-url {
+    position: absolute;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: min(320px, 52%);
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #3c3c43;
+    font-size: 12.5px;
+    transform: translateX(-50%);
+}
+.ng-window-url svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0.6;
+}
+@media (max-width: 520px) {
+    .ng-window-lights {
+        display: none;
+    }
+    .ng-window-url {
+        width: calc(100% - 28px);
+    }
+}
+
+/* ── Widget: playable exam ─────────────────────────────────────────────── */
+.ng-demo {
+    scroll-margin-top: calc(var(--ng-nav) + 60px);
+}
+.ng-demo-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin: 0 0 12px;
+}
+.ng-demo-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ng-demo-chips span {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--ng-fill);
+    color: var(--ng-ink-2);
+    font-size: 12px;
+    font-weight: 600;
+}
+.ng-demo-restart {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 4px;
+    border: 0;
+    background: none;
+    color: var(--ng-link);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.ng-demo-restart svg {
+    width: 15px;
+    height: 15px;
+}
+.ng-demo-screen {
+    position: relative;
+    height: 660px;
+    overflow: hidden;
+    transform: translateZ(0);
+}
+.ng-window--phone .ng-demo-screen {
+    height: clamp(560px, calc(100svh - 150px), 720px);
+}
+/* sonner's default toast, as the exam screen shows it */
+.ng-toast {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(356px, calc(100% - 32px));
+    padding: 14px 16px;
+    border: 1px solid hsl(0 0% 93%);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: hsl(0 0% 9%);
+    font-family: 'Mukta', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    animation: ng-rise 0.35s var(--ng-ease);
+}
+.ng-toast svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+.ng-toast--phone {
+    left: 16px;
+    right: 16px;
+    bottom: 70px;
+    width: auto;
+}
+.ng-review {
+    margin-top: 24px;
+}
+.ng-review-list {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--ng-r);
+    background: var(--ng-card);
+    box-shadow: var(--ng-shadow);
+    list-style: none;
+}
+.ng-review-list li {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 13px 16px;
+}
+.ng-review-list li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 48px;
+    right: 0;
+    height: 0.5px;
+    background: var(--ng-sep);
+}
+.ng-review-list li > svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    color: var(--ng-ink-4);
+}
+.ng-review-list li.is-right > svg {
+    color: var(--ng-green);
+}
+.ng-review-list li.is-wrong > svg {
+    color: var(--ng-red);
+}
+.ng-review-list p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ng-ink-2);
+}
+.ng-review-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin-bottom: 2px !important;
+}
+.ng-review-head b {
+    color: var(--ng-ink);
+    font-weight: 600;
+}
+.ng-review-head span {
+    color: var(--ng-ink-3);
+    font-size: 13px;
+}
+.ng-review-head span:last-child {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Widget: AI processing replay ──────────────────────────────────────── */
+.ng-aix-frame {
+    position: relative;
+    height: 560px;
+    overflow: hidden;
+    /* Makes the real screen's position: fixed parts (the mini status) stay inside the window. */
+    transform: translateZ(0);
+}
+.ng .ng-aix {
+    --nav: 0px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    font-family: 'Mukta', sans-serif;
+    letter-spacing: normal;
+    line-height: 1.5;
+    text-align: left;
+}
+.ng .ng-aix::-webkit-scrollbar {
+    display: none;
+}
+.ng-aix .aix-mini {
+    top: 8px;
+}
+.ng-aix .ng-aix-h {
+    margin: 0;
+    font: 650 20px/1.2 var(--f-display);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ng-aix .ng-aix-h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font: 700 24px/1.1 var(--f-display);
+    letter-spacing: -0.025em;
+    color: var(--ink);
+}
+.ng-aix .ng-qtable {
+    margin: 0.6rem 0 0.2rem;
+}
+
+/* ── Widget: time planner ──────────────────────────────────────────────── */
+.ng-plan {
+    margin: 4px 0 30px;
+}
+.ng-plan-bar {
+    display: flex;
+    gap: 3px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 12px;
+}
+.ng-plan-bar span {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 10px;
+    overflow: hidden;
+    background: var(--c, var(--ng-fill));
+    color: #fff;
+    white-space: nowrap;
+    transition: flex-grow 0.45s var(--ng-ease);
+}
+.ng-plan-bar span b {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+}
+.ng-plan-bar span small {
+    font-size: 12px;
+    opacity: 0.85;
+}
+.ng-plan-bar span.is-review {
+    background: var(--ng-fill);
+    color: var(--ng-ink-2);
+}
+.ng-plan-ticks {
+    position: relative;
+    height: 18px;
+    margin-top: 6px;
+}
+.ng-plan-ticks span {
+    position: absolute;
+    top: 0;
+    font-size: 11px;
+    color: var(--ng-ink-3);
+    font-variant-numeric: tabular-nums;
+    transform: translateX(-50%);
+    transition: left 0.45s var(--ng-ease);
+}
+.ng-plan-ticks span:first-child {
+    transform: none;
+}
+.ng-plan-ticks span.is-end {
+    transform: translateX(-100%);
+}
+.ng-plan-order {
+    margin-bottom: 18px;
+    overflow-x: auto;
+}
+.ng-plan-sliders {
+    display: grid;
+    gap: 16px;
+}
+.ng-plan-sum {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(52, 199, 89, 0.1);
+    font-size: 14px;
+    color: var(--ng-ink-2);
+}
+.ng-plan-sum b {
+    color: var(--ng-green-ink);
+}
+.ng-plan-sum.is-over {
+    background: rgba(255, 59, 48, 0.1);
+}
+.ng-plan-sum.is-over b {
+    color: var(--ng-red-ink);
+}
+
+/* Slider track marker (break-even) */
+.ng-range-wrap {
+    position: relative;
+}
+.ng-range-mark {
+    position: absolute;
+    top: 6px;
+    pointer-events: none;
+}
+.ng-range-mark i {
+    display: block;
+    width: 2px;
+    height: 16px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: var(--ng-ink-3);
+}
+.ng-range-mark small {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    font-size: 11px;
+    color: var(--ng-ink-3);
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+/* ── Widget: score lab ─────────────────────────────────────────────────── */
+.ng-lab {
+    display: grid;
+    gap: 22px;
+}
+@media (min-width: 640px) {
+    .ng-lab {
+        grid-template-columns: 190px minmax(0, 1fr);
+        align-items: start;
+        gap: 28px;
+    }
+}
+.ng-lab-dial {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+}
+.ng-ring-lg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+.ng-ring-lg circle {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+}
+.ng-ring-lg .bg {
+    stroke: var(--ng-fill);
+}
+.ng-ring-lg .fg {
+    stroke: var(--ng-green);
+    transition: stroke-dashoffset 0.45s var(--ng-ease);
+}
+.ng-lab-dial-in {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+}
+.ng-lab-dial-in b {
+    font-family: var(--ng-fd);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ng-ink);
+    font-variant-numeric: tabular-nums;
+}
+.ng-lab-dial-in span {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ng-ink-3);
+}
+.ng-lab-controls {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+}
+.ng-lab-rows {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--ng-card-2);
+    box-shadow: inset 0 0 0 0.5px var(--ng-sep);
+}
+.dark .ng .ng-lab-rows {
+    background: var(--ng-fill-2);
+}
+.ng-lab-rows > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 14px;
+    font-size: 14px;
+}
+.ng-lab-rows > div + div {
+    border-top: 0.5px solid var(--ng-sep);
+}
+.ng-lab-rows dt {
+    color: var(--ng-ink-2);
+}
+.ng-lab-rows dd {
+    margin: 0;
+    color: var(--ng-ink-3);
+    font-variant-numeric: tabular-nums;
+}
+.ng-lab-rows dd b {
+    color: var(--ng-ink);
+    font-weight: 600;
+}
+.ng .is-plus {
+    color: var(--ng-green-ink) !important;
+}
+.ng .is-minus {
+    color: var(--ng-red-ink) !important;
+}
+.ng-lab-note {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ng-ink-3);
+}
+.ng-lab-big {
+    text-align: center;
+}
+.ng-lab-big b {
+    display: block;
+    font-family: var(--ng-fd);
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ng-ink);
+    font-variant-numeric: tabular-nums;
+}
+.ng-lab-big span {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--ng-ink-3);
+}
+.ng-lab-big p {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ng-ink-2);
+}
+.ng-lab-field {
+    display: grid;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ng-ink);
+}
+.ng-lab--guess .ng-slider:last-of-type {
+    padding-bottom: 14px;
+}
+
+.ng-pop {
+    animation: ng-pop 0.35s var(--ng-spring);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes ng-rise {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+@keyframes ng-title-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+@keyframes ng-caption-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+@keyframes ng-menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+}
+@keyframes ng-dialog-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.95);
+    }
+}
+@keyframes ng-pop {
+    0% {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.06);
+        opacity: 1;
+    }
+}
+
+/* ── Reduced motion: everything visible, nothing moves ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .ng *,
+    .ng *::before,
+    .ng *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .ng .ng-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
