@@ -82,6 +82,6 @@ Shared helpers live in `examUtils.ts`; the six questions in `src/guides/neetMini
 2. Deploy the frontend (Cloudflare Pages builds from `main`).
 3. Deploy the backend (live sitemap).
 4. Redeploy the worker: `cd infrastructure/cloudflare-worker && npx wrangler deploy --env production`.
-5. Run `supabase/migrations/20261001130000_analytics_guides_neet.sql` (after the AI test generator guide's `20261001120000_analytics_guide_ai_test_generator.sql`)` in the Supabase SQL editor.
+5. Run `supabase/migrations/20261001130000_analytics_guides_neet.sql` (after the AI test generator guide's `20261001120000_analytics_guide_ai_test_generator.sql`) in the Supabase SQL editor.
 6. Check `https://testoza.com/neet-online-test-software` stays on testoza.com and view-source contains "OMR today, a computer screen tomorrow".
 7. Search Console → URL inspection → Request indexing; Bing Webmaster Tools → submit URL.
