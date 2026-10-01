@@ -26,7 +26,13 @@ export type GuideWidget =
     | 'ai-before-after'
     | 'sypad-playground'
     | 'partial-marks'
-    | 'batch-report';
+    | 'batch-report'
+    // ai-test-generator
+    | 'mode-compare'
+    | 'settings-lab'
+    | 'review-screen'
+    | 'material-picker'
+    | 'time-saved';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

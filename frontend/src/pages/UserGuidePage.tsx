@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
-import { BEST_PLATFORM_META, CBT_META, JEE_META } from '@/guides/meta';
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, JEE_META } from '@/guides/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -574,19 +574,23 @@ export default function UserGuidePage() {
                 return (
                     <div className="space-y-6">
                         <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                            We are building an fully integrated AI panel that will allow test creators to drag and drop PDFs, scanned images, or word files directly inside the platform dashboard to convert them to TestoZa exam schemas dynamically.
+                            The AI test generator turns a PDF or photos (PNG, JPG or WEBP) into a test. Save Word and PowerPoint files as PDF first. You need to be signed in.
                         </p>
+                        <ol className="list-decimal pl-5 space-y-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <li>Open <button type="button" onClick={() => navigate('/generate-with-ai')} className="font-semibold underline underline-offset-2">Generate with AI</button> and choose your file. Add an answer key if you have one.</li>
+                            <li>Pick the language (same as the material, English, Hindi or both), the difficulty and any instructions such as marks or the number of questions.</li>
+                            <li>Choose <strong>Extract Questions</strong> to keep an existing paper exactly, or <strong>Generate New Questions</strong> to write new ones from a chapter or notes.</li>
+                            <li>Watch the questions arrive, then review them. Set any answer marked orange before you save.</li>
+                            <li>Press <strong>Save &amp; continue</strong>, or <strong>Edit</strong> to fine-tune the test in the builder first.</li>
+                        </ol>
 
-                        <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/10">
-                            <Sparkles className="h-12 w-12 text-purple-500 animate-pulse mb-4" />
-                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">Interactive AI Generator</h4>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-2 leading-relaxed">
-                                Our engineering team is currently testing this feature. It is scheduled to release in the next major system update. Stay tuned!
-                            </p>
-                            <span className="mt-5 text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-800">
-                                Release Stage: Private Beta
-                            </span>
-                        </div>
+                        <AlertBlock type="info" title="The full guide">
+                            How Extract and Generate differ, what each setting changes, what the AI can read and how to check its work in two minutes.{' '}
+                            <button type="button" onClick={() => navigate(AI_TEST_GENERATOR_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the AI test generator guide
+                            </button>
+                            .
+                        </AlertBlock>
                     </div>
                 );
 

@@ -353,6 +353,19 @@ A long-form guide for coaching institutes, schools and teachers on computer-base
 
 ---
 
+## Guide: AI test generator (https://testoza.com/ai-test-generator)
+
+A long-form guide for teachers, coaching institutes and students on AI test generators in general and TestoZa's in particular (testoza.com/generate-with-ai).
+
+- **What it is:** software that reads material you already have (PDFs, scanned papers, photos of pages) and writes it into a structured, editable test: question type, options in order, the correct answer, marks, passages and diagrams. Unlike a chatbot it ends with a test that can be timed, marked and shared; unlike a question bank it works from your own material.
+- **Two modes:** Extract keeps an existing paper exactly (wording, every digit, options, diagrams, questions that run across pages, passages with their questions) and takes answers only from the document or an uploaded answer key; a question without one is flagged "No correct answer detected", never solved. Generate writes original questions from a chapter or notes, usually 15 to 25 per run, with distractors based on common misconceptions, an answer key, a title, a description and revision notes; "Generate more" adds further questions.
+- **Inputs and settings:** PDF, PNG, JPG and WEBP, several files at once, plus an optional answer key. Word and PowerPoint files must be saved as PDF first. Language output: same as the material, English, Hindi, or both (bilingual: every question and option in English with the Hindi beneath). Target difficulty for generated questions: Easy, Moderate or Tough (default). Free-text custom instructions (marks, negative marking, counts, topics, sections). High Accuracy (default, page by page in order) or Fast Mode (batches in parallel).
+- **Under the hood:** digital PDFs' text layer is read directly; scanned pages are read by a vision model at 150 to 300 DPI depending on scan quality; diagrams are cropped from the page and attached; solution diagrams are skipped; maths is written as LaTeX and chemistry as mhchem.
+- **Live and review screens:** four stages (Upload, Read pages, Find or Write questions, Final touches), percent, elapsed time, an estimate, questions appearing as they are read, progress in the tab title. Review shows question count, answers missing, types and processing time; filters for Needs answer and Diagrams; search; a jump grid; a Raw switch showing the LaTeX. Save & continue stores a private test (one minute per question to start); Edit opens the full builder.
+- **Limits:** sign-in required; 30 AI runs per account per hour; a run is capped at about ten minutes, so very long books should go in chapters; generated answer keys should be spot-checked; a question saved without an answer gets a placeholder (option A), so missing answers should be set first. The AI generator is included on the free plan.
+
+---
+
 ## Guide: JEE mock test platform (https://testoza.com/jee-mock-test-platform)
 
 A long-form guide for JEE faculty, coaching institutes and JEE aspirants on building JEE Main and JEE Advanced mock tests without learning LaTeX.

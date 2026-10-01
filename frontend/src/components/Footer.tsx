@@ -43,6 +43,7 @@ const LINK_COLUMNS = [
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
             // Long-form guides (src/guides).
+            { label: 'AI test generator guide', to: '/ai-test-generator' },
             { label: 'JEE mock test platform', to: '/jee-mock-test-platform' },
             { label: 'CBT exam software', to: '/cbt-exam-software' },
             { label: 'Best online test platform', to: '/best-online-test-platform' },

@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { BEST_PLATFORM_META, CBT_META, JEE_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, JEE_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -130,6 +130,7 @@ const BlogPostRoute = () => {
 const BestOnlineTestPlatform = safeLazy(() => import("./pages/guides/BestOnlineTestPlatform"));
 const CbtExamSoftware = safeLazy(() => import("./pages/guides/CbtExamSoftware"));
 const JeeMockTestPlatform = safeLazy(() => import("./pages/guides/JeeMockTestPlatform"));
+const AiTestGenerator = safeLazy(() => import("./pages/guides/AiTestGenerator"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -274,6 +275,7 @@ const App = () => (
                     <Route path={BEST_PLATFORM_META.path} element={<BestOnlineTestPlatform />} />
                     <Route path={CBT_META.path} element={<CbtExamSoftware />} />
                     <Route path={JEE_META.path} element={<JeeMockTestPlatform />} />
+                    <Route path={AI_TEST_GENERATOR_META.path} element={<AiTestGenerator />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

@@ -108,8 +108,43 @@ export const JEE_META: GuideMeta = {
     cta: { label: 'Build a JEE mock, free', href: '/generate-with-ai' },
 };
 
+export const AI_TEST_GENERATOR_META: GuideMeta = {
+    slug: 'ai-test-generator',
+    path: '/ai-test-generator',
+    title: 'AI test generator: turn any PDF or photo into a test you can share',
+    seoTitle: 'AI Test Generator: Tests from PDFs & Photos, Free',
+    description:
+        'Free AI test generator for teachers and students. Upload a PDF or photo and get MCQs, numericals, diagrams and an answer key in minutes, in English or Hindi.',
+    dek:
+        'Upload an old question paper and get it back as an online test. Upload a chapter and get new questions written from it. Here is how an AI test generator works, what it gets right, what you still need to check, and how teachers, coaching institutes and students use the one built into TestoZa.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-01T12:00:00+05:30',
+    dateModified: '2026-10-01T12:00:00+05:30',
+    readMinutes: 18,
+    cover: {
+        src: '/guides/ai-test-generator/cover.png',
+        alt: "TestoZa's AI test generator on a phone, generating questions from a physics chapter PDF, beside the words: AI test generator, PDF or photo in, test out",
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'AI test generator',
+        'AI test generator from PDF',
+        'AI question paper generator',
+        'create test from PDF with AI',
+        'AI test maker from images',
+        'AI MCQ generator for teachers',
+        'generate questions from textbook',
+        'Hindi AI test generator',
+        'bilingual question paper generator',
+        'free AI test generator',
+        'TestoZa',
+    ],
+    cta: { label: 'Make a test with AI, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;
