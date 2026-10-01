@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Sparkles, FileText, Upload, Database, ChevronRight, Activity, BookOpen, Layers } from 'lucide-react';
+import { Search, Plus, FileText, Upload, ChevronRight, Activity, BookOpen, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface GlobalSearchModalProps {
@@ -27,10 +27,11 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
     }, [open, onOpenChange]);
 
     const quickActions = [
-        { title: 'Create New Test', subtitle: 'Manual LaTeX & Section Builder', icon: Plus, action: () => navigate('/create-test'), color: 'text-blue-600 bg-blue-50' },
-        { title: 'AI Test Studio', subtitle: 'Generate from PDF, YouTube, or Prompts', icon: Sparkles, action: () => navigate('/generate-with-ai'), color: 'text-purple-600 bg-purple-50' },
-        { title: 'Import PDF Exam', subtitle: 'Extract questions & diagrams from file', icon: Upload, action: () => navigate('/generate-with-ai?tab=pdf'), color: 'text-emerald-600 bg-emerald-50' },
-        { title: 'Study Materials', subtitle: 'Manage notes, syllabus, and resources', icon: BookOpen, action: () => navigate('/materials'), color: 'text-amber-600 bg-amber-50' },
+        { title: 'Upload a question paper', subtitle: 'PDF, Word or photo — AI types it in', icon: Upload, action: () => navigate('/generate-with-ai'), color: 'text-violet-600 bg-violet-50' },
+        { title: 'Type or paste questions', subtitle: 'Build a test with the maths keyboard', icon: Plus, action: () => navigate('/create-test'), color: 'text-sky-600 bg-sky-50' },
+        { title: 'Combine two papers', subtitle: 'Paper I + Paper II with a break', icon: Layers, action: () => navigate('/create-combined-test'), color: 'text-amber-600 bg-amber-50' },
+        { title: 'All results', subtitle: 'Every test your students have taken', icon: Activity, action: () => navigate('/all-submissions'), color: 'text-emerald-600 bg-emerald-50' },
+        { title: 'Class materials', subtitle: 'Notes and links for your batches', icon: BookOpen, action: () => navigate('/materials'), color: 'text-slate-600 bg-slate-100' },
     ];
 
     const filteredTests = userTests.filter(t => t.title?.toLowerCase().includes(query.toLowerCase()));
@@ -50,7 +51,7 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
                     <Input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search tests, actions, AI tools... (Press ESC to exit)"
+                        placeholder="Search your tests"
                         className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-800 placeholder:text-slate-400 text-sm h-9 p-0"
                         autoFocus
                     />
@@ -65,7 +66,7 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
                     {!query && (
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5">
-                                Recommended Actions
+                                Quick actions
                             </p>
                             <div className="space-y-1">
                                 {quickActions.map((action, idx) => {
@@ -97,7 +98,7 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
                     {userTests.length > 0 && (
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5">
-                                {query ? 'Matching Exams & Tests' : 'Your Recent Tests'}
+                                {query ? 'Matching tests' : 'Your recent tests'}
                             </p>
                             {filteredTests.length === 0 ? (
                                 <p className="text-xs text-slate-400 px-3 py-4 text-center">No tests matching "{query}"</p>

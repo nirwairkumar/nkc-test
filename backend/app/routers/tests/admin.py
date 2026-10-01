@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
+from app.core.auth import verify_is_admin
 from app.core.database import get_db
 from supabase import Client
 
@@ -13,11 +14,14 @@ router = APIRouter()
 
 @router.get("/all")
 async def get_all_tests(
+    request: Request,
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
     search_query: Optional[str] = None,
     db: Client = Depends(get_db)
 ):
+    # Lists private tests and their exam links, so admins only.
+    verify_is_admin(request, db)
     try:
         # 1. Calculate Pagination
         start = (page - 1) * limit
@@ -105,7 +109,10 @@ async def get_next_test_id(
 async def admin_update_test(
     test_id: str,
     payload: Dict[str, Any],
+    request: Request,
 ):
+    # Service-role write that skips the owner check, so admins only.
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
         # Update using Service Role Key (bypasses RLS)
@@ -120,8 +127,10 @@ async def admin_update_test(
 
 @router.delete("/admin/{test_id}")
 async def admin_delete_test(
-    test_id: str
+    test_id: str,
+    request: Request,
 ):
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
         # Delete using Service Role Key (bypasses RLS)
@@ -137,7 +146,9 @@ async def admin_delete_test(
 async def admin_clone_test(
     test_id: str,
     payload: dict, # Using dict directly to avoid import issues or schema complexity
+    request: Request,
 ):
+    verify_is_admin(request)
     try:
         target_user_id = payload.get("target_user_id")
         if not target_user_id:
@@ -205,7 +216,9 @@ async def admin_clone_test(
 
 
 @router.get("/admin/conduct-mode-tests")
-async def get_conduct_mode_tests():
+async def get_conduct_mode_tests(request: Request):
+    # Returns every live exam link and creator emails, so admins only.
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
         # 1. Fetch conduct mode tests directly at database level (massive egress saving)

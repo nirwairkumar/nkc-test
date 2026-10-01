@@ -45,6 +45,9 @@ import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 import SplashLoader from '@/components/ui/SplashLoader';
 import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
 import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
+import {
+    DEFAULT_ENVIRONMENT_SETTINGS, buildStartConductPayload, buildStopConductPayload, isProctoringEnabled,
+} from '@/lib/conductExam';
 
 /* Shared control styles — iOS-flavoured, in the landing page's sky palette. */
 const PRIMARY_BTN =
@@ -66,19 +69,6 @@ const SEGMENT =
 const GUIDE_DISMISSED_KEY = 'testoza_mytests_guide_dismissed';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-const isProctoringEnabled = (test: any) => {
-    const s = test?.settings;
-    if (!s) return false;
-    return !!(
-        s.force_fullscreen ||
-        (s.tab_switch_mode && s.tab_switch_mode !== 'off') ||
-        s.disable_copy_paste ||
-        s.disable_actions ||
-        s.block_back_button ||
-        s.disable_exit_button
-    );
-};
 
 export default function UserTestManager() {
     const { user, profile, isAdmin, loading: authLoading } = useAuth();
@@ -563,33 +553,7 @@ export default function UserTestManager() {
         if (!conductExamTest) return;
         setConductExamLoading(true);
         try {
-            // Preserve original slug (only if test was public and had a slug)
-            const originalSlug = conductExamTest.visibility === 'public' && conductExamTest.slug
-                ? conductExamTest.slug
-                : (conductExamTest.settings?.conduct_exam?.original_slug || null);
-
-            const nowIso = new Date().toISOString();
-            const newSettings = {
-                ...(conductExamTest.settings || {}),
-                conduct_exam: {
-                    enabled: true,
-                    conduct_slug: conductSlug,
-                    original_slug: originalSlug,
-                    started_at: nowIso,
-                }
-            };
-
-            // If the test has an expired schedule, clear it when starting a live conduct exam
-            if (newSettings.schedule?.end_time && new Date(newSettings.schedule.end_time) < new Date()) {
-                delete newSettings.schedule;
-            }
-
-            const payload = {
-                visibility: 'unlisted' as const,
-                is_public: false,
-                slug: conductSlug,
-                settings: newSettings,
-            };
+            const payload = buildStartConductPayload(conductExamTest, conductSlug);
 
             // Optimistic update
             mapAllTests(t =>
@@ -616,39 +580,12 @@ export default function UserTestManager() {
         }
     };
 
-    const DEFAULT_ENVIRONMENT_SETTINGS = {
-        attempt_limit: undefined,
-        strict_timer: false,
-        allow_flexible_timer: true,
-        tab_switch_mode: 'off' as const,
-        disable_copy_paste: false,
-        disable_actions: false,
-        force_fullscreen: false,
-        block_back_button: false,
-        disable_exit_button: false,
-        shuffle_questions: false,
-        show_results_immediate: true,
-        schedule: { enabled: false },
-        start_form: { enabled: false, fields: [] },
-    };
-
     // Remove from ACTIVE container → move to Inactive as private (no dialog)
     const handleRemoveFromActive = async (testId: string) => {
         const test = findTest(testId);
         if (!test) return;
 
-        const resetSettings = {
-            ...DEFAULT_ENVIRONMENT_SETTINGS,
-            conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false, ended_at: new Date().toISOString() }
-        };
-
-        const payload: any = {
-            visibility: 'private',
-            is_public: false,
-            class_id: null,
-            slug: `unlisted-${test.custom_id || test.id}`,
-            settings: resetSettings,
-        };
+        const payload: any = buildStopConductPayload(test);
 
         // Optimistic update
         mapAllTests(t => t.id === testId ? { ...t, ...payload } : t);
@@ -753,18 +690,7 @@ export default function UserTestManager() {
         endedActiveExams.forEach(async (test) => {
             autoDeactivatedRef.current.add(test.id);
 
-            const resetSettings = {
-                ...DEFAULT_ENVIRONMENT_SETTINGS,
-                conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false, ended_at: new Date().toISOString() }
-            };
-
-            const payload: any = {
-                visibility: 'private',
-                is_public: false,
-                class_id: null,
-                slug: `unlisted-${test.custom_id || test.id}`,
-                settings: resetSettings,
-            };
+            const payload: any = buildStopConductPayload(test);
 
             // Optimistic update
             mapAllTests(t => t.id === test.id ? { ...t, ...payload } : t);
