@@ -117,6 +117,7 @@ async function generateSitemap() {
             { url: '/jee-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-28T00:00:00.000Z' },
             { url: '/ai-test-generator', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
             { url: '/neet-online-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
+            { url: '/moodle-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

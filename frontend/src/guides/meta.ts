@@ -178,8 +178,44 @@ export const NEET_META: GuideMeta = {
     cta: { label: 'Build a NEET mock, free', href: '/generate-with-ai' },
 };
 
+export const MOODLE_META: GuideMeta = {
+    slug: 'moodle-alternative',
+    path: '/moodle-alternative',
+    title: 'Moodle alternative for online tests and exams: no server, no student logins',
+    seoTitle: 'Moodle Alternative for Online Tests & Exams (2026)',
+    description:
+        'A Moodle alternative for online tests and exams: no server, plugins or student logins. Costs, an honest comparison, and how to switch or run both.',
+    dek:
+        'Moodle is free, mature and runs on more than 147,000 registered sites. It also needs a server, an administrator, an account for every student and a plugin for most new things. If what you mostly do in Moodle is set tests, here is what to keep, what to move, what it costs, and what switching to TestoZa actually involves.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-02T12:00:00+05:30',
+    dateModified: '2026-10-02T12:00:00+05:30',
+    readMinutes: 20,
+    cover: {
+        src: '/guides/moodle-alternative/cover.png',
+        alt: 'A candidate joining a TestoZa exam on a phone with a six-digit code and a roll number, no account needed',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Moodle alternative',
+        'Moodle alternatives',
+        'Moodle quiz alternative',
+        'Moodle alternative for online exams',
+        'free Moodle alternative',
+        'MoodleCloud alternative',
+        'Moodle alternative for schools',
+        'Moodle alternative for coaching institutes',
+        'Moodle alternative India',
+        'Moodle negative marking',
+        'online exam without student login',
+        'TestoZa',
+    ],
+    cta: { label: 'Run your first test, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [MOODLE_META, NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

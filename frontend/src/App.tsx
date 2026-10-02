@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, JEE_META, NEET_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, JEE_META, MOODLE_META, NEET_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -141,6 +141,7 @@ const CbtExamSoftware = safeLazy(() => import("./pages/guides/CbtExamSoftware"))
 const JeeMockTestPlatform = safeLazy(() => import("./pages/guides/JeeMockTestPlatform"));
 const AiTestGenerator = safeLazy(() => import("./pages/guides/AiTestGenerator"));
 const NeetOnlineTestSoftware = safeLazy(() => import("./pages/guides/neet/NeetOnlineTestSoftware"));
+const MoodleAlternative = safeLazy(() => import("./pages/guides/moodle/MoodleAlternative"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -293,6 +294,7 @@ const App = () => (
                     <Route path={JEE_META.path} element={<JeeMockTestPlatform />} />
                     <Route path={AI_TEST_GENERATOR_META.path} element={<AiTestGenerator />} />
                     <Route path={NEET_META.path} element={<NeetOnlineTestSoftware />} />
+                    <Route path={MOODLE_META.path} element={<MoodleAlternative />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />
