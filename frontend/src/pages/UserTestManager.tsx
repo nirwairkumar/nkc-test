@@ -863,9 +863,12 @@ export default function UserTestManager() {
                     <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => openTestEditor(test)}>
                         <Pencil className="mr-2.5 h-4 w-4 text-slate-500" /> Edit questions
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => setConfiguringTest(test)}>
-                        <Settings className="mr-2.5 h-4 w-4 text-slate-500" /> Settings
-                    </DropdownMenuItem>
+                    {/* Live rows already have a Settings button on the card */}
+                    {source === 'inactive' && (
+                        <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => setConfiguringTest(test)}>
+                            <Settings className="mr-2.5 h-4 w-4 text-slate-500" /> Settings
+                        </DropdownMenuItem>
+                    )}
                     {source === 'active' && !test.settings?.conduct_exam?.join_code && (
                         <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleGetJoinCode(test)}>
                             <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Get a join code
@@ -898,17 +901,20 @@ export default function UserTestManager() {
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     {source === 'active' ? (
+                        // No delete while live — stop the exam first.
                         <DropdownMenuItem onClick={() => setStopExamTarget(test)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
                             <Square className="mr-2.5 h-4 w-4" /> Stop exam
                         </DropdownMenuItem>
                     ) : (
-                        <DropdownMenuItem onClick={() => handleRemoveFromInactive(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
-                            <X className="mr-2.5 h-4 w-4" /> Remove from ended list
-                        </DropdownMenuItem>
+                        <>
+                            <DropdownMenuItem onClick={() => handleRemoveFromInactive(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
+                                <X className="mr-2.5 h-4 w-4" /> Remove from ended list
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 font-semibold text-red-700 focus:bg-red-50 focus:text-red-700">
+                                <Trash2 className="mr-2.5 h-4 w-4" /> Delete test
+                            </DropdownMenuItem>
+                        </>
                     )}
-                    <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 font-semibold text-red-700 focus:bg-red-50 focus:text-red-700">
-                        <Trash2 className="mr-2.5 h-4 w-4" /> Delete test
-                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         );
