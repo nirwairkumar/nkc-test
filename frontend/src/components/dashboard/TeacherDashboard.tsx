@@ -11,8 +11,8 @@ import { toggleCreatorMode as apiToggleCreatorMode } from '@/lib/socialApi';
 import { shareTest } from '@/utils/shareUtils';
 import { buildStartConductPayload, buildStopConductPayload } from '@/lib/conductExam';
 import {
-    AttemptRow, Branding, HISTORY_DAYS, RegistrationRow, buildDashboardModel, buildSampleData, fetchActiveRegistrations,
-    fetchAttempts, fetchBranding, isSampleUser,
+    AttemptRow, HISTORY_DAYS, RegistrationRow, buildDashboardModel, buildSampleData, fetchActiveRegistrations,
+    fetchAttempts, isSampleUser,
 } from '@/lib/teacherDashboardApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 import ConductExamDialog from '@/components/ConductExamDialog';
@@ -35,6 +35,9 @@ import StudentsCard from './StudentsCard';
 import BatchesCard from './BatchesCard';
 import GlobalSearchModal from './GlobalSearchModal';
 import NotificationCenter from './NotificationCenter';
+import ExamRoomsCard from './ExamRoomsCard';
+import NewExamSheet from '@/components/exams/NewExamSheet';
+import { ExamSession, examSessionsApi, problemOf } from '@/lib/examSessionsApi';
 import { CARD, PRIMARY_BTN, Skeleton } from './dashboardUi';
 import { dayAndTime, greeting, plural, timeAgo, untilText } from './format';
 
@@ -65,7 +68,6 @@ export default function TeacherDashboard() {
     const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
     const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
     const [openReports, setOpenReports] = useState(0);
-    const [branding, setBranding] = useState<Branding>({ name: null, logo: null });
     const [now, setNow] = useState(() => new Date());
     const [liveUpdatedAt, setLiveUpdatedAt] = useState<Date | null>(null);
 
@@ -78,6 +80,9 @@ export default function TeacherDashboard() {
     const [resultsTarget, setResultsTarget] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const [stopTarget, setStopTarget] = useState<any>(null);
+    // Exam sittings with a join code (null until loaded; stays null if the API is unavailable)
+    const [examSessions, setExamSessions] = useState<ExamSession[] | null>(null);
+    const [newExam, setNewExam] = useState<{ testId?: string } | null>(null);
 
     const [checklistHidden, setChecklistHidden] = useState(() => {
         try {
@@ -128,11 +133,30 @@ export default function TeacherDashboard() {
         setClasses(Array.isArray(data) ? data : []);
     }, [targetUserId]);
 
+    const loadExamSessions = useCallback(async () => {
+        try {
+            setExamSessions(await examSessionsApi.list({ asUser: isImpersonating ? impersonateUserId : null }));
+        } catch {
+            // Older backend without exam sessions: the card simply stays hidden.
+        }
+    }, [isImpersonating, impersonateUserId]);
+
+    useEffect(() => {
+        if (targetUserId) loadExamSessions();
+    }, [targetUserId, loadExamSessions]);
+
+    useEffect(() => {
+        if (!examSessions?.some(s => s.phase === 'live' || s.phase === 'lobby')) return;
+        const id = window.setInterval(() => {
+            if (document.visibilityState === 'visible') loadExamSessions();
+        }, 20_000);
+        return () => window.clearInterval(id);
+    }, [examSessions, loadExamSessions]);
+
     useEffect(() => {
         if (!targetUserId) return;
         loadTests();
         loadClasses();
-        fetchBranding(targetUserId).then(setBranding);
         fetchCreatorReports(targetUserId).then(({ data }) => {
             setOpenReports((data || []).filter(r => r.status === 'open').length);
         });
@@ -254,7 +278,7 @@ export default function TeacherDashboard() {
             return;
         }
         setConductTarget(null);
-        toast.success('Exam is live. Send the link to your students.');
+        toast.success('Exam is live. Send the link to your candidates.');
         window.setTimeout(() => document.getElementById('live-now-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
     };
 
@@ -310,6 +334,16 @@ export default function TeacherDashboard() {
         return true;
     };
 
+    const getJoinCode = async (test: any) => {
+        try {
+            const { join_code, settings } = await examSessionsApi.linkCode(test.id);
+            replaceTest(test.id, { settings });
+            toast.success(`Join code ${join_code.slice(0, 3)} ${join_code.slice(3)} is ready. Candidates enter it at testoza.com/join.`);
+        } catch (err) {
+            toast.error(problemOf(err).message);
+        }
+    };
+
     const hideChecklist = () => {
         setChecklistHidden(true);
         try {
@@ -330,7 +364,7 @@ export default function TeacherDashboard() {
                     </span>
                     <h1 className="text-2xl font-bold tracking-[-0.02em] text-slate-900">Turn on your teacher tools</h1>
                     <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
-                        Make tests, run them as online exams and see every student's marks.
+                        Make tests, run them as online exams and see every candidate's marks.
                     </p>
                     <button
                         type="button"
@@ -354,13 +388,23 @@ export default function TeacherDashboard() {
 
     const fullName = profileForRole?.full_name || (!isImpersonating ? user?.user_metadata?.full_name : '') || '';
     const callName = isInstitution ? fullName : fullName.split(' ')[0];
-    const eyebrow = branding.name || (isInstitution ? 'Institute dashboard' : 'Teacher dashboard');
-    const { live, upcoming, latest, checklist } = model;
+    const eyebrow = isInstitution ? 'Institute dashboard' : 'Teacher dashboard';
+    const { live, upcoming, latest } = model;
+    // A sitting with a join code counts as running an exam, and its submissions as results.
+    const checklist = {
+        ...model.checklist,
+        hasConducted: model.checklist.hasConducted || !!examSessions?.length,
+        hasResult: model.checklist.hasResult || !!examSessions?.some(s => s.counts.submitted > 0),
+    };
     const showChecklist = !isDemo && !checklistHidden && !testsLoading && attemptsState === 'ready'
         && !(checklist.hasTest && checklist.hasConducted && checklist.hasResult);
 
+    const liveSitting = examSessions?.find(s => s.phase === 'live');
     const summary = (() => {
         if (testsLoading) return 'Loading your workspace…';
+        if (liveSitting && live.length === 0) {
+            return <>“<strong className="font-semibold text-slate-900">{liveSitting.test.title}</strong>” is live for {liveSitting.name} — <strong className="font-semibold text-emerald-700">{liveSitting.counts.writing} writing</strong>, {liveSitting.counts.submitted} submitted.</>;
+        }
         if (live.length > 0) {
             const writing = live.reduce((s, l) => s + l.writingNow, 0);
             const submitted = live.reduce((s, l) => s + l.submitted, 0);
@@ -372,7 +416,7 @@ export default function TeacherDashboard() {
             return <>“<strong className="font-semibold text-slate-900">{soon.test.title}</strong>” starts {dayAndTime(soon.startsAt, now)} ({untilText(soon.startsAt, now)}).</>;
         }
         if (latest && now.getTime() - latest.lastAt.getTime() < 7 * 24 * 3600 * 1000) {
-            return <>{plural(latest.count, 'student')} took “<strong className="font-semibold text-slate-900">{latest.test.title}</strong>” — last result {timeAgo(latest.lastAt, now)}.</>;
+            return <>{plural(latest.count, 'candidate')} took “<strong className="font-semibold text-slate-900">{latest.test.title}</strong>” — last result {timeAgo(latest.lastAt, now)}.</>;
         }
         if (!checklist.hasTest) return "Let's get your first online exam running.";
         return 'No exam is running right now.';
@@ -396,7 +440,8 @@ export default function TeacherDashboard() {
                 eyebrow={eyebrow}
                 title={callName ? `${greeting(now)}, ${callName}` : greeting(now)}
                 summary={summary}
-                logoUrl={branding.logo}
+                avatarUrl={profileForRole?.avatar_url || (!isImpersonating ? user?.user_metadata?.avatar_url : null)}
+                displayName={fullName}
                 isInstitution={isInstitution}
                 openReports={openReports}
                 onOpenReports={() => navigate(withUser('/my-tests?tab=reports'))}
@@ -427,11 +472,21 @@ export default function TeacherDashboard() {
                 onSolutions={openSolutions}
                 onShare={shareTest}
                 onStop={setStopTarget}
+                onGetCode={getJoinCode}
             />
+
+            {examSessions && (checklist.hasTest || examSessions.length > 0) && (
+                <ExamRoomsCard
+                    sessions={examSessions}
+                    onOpen={(sid) => navigate(`/exams/${sid}`)}
+                    onNew={() => setNewExam({})}
+                    onAll={() => navigate('/exams')}
+                />
+            )}
 
             {attemptsState === 'error' && (
                 <div className="flex flex-col gap-3 rounded-2xl bg-amber-50 px-4 py-3.5 text-[14px] text-amber-900 ring-1 ring-inset ring-amber-600/20 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> Could not load your students' results, so they are not shown below.</span>
+                    <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> Could not load your candidates' results, so they are not shown below.</span>
                     <button type="button" onClick={loadAttempts} className="inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white px-3.5 text-[13px] font-semibold text-amber-900 ring-1 ring-amber-600/20 hover:bg-amber-100 sm:self-auto cursor-pointer">
                         <RefreshCw className="h-3.5 w-3.5" /> Try again
                     </button>
@@ -468,6 +523,7 @@ export default function TeacherDashboard() {
                         onSolutions={openSolutions}
                         onDelete={setDeleteTarget}
                         onBatchChange={changeBatch}
+                        onSchedule={(test) => setNewExam({ testId: test.id })}
                         onViewAll={() => navigate(withUser('/my-tests'))}
                     />
                 </div>
@@ -482,12 +538,21 @@ export default function TeacherDashboard() {
                             isInstitution={isInstitution}
                             onCreate={createBatch}
                             onAssignTests={() => navigate(withUser('/my-tests'))}
+                            onOpen={(batchId) => navigate(batchId.startsWith('sample-') ? '/batches' : `/batches/${batchId}`)}
                         />
                     )}
                 </aside>
             </div>
 
             <GlobalSearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} userTests={tests} />
+            <NewExamSheet
+                open={!!newExam}
+                onOpenChange={(open) => { if (!open) setNewExam(null); }}
+                ownerId={targetUserId}
+                asUser={isImpersonating ? impersonateUserId : null}
+                presetTestId={newExam?.testId}
+                onCreated={() => loadExamSessions()}
+            />
             <NotificationCenter open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen} />
 
             {conductTarget && (
@@ -530,13 +595,13 @@ export default function TeacherDashboard() {
                         <AlertDialogDescription className="mt-1 line-clamp-2 text-[15px] font-medium text-slate-700">{stopTarget?.title}</AlertDialogDescription>
                     </div>
                     <ul className="mx-6 mt-4 space-y-2.5 rounded-xl bg-slate-50 p-4 text-left text-[13px] leading-snug text-slate-700">
-                        <li className="flex gap-2.5"><LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /><span>The exam link stops working, so no new student can start.</span></li>
+                        <li className="flex gap-2.5"><LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /><span>The exam link stops working, so no new candidate can start.</span></li>
                         <li className="flex gap-2.5">
                             <Users className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                             <span>
                                 {(() => {
                                     const w = live.find(l => l.test.id === stopTarget?.id)?.writingNow || 0;
-                                    return w > 0 ? `${plural(w, 'student is', 'students are')} still writing. Ask them to submit first.` : 'Ask anyone still writing to submit before you stop.';
+                                    return w > 0 ? `${plural(w, 'candidate is', 'candidates are')} still writing. Ask them to submit first.` : 'Ask anyone still writing to submit before you stop.';
                                 })()}
                             </span>
                         </li>
@@ -555,7 +620,7 @@ export default function TeacherDashboard() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete this test?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            "{deleteTarget?.title}" and every student result for it will be deleted. This can't be undone.
+                            "{deleteTarget?.title}" and every candidate result for it will be deleted. This can't be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

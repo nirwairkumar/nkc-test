@@ -22,6 +22,8 @@ import {
     X,
     Calculator,
     Copy,
+    KeyRound,
+    GraduationCap,
 } from 'lucide-react';
 import {
     Tooltip,
@@ -197,6 +199,18 @@ Item 2 & Value B & 200 \\\\
             icon: FileText,
             exact: false,
             matchPaths: ['/my-tests']
+        },
+        {
+            title: 'Exams',
+            path: '/exams',
+            icon: KeyRound,
+            matchPaths: ['/exams']
+        },
+        {
+            title: 'Batches',
+            path: '/batches',
+            icon: GraduationCap,
+            matchPaths: ['/batches']
         },
         {
             title: 'Generate with AI',

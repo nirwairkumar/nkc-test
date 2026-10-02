@@ -4,6 +4,7 @@ from supabase import Client
 from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
 from app.core.auth import verify_auth_token, is_admin_user
+from app.routers.tests.utils import exam_window_still_open, strip_answer_key
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,8 +38,15 @@ async def get_test_result(
 
         is_attempt_owner = result.get("user_id") == requesting_user_id
         is_test_creator = bool(test) and test.get("created_by") == requesting_user_id
-        if not (is_attempt_owner or is_test_creator or is_admin_user(requesting_user_id, db)):
+        is_admin = is_admin_user(requesting_user_id, db)
+        if not (is_attempt_owner or is_test_creator or is_admin):
             raise HTTPException(status_code=404, detail="Result not found")
+
+        # While a scheduled exam is still running, a candidate who already submitted
+        # sees their score but not the answer key.
+        if test and not (is_test_creator or is_admin) and exam_window_still_open(test.get("settings")):
+            test = strip_answer_key(test, False)
+            result = {**result, "tests": test}
         
         # We can perform additional server-side calculations here if needed
         # e.g., Rank calculation (mocked or real)

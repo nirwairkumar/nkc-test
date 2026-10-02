@@ -54,6 +54,15 @@ const AITestImporter = safeLazy(() => import("./pages/AITestImporter"));
 const CategoryPage = safeLazy(() => import("./pages/CategoryPage"));
 const TestList = safeLazy(() => import("./pages/TestList"));
 const TestPage = safeLazy(() => import("./pages/TestPage"));
+// Exam sessions: join codes, live monitor, batches
+const JoinPage = safeLazy(() => import("./pages/join/JoinPage"));
+const ExamsPage = safeLazy(() => import("./pages/exams/ExamsPage"));
+const ExamSessionPage = safeLazy(() => import("./pages/exams/ExamSessionPage"));
+const ExamPresentPage = safeLazy(() => import("./pages/exams/ExamPresentPage"));
+const ReportCardsPage = safeLazy(() => import("./pages/exams/ReportCardsPage"));
+const BatchesPage = safeLazy(() => import("./pages/exams/BatchesPage"));
+const BatchPage = safeLazy(() => import("./pages/exams/BatchPage"));
+const PinSlipsPage = safeLazy(() => import("./pages/exams/PinSlipsPage"));
 const TestIntroPage = safeLazy(() => import("./pages/TestIntroPage"));
 const TestHistory = safeLazy(() => import("./pages/TestHistory"));
 const ResultsLayout = safeLazy(() => import("./components/layout/ResultsLayout"));
@@ -160,6 +169,12 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/** testoza.com/j/482913 — the short link inside the QR code and WhatsApp message. */
+const ShortJoinRedirect = () => {
+  const { code } = useParams<{ code: string }>();
+  return <Navigate to={`/join/${code || ''}`} replace />;
+};
 
 const AIImportRoute = () => {
   const navigate = useNavigate();
@@ -342,6 +357,20 @@ const App = () => (
                       path="/live/:id"
                       element={<TestPage />}
                     />
+
+                    {/* Exam sessions — students join with a 6-digit code (no account) */}
+                    <Route path="/join" element={<JoinPage />} />
+                    <Route path="/join/:code" element={<JoinPage />} />
+                    <Route path="/join/:code/exam" element={<TestPage />} />
+                    <Route path="/j/:code" element={<ShortJoinRedirect />} />
+                    {/* …and teachers run them */}
+                    <Route path="/exams" element={<PrivateRoute><ExamsPage /></PrivateRoute>} />
+                    <Route path="/exams/:id" element={<PrivateRoute><ExamSessionPage /></PrivateRoute>} />
+                    <Route path="/exams/:id/present" element={<PrivateRoute><ExamPresentPage /></PrivateRoute>} />
+                    <Route path="/exams/:id/report-cards" element={<PrivateRoute><ReportCardsPage /></PrivateRoute>} />
+                    <Route path="/batches" element={<PrivateRoute><BatchesPage /></PrivateRoute>} />
+                    <Route path="/batches/:id" element={<PrivateRoute><BatchPage /></PrivateRoute>} />
+                    <Route path="/batches/:id/slips" element={<PrivateRoute><PinSlipsPage /></PrivateRoute>} />
 
                     {/* Combined Session Routes */}
                     <Route path="/create-combined-test" element={<PrivateRoute><CreateCombinedTestPage /></PrivateRoute>} />

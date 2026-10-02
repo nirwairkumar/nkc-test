@@ -1,8 +1,9 @@
 import React from 'react';
 import {
-    AlertTriangle, BarChart3, CalendarClock, Copy, Link as LinkIcon, MoreHorizontal, Pencil, FileText,
+    AlertTriangle, BarChart3, CalendarClock, Copy, KeyRound, Link as LinkIcon, MoreHorizontal, Pencil, FileText,
     Settings, Share2, Square,
 } from 'lucide-react';
+import JoinCodeLine from '@/components/exams/JoinCodeLine';
 import { toast } from 'sonner';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -23,6 +24,8 @@ interface LiveNowSectionProps {
     onSolutions: (test: any) => void;
     onShare: (test: any) => void;
     onStop: (test: any) => void;
+    /** Give this live exam a 6-digit code for testoza.com/join. */
+    onGetCode?: (test: any) => void;
 }
 
 async function copyLink(test: any) {
@@ -33,7 +36,7 @@ async function copyLink(test: any) {
 
 /** Exams running right now and the ones coming up — the first thing a teacher checks on exam day. */
 export default function LiveNowSection({
-    live, upcoming, updatedAt, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop,
+    live, upcoming, updatedAt, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop, onGetCode,
 }: LiveNowSectionProps) {
     if (live.length === 0 && upcoming.length === 0) return null;
 
@@ -61,6 +64,7 @@ export default function LiveNowSection({
                                 onSolutions={onSolutions}
                                 onShare={onShare}
                                 onStop={onStop}
+                                onGetCode={onGetCode}
                             />
                         ))}
                     </div>
@@ -113,9 +117,10 @@ export default function LiveNowSection({
 }
 
 function LiveExamCard({
-    exam, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop,
+    exam, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop, onGetCode,
 }: { exam: LiveExam; now: Date } & Omit<LiveNowSectionProps, 'live' | 'upcoming' | 'updatedAt' | 'now'>) {
     const { test, writingNow, submitted, startedAt, endsAt, proctoringOff } = exam;
+    const joinCode: string | undefined = test.settings?.conduct_exam?.join_code;
     const url = getExamUrl(test);
     const questions = test.total_questions || 0;
 
@@ -140,7 +145,12 @@ function LiveExamCard({
                                 <MoreHorizontal className="h-[18px] w-[18px]" />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5">
+                        <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5">
+                            {onGetCode && !joinCode && (
+                                <DropdownMenuItem className={MENU_ITEM} onClick={() => onGetCode(test)}>
+                                    <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Get a join code
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem className={MENU_ITEM} onClick={() => onShare(test)}>
                                 <Share2 className="mr-2.5 h-4 w-4 text-slate-500" /> Share…
                             </DropdownMenuItem>
@@ -158,7 +168,7 @@ function LiveExamCard({
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
                     <div
                         className="rounded-xl bg-emerald-50/70 px-3.5 py-3 ring-1 ring-inset ring-emerald-600/10"
-                        title="Students whose exam screen checked in during the last 3 minutes"
+                        title="Candidates whose exam screen checked in during the last 3 minutes"
                     >
                         <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{writingNow}</p>
                         <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-emerald-800">
@@ -176,7 +186,7 @@ function LiveExamCard({
                 </div>
 
                 {/* Exam link */}
-                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your students</p>
+                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
                 <div className="flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
                         <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
@@ -202,6 +212,7 @@ function LiveExamCard({
                         <WhatsAppIcon className="h-5 w-5" />
                     </a>
                 </div>
+                {joinCode && <JoinCodeLine code={joinCode} />}
 
                 {/* Actions */}
                 <div className="mt-3 flex flex-wrap items-center gap-2">

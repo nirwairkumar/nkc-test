@@ -101,5 +101,7 @@ export function examWhatsAppUrl(test: any, opts: { startsAt?: Date | null } = {}
         lines.push(`Starts ${opts.startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`);
     }
     lines.push('', `Start here: ${getExamUrl(test)}`);
+    const code = test?.settings?.conduct_exam?.enabled ? test.settings.conduct_exam.join_code : null;
+    if (code) lines.push(`Or open testoza.com/join and enter code *${code.slice(0, 3)} ${code.slice(3)}*`);
     return `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
 }

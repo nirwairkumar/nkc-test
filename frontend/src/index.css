@@ -877,3 +877,19 @@
   background: #1e293b;
   color: #cbd5e1;
 }
+/* ── Exam sessions (/join digit boxes) ───────────────────────────────────── */
+@keyframes tz-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes tz-caret {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+@keyframes tz-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.18); opacity: 0.18; }
+}

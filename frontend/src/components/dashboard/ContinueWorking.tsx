@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    BarChart3, Check, FileText, GraduationCap, MoreHorizontal, Pencil, Radio, Settings, Share2, Trash2, FilePlus2,
+    BarChart3, Check, FileText, GraduationCap, KeyRound, MoreHorizontal, Pencil, Radio, Settings, Share2, Trash2, FilePlus2,
 } from 'lucide-react';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub,
@@ -24,6 +24,8 @@ interface ContinueWorkingProps {
     onSolutions: (test: any) => void;
     onDelete: (test: any) => void;
     onBatchChange: (test: any, classId: string | null) => void;
+    /** Give this paper to a batch with a join code (an exam session). */
+    onSchedule?: (test: any) => void;
     onViewAll: () => void;
 }
 
@@ -34,7 +36,7 @@ const statusOf = (t: any): 'public' | 'private' | 'ended' => {
 
 /** The newest tests that aren't live: pick up a draft, or start it as an exam. */
 export default function ContinueWorking({
-    tests, loading, classes, now, onEdit, onConduct, onSettings, onResults, onShare, onSolutions, onDelete, onBatchChange, onViewAll,
+    tests, loading, classes, now, onEdit, onConduct, onSettings, onResults, onShare, onSolutions, onDelete, onBatchChange, onSchedule, onViewAll,
 }: ContinueWorkingProps) {
     return (
         <section aria-labelledby="continue-heading">
@@ -123,7 +125,12 @@ export default function ContinueWorking({
                                                 <MoreHorizontal className="h-[18px] w-[18px]" />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5">
+                                        <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5">
+                                            {onSchedule && questions > 0 && (
+                                                <DropdownMenuItem className={MENU_ITEM} onClick={() => onSchedule(test)}>
+                                                    <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Give with a join code
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem className={MENU_ITEM} onClick={() => onEdit(test)}>
                                                 <Pencil className="mr-2.5 h-4 w-4 text-slate-500" /> Edit questions
                                             </DropdownMenuItem>

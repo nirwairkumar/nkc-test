@@ -97,7 +97,13 @@ export default function Layout() {
         location.pathname.startsWith('/test-intro/') ||
         location.pathname.startsWith('/live/') ||
         location.pathname.startsWith('/test-submitted') ||
-        location.pathname.startsWith('/combined-');
+        location.pathname.startsWith('/combined-') ||
+        // Exam sessions: the student join flow, the classroom projector screen and print views
+        location.pathname === '/join' ||
+        location.pathname.startsWith('/join/') ||
+        location.pathname.startsWith('/j/') ||
+        /^\/exams\/[^/]+\/(present|report-cards)$/.test(location.pathname) ||
+        /^\/batches\/[^/]+\/slips$/.test(location.pathname);
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 

@@ -45,11 +45,6 @@ export interface RegistrationRow {
     last_active_at: string | null;
 }
 
-export interface Branding {
-    name: string | null;
-    logo: string | null;
-}
-
 const ATTEMPT_COLUMNS =
     'id, user_id, test_id, score, created_at, violation_count, sf:metadata->startFormData, stats:metadata->stats, conduct:metadata->conduct_exam';
 const ID_CHUNK = 80;
@@ -104,23 +99,6 @@ export async function fetchActiveRegistrations(testIds: string[]): Promise<{ dat
     }
 }
 
-/** Institute name + logo from the creator's latest branded test (set in the test builder). */
-export async function fetchBranding(creatorId: string): Promise<Branding> {
-    try {
-        const { data } = await (supabase as any)
-            .from('tests')
-            .select('institution_name, institution_logo')
-            .eq('created_by', creatorId)
-            .not('institution_name', 'is', null)
-            .neq('institution_name', '')
-            .order('created_at', { ascending: false })
-            .limit(1);
-        const row = data?.[0];
-        return { name: row?.institution_name || null, logo: row?.institution_logo || null };
-    } catch {
-        return { name: null, logo: null };
-    }
-}
 
 /* ── Students: who typed what ────────────────────────────────────────────── */
 
@@ -291,7 +269,7 @@ function scoreAttempt(row: AttemptRow, test: any): ScoredAttempt {
         pct: maxMarks > 0 ? (score / maxMarks) * 100 : null,
         name,
         roll,
-        displayName: name || (roll ? `Roll no. ${roll}` : 'Unnamed student'),
+        displayName: name || (roll ? `Roll no. ${roll}` : 'Unnamed candidate'),
         studentKey,
         wrong: Number(row.stats?.wrongCount) || 0,
         unattempted: Number(row.stats?.unattemptedCount) || 0,
@@ -498,7 +476,7 @@ const fmtScore = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).
 export function rankListText(summary: TestResultSummary): string {
     const lines = [`📊 *${summary.test.title}* — Results`];
     const avg = summary.avgPct !== null ? ` · Average ${Math.round(summary.avgPct)}%` : '';
-    lines.push(`${summary.count} student${summary.count === 1 ? '' : 's'}${avg}`, '');
+    lines.push(`${summary.count} candidate${summary.count === 1 ? '' : 's'}${avg}`, '');
     const medals = ['🥇', '🥈', '🥉'];
     let rank = 0;
     let prevKey = '';

@@ -8,7 +8,9 @@ interface DashboardHeaderProps {
     eyebrow: string;
     title: string;
     summary: React.ReactNode;
-    logoUrl?: string | null;
+    /** The account's own profile photo; initials are shown when there is none. */
+    avatarUrl?: string | null;
+    displayName: string;
     isInstitution: boolean;
     openReports: number;
     onOpenReports: () => void;
@@ -22,7 +24,8 @@ export default function DashboardHeader({
     eyebrow,
     title,
     summary,
-    logoUrl,
+    avatarUrl,
+    displayName,
     isInstitution,
     openReports,
     onOpenReports,
@@ -31,21 +34,26 @@ export default function DashboardHeader({
     onCreate,
 }: DashboardHeaderProps) {
     const { unreadCount } = useNotifications();
+    const [photoFailed, setPhotoFailed] = React.useState(false);
+    const words = displayName.trim().split(/\s+/).filter(Boolean);
+    const initials = words.length ? (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() : '';
 
     return (
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3.5">
-                {logoUrl ? (
+                {avatarUrl && !photoFailed ? (
                     <img
-                        src={logoUrl}
+                        src={avatarUrl}
                         alt=""
-                        className="mt-1 hidden h-12 w-12 shrink-0 rounded-[14px] bg-white object-contain p-1 ring-1 ring-slate-900/[0.08] sm:block"
+                        referrerPolicy="no-referrer"
+                        onError={() => setPhotoFailed(true)}
+                        className="mt-1 hidden h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm sm:block"
                     />
-                ) : isInstitution ? (
-                    <span className="mt-1 hidden h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-700 ring-1 ring-inset ring-sky-500/20 sm:flex">
-                        <Building2 className="h-6 w-6" />
+                ) : (
+                    <span className="mt-1 hidden h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-[17px] font-semibold text-white shadow-sm sm:flex">
+                        {initials || (isInstitution ? <Building2 className="h-6 w-6" /> : null)}
                     </span>
-                ) : null}
+                )}
                 <div className="min-w-0">
                     <p className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">{eyebrow}</p>
                     <h1 className="mt-1.5 text-[28px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 sm:text-[34px]">
@@ -59,7 +67,7 @@ export default function DashboardHeader({
                             className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-full bg-red-50 px-3 text-[13px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/15 transition-colors hover:bg-red-100 cursor-pointer"
                         >
                             <Inbox className="h-3.5 w-3.5" />
-                            {plural(openReports, 'question')} flagged by students
+                            {plural(openReports, 'question')} flagged by candidates
                         </button>
                     )}
                 </div>

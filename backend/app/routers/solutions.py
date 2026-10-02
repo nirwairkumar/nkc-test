@@ -3,6 +3,7 @@ from app.core.database import get_db
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
+from app.routers.tests.utils import exam_window_still_open
 import logging
 
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ async def get_test_solutions(
     from app.core.auth import get_optional_user_id, is_admin_user
 
     try:
-        test_resp = db.table("tests").select("id, created_by, solutions").eq("id", test_id).execute()
+        test_resp = db.table("tests").select("id, created_by, solutions, settings").eq("id", test_id).execute()
         
         if not test_resp.data:
             raise HTTPException(status_code=404, detail="Test not found")
@@ -88,7 +89,7 @@ async def get_test_solutions(
         if requesting_user_id:
             if test_row.get("created_by") == requesting_user_id or is_admin_user(requesting_user_id, db):
                 allowed = True
-            else:
+            elif not exam_window_still_open(test_row.get("settings")):
                 attempt = db.table("user_tests").select("id")                    .eq("user_id", requesting_user_id).eq("test_id", test_id).limit(1).execute()
                 allowed = bool(attempt.data)
         if not allowed:

@@ -257,6 +257,12 @@ app.include_router(combined_sessions.router, prefix="/api/combined-sessions", ta
 from app.routers import email_broadcast
 app.include_router(email_broadcast.router, prefix="/api/email-broadcast", tags=["Email Broadcast"])
 
+# Exam sessions: join codes (/join), live monitor, batch rosters and PINs
+from app.routers import exam_sessions, join, batches
+app.include_router(exam_sessions.router, prefix="/api/exam-sessions", tags=["Exam Sessions"])
+app.include_router(join.router, prefix="/api/join", tags=["Join"])
+app.include_router(batches.router, prefix="/api/batches", tags=["Batches"])
+
 from app.routers import sitemap
 app.include_router(sitemap.router, prefix="/api", tags=["Sitemap"])
 app.include_router(sitemap.router, prefix="", tags=["Sitemap"])

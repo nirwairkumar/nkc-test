@@ -314,3 +314,76 @@ def score_attempt(
         "totalQuestions": len(questions),
         "maxMarks": calculate_test_max_marks(test).get("total_max_marks", 0),
     }
+
+
+def breakdown_attempt(
+    test: Dict[str, Any], answers: Optional[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Per-section and per-topic marks for one submission, for report cards.
+
+    Uses exactly the same marking as score_attempt (same soft attempt control, same
+    per-question marks), so the section totals add up to the attempt's score.
+    Returns {"sections": [...], "topics": [...]}; topics only for questions with a
+    `topic`, sections only for section-mode tests.
+    """
+    from app.utils.attempt_control import calculate_test_max_marks
+
+    answers = answers or {}
+    questions = _flatten_questions(test)
+    bounds = _section_bounds(test)
+    section_mode = bool(test.get("enable_section_mode") and test.get("sections"))
+    final_answers = _apply_soft_attempt_control(test, answers)
+    by_str_key = {str(k): v for k, v in final_answers.items()}
+    section_max = calculate_test_max_marks(test).get("section_max_marks", {}) or {}
+
+    def blank(name: str, max_marks: float = 0.0) -> Dict[str, Any]:
+        return {"name": name, "score": 0.0, "max": max_marks, "correct": 0, "wrong": 0, "unattempted": 0, "total": 0}
+
+    sections: List[Dict[str, Any]] = []
+    if section_mode:
+        for _, _, section in bounds:
+            sections.append(blank(
+                section.get("name") or section.get("title") or "Section",
+                float(section_max.get(section.get("id"), 0) or 0),
+            ))
+    topics: Dict[str, Dict[str, Any]] = {}
+
+    for index, question in enumerate(questions):
+        section_row = None
+        if section_mode:
+            for pos, (start, end, _) in enumerate(bounds):
+                if start <= index < end:
+                    section_row = sections[pos]
+                    break
+        topic = str(question.get("topic") or "").strip()
+        topic_row = None
+        if topic:
+            topic_row = topics.setdefault(topic.lower(), blank(topic))
+
+        marks, negative = _marks_for_question(test, question, index, bounds, section_mode)
+        rows = [r for r in (section_row, topic_row) if r is not None]
+        for row in rows:
+            row["total"] += 1
+        if topic_row is not None:
+            topic_row["max"] += marks
+
+        user_answer = by_str_key.get(str(question.get("id")))
+        if _is_blank(user_answer):
+            for row in rows:
+                row["unattempted"] += 1
+            continue
+
+        delta, outcome = score_question(question, user_answer, marks, negative)
+        for row in rows:
+            row["score"] += delta
+            if outcome == "correct":
+                row["correct"] += 1
+            else:
+                row["wrong"] += 1
+
+    for row in sections + list(topics.values()):
+        row["score"] = round(row["score"], 2)
+        row["max"] = round(row["max"], 2)
+
+    return {"sections": sections, "topics": list(topics.values())}

@@ -1,6 +1,6 @@
 # Live Exam Join Code & What Educators Need
 
-**Status:** Proposal. Nothing in this file is built yet. Read it, then decide.
+**Status:** Built on 2 October 2026 (Phases A–D, the answer-key quick fix and the "Student" onboarding option), using the recommendations in 2.10. Not deployed yet. What was built, and the rollout order: [documentation/2026-10-02-live-exam-sessions.md](../documentation/2026-10-02-live-exam-sessions.md).
 **Date:** 24 September 2026
 **Covers:**
 - **Part 2**: your idea of a test-ID + password page at `testoza.com/live`

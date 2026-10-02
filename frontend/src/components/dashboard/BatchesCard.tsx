@@ -13,10 +13,12 @@ interface BatchesCardProps {
     isInstitution: boolean;
     onCreate: (name: string) => Promise<boolean>;
     onAssignTests: () => void;
+    /** Open a batch's student list and PINs. */
+    onOpen?: (batchId: string) => void;
 }
 
 /** One row per batch (a "class" in the data): how many tests it has and how it is scoring. */
-export default function BatchesCard({ batches, isInstitution, onCreate, onAssignTests }: BatchesCardProps) {
+export default function BatchesCard({ batches, isInstitution, onCreate, onAssignTests, onOpen }: BatchesCardProps) {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [saving, setSaving] = useState(false);
@@ -60,7 +62,11 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                 <>
                     <ul className="mt-2 divide-y divide-slate-100">
                         {batches.map(b => (
-                            <li key={b.id} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
+                            <li
+                                key={b.id}
+                                onClick={onOpen ? () => onOpen(b.id) : undefined}
+                                className={`flex items-center gap-3 px-4 py-2.5 sm:px-5 ${onOpen ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                            >
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-500/15">
                                     <GraduationCap className="h-4 w-4" />
                                 </span>
@@ -68,7 +74,7 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                                     <p className="truncate text-[14px] font-medium text-slate-900" title={b.name}>{b.name}</p>
                                     <p className="text-[12px] text-slate-500">
                                         {plural(b.tests, 'test')}
-                                        {b.students > 0 && ` · ${plural(b.students, 'student')}`}
+                                        {b.students > 0 && ` · ${plural(b.students, 'candidate')}`}
                                     </p>
                                 </div>
                                 <div className="shrink-0 text-right">
@@ -93,7 +99,7 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                         <DialogHeader>
                             <DialogTitle>New batch</DialogTitle>
                             <DialogDescription>
-                                Give it the name your students know, like "Class 10 – B" or "NEET 2027 Evening".
+                                Give it the name your candidates know, like "Class 10 – B" or "NEET 2027 Evening".
                             </DialogDescription>
                         </DialogHeader>
                         <Input

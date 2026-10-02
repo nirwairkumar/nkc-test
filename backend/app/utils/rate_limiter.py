@@ -288,6 +288,16 @@ upload_per_user = RateLimiter(requests=40, window=3600, name="upload_user")
 support_per_ip = RateLimiter(requests=10, window=3600, name="support_ip")
 password_update_per_user = RateLimiter(requests=5, window=3600, name="pwd_update")
 
+# ── Exam sessions (/join) ─────────────────────────────────────────
+# A 6-digit code is a 1-in-a-million guess; these keep guessing impractical while a
+# whole classroom behind one school IP can still join at once.
+join_lookup_per_ip = RateLimiter(requests=60, window=60, name="join_lookup")
+join_enter_per_ip = RateLimiter(requests=120, window=300, name="join_enter")
+# 4-digit PIN: at most 8 tries per student per 10 minutes.
+join_pin_per_student = RateLimiter(requests=8, window=600, name="join_pin")
+# Heartbeats arrive every ~20 s per student; this only stops runaway clients.
+join_heartbeat_per_token = RateLimiter(requests=30, window=60, name="join_heartbeat")
+
 
 # ══════════════════════════════════════════════════════════════════
 #  DEPENDENCIES (used in FastAPI Depends())

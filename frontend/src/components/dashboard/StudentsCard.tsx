@@ -20,10 +20,10 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
         <section aria-labelledby="students-heading" className={`${CARD} overflow-hidden`}>
             <div className="px-4 pt-4 sm:px-5">
                 <div className="flex items-baseline justify-between gap-3">
-                    <h2 id="students-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Students to watch</h2>
-                    <span className="text-[12px] text-slate-500">{plural(total, 'student')} · 60 days</span>
+                    <h2 id="students-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Candidates to watch</h2>
+                    <span className="text-[12px] text-slate-500">{plural(total, 'candidate')} · 60 days</span>
                 </div>
-                <div role="tablist" aria-label="Student groups" className="mt-3 grid grid-cols-2 rounded-[10px] bg-slate-200/60 p-0.5">
+                <div role="tablist" aria-label="Candidate groups" className="mt-3 grid grid-cols-2 rounded-[10px] bg-slate-200/60 p-0.5">
                     {([['help', `Needs help (${needsHelp.length})`], ['top', 'Doing well']] as const).map(([key, label]) => (
                         <button
                             key={key}
@@ -41,7 +41,7 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
 
             {rows.length === 0 ? (
                 <p className="px-4 py-5 text-[13px] text-slate-600 sm:px-5">
-                    {tab === 'help' ? `No student is averaging below ${WEAK_PCT}%.` : `No student is averaging ${WEAK_PCT}% or more yet.`}
+                    {tab === 'help' ? `No candidate is averaging below ${WEAK_PCT}%.` : `No candidate is averaging ${WEAK_PCT}% or more yet.`}
                 </p>
             ) : (
                 <ul className="mt-2 divide-y divide-slate-100">
@@ -65,7 +65,7 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
                 </ul>
             )}
             <p className="border-t border-slate-100 px-4 py-2.5 text-[12px] leading-snug text-slate-500 sm:px-5">
-                Average score per student. Students are matched by the roll number or name they typed.
+                Average score per candidate. Candidates are matched by the roll number or name they typed.
             </p>
         </section>
     );

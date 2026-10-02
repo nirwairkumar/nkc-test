@@ -39,6 +39,23 @@ def compute_test_status(settings: Optional[Dict[str, Any]]) -> str:
                 
     return "active"
 
+def exam_window_still_open(settings: Optional[Dict[str, Any]]) -> bool:
+    """
+    True while a scheduled exam's end time is still ahead. Answer keys and solutions
+    stay hidden from candidates until then, even for those who already submitted.
+    """
+    schedule = (settings or {}).get("schedule") or {}
+    end_str = schedule.get("end_time")
+    if not schedule.get("enabled") or not end_str:
+        return False
+    try:
+        end_dt = datetime.fromisoformat(str(end_str).replace("Z", "+00:00"))
+        if end_dt.tzinfo is None:
+            end_dt = end_dt.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) < end_dt
+    except Exception:
+        return False
+
 def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
     """
     Enriches test objects with creator information and assigned categories.

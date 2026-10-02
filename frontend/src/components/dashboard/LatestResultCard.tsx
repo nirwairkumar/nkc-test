@@ -42,7 +42,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
                             {test.title}
                         </h2>
                         <p className="mt-0.5 text-[13px] text-slate-600">
-                            {plural(count, 'student')} submitted · last one {dayAndTime(summary.lastAt, now)}
+                            {plural(count, 'candidate')} submitted · last one {dayAndTime(summary.lastAt, now)}
                         </p>
                     </div>
                 </div>
@@ -64,7 +64,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
                                     key={b.key}
                                     className="h-full first:rounded-l-full last:rounded-r-full"
                                     style={{ width: `${(bands[b.key] / banded) * 100}%`, backgroundColor: b.color }}
-                                    title={`${b.short} (${b.label}): ${plural(bands[b.key], 'student')}`}
+                                    title={`${b.short} (${b.label}): ${plural(bands[b.key], 'candidate')}`}
                                 />
                             ))}
                         </div>
@@ -96,7 +96,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
                         <TriangleAlert className="h-4 w-4 text-rose-500" /> Needs help <span className="font-normal text-slate-500">(below {WEAK_PCT}%)</span>
                     </h3>
                     {weak.length === 0 ? (
-                        <p className="mt-2 text-[13px] text-slate-600">Nobody. Every student scored {WEAK_PCT}% or more.</p>
+                        <p className="mt-2 text-[13px] text-slate-600">Nobody. Every candidate scored {WEAK_PCT}% or more.</p>
                     ) : (
                         <ul className="mt-2 space-y-1.5">
                             {weak.slice(0, 4).map(a => (

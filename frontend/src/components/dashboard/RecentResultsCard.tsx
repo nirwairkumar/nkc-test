@@ -35,7 +35,7 @@ export default function RecentResultsCard({ summaries, now, onOpen, onSeeAll }: 
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-[15px] font-semibold text-slate-900" title={s.test.title}>{s.test.title}</p>
                                 <p className="mt-0.5 text-[13px] text-slate-600">
-                                    {plural(s.count, 'student')}
+                                    {plural(s.count, 'candidate')}
                                     {s.weak.length > 0 && <> · <span className="text-rose-700">{s.weak.length} below {WEAK_PCT}%</span></>}
                                     {' · '}{timeAgo(s.lastAt, now)}
                                 </p>

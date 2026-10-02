@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Loader2, Pencil, Plus, Radio, Settings, BarChart3, Link as LinkIcon, X, GraduationCap, Search, Inbox,
     CheckCircle, AlertTriangle, Copy, Share2, Globe, Lock, Info, Trash2, MoreHorizontal, Check, FileText,
-    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown,
+    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown, KeyRound,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
@@ -48,6 +48,8 @@ import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
 import {
     DEFAULT_ENVIRONMENT_SETTINGS, buildStartConductPayload, buildStopConductPayload, isProctoringEnabled,
 } from '@/lib/conductExam';
+import { examSessionsApi, problemOf } from '@/lib/examSessionsApi';
+import JoinCodeLine from '@/components/exams/JoinCodeLine';
 
 /* Shared control styles — iOS-flavoured, in the landing page's sky palette. */
 const PRIMARY_BTN =
@@ -522,6 +524,17 @@ export default function UserTestManager() {
         shareTest(test);
     };
 
+    // A second way into a live exam: testoza.com/join + a 6-digit code (same link, same results).
+    const handleGetJoinCode = async (test: any) => {
+        try {
+            const { join_code, settings } = await examSessionsApi.linkCode(test.id);
+            mapAllTests(t => (t.id === test.id ? { ...t, settings } : t));
+            toast.success(`Join code ${join_code.slice(0, 3)} ${join_code.slice(3)} is ready. Candidates enter it at testoza.com/join.`);
+        } catch (err) {
+            toast.error(problemOf(err).message);
+        }
+    };
+
     const handleUploadSolutions = (test: any) => {
         if (isAdmin && impersonateUserId) {
             navigate(`/solutions-editor/${test.id}?userId=${impersonateUserId}`);
@@ -853,6 +866,11 @@ export default function UserTestManager() {
                     <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => setConfiguringTest(test)}>
                         <Settings className="mr-2.5 h-4 w-4 text-slate-500" /> Settings
                     </DropdownMenuItem>
+                    {source === 'active' && !test.settings?.conduct_exam?.join_code && (
+                        <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleGetJoinCode(test)}>
+                            <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Get a join code
+                        </DropdownMenuItem>
+                    )}
                     {source === 'active' && (
                         <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleShare(test)}>
                             <LinkIcon className="mr-2.5 h-4 w-4 text-slate-500" /> Share link
@@ -1014,7 +1032,7 @@ export default function UserTestManager() {
                                                 </div>
 
                                                 {/* Exam link */}
-                                                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your students</p>
+                                                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
                                                 <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
                                                     <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
                                                     <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={examUrl}>
@@ -1042,6 +1060,9 @@ export default function UserTestManager() {
                                                         <Share2 className="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
+                                                {test.settings?.conduct_exam?.join_code && (
+                                                    <JoinCodeLine code={test.settings.conduct_exam.join_code} />
+                                                )}
 
                                                 {/* Actions */}
                                                 <div className="mt-3 flex flex-wrap items-center gap-2">

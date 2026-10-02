@@ -30,7 +30,7 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
         { title: 'Upload a question paper', subtitle: 'PDF, Word or photo — AI types it in', icon: Upload, action: () => navigate('/generate-with-ai'), color: 'text-violet-600 bg-violet-50' },
         { title: 'Type or paste questions', subtitle: 'Build a test with the maths keyboard', icon: Plus, action: () => navigate('/create-test'), color: 'text-sky-600 bg-sky-50' },
         { title: 'Combine two papers', subtitle: 'Paper I + Paper II with a break', icon: Layers, action: () => navigate('/create-combined-test'), color: 'text-amber-600 bg-amber-50' },
-        { title: 'All results', subtitle: 'Every test your students have taken', icon: Activity, action: () => navigate('/all-submissions'), color: 'text-emerald-600 bg-emerald-50' },
+        { title: 'All results', subtitle: 'Every test your candidates have taken', icon: Activity, action: () => navigate('/all-submissions'), color: 'text-emerald-600 bg-emerald-50' },
         { title: 'Class materials', subtitle: 'Notes and links for your batches', icon: BookOpen, action: () => navigate('/materials'), color: 'text-slate-600 bg-slate-100' },
     ];
 

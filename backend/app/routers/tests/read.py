@@ -4,7 +4,7 @@ from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
-from app.routers.tests.utils import enrich_tests, compute_test_status, strip_answer_key
+from app.routers.tests.utils import enrich_tests, compute_test_status, strip_answer_key, exam_window_still_open
 from app.utils.cache_headers import set_public_cache, set_no_cache, set_private_cache
 import uuid
 from cachetools import TTLCache
@@ -257,6 +257,10 @@ def _may_see_answers(test: Optional[Dict[str, Any]], user_id: Optional[str], is_
         return False
     if test.get("created_by") == user_id:
         return True
+    # A scheduled exam keeps its key until the window closes, so a student who submits
+    # early can't pass answers to classmates who are still writing.
+    if exam_window_still_open(test.get("settings")):
+        return False
     try:
         attempt = db.table("user_tests").select("id")            .eq("user_id", user_id).eq("test_id", test.get("id")).limit(1).execute()
         return bool(attempt.data)

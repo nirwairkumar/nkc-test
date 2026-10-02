@@ -29,7 +29,7 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: 'Name must be at least 2 characters.',
     }),
-    designation: z.enum(["Teacher", "Institution", "Other"], {
+    designation: z.enum(["Student", "Teacher", "Institution", "Other"], {
         required_error: "Please select a designation.",
     }),
 });
@@ -65,7 +65,8 @@ export default function OnboardingPage() {
                 return;
             }
 
-            const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution' || values.designation === 'Other';
+            // Students take tests; everyone else starts with creator tools switched on.
+            const isCreatorDefault = values.designation !== 'Student';
 
             // 1. Try to update Auth User Metadata (non-critical — may fail for Google OAuth users
             //    if the backend doesn't have a service role key)
@@ -99,7 +100,8 @@ export default function OnboardingPage() {
             if (redirectIntent) {
                 localStorage.removeItem('auth_redirect_intent');
             }
-            const destination = redirectIntent && redirectIntent !== '/onboarding' && redirectIntent !== '/login' ? redirectIntent : '/';
+            const fallback = values.designation === 'Student' ? '/history' : '/';
+            const destination = redirectIntent && redirectIntent !== '/onboarding' && redirectIntent !== '/login' ? redirectIntent : fallback;
             window.location.href = destination;
         } catch (error: any) {
             toast.error(error.message || 'Failed to update profile');
@@ -190,6 +192,7 @@ export default function OnboardingPage() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
+                                                    <SelectItem value="Student">Student</SelectItem>
                                                     <SelectItem value="Teacher">Teacher</SelectItem>
                                                     <SelectItem value="Institution">Institution</SelectItem>
                                                     <SelectItem value="Other">Other</SelectItem>

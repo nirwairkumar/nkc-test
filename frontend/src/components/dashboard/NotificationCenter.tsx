@@ -149,7 +149,7 @@ export default function NotificationCenter({ open, onOpenChange }: NotificationC
                             </div>
                             <h3 className="text-sm font-bold text-slate-700">No Notifications</h3>
                             <p className="text-xs text-slate-400 mt-1 max-w-[240px] leading-relaxed">
-                                You will receive live updates when students submit tests, report questions, or when exams conclude.
+                                You will receive live updates when candidates submit tests, report questions, or when exams conclude.
                             </p>
                         </div>
                     )}

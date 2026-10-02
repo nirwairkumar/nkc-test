@@ -50,12 +50,54 @@ def _verify_auth_token_attempts(request: Request, db: Client) -> str:
     except Exception as e:
         raise HTTPException(status_code=401, detail="Authentication failed")
 
+def _save_session_attempt(payload: SaveAttemptRequest, token: str):
+    """
+    A student sitting an exam session (joined with a code at /join). Identity, the time
+    limit and one-attempt-per-student all come from the session, not from the payload.
+    """
+    from app.services import exam_sessions as session_rules
+    from app.services import exam_session_store as session_store
+
+    participant, session = session_store.participant_by_token(supabase, token)
+    if participant.get("status") == "submitted" and participant.get("attempt_id"):
+        existing = session_store._first(
+            supabase.table("user_tests").select("*").eq("id", participant["attempt_id"]).limit(1).execute()
+        )
+        if existing:  # a retried submission: hand back the attempt already saved
+            return {"data": existing, "error": None}
+
+    paper = session_store.load_paper(supabase, session["test_id"])
+    if payload.test_id not in (paper["id"], paper.get("slug"), paper.get("custom_id")):
+        raise HTTPException(status_code=400, detail="This attempt is for a different test.")
+    if paper.get("enable_section_mode") and paper.get("sections"):
+        try:
+            apply_section_attempt_control(paper["sections"], payload.answers)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    allowed, late_seconds = session_rules.may_submit(session, participant, paper.get("duration"))
+    if not allowed:
+        raise session_store.SessionError(
+            403, "time_over",
+            "The exam time is over. Your teacher can still collect your last saved answers.",
+        )
+    row = session_store.submit_attempt(
+        supabase, session=session, participant=participant, test=paper,
+        answers=payload.answers or {}, metadata=payload.metadata,
+        late_seconds=late_seconds, completion_percentage=payload.completion_percentage,
+    )
+    return {"data": row, "error": None}
+
+
 @router.post("/save")
 async def save_attempt(
     payload: SaveAttemptRequest,
     request: Request,
     db: Client = Depends(get_db)
 ):
+    exam_token = request.headers.get("X-Exam-Token")
+    if exam_token:
+        return _save_session_attempt(payload, exam_token)
     try:
         # Security: Check auth header first
         auth_header = request.headers.get("Authorization")

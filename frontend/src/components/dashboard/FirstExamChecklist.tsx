@@ -24,8 +24,8 @@ export default function FirstExamChecklist({
 }: FirstExamChecklistProps) {
     const steps = [
         { done: checklist.hasTest, title: 'Make your test', body: 'Upload a question paper (PDF, Word or photo) and AI types it in for you. Or type the questions yourself.' },
-        { done: checklist.hasConducted, title: 'Start it as an online exam', body: 'You get a private link. Only students who have the link can take it.' },
-        { done: checklist.hasResult, title: 'Send the link to your students', body: "Share it on your WhatsApp group. Each student's marks and rank appear here as soon as they submit." },
+        { done: checklist.hasConducted, title: 'Start it as an online exam', body: 'You get a private link. Only candidates who have the link can take it.' },
+        { done: checklist.hasResult, title: 'Send the link to your candidates', body: "Share it on your WhatsApp group. Each candidate's marks and rank appear here as soon as they submit." },
     ];
     const doneCount = steps.filter(s => s.done).length;
     const current = steps.findIndex(s => !s.done);
@@ -46,7 +46,7 @@ export default function FirstExamChecklist({
                     <h2 id="first-exam-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">
                         Run your first online exam
                     </h2>
-                    <p className="mt-0.5 text-[13px] text-slate-600">Three steps from your question paper to your students' marks.</p>
+                    <p className="mt-0.5 text-[13px] text-slate-600">Three steps from your question paper to your candidates' marks.</p>
                 </div>
                 <button
                     type="button"

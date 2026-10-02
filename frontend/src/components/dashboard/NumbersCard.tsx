@@ -23,7 +23,7 @@ export default function NumbersCard({ numbers }: { numbers: PeriodNumbers }) {
                         </span>
                     )}
                 </Tile>
-                <Tile label="Students" value={numbers.students.toLocaleString()} hint="Grouped by roll number or name" />
+                <Tile label="Candidates" value={numbers.students.toLocaleString()} hint="Grouped by roll number or name" />
                 <Tile label="Tests taken" value={numbers.examsGiven.toLocaleString()} />
                 <Tile label="Average score" value={pctText(numbers.avgPct)} />
             </dl>

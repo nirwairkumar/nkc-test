@@ -5,11 +5,12 @@ import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
     Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
-    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink
+    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink, KeyRound
 } from 'lucide-react';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide'));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide'));
 const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide'));
+const LiveExamSessionsGuide = React.lazy(() => import('@/components/docs/LiveExamSessionsGuide'));
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -62,6 +63,12 @@ const DOC_SECTIONS: DocSection[] = [
     {
         title: "Platform Overview",
         items: [
+            {
+                slug: "live-exam-sessions",
+                title: "Live Exams with a Join Code",
+                description: "Let candidates join with a 6-digit code: a quick code for any live exam, or a full exam room with candidate lists, PINs, a live monitor, rank lists and report cards.",
+                icon: <KeyRound className="h-4 w-4" />
+            },
             {
                 slug: "conduct-exam",
                 title: "Conduct Exams",
@@ -559,6 +566,13 @@ export default function UserGuidePage() {
                             <TestUploadFormatGuide isInline />
                         </React.Suspense>
                     </div>
+                );
+
+            case 'live-exam-sessions':
+                return (
+                    <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+                        <LiveExamSessionsGuide />
+                    </React.Suspense>
                 );
 
             case 'solution-upload-guide':

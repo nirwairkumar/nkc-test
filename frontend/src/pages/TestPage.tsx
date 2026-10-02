@@ -34,6 +34,7 @@ import { Progress } from '@/components/ui/progress';
 import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
 import VirtualNumericPad from '@/components/test/VirtualNumericPad';
 import CorporateTestView from '@/components/test/CorporateTestView';
+import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -72,11 +73,31 @@ const clearLocalTestSession = (userId: string, paramId?: string | null, testUuid
 };
 
 export default function TestPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId, code: joinCode } = useParams<{ id?: string; code?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  // Exam-session mode: a student who joined with a 6-digit code at /join/:code/exam.
+  // They have no account; the server knows them by the device token in their seat, and
+  // their seat id keys every local draft below in place of a user id.
+  const examSeat = useMemo(() => (joinCode ? seatStore.get(joinCode) : null), [joinCode]);
+  const id = examSeat ? `join-${joinCode}` : routeId;
+  const user = useMemo(() => (examSeat ? ({ id: examSeat.participantId } as any) : authUser), [examSeat, authUser]);
+  const exitPath = examSeat ? `/join/${joinCode}` : '/';
+  const sessionClockRef = useRef<{ skewMs: number; deadline: number | null }>({ skewMs: 0, deadline: null });
+  const sessionAutoSubmitRef = useRef(false);
+  const confirmSubmitRef = useRef<() => void>(() => { });
+  const [seatProblem, setSeatProblem] = useState<string | null>(null);
+  const sessionSecondsLeft = () => {
+    const { deadline, skewMs } = sessionClockRef.current;
+    return deadline ? Math.max(0, Math.floor((deadline - (Date.now() + skewMs)) / 1000)) : 0;
+  };
+
+  useEffect(() => {
+    if (joinCode && !examSeat) navigate(`/join/${joinCode}`, { replace: true });
+  }, [joinCode, examSeat]);
 
   // Combined mode state (from CombinedIntroPage navigation)
   const combinedState = (location.state as any) || {};
@@ -121,7 +142,8 @@ export default function TestPage() {
 
   // Track delayed proctoring start state
   const [isExamStarted, setIsExamStarted] = useState(() => {
-    return !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+    // Session students pressed "Start exam" in the lobby, which is their intro page.
+    return !!examSeat || !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
   });
 
   // Reporting State
@@ -140,6 +162,10 @@ export default function TestPage() {
 
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
+    if (examSeat) {
+      toast.info("Tell your teacher about this question after the exam.");
+      return;
+    }
     if (!user) {
       toast.error("Please login to report a question.");
       return;
@@ -244,7 +270,7 @@ export default function TestPage() {
 
 
   const [isTimeHidden, setIsTimeHidden] = useState(false);
-  const [isTimerDisabled] = useState(() => sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
+  const [isTimerDisabled] = useState(() => !examSeat && sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -410,7 +436,7 @@ export default function TestPage() {
 
   // ─── Proactive token refresh: start when test loads, stop on unmount ────────
   useEffect(() => {
-    if (!test || !user) return;
+    if (!test || !user || examSeat) return;
     const apiBase = getApiUrl().replace(/\/$/, '') + '/';
     tokenRefreshCleanupRef.current = startProactiveTokenRefresh(apiBase);
     return () => { tokenRefreshCleanupRef.current?.(); };
@@ -428,7 +454,7 @@ export default function TestPage() {
 
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !user || isSubmitting) return;
+    if (!test || !user || isSubmitting || examSeat) return; // sessions sync through their heartbeat
     const syncInterval = setInterval(async () => {
       if (submittedRef.current) return;
       try {
@@ -463,7 +489,7 @@ export default function TestPage() {
   // On test load: register anonymous start (only for non-conduct exams)
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test) return;
+    if (!test || examSeat) return;
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
     if (!user && !isConductExam) {
       // Anonymous user starts — track in dedicated anon table
@@ -474,10 +500,10 @@ export default function TestPage() {
   // Periodic progress ping (every 60 seconds)
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || isSubmitting) return;
+    if (!test || isSubmitting || examSeat) return;
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
     const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
-    
+
     const interval = setInterval(() => {
       if (submittedRef.current) return;
       const totalQ = test.questions?.length || 1;
@@ -499,7 +525,7 @@ export default function TestPage() {
   // Abandon detection on tab close / navigation away
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test) return;
+    if (!test || examSeat) return; // a session draft lives on the server; closing the tab is not "abandoned"
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
     const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
 
@@ -527,7 +553,7 @@ export default function TestPage() {
 
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
-    if (!id || !user) return;
+    if (!id || !user || examSeat) return; // the server decides whether a session student may re-enter
     const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) return; // Handled in session mount effect below
 
@@ -544,7 +570,8 @@ export default function TestPage() {
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!id || !user) return;
+    // Session students never get "Resume / Start over": loadTest restores their draft silently.
+    if (!id || !user || examSeat) return;
 
     const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) {
@@ -613,7 +640,10 @@ export default function TestPage() {
       setQuestionTimes(resumeData.questionTimes);
       questionTimesRef.current = { ...resumeData.questionTimes };
     }
-    if (resumeData.timeRemaining) {
+    if (examSeat) {
+      // A session's clock is the server's, not the saved local countdown.
+      setTimeRemaining(sessionSecondsLeft());
+    } else if (resumeData.timeRemaining) {
       setTimeRemaining(resumeData.timeRemaining);
     }
     setIsExamStarted(true);
@@ -652,13 +682,81 @@ export default function TestPage() {
   }, [warnings, test?.id, user?.id]);
   const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
 
+  // ── Exam session heartbeat (every 20 s and when the tab comes back) ──────────
+  // Sends progress, violations and an answer draft (so a dead phone can continue on
+  // another device), and receives the teacher's controls: extra time, "submit now",
+  // "exam ended", or that this seat moved to another device.
+  const warningsRef = useRef(warnings);
+  useEffect(() => { warningsRef.current = warnings; }, [warnings]);
+  useEffect(() => {
+    if (!examSeat || !test || !isExamStarted) return;
+    let stopped = false;
+    const beat = async () => {
+      if (stopped || submittedRef.current) return;
+      const totalQ = test.questions?.length || 1;
+      const current = answersRef.current as Record<string, any>;
+      const answered = Object.values(current).filter(v => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0)).length;
+      try {
+        const res = await joinApi.heartbeat(examSeat.token, {
+          answers: current,
+          answered,
+          progress: Math.min(99, Math.round((visitedRef.current.size / totalQ) * 100)),
+          violations: warningsRef.current,
+        });
+        sessionClockRef.current.skewMs = new Date(res.server_time).getTime() - Date.now();
+        if (res.deadline) {
+          const next = new Date(res.deadline).getTime();
+          const previous = sessionClockRef.current.deadline;
+          sessionClockRef.current.deadline = next;
+          if (previous && next - previous >= 60_000) {
+            const added = Math.round((next - previous) / 60_000);
+            toast.success(`Your teacher gave you ${added} more minute${added === 1 ? '' : 's'}.`);
+            setIsTimeUp(false);
+          }
+          setTimeRemaining(sessionSecondsLeft());
+        }
+        if ((res.force_submit || res.ended) && !sessionAutoSubmitRef.current) {
+          sessionAutoSubmitRef.current = true;
+          toast.info(res.ended ? 'Your teacher ended the exam. Submitting your answers…' : 'Your teacher asked everyone to submit. Submitting your answers…');
+          confirmSubmitRef.current();
+        }
+      } catch (err) {
+        const problem = problemOf(err);
+        if (problem.code === 'device_replaced' || problem.code === 'removed') {
+          stopped = true;
+          setSeatProblem(problem.message);
+        }
+        // Network trouble: the next beat tries again; answers are safe on this device.
+      }
+    };
+    beat();
+    const interval = setInterval(beat, 20_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') beat(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [examSeat, test?.id, isExamStarted]);
+
+  // Session exams submit by themselves when time runs out (nobody to press the button for a dead phone).
+  useEffect(() => {
+    if (!examSeat || !isTimeUp || isSubmitting || sessionAutoSubmitRef.current) return;
+    const timer = setTimeout(() => {
+      sessionAutoSubmitRef.current = true;
+      confirmSubmitRef.current();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [examSeat, isTimeUp, isSubmitting]);
+
   // ── Screen Wake Lock: prevent screen sleep during conduct-exam tests ─────────
   // Uses the W3C Screen Wake Lock API (supported in Chrome 84+, Edge 84+, Firefox 126+).
   // Automatically re-acquires the lock when the page becomes visible again.
   useEffect(() => {
     if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
-    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled || !!examSeat;
     if (!isConductExam) return; // Only apply wake lock for proctored conduct-exam tests
 
     const acquireWakeLock = async () => {
@@ -708,8 +806,8 @@ export default function TestPage() {
     const settings = test.settings;
     if (!settings) return;
 
-    // Only conduct-exam tests have proctoring violations
-    const isConductExam = !!settings.conduct_exam?.enabled;
+    // Only conduct-exam tests (and exam sessions) have proctoring violations
+    const isConductExam = !!settings.conduct_exam?.enabled || !!examSeat;
 
     // 1. Action Blocking (applies to all test types if enabled)
     const handleContextMenu = (e: Event) => {
@@ -908,6 +1006,49 @@ export default function TestPage() {
         }
       }
     };
+
+    if (examSeat) {
+      // The paper comes from the session (it may be a private test), answers stripped.
+      setLoading(true);
+      try {
+        const paper = await joinApi.start(examSeat.token);
+        sessionClockRef.current = {
+          skewMs: new Date(paper.server_time).getTime() - Date.now(),
+          deadline: paper.deadline ? new Date(paper.deadline).getTime() : null,
+        };
+        // Read this device's own draft BEFORE the test is set (the autosave effect would overwrite it).
+        let local: any = null;
+        try { local = JSON.parse(localStorage.getItem(`test_session_${examSeat.participantId}_${testId}`) || 'null'); } catch { /* ignore */ }
+        processTestData(paper.test);
+        setTimeRemaining(sessionSecondsLeft());
+        seatStore.set({ ...examSeat, testId: paper.test.id });
+
+        const draft = paper.draft_answers || {};
+        if (local?.answers && Object.keys(local.answers).length > 0) {
+          // Refreshed or reopened on this device: carry on exactly where they were.
+          setAnswers(local.answers);
+          setMarkedForReview(new Set(local.markedForReview || []));
+          setVisited(new Set(local.visited || [0]));
+          setCurrentQuestionIndex(local.currentQuestionIndex || 0);
+          if (local.questionTimes) {
+            setQuestionTimes(local.questionTimes);
+            questionTimesRef.current = { ...local.questionTimes };
+          }
+        } else if (Object.keys(draft).length > 0) {
+          // Started on another phone: bring back what was saved there.
+          setAnswers(draft as any);
+          toast.success('Your saved answers are back. Carry on from where you stopped.');
+        }
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 300);
+      } catch (err) {
+        const problem = problemOf(err);
+        toast.error(problem.message);
+        navigate(`/join/${joinCode}`, { replace: true });
+        setLoading(false);
+      }
+      return;
+    }
 
     setLoading(true);
     try {
@@ -1309,6 +1450,37 @@ export default function TestPage() {
     const totalQ = test.questions?.length || 1;
     const finalCompletionPercentage = Math.round((visited.size / totalQ) * 100);
 
+    // ── EXAM SESSION: submit through the session, then back to the join page ──
+    if (examSeat) {
+      let retryToast: string | number | undefined;
+      const { error: sessionError } = await joinApi.submit(
+        examSeat.token,
+        { user_id: examSeat.participantId, test_id: test.id, answers: finalAnswers, score: finalScore, metadata, completion_percentage: finalCompletionPercentage },
+        (attempt) => {
+          if (retryToast) toast.dismiss(retryToast);
+          retryToast = toast.loading(`Connection issue — trying again (${attempt}/5). Keep this page open.`, { duration: 15_000 });
+        },
+      );
+      if (retryToast) toast.dismiss(retryToast);
+      if (sessionError) {
+        const problem = problemOf(sessionError);
+        toast.error(problem.message, { duration: 10_000 });
+        sessionAutoSubmitRef.current = false;
+        setIsSubmitting(false);
+        if (problem.code === 'device_replaced' || problem.code === 'removed' || problem.code === 'time_over') {
+          setSeatProblem(problem.message);
+        }
+        return;
+      }
+      clearLocalTestSession(examSeat.participantId, id, test.id);
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch { /* ignore */ }
+      }
+      toast.success('Submitted. Well done!');
+      navigate(`/join/${joinCode}`, { replace: true });
+      return;
+    }
+
     const effectiveUserId = user?.id || (() => {
       let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
       if (!anonId) {
@@ -1522,6 +1694,8 @@ export default function TestPage() {
       }
     }
   };
+
+  confirmSubmitRef.current = confirmSubmit;
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -1885,7 +2059,7 @@ export default function TestPage() {
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(exitPath)}
               className="w-full sm:w-1/3 py-6 text-sm font-bold rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
             >
               Exit Portal
@@ -3046,8 +3220,23 @@ export default function TestPage() {
         onOpenChange={setShowExitDialog}
         testId={id || test.id}
         userId={user?.id}
-        onConfirmExit={() => navigate('/')}
+        onConfirmExit={() => navigate(exitPath)}
       />
+
+      {/* Exam session: this seat moved to another device, or the teacher removed the student */}
+      <AlertDialog open={!!seatProblem}>
+        <AlertDialogContent className="max-w-[min(400px,calc(100vw-32px))] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exam paused on this device</AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-relaxed">{seatProblem}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => navigate(exitPath, { replace: true })} className="h-11 rounded-xl">
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isSubmitting && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all animate-in fade-in duration-300">
