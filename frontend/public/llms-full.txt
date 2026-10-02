@@ -366,6 +366,22 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: How to conduct an online exam (https://testoza.com/how-to-conduct-online-exam)
+
+A long-form, step-by-step guide for school teachers, coaching institutes, college exam cells and recruiters, with TestoZa as the worked example. Product details checked against the app on 2 October 2026.
+
+- **1. Plan:** decide the stakes (practice, class or weekly test, full mock or term exam, admission or hiring) and the place (one room, several rooms or labs, at home), the devices (in India usually Android phones: 93.89% of mobile web traffic in September 2026, Statcounter) and the size. Exams that decide a seat or a job belong in a supervised room.
+- **2. The paper:** objective questions a computer can mark (single correct, multiple correct, numerical, passage-based); written answers stay on paper. TestoZa's AI test generator reads PDFs and photos (PNG, JPG, WEBP) and matches a separate answer key. Marks and negative marks on every question card (each new question copies the last); partial marks for multiple-correct; numerical ranges; sections. Timing guide: NEET-UG 180 questions in 180 min (1 min each, +4/−1), JEE Main 75 in 3 h (2 min 24 s), CUET-UG 50 in 60 min (1 min 12 s, +5/−1), SSC CGL Tier 1 100 in 60 min (36 s, +2/−0.5). Have a second teacher answer the paper once before it goes live.
+- **3. Getting in:** a private exam link (start form or sign-in, optional time window) for practice; for timed exams, a sitting with a six-digit join code at testoza.com/join or a QR code, checked in by name only, roll number (name fills in from the batch list) or roll number + 4-digit PIN (shown once, printed as slips). One paper can be given to many batches as separate sittings. The New exam sheet needs only a paper and a time; More options hold the batch, late entry (0–60 min), start on time or when the teacher taps Start, check-in, walk-ins, when results show, and a name; closing time = start + paper length + late entry + 10 minutes.
+- **4. Exam rules:** force full screen; tab and app switch detection; warn only or 2–5 warnings then automatic submit; copy/paste and right-click off; back button blocked; shuffle question order. Warnings appear next to the candidate's name in the exam room. Release results when the exam ends (candidates in a sitting never receive the answer key). Rehearse full screen on iPhones; no browser rule can see a second phone. Exam-security rules are on paid plans (₹49/week, ₹149/month, ₹799/year).
+- **5. Rehearse:** two days before, a short sitting on three phones including an old one; switch apps, lock the screen, go offline, rejoin on another device; check two papers' marks by hand; send candidates an instructions message.
+- **6. Run the day:** the lobby opens 30 minutes before; projector view with the code, a QR code and names as they join; Start; a live list (writing, minutes left, answered, submitted, no signal, changed device, warnings); +5/+10 minutes for one candidate or +5 to +30 for everyone writing (the phone shows "Your teacher gave you N more minutes." at its next sync); submit one paper or remove a candidate; End exam submits everyone's last saved answers. Answers save every 20 seconds; a dead phone rejoins on any device; papers up to 15 minutes late because of the network are accepted and flagged; countdowns run on the server clock.
+- **7. Results:** check the questions most candidates got wrong (accuracy and option split) before release; candidates see marks, rank, right/wrong/skipped, sections and the class average; rank list to copy, send on WhatsApp or download as Excel; report cards (A4, print or PDF); WhatsApp messages to parents and absentees (nothing sent automatically); a re-test sitting for absentees.
+- **Google Forms:** fine for short practice quizzes; no built-in timer or negative marking (add-ons only); locked mode only on school-managed Chromebooks; no lobby, live monitoring or rank list.
+- **Limits:** no camera, microphone or screen proctoring; objective questions only; internet needed to join and submit; a hosted service (no self-hosting).
+
+---
+
 ## Guide: Moodle alternative (https://testoza.com/moodle-alternative)
 
 A long-form guide for school heads, coaching institute owners, college exam cells and trainers who mostly use Moodle for quizzes and exams. Moodle facts checked against Moodle's documentation on 2 October 2026.

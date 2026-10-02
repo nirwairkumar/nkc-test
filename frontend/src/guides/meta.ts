@@ -214,8 +214,45 @@ export const MOODLE_META: GuideMeta = {
     cta: { label: 'Run your first test, free', href: '/generate-with-ai' },
 };
 
+export const CONDUCT_META: GuideMeta = {
+    slug: 'how-to-conduct-online-exam',
+    path: '/how-to-conduct-online-exam',
+    title: 'How to conduct an online exam, step by step',
+    seoTitle: 'How to Conduct an Online Exam: Step-by-Step Guide',
+    description:
+        'How to conduct an online exam, step by step: plan it, build the paper, let candidates join with a code, stop casual cheating, run the day and publish results.',
+    dek:
+        'Most online exams that go wrong fail on logistics, not questions: candidates who can’t log in, a phone that dies at minute 20, answers shared on WhatsApp, marks that take a week. Here is the whole process as an exam controller would run it, from planning to the rank list, with checklists you can use and an exam you can run yourself on this page.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-02T12:00:00+05:30',
+    dateModified: '2026-10-02T12:00:00+05:30',
+    readMinutes: 21,
+    cover: {
+        src: '/guides/how-to-conduct-online-exam/cover.png',
+        alt: 'A teacher’s phone running an online exam in TestoZa: a six-digit join code, candidates joining, and the rank list when it ends',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'how to conduct online exam',
+        'how to conduct an online exam',
+        'conduct online exam',
+        'how to conduct online test',
+        'how to conduct online exam for students',
+        'online exam process step by step',
+        'how to prevent cheating in online exams',
+        'online exam checklist',
+        'conduct online exam on mobile',
+        'online exam with join code',
+        'conduct online exam free',
+        'TestoZa',
+    ],
+    // Every exam starts with a paper; /exams can't create a sitting without one.
+    cta: { label: 'Make your exam paper, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [MOODLE_META, NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

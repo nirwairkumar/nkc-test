@@ -44,7 +44,13 @@ export type GuideWidget =
     | 'moodle-audit'
     | 'moodle-support'
     | 'moodle-exam-room'
-    | 'moodle-marking';
+    | 'moodle-marking'
+    // how-to-conduct-online-exam
+    | 'conduct-planner'
+    | 'conduct-new-exam'
+    | 'conduct-rules'
+    | 'conduct-exam-day'
+    | 'conduct-checklist';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };
