@@ -23,6 +23,36 @@ export interface IMEInputHandle {
     focus: () => void;
 }
 
+/** Hindi suggestions (Google Input Tools) for a word typed in English letters. */
+async function fetchHindi(word: string): Promise<string[] | null> {
+    try {
+        const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=hi-t-i0-und&num=5`);
+        const data = await res.json();
+        const list = data?.[0] === 'SUCCESS' ? data?.[1]?.[0]?.[1] : null;
+        return Array.isArray(list) && list.length ? list : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Where `word` now stands as a whole word, nearest to where it was typed. Words
+ * converted in the meantime change length, so the original position can be off.
+ */
+function findWord(text: string, word: string, near: number): number {
+    let best = -1;
+    let dist = Infinity;
+    for (let i = text.indexOf(word); i !== -1; i = text.indexOf(word, i + 1)) {
+        const startsWord = i === 0 || /\s/.test(text[i - 1]);
+        const endsWord = i + word.length === text.length || /\s/.test(text[i + word.length]);
+        if (startsWord && endsWord && Math.abs(i - near) < dist) {
+            dist = Math.abs(i - near);
+            best = i;
+        }
+    }
+    return best;
+}
+
 export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     value,
     onChange,
@@ -132,49 +162,59 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     // But for consistency, we can just use the toggle logic if enablePreview is true.
     const showPreview = enablePreview && !isEditing && hasFormatting;
 
+    // Hindi typing. A word goes to the transliteration service when space follows it,
+    // and the answer can arrive after more keys have been typed. So the space goes in at
+    // once, every change is written to the box itself before the parent's state (the
+    // next key always lands in the current text), and the word is found again in the
+    // text as it is when the answer arrives. Earlier, the answer replaced the whole text
+    // captured at the key press, losing letters typed while it was on its way.
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+
+    const emit = (next: string, caret: number | null) => {
+        const el = inputRef.current;
+        if (el && el.value !== next) {
+            el.value = next;
+            if (caret !== null) el.setSelectionRange(caret, caret);
+        }
+        valueRef.current = next;
+        onChangeRef.current(next);
+    };
+
+    const convertWord = (word: string, typedAt: number) => {
+        fetchHindi(word).then(list => {
+            if (!list) return; // offline or no answer: the word stays in English letters
+            const best = list[0];
+            const el = inputRef.current;
+            const text = el ? el.value : valueRef.current;
+            const start = findWord(text, word, typedAt);
+            if (start < 0) return; // the word was changed or deleted meanwhile
+            const caret = el && document.activeElement === el ? el.selectionStart : null;
+            const shift = best.length - word.length;
+            emit(text.slice(0, start) + best + text.slice(start + word.length), caret === null ? null : caret > start ? caret + shift : caret);
+            setSuggestions(list);
+            setLastWordPos({ start, end: start + best.length });
+        });
+    };
+
+    /** The last space-separated piece before `cursor`, if it is a plain word. */
+    const plainWordBefore = (text: string, cursor: number) => {
+        const lastWord = text.substring(0, cursor).split(/[\s\n]/).pop() || '';
+        return /^[a-zA-Z]+$/.test(lastWord) ? lastWord : null;
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (typingMode === 'hi' && e.key === ' ') {
-            const cursor = e.currentTarget.selectionStart || 0;
-            const text = e.currentTarget.value;
-            const textBefore = text.substring(0, cursor);
-            const words = textBefore.split(/[\s\n]/);
-            const lastWord = words[words.length - 1];
-
-            if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
+            const el = e.currentTarget;
+            const cursor = el.selectionStart ?? el.value.length;
+            const lastWord = plainWordBefore(el.value, cursor);
+            if (lastWord) {
                 e.preventDefault();
-                fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
-                            const suggestionsList = data[1][0][1];
-                            const bestMatch = suggestionsList[0];
-                            const newValue = text.substring(0, cursor - lastWord.length) + bestMatch + " " + text.substring(cursor);
-                            onChange(newValue);
-
-                            setTimeout(() => {
-                                if (inputRef.current) {
-                                    const newPos = cursor - lastWord.length + bestMatch.length + 1;
-                                    inputRef.current.setSelectionRange(newPos, newPos);
-                                }
-                            }, 0);
-
-                            setSuggestions(suggestionsList);
-                            setLastWordPos({
-                                start: cursor - lastWord.length,
-                                end: cursor - lastWord.length + bestMatch.length
-                            });
-                        } else {
-                            const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
-                            onChange(newValue);
-                            setTimeout(() => {
-                                if (inputRef.current) inputRef.current.setSelectionRange(cursor + 1, cursor + 1);
-                            }, 0);
-                        }
-                    })
-                    .catch(() => {
-                        const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
-                        onChange(newValue);
-                    });
+                el.setRangeText(' ', cursor, el.selectionEnd ?? cursor, 'end');
+                emit(el.value, null);
+                convertWord(lastWord, cursor - lastWord.length);
             }
             return;
         }
@@ -187,56 +227,24 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
 
     const replaceWord = (word: string) => {
         if (!lastWordPos || !inputRef.current) return;
-        const text = value;
-        const newValue = text.substring(0, lastWordPos.start) + word + text.substring(lastWordPos.end);
-        onChange(newValue);
+        const el = inputRef.current;
+        const text = el.value;
+        el.focus();
+        emit(text.substring(0, lastWordPos.start) + word + text.substring(lastWordPos.end), lastWordPos.start + word.length);
         setSuggestions([]);
         setLastWordPos(null);
-        setTimeout(() => {
-            if (inputRef.current) {
-                const newPos = lastWordPos.start + word.length;
-                inputRef.current.setSelectionRange(newPos, newPos);
-                inputRef.current.focus();
-            }
-        }, 0);
     };
 
+    // Phone keyboards often send no usable key on keydown; the space shows up here instead.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         const newCursor = e.target.selectionStart || 0;
 
-        if (typingMode === 'hi' && newValue.length > value.length) {
-            const charBefore = newValue.charAt(newCursor - 1);
-            if (charBefore === ' ') {
-                const textBefore = newValue.substring(0, newCursor);
-                const words = textBefore.trimEnd().split(/[\s\n]/);
-                const lastWord = words[words.length - 1];
-
-                if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
-                    fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
-                                const suggestionsList = data[1][0][1];
-                                const bestMatch = suggestionsList[0];
-                                const startIdx = newCursor - 1 - lastWord.length;
-                                const finalValue = newValue.substring(0, startIdx) + bestMatch + " " + newValue.substring(newCursor);
-                                onChange(finalValue);
-                                setTimeout(() => {
-                                    if (inputRef.current) {
-                                        const newPos = startIdx + bestMatch.length + 1;
-                                        inputRef.current.setSelectionRange(newPos, newPos);
-                                    }
-                                }, 0);
-                                setSuggestions(suggestionsList);
-                                setLastWordPos({ start: startIdx, end: startIdx + bestMatch.length });
-                                return;
-                            }
-                        })
-                        .catch(err => console.error(err));
-                }
-            }
+        if (typingMode === 'hi' && newValue.length > valueRef.current.length && newValue.charAt(newCursor - 1) === ' ') {
+            const lastWord = plainWordBefore(newValue, newCursor - 1);
+            if (lastWord) convertWord(lastWord, newCursor - 1 - lastWord.length);
         }
+        valueRef.current = newValue;
         onChange(newValue);
     };
 

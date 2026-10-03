@@ -50,6 +50,7 @@ from ai_preview_importer.pdf_vision_pipeline import (
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 from ai_preview_importer.latex_json import repair_json_escapes, normalize_question_latex
 from ai_preview_importer.figure_crops import normalize_bbox_pages
+from ai_preview_importer.legacy_fonts import looks_like_legacy_hindi
 
 
 def _bbox_page(q: Dict) -> Optional[int]:
@@ -146,22 +147,27 @@ def extract_text_and_classify_pages(pdf_bytes: bytes) -> List[Dict]:
         image_list = page.get_images(full=True)
         has_images = len(image_list) > 0
 
-        classification = "text_rich" if len(text) >= TEXT_RICH_THRESHOLD else "image_only"
+        # Text typed in Kruti Dev and similar fonts is Latin key codes, not Hindi:
+        # send the page as a picture, so the model reads what is printed.
+        legacy_font = len(text) >= TEXT_RICH_THRESHOLD and looks_like_legacy_hindi(text)
+        classification = "text_rich" if len(text) >= TEXT_RICH_THRESHOLD and not legacy_font else "image_only"
 
         pages.append({
             "page_num": page_num + 1,
             "text": text,
             "has_images": has_images,
             "classification": classification,
+            "legacy_font": legacy_font,
         })
 
     doc.close()
 
     text_count = sum(1 for p in pages if p["classification"] == "text_rich")
     img_count = sum(1 for p in pages if p["classification"] == "image_only")
+    legacy_count = sum(1 for p in pages if p["legacy_font"])
     logger.info(
         f"Page classification: {text_count} text-rich, {img_count} image-only "
-        f"out of {len(pages)} total pages"
+        f"({legacy_count} in a legacy Hindi font) out of {len(pages)} total pages"
     )
     return pages
 
@@ -436,12 +442,14 @@ async def process_files_hybrid_stream(
 
     text_rich_count = sum(1 for p in all_page_infos if p["classification"] == "text_rich")
     image_only_count = sum(1 for p in all_page_infos if p["classification"] == "image_only")
+    legacy_font_count = sum(1 for p in all_page_infos if p.get("legacy_font"))
     total_pdf_pages = len(all_page_infos)
     has_pdfs = total_pdf_pages > 0
 
     if progress_callback:
         msg = (
             f'Found {text_rich_count} text pages, {image_only_count} scanned pages'
+            + (f' ({legacy_font_count} typed in an old Hindi font, read as pictures)' if legacy_font_count else '')
             if has_pdfs
             else f'Processing {len(image_files)} image file(s)...'
         )

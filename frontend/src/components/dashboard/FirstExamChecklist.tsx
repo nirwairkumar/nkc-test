@@ -23,7 +23,7 @@ export default function FirstExamChecklist({
     checklist, liveExam, onUploadPaper, onTypeQuestions, onConduct, onHide,
 }: FirstExamChecklistProps) {
     const steps = [
-        { done: checklist.hasTest, title: 'Make your test', body: 'Upload a question paper (PDF, Word or photo) and AI types it in for you. Or type the questions yourself.' },
+        { done: checklist.hasTest, title: 'Make your test', body: 'Upload a question paper (PDF or photo) and AI types it in for you. Or type the questions yourself.' },
         { done: checklist.hasConducted, title: 'Start it as an online exam', body: 'You get a private link. Only candidates who have the link can take it.' },
         { done: checklist.hasResult, title: 'Send the link to your candidates', body: "Share it on your WhatsApp group. Each candidate's marks and rank appear here as soon as they submit." },
     ];

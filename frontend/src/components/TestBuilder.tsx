@@ -216,8 +216,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const [logoDragOver, setLogoDragOver] = useState(false);
 
-    // Description typing mode
+    // Description and test name typing modes
     const [descriptionLanguage, setDescriptionLanguage] = useState<'en' | 'hi'>('en');
+    const [titleLanguage, setTitleLanguage] = useState<'en' | 'hi'>('en');
 
     // Online/Offline State
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -866,7 +867,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         };
 
         if (!isEditMode && title) {
-            testDataPayload.slug = slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4);
+            // slugify drops Devanagari, so an all-Hindi name would leave only "-ab12".
+            testDataPayload.slug = (slugify(title, { lower: true, strict: true }) || 'test') + '-' + Math.random().toString(36).substr(2, 4);
         }
 
         if (isEditMode && testId) {
@@ -1639,13 +1641,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     <h2 id="details-heading" className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">Test details</h2>
                     <div className={cn(GROUP, 'space-y-5 p-4 sm:p-6')}>
                         <div>
-                            <label htmlFor="test-title" className={FIELD_LABEL}>Test name</label>
-                            <input
+                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                                <label htmlFor="test-title" className={cn(FIELD_LABEL, 'mb-0')}>Test name</label>
+                                <div className="flex h-7 items-center rounded-full bg-slate-100 p-0.5 text-[12px] font-semibold">
+                                    {([['en', 'English'], ['hi', 'हिंदी']] as const).map(([v, l]) => (
+                                        <button key={v} type="button" onClick={() => setTitleLanguage(v)} aria-pressed={titleLanguage === v}
+                                            className={cn('h-6 rounded-full px-2.5', titleLanguage === v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500')}>
+                                            {l}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <IMEInput
                                 id="test-title"
+                                typingMode={titleLanguage}
                                 value={title}
-                                onChange={e => setTitle(e.target.value)}
+                                onChange={setTitle}
+                                enablePreview={false}
                                 placeholder="e.g. Class 10 Science — Chapter 3 test"
-                                className={cn(TEXT_FIELD, 'h-14 text-[19px] font-semibold')}
+                                className={cn(TEXT_FIELD, 'h-14 border-0 text-[19px] font-semibold shadow-none focus-visible:ring-2 focus-visible:ring-sky-500/45 focus-visible:ring-offset-0 md:text-[19px]')}
                             />
                         </div>
 

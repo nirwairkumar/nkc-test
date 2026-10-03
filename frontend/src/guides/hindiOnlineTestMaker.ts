@@ -22,7 +22,7 @@
  * TestoZa claims checked against the code on 3 October 2026:
  *   - Hindi typing: components/ui/IMEInput.tsx + test-builder/QuestionCard.tsx. An
  *     English | हिंदी switch on each card (question, options, passage) and on the test
- *     description; the test name is a plain input (no switch). On space, a word made only
+ *     description and the test name. On space, a word made only
  *     of letters goes to Google Input Tools; the first suggestion replaces it and up to
  *     five show in a bar until the next letter is typed. Capitals make no difference.
  *     New cards take the last language used (TestBuilder lastTypingMode). Needs the
@@ -33,12 +33,14 @@
  *   - AI import (AITestImporter.tsx, pdf_vision_pipeline.build_prompt): Language Output
  *     Same as Material / English / Hindi, several for bilingual; bilingual fields are
  *     "first language \n second language", in the order selected. PDFs and images only;
- *     the hybrid pipeline sends a text-rich PDF page's text layer (so a Kruti Dev PDF
- *     reaches the AI as Latin letters) and images as pictures.
+ *     the hybrid pipeline sends a text-rich PDF page's text layer, except pages whose text
+ *     looks like a legacy Hindi font (ai_preview_importer/legacy_fonts.py), which go as
+ *     pictures like scanned pages. Word/PowerPoint files are refused in the picker with
+ *     a "Save As → PDF" message.
  *   - Exam screen (TestPage.tsx): body font Mukta (index.css); text size − / + at the top
  *     right of the question, 12–32 px, 18 by default, options 2 px smaller (min 14);
  *     numerical answers accept 0–9 from the on-screen keypad. No Hindi UI (no i18n).
- *   - NOT in the product: an exam-screen language switch, Kruti Dev conversion, other AI
+ *   - NOT in the product: an exam-screen language switch, conversion of pasted Kruti Dev text, other AI
  *     output languages, Hindi option letters, essays. Don't claim them.
  */
 import { HINDI_META } from './meta';
@@ -51,7 +53,7 @@ const TYPING_FALLBACK = `
 <p>A working copy of the question card from TestoZa’s test builder. The card has a question type, an English | हिंदी switch, the question box, Fill from photo, Picture and Maths &amp; symbols buttons, Marks and Wrong, and four options. With the switch on हिंदी, type a word in English letters and press space: “nimnalikhit” becomes निम्नलिखित, “mein” becomes में, and so on, until the stem reads “निम्नलिखित में से कौन सा कथन सत्य है”. After each word a bar above the text shows up to five suggestions, such as काम, कम and कॉम for “kam”; tapping one replaces the word. The demo uses the same transliteration service as TestoZa, with a built-in list of the example words if the service can’t be reached.</p>`;
 
 const UNICODE_FALLBACK = `
-<p>A checker for text copied from an old Hindi file. Paste a line and it reports whether it is Unicode Hindi (safe to paste into any online test), text from a legacy font such as Kruti Dev, Chanakya or DevLys (stored as English letters, so “भारत की राजधानी” arrives as “Hkkjr dh jkt/kkuh”), or English. It also shows the line as students would see it in TestoZa’s exam font, and what to do next: paste it as it is, convert it to Unicode first, or upload a photo of the paper instead.</p>`;
+<p>A checker for text copied from an old Hindi file. Paste a line and it reports whether it is Unicode Hindi (safe to paste into any online test), text from a legacy font such as Kruti Dev, Chanakya or DevLys (stored as English letters, so “भारत की राजधानी” arrives as “Hkkjr dh jkt/kkuh”), or English. It also shows the line as students would see it in TestoZa’s exam font, and what to do next: paste it as it is, convert it to Unicode first, or upload the PDF or photos of the paper instead.</p>`;
 
 const AI_LANGUAGE_FALLBACK = `
 <p>A replay of TestoZa’s AI import with two sources, an English textbook page on spherical mirrors and a photo of a printed Hindi question paper, and the Language Output setting: Same as Material, English, Hindi, or English and Hindi together. Same as Material keeps each source’s language. Hindi turns the English page into Hindi-medium questions, for example “किसी गोलीय दर्पण की वक्रता त्रिज्या 20 सेमी है। इसकी फोकस दूरी कितनी है?”. English and Hindi together writes every question and option in both, one under the other, in the order the languages were selected. From the Hindi paper, options labelled (क) to (घ) come back as A to D, and the printed “उत्तर: (ग)” sets the correct answer.</p>`;
@@ -78,7 +80,7 @@ export const HINDI_ONLINE_TEST_MAKER: Guide = {
 `),
         ],
 
-        answer: 'A Hindi online test maker has to do four things well: let you type Hindi on an ordinary keyboard, store it as Unicode so it looks the same on every phone, bring in the papers you already have, and show students clean Devanagari with every matra in place. In TestoZa, switch a question card to हिंदी and type in English letters: each word becomes Hindi when you press space (“prashn” becomes प्रश्न), with up to five suggestions to choose from. A printed paper can be photographed or uploaded as a PDF, and the AI keeps it in Hindi, translates it, or makes it bilingual with English and Hindi in every question. Students take the test in any phone browser, and with a six-digit join code they don’t need accounts. Making and sharing tests is free. One warning: text typed in Kruti Dev or another old Hindi font isn’t real Hindi to a computer, so photograph that paper or convert it to Unicode before you use it.',
+        answer: 'A Hindi online test maker has to do four things well: let you type Hindi on an ordinary keyboard, store it as Unicode so it looks the same on every phone, bring in the papers you already have, and show students clean Devanagari with every matra in place. In TestoZa, switch a question card to हिंदी and type in English letters: each word becomes Hindi when you press space (“prashn” becomes प्रश्न), with up to five suggestions to choose from. A printed paper can be photographed or uploaded as a PDF, and the AI keeps it in Hindi, translates it, or makes it bilingual with English and Hindi in every question. Students take the test in any phone browser, and with a six-digit join code they don’t need accounts. Making and sharing tests is free. One warning: text typed in Kruti Dev or another old Hindi font isn’t real Hindi to a computer, so convert it to Unicode before you paste it. Uploaded PDFs and photos of such papers are read from the page itself.',
 
         sections: [
             {
@@ -139,7 +141,7 @@ ${GUESS_ROWS}
 <h3>Other ways to type Hindi</h3>
 <p>Whatever you type with, the rule is the same: it must produce Unicode Hindi, not a legacy font. Three options that do:</p>
 <ul class="ht-list">
-<li><strong>On a phone: a Hindi keyboard.</strong> Gboard on Android and the iPhone’s own Hindi keyboards include layouts where you type in English letters. Hindi typed this way can go into any box, including the test name, which has no Hindi switch of its own.</li>
+<li><strong>On a phone: a Hindi keyboard.</strong> Gboard on Android and the iPhone’s own Hindi keyboards include layouts where you type in English letters. Hindi typed this way can go into any box.</li>
 <li><strong>On Windows: Hindi Phonetic.</strong> Windows 10 and 11 include a Hindi Phonetic keyboard (Settings → Time &amp; language → Language &amp; region → Hindi → Add a keyboard). Windows + Space switches between it and English.</li>
 <li><strong>For trained typists: Inscript.</strong> The standard Hindi layout, built into Windows and macOS. Fast once learned, but few teachers have learned it, and it is a different layout from the Remington one that Kruti Dev typists know.</li>
 </ul>
@@ -166,12 +168,12 @@ ${GUESS_ROWS}
 <p>For a full paper, use <strong>Import from PDF or photos</strong> at the top of the test builder, which opens the <a href="/ai-test-generator">AI test generator</a>. Upload the PDF or photos of the pages, and the answer key as a separate file if you have one. Choose <em>Extract</em> to keep the paper’s own questions, or <em>Generate</em> to have new questions written from a chapter. Leave the language on <em>Same as Material</em> and a Hindi paper comes back in Hindi. Every question then appears on a review screen, where you read it once before it becomes a test. AI import reads PDFs and pictures (PNG, JPG and WEBP), so save a Word file as PDF first.</p>
 <h3>The Kruti Dev problem</h3>
 <p>This is the trap that catches most Hindi-medium schools. For years, Hindi on Indian office computers was typed in fonts such as Kruti Dev, Chanakya and DevLys. They don’t store Hindi at all. They store ordinary English letters and draw them as Devanagari shapes: the word भारत is saved as “Hkkjr”. On the computer that has the font, it looks perfect. Copy it anywhere else (a website, WhatsApp, a test maker) and the disguise falls off.</p>
-<p>For an online test that matters twice:</p>
-<ul class="ht-limits">
-<li><strong>Pasting.</strong> Text copied from a Kruti Dev file arrives as “Hkkjr dh jkt/kkuh”, and that is exactly what students would see.</li>
-<li><strong>Uploading the PDF.</strong> A PDF made from a Kruti Dev file carries the same English letters inside it. TestoZa reads a PDF’s own text wherever it has text, so a Kruti Dev PDF can come through as gibberish too. Photos are different: a photo or a screenshot of the page is read as a picture, so the Hindi letters are read as Hindi.</li>
+<p>For an online test that matters in two places:</p>
+<ul class="ht-list">
+<li><strong>Pasting: convert first.</strong> Text copied from a Kruti Dev file arrives as “Hkkjr dh jkt/kkuh”, and that is exactly what students would see. Run it through any “Kruti Dev to Unicode” converter before you paste (paste, convert, then check the result).</li>
+<li><strong>Uploading: TestoZa handles it.</strong> A PDF made from a Kruti Dev file carries the same English letters inside it. TestoZa spots pages like that and reads them as pictures instead, so the AI reads the Hindi printed on the page, not the letters hidden behind it. Photos and screenshots of the pages work the same way.</li>
 </ul>
-<p>So for an old file, either convert it to Unicode first (any “Kruti Dev to Unicode” converter: paste, convert, then check the result), or take photos or screenshots of the pages and upload those. Not sure what your file is? Paste a line from it here:</p>
+<p>Not sure what your file is? Paste a line from it here:</p>
 `),
                     { type: 'widget', widget: 'hindi-unicode-check', fallbackHtml: UNICODE_FALLBACK },
                     html(`
@@ -258,7 +260,7 @@ ${GUESS_ROWS}
                 blocks: [
                     html(`
 <ol class="ht-steps">
-<li><strong>Create a test and name it.</strong> Open Create a test. The name box takes English, or Hindi typed on a phone keyboard or pasted in; the short description underneath has its own English | हिंदी switch.</li>
+<li><strong>Create a test and name it.</strong> Open Create a test. The name and the short description underneath each have their own English | हिंदी switch.</li>
 <li><strong>Bring in what you have.</strong> A whole paper: Import from PDF or photos, with the language on Same as Material, Hindi, or English and Hindi. A few questions: Fill from photo on each card. Nothing yet: type.</li>
 <li><strong>Switch the first card to हिंदी</strong> and type the first question. Every new card starts in Hindi after that.</li>
 <li><strong>Set the marks once.</strong> Fill Marks and Wrong on the first card, for example +2 and −0.5. Each new question copies the one before it.</li>
@@ -320,7 +322,7 @@ ${EXAM_ROWS}
                 blocks: [
                     html(`
 <ul class="ht-limits">
-<li><strong>Pasting from a Kruti Dev file.</strong> It looks like Hindi on your computer and arrives as “Hkkjr” on students’ phones. Convert it, or photograph the paper.</li>
+<li><strong>Pasting from a Kruti Dev file.</strong> It looks like Hindi on your computer and arrives as “Hkkjr” on students’ phones. Convert it before pasting, or upload the PDF or photos instead.</li>
 <li><strong>Trusting every first suggestion.</strong> “kam” gives काम and “grah” gives गृह. Glance at each word as it changes, or use the spellings above.</li>
 <li><strong>Typing abbreviations in Hindi mode.</strong> SI becomes सी, km becomes कम. Switch to English for them.</li>
 <li><strong>Screenshots instead of text.</strong> A question pasted as a picture can’t be resized or searched, and it blurs on a small phone. Type it or import it.</li>
@@ -343,8 +345,8 @@ ${EXAM_ROWS}
 <li><strong>No language switch on the exam screen.</strong> A bilingual paper shows both languages together, one under the other. Students can’t flip a question between Hindi and English as some computer-based exams allow.</li>
 <li><strong>The app itself is in English.</strong> Buttons, menus, results and report cards are in English; your questions are in Hindi.</li>
 <li><strong>Hindi and English only.</strong> The AI writes papers in English, Hindi or both. Other Indian languages aren’t offered as an output language yet.</li>
-<li><strong>No Kruti Dev conversion.</strong> TestoZa doesn’t convert legacy-font text. Convert it first, or upload photos of the paper.</li>
-<li><strong>Hindi typing needs the internet,</strong> and the test name has no Hindi switch: type the name in English, on a phone keyboard, or paste it.</li>
+<li><strong>No conversion of pasted Kruti Dev text.</strong> Text copied from a legacy-font file stays as it was pasted, so convert it first. Uploaded PDFs and photos are read from the page instead.</li>
+<li><strong>Hindi typing needs the internet.</strong> Without a connection, words stay in English letters until it’s back.</li>
 <li><strong>Option letters are A to D.</strong> A paper printed with (क) to (घ) shows A to D on the exam screen.</li>
 <li><strong>Objective questions only.</strong> Single correct, multiple correct, numerical answers and passages. No essays or written answers, in Hindi or any language.</li>
 </ul>
@@ -363,7 +365,7 @@ ${EXAM_ROWS}
 <ul class="ht-list">
 <li><strong>अंग्रेज़ी अक्षरों में टाइप करें।</strong> प्रश्न कार्ड पर English | हिंदी स्विच को हिंदी पर करें और शब्द को अंग्रेज़ी अक्षरों में लिखें। स्पेस दबाते ही “prashn” प्रश्न बन जाता है। अगर पहला शब्द सही न हो, तो ऊपर दिखने वाले सुझावों में से सही शब्द चुन लें।</li>
 <li><strong>पुराना प्रश्नपत्र दोबारा टाइप न करें।</strong> किसी एक प्रश्न के लिए “Fill from photo” दबाकर उसकी फ़ोटो लें। पूरे प्रश्नपत्र के लिए “Import from PDF or photos” से PDF या फ़ोटो अपलोड करें। AI प्रश्नों को हिंदी में ही रखता है, उनका अनुवाद करता है, या हर प्रश्न को हिंदी और अंग्रेज़ी दोनों में लिख देता है।</li>
-<li><strong>कृतिदेव (Kruti Dev) से सावधान रहें।</strong> कृतिदेव, चाणक्य या DevLys फ़ॉन्ट में टाइप किया गया पाठ असल में अंग्रेज़ी अक्षरों में सेव होता है, इसलिए वेबसाइट पर वह “Hkkjr” जैसा दिखता है। ऐसी फ़ाइल को पहले यूनिकोड में बदलें, या प्रश्नपत्र की फ़ोटो अपलोड करें।</li>
+<li><strong>कृतिदेव (Kruti Dev) से सावधान रहें।</strong> कृतिदेव, चाणक्य या DevLys फ़ॉन्ट में टाइप किया गया पाठ असल में अंग्रेज़ी अक्षरों में सेव होता है, इसलिए वेबसाइट पर वह “Hkkjr” जैसा दिखता है। ऐसा पाठ कॉपी-पेस्ट करने से पहले यूनिकोड में बदलें। PDF या फ़ोटो अपलोड करने पर TestoZa पन्ने पर छपी हिंदी को ही पढ़ता है।</li>
 <li><strong>अंक और ऋणात्मक अंकन।</strong> हर प्रश्न पर सही उत्तर के अंक और गलत उत्तर पर कटने वाले अंक डालें, जैसे +2 और −0.5। अगला प्रश्न पिछले प्रश्न के अंक अपने आप ले लेता है।</li>
 <li><strong>भेजने से पहले मोबाइल पर पढ़ें।</strong> छात्रों को प्रश्न साफ़ हिंदी (मुक्ता फ़ॉन्ट) में दिखते हैं और वे अक्षरों का आकार बड़ा कर सकते हैं। फिर भी पूरा पेपर एक बार किसी पुराने फ़ोन पर ज़रूर पढ़ें।</li>
 </ul>
@@ -397,7 +399,7 @@ ${EXAM_ROWS}
             },
             {
                 q: 'Can TestoZa import a Kruti Dev PDF?',
-                a: 'Not reliably. TestoZa reads a PDF’s own text where it has text, and the text inside a Kruti Dev PDF is English letters, not Hindi. Photos and screenshots are read as pictures, so the Hindi letters are read correctly. Upload photos of the pages, or convert the file to Unicode first.',
+                a: 'Yes. TestoZa spots PDF pages typed in Kruti Dev, DevLys or a similar font and reads them as pictures, so the AI reads the Hindi printed on the page rather than the English letters hidden in the file. Photos and screenshots of the pages work too. Text you copy and paste from such a file still needs converting to Unicode first.',
             },
             {
                 q: 'Will Hindi show correctly on students’ phones?',

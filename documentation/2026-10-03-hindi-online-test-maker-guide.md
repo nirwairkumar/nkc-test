@@ -63,6 +63,18 @@ One deliberate difference from the product: in the replica, the space goes in at
 6. **CSP:** the repo worker's `connect-src` didn't allow `https://inputtools.google.com`, so once deployed it would have blocked the typing demo on testoza.com. Added (one line). app.testoza.com isn't behind the worker, so the product's Hindi typing is unaffected.
 7. Still open from earlier docs: `unlock_all_premium` is on, so "exam-security rules are paid" describes the plan design, not today's behaviour.
 
+### 5a. Fixed the same day (after the guide was pushed)
+
+| Finding | Fix |
+|---|---|
+| 1. Fast typing lost letters | `components/ui/IMEInput.tsx`: the space goes in at once; every change is written to the box before the parent's state; when the service answers, the word is found again in the current text (`findWord`) instead of replacing the whole text captured at the key press. Same for the phone (change-event) path and for picking from the bar. Checked in the real builder at 20 ms a key: "nimnalikhit mein se kaun sa kathan satya hai" fully converted; कम picked from the bar. |
+| 2. Kruti Dev PDFs | New `backend/ai_preview_importer/legacy_fonts.py` (`looks_like_legacy_hindi`, line by line, so bilingual Unicode English + Kruti Dev Hindi pages are caught). `hybrid_pipeline.extract_text_and_classify_pages` sends such pages as `image_only` (rendered and read as pictures, like scans) and the progress message says how many. Tests: `tests/test_legacy_fonts.py` (Kruti Dev, bilingual, English, romanised Hindi, Unicode Hindi, maths) and `tests/test_legacy_font_pages.py` (a real two-page PDF). |
+| 3. Word/PowerPoint offered | `AITestImporter.tsx`: pickers accept PDF and images only; every entry point (drop, both pickers, document/image handlers) goes through `keepReadableFiles`, which leaves out other files with "Open the file, choose File → Save As → PDF". Copy changed there and on the dashboard (`CreateCard`, `GlobalSearchModal`, `FirstExamChecklist`). |
+| 5. Test name without हिंदी | `TestBuilder.tsx`: the name uses `IMEInput` (no formatted preview) with the same English / हिंदी pill as the description, same 19 px type. An all-Hindi name no longer gives a slug like "-ab12": `slugify(title) || 'test'`. |
+| 4. Text-size control | Left as it is (owner's decision: no extra distractions on the live exam screen). |
+
+The guide's copy was updated to match (the name switch; uploaded Kruti Dev PDFs are now read from the page; pasted Kruti Dev text still needs converting). Not changed, for the owner to decide: earlier pages still say Word/PowerPoint uploads work — `landing/adsLanding.ts` (an Ads landing page), `pages/CreateTestPage.tsx` FAQ, and the guides `jeeMockTestPlatform.ts`, `mock-test/createMockTestOnline.ts`. Deploy the backend together with the frontend, since the guide now says Kruti Dev PDFs are handled.
+
 ## 6. Verification
 
 - `tsc -p tsconfig.app.json`: only the 4 existing errors (TestLikeButton, NotificationsPage). ESLint on new files: 0 errors (fast-refresh warnings only, as in the other guides).

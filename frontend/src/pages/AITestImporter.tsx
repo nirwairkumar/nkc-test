@@ -191,7 +191,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         e.stopPropagation();
         setIsDragging(false);
 
-        const droppedFiles = Array.from(e.dataTransfer.files || []);
+        const droppedFiles = keepReadableFiles(Array.from(e.dataTransfer.files || []));
         if (!droppedFiles.length) return;
 
         const newFiles: SelectedFile[] = [];
@@ -358,6 +358,25 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         return 'image';
     };
 
+    /**
+     * What the AI can read: PDFs and pictures (the server takes .pdf, .png, .jpg, .jpeg
+     * and .webp; pictures are re-saved as JPG here). Anything else is left out with a
+     * message now, rather than failing once processing starts.
+     */
+    const keepReadableFiles = (raw: File[]): File[] => {
+        const readable = (f: File) => /\.(pdf|png|jpe?g|webp)$/i.test(f.name) || f.type === 'application/pdf' || f.type.startsWith('image/');
+        const skipped = raw.filter(f => !readable(f));
+        if (skipped.length) {
+            const names = skipped.map(f => f.name).join(', ');
+            toast.error(
+                skipped.some(f => /\.(docx?|pptx?|odt|odp|rtf)$/i.test(f.name))
+                    ? `${names}: Word and PowerPoint files can't be read yet. Open the file, choose File → Save As → PDF, and upload the PDF.`
+                    : `${names}: only PDFs and photos (PNG, JPG, WEBP) can be read.`,
+            );
+        }
+        return raw.filter(readable);
+    };
+
     const createPreview = (file: File): Promise<string> => {
         return new Promise((resolve) => {
             if (file.type.startsWith('image/')) {
@@ -421,7 +440,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(e.target.files || []);
+        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
         if (selectedFiles.length === 0) return;
 
         const newFiles: SelectedFile[] = [];
@@ -444,7 +463,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(e.target.files || []);
+        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
         if (selectedFiles.length === 0) return;
 
         const newFiles: SelectedFile[] = [];
@@ -1408,10 +1427,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 <input
                     ref={documentInputRef}
                     type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,image/*"
                     multiple
                     onChange={async (e) => {
-                        const selectedFiles = Array.from(e.target.files || []);
+                        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
                         if (!selectedFiles.length) return;
                         const newFiles: SelectedFile[] = [];
                         for (const rawFile of selectedFiles) {
@@ -1461,7 +1480,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper</p>
-                                    <p className="text-[11px] text-slate-400">PDF, Word, or Photos</p>
+                                    <p className="text-[11px] text-slate-400">PDF or photos</p>
                                 </div>
                             </div>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
@@ -1470,7 +1489,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         {/* Card body */}
                         <div className="p-4 space-y-3.5">
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Select a PDF, Word document, or photo of your exam paper. We'll automatically extract questions and convert it into an online test.
+                                Select a PDF or photos of your exam paper. We'll automatically extract questions and convert it into an online test. Word or PowerPoint? Save it as PDF first.
                             </p>
 
                             {/* Primary CTA */}
@@ -1536,7 +1555,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center shrink-0">1</div>
                                     <div>
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Select Question Paper</p>
-                                        <p className="text-xs text-slate-500">Click "Choose File" and upload your exam paper in PDF, Word, or photo format.</p>
+                                        <p className="text-xs text-slate-500">Click "Choose File" and upload your exam paper as a PDF or photos (save Word or PowerPoint files as PDF first).</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -1583,10 +1602,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 <Input
                     ref={documentInputRef}
                     type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,image/*"
                     multiple
                     onChange={async (e) => {
-                        const selectedFiles = Array.from(e.target.files || []);
+                        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
                         if (!selectedFiles.length) return;
                         const newFiles: SelectedFile[] = [];
                         for (const rawFile of selectedFiles) {

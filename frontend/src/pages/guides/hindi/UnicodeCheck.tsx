@@ -47,7 +47,7 @@ const RESULT: Record<Exclude<Verdict, 'empty'>, { tone: 'green' | 'orange' | 'bl
         tone: 'orange',
         title: 'Looks like a legacy Hindi font',
         body: 'This is English letters that only looked like Hindi in a font such as Kruti Dev, DevLys or Chanakya. Students would see exactly what is shown below.',
-        next: 'Convert it with a Kruti Dev to Unicode converter and check it here again, or upload a photo of the paper instead.',
+        next: 'Before pasting, convert it with a Kruti Dev to Unicode converter and check it here again. Or skip the pasting: upload the PDF or photos of the paper, and TestoZa reads the Hindi on the page.',
     },
     latin: {
         tone: 'blue',

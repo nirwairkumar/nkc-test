@@ -11,7 +11,7 @@ interface CreateCardProps {
 /** The three ways teachers actually make a paper — no separate AI studio, tool grid or badges. */
 export default function CreateCard({ onUploadPaper, onTypeQuestions, onCombine }: CreateCardProps) {
     const options: { icon: React.ComponentType<{ className?: string }>; tone: Tone; title: string; body: string; onClick: () => void }[] = [
-        { icon: Upload, tone: 'violet', title: 'Upload a question paper', body: 'PDF, Word or a photo. AI types it in, with maths and diagrams.', onClick: onUploadPaper },
+        { icon: Upload, tone: 'violet', title: 'Upload a question paper', body: 'A PDF or a photo. AI types it in, with maths and diagrams.', onClick: onUploadPaper },
         { icon: PenLine, tone: 'sky', title: 'Type or paste questions', body: 'Write your own, with the maths keyboard.', onClick: onTypeQuestions },
         { icon: Layers, tone: 'amber', title: 'Combine two papers', body: 'Paper I + Paper II with a break, like JEE Advanced.', onClick: onCombine },
     ];
