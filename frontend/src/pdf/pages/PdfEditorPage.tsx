@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { PANNA } from '../brand';
 import type { PageEdit, PageSlot } from '../engine/edits';
 import { takePendingFile } from '../handoff';
+import { GUIDE_META } from '../guide/data';
 import { COMMON_FACTS, DEFINITIONS, EDITOR_COMPARE, EDITOR_FAQS, EDITOR_STEPS, EDITOR_TOOLS, HINDI_FAQS, HINDI_STEPS, HINDI_SUPPORT, TOOL_FACTS } from '../site/content';
 import PannaHeader from '../ui/PannaHeader';
 import Dropzone from '../ui/Dropzone';
@@ -67,6 +68,13 @@ function EditorContent() {
     return (
         <>
             <HowToSteps heading="How to edit a PDF online" intro="Three steps, no account. The whole thing happens in your browser tab." steps={EDITOR_STEPS} />
+            <p className="mx-auto -mt-8 max-w-6xl px-4 pb-10 text-sm text-slate-600 sm:px-6">
+                Scanned page, Hindi form or a line you need gone for good? Read the full guide:{' '}
+                <Link to={GUIDE_META.path} className="font-semibold text-emerald-700 underline-offset-2 hover:underline">
+                    how to edit a PDF without changing the font
+                </Link>
+                .
+            </p>
             <Screenshot src="/screenshots/edit-pdf.webp" alt="Editing a line of text in a PDF with the Panna editor — the new words use the document's own font" />
 
             <section aria-labelledby="can-do" className="mx-auto max-w-6xl px-4 py-14 sm:px-6">

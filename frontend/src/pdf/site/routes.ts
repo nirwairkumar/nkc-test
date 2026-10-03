@@ -4,9 +4,21 @@
  * and the head tags all read this one table.
  */
 import { PANNA } from '../brand';
-import { CHATGPT_FAQS, EDITOR_FAQS, HINDI_FAQS, HOME_FAQS, LATEX_FAQS, type Faq } from './content';
+import { GUIDE_FAQS, GUIDE_META, GUIDE_STEPS } from '../guide/data';
+import { CHATGPT_FAQS, EDITOR_FAQS, HINDI_FAQS, HOME_FAQS, LATEX_FAQS, type Faq, type Step } from './content';
 
-export type PageKey = 'home' | 'editor' | 'hindi' | 'latex' | 'chatgpt' | 'notFound';
+export type PageKey = 'home' | 'editor' | 'hindi' | 'latex' | 'chatgpt' | 'guide' | 'notFound';
+
+/** Long-form guides: published as an Article (plus HowTo steps) instead of a WebApplication. */
+export interface SiteArticle {
+    headline: string;
+    published: string;
+    modified: string;
+    author: string;
+    steps?: Step[];
+    /** Section the steps live in, for the HowTo's URL. */
+    stepsAnchor?: string;
+}
 
 export interface SiteApp {
     name: string;
@@ -28,7 +40,10 @@ export interface SitePage {
     /** Label in breadcrumbs and in the tools list. */
     crumb: string;
     app?: SiteApp;
+    article?: SiteArticle;
     faqs?: Faq[];
+    /** Last change to this page (sitemap lastmod, dateModified); defaults to UPDATED. */
+    updated?: string;
     index: boolean;
 }
 
@@ -150,6 +165,27 @@ export const PAGES: SitePage[] = [
         index: true,
     },
     {
+        key: 'guide',
+        path: GUIDE_META.path,
+        file: 'how-to-edit-a-pdf.html',
+        title: GUIDE_META.title,
+        description: GUIDE_META.description,
+        ogImage: GUIDE_META.ogImage,
+        ogAlt: GUIDE_META.ogAlt,
+        crumb: 'How to edit a PDF',
+        article: {
+            headline: GUIDE_META.h1,
+            published: GUIDE_META.datePublished,
+            modified: GUIDE_META.dateModified,
+            author: GUIDE_META.author,
+            steps: GUIDE_STEPS,
+            stepsAnchor: 'steps',
+        },
+        faqs: GUIDE_FAQS,
+        updated: GUIDE_META.dateModified,
+        index: true,
+    },
+    {
         key: 'notFound',
         path: '/404',
         file: '404.html',
@@ -175,6 +211,8 @@ export const REDIRECTS: [string, string][] = [
     ['/pdf/latex-to-pdf', PANNA.routes.latex],
     ['/chatgpt', PANNA.routes.chatgpt],
     ['/pdf', PANNA.routes.home],
+    ['/how-to-edit-pdf', GUIDE_META.path],
+    ['/edit-pdf-guide', GUIDE_META.path],
 ];
 
 export const TOOL_PAGES = PAGES.filter((p) => p.app);

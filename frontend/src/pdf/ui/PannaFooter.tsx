@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import { PANNA, testozaUrl } from '../brand';
 import { UPDATED } from '../site/content';
 import { TOOL_PAGES } from '../site/routes';
+import { GUIDE_META } from '../guide/data';
 import PannaLogo from './PannaLogo';
 
 /** The long-form guide to every Panna tool, on the TestoZa Blog (src/blog/articles). */
@@ -48,6 +49,11 @@ export default function PannaFooter() {
                                 </Link>
                             </li>
                         ))}
+                        <li>
+                            <Link to={GUIDE_META.path} className={col}>
+                                How to edit a PDF
+                            </Link>
+                        </li>
                         <li>
                             <a href={PANNA_GUIDE} className={col}>
                                 Complete guide

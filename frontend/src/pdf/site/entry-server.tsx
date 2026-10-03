@@ -8,6 +8,7 @@ import LatexToPdfPage from '../pages/LatexToPdfPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import PdfEditorPage from '../pages/PdfEditorPage';
 import PdfToolsLanding from '../pages/PdfToolsLanding';
+import HowToEditPdf from '../guide/HowToEditPdf';
 import App, { type PageComponents } from './App';
 
 export { UPDATED } from './content';
@@ -20,6 +21,7 @@ const pages: PageComponents = {
     hindi: () => <PdfEditorPage variant="hindi" />,
     latex: () => <LatexToPdfPage />,
     chatgpt: () => <LatexToPdfPage variant="chatgpt" />,
+    guide: HowToEditPdf,
     notFound: NotFoundPage,
 };
 

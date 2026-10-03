@@ -822,7 +822,7 @@ async def get_detailed_visitors(
                     entry = (s.get("entry_page") or "").lower()
                     if vid not in visitor_platform_map:
                         visitor_platform_map[vid] = {"pdf": False, "main": False}
-                    if "pdf.testoza.com" in entry or entry.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf")) or "/pdf" in entry:
+                    if "pdf.testoza.com" in entry or entry.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf", "/how-to-edit-a-pdf")) or "/pdf" in entry:
                         visitor_platform_map[vid]["pdf"] = True
                     elif entry:
                         visitor_platform_map[vid]["main"] = True
@@ -844,7 +844,7 @@ async def get_detailed_visitors(
                         continue
                     if vid not in visitor_platform_map:
                         visitor_platform_map[vid] = {"pdf": False, "main": False}
-                    if "pdf.testoza.com" in path or path.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf")) or "panna" in title or ("pdf" in title and "testoza" in title):
+                    if "pdf.testoza.com" in path or path.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf", "/how-to-edit-a-pdf")) or "panna" in title or ("pdf" in title and "testoza" in title):
                         visitor_platform_map[vid]["pdf"] = True
                     elif path:
                         visitor_platform_map[vid]["main"] = True

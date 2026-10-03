@@ -7,7 +7,7 @@
  */
 const HOST = 'pdf.testoza.com';
 const KEY = 'c2a78dbe99e3511235aaa7c273d9bf8d'; // also served at /<KEY>.txt
-const PATHS = ['/', '/edit-pdf', '/edit-hindi-pdf', '/latex-to-pdf', '/chatgpt-to-pdf'];
+const PATHS = ['/', '/edit-pdf', '/edit-hindi-pdf', '/latex-to-pdf', '/chatgpt-to-pdf', '/how-to-edit-a-pdf'];
 
 const res = await fetch('https://api.indexnow.org/indexnow', {
     method: 'POST',

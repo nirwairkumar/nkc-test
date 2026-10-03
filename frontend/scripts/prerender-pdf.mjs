@@ -31,6 +31,7 @@ const PAGE_SOURCE = {
     hindi: 'src/pdf/pages/PdfEditorPage.tsx',
     latex: 'src/pdf/pages/LatexToPdfPage.tsx',
     chatgpt: 'src/pdf/pages/LatexToPdfPage.tsx',
+    guide: 'src/pdf/guide/HowToEditPdf.tsx',
     notFound: 'src/pdf/pages/NotFoundPage.tsx',
 };
 const entry = manifest['pdf.html'];
@@ -79,7 +80,7 @@ if (!entry) throw new Error('manifest has no pdf.html entry');
 // --- sitemap.xml ----------------------------------------------------------
 const urls = SITEMAP_PAGES.map((p) => {
     const image = p.app ? `\n    <image:image><image:loc>${absoluteUrl(p.app.screenshot)}</image:loc></image:image>` : '';
-    return `  <url>\n    <loc>${absoluteUrl(p.path)}</loc>\n    <lastmod>${UPDATED}</lastmod>${image}\n  </url>`;
+    return `  <url>\n    <loc>${absoluteUrl(p.path)}</loc>\n    <lastmod>${p.updated ?? UPDATED}</lastmod>${image}\n  </url>`;
 });
 fs.writeFileSync(
     path.join(dist, 'sitemap.xml'),
@@ -102,6 +103,7 @@ const llms = [
     '',
     '## Guides',
     '',
+    ...SITEMAP_PAGES.filter((p) => p.article).map((p) => `- [${p.article.headline}](${absoluteUrl(p.path)}): ${p.description}`),
     '- [Stop painting white boxes on your PDFs](https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs): the complete guide to Panna — every tool, how same-font editing and true erasing work, Hindi support, and a comparison with other PDF editors',
     '- [Panna in the TestoZa user guide](https://testoza.com/user-guide/pdf-tools)',
     '',

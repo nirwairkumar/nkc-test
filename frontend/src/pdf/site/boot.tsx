@@ -32,6 +32,7 @@ const pages: Record<PageKey, Loadable> = {
     hindi: loadable(() => import('../pages/PdfEditorPage').then((m) => () => <m.default variant="hindi" />)),
     latex: loadable(() => import('../pages/LatexToPdfPage').then((m) => () => <m.default />)),
     chatgpt: loadable(() => import('../pages/LatexToPdfPage').then((m) => () => <m.default variant="chatgpt" />)),
+    guide: loadable(() => import('../guide/HowToEditPdf').then((m) => m.default)),
     notFound: loadable(() => import('../pages/NotFoundPage').then((m) => m.default)),
 };
 

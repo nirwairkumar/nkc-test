@@ -51,12 +51,46 @@ export function structuredData(page: SitePage): object {
         description: page.description,
         isPartOf: { '@id': SITE_ID },
         inLanguage: page.key === 'hindi' ? ['en', 'hi'] : 'en',
-        dateModified: UPDATED,
+        dateModified: page.updated ?? UPDATED,
+        ...(page.article ? { datePublished: page.article.published } : {}),
         primaryImageOfPage: { '@type': 'ImageObject', url: absoluteUrl(page.ogImage), width: 1200, height: 630 },
         ...(page.key !== 'home' ? { breadcrumb: { '@id': `${url}#breadcrumb` } } : {}),
         ...(page.app ? { mainEntity: { '@id': `${url}#app` } } : {}),
+        ...(page.article ? { mainEntity: { '@id': `${url}#article` } } : {}),
         publisher: { '@id': ORG_ID },
     });
+    if (page.article) {
+        const a = page.article;
+        graph.push({
+            '@type': 'Article',
+            '@id': `${url}#article`,
+            headline: a.headline,
+            description: page.description,
+            image: { '@type': 'ImageObject', url: absoluteUrl(page.ogImage), width: 1200, height: 630 },
+            datePublished: a.published,
+            dateModified: a.modified,
+            author: { '@type': 'Organization', name: a.author, url: `${PANNA.testoza}/about` },
+            publisher: { '@id': ORG_ID },
+            mainEntityOfPage: { '@id': `${url}#webpage` },
+            isPartOf: { '@id': SITE_ID },
+            inLanguage: 'en',
+            about: { '@type': 'Thing', name: 'Editing PDF files' },
+            mentions: TOOL_PAGES.filter((t) => t.key === 'editor' || t.key === 'hindi').map((t) => ({ '@type': 'WebApplication', name: t.app!.name, url: absoluteUrl(t.path) })),
+        });
+        if (a.steps?.length) {
+            graph.push({
+                '@type': 'HowTo',
+                '@id': `${url}#howto`,
+                name: 'How to edit a PDF online without changing the font',
+                description: page.description,
+                totalTime: 'PT2M',
+                estimatedCost: { '@type': 'MonetaryAmount', currency: 'INR', value: '0' },
+                tool: [{ '@type': 'HowToTool', name: 'A web browser on a phone or computer' }],
+                step: a.steps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.title, text: s.text, url: `${url}#${a.stepsAnchor ?? 'steps'}` })),
+                isPartOf: { '@id': `${url}#article` },
+            });
+        }
+    }
     if (page.key !== 'home') {
         graph.push({
             '@type': 'BreadcrumbList',
@@ -118,7 +152,9 @@ export function headHtml(page: SitePage): string {
         `<meta name="description" content="${esc(page.description)}" />`,
         `<meta name="robots" content="${robots(page)}" />`,
         page.index ? `<link rel="canonical" href="${url}" />` : '',
-        `<meta property="og:type" content="website" />`,
+        `<meta property="og:type" content="${page.article ? 'article' : 'website'}" />`,
+        page.article ? `<meta property="article:published_time" content="${page.article.published}" />` : '',
+        page.article ? `<meta property="article:modified_time" content="${page.article.modified}" />` : '',
         `<meta property="og:site_name" content="Panna by TestoZa" />`,
         `<meta property="og:locale" content="en_IN" />`,
         `<meta property="og:title" content="${esc(page.title)}" />`,
@@ -167,6 +203,7 @@ export function applyHead(page: SitePage) {
     document.title = page.title;
     meta('name', 'description', page.description);
     meta('name', 'robots', robots(page));
+    meta('property', 'og:type', page.article ? 'article' : 'website');
     meta('property', 'og:title', page.title);
     meta('property', 'og:description', page.description);
     meta('property', 'og:url', url);
