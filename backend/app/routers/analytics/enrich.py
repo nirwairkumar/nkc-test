@@ -244,16 +244,91 @@ def _header_text(value: Optional[str]) -> Optional[str]:
     return value[:80] or None
 
 
-def geo_from_headers(headers: Mapping[str, str]) -> dict:
+def _country(value: Optional[str]) -> Optional[str]:
+    code = (value or "").strip().upper()
+    return code if len(code) == 2 and code.isalpha() and code != "XX" else None
+
+
+# Last-resort country from the browser's time zone (single-country zones only).
+TIMEZONE_COUNTRY = {
+    "Asia/Kolkata": "IN", "Asia/Calcutta": "IN", "Asia/Kathmandu": "NP", "Asia/Katmandu": "NP",
+    "Asia/Dhaka": "BD", "Asia/Dacca": "BD", "Asia/Karachi": "PK", "Asia/Colombo": "LK", "Asia/Thimphu": "BT",
+    "Asia/Dubai": "AE", "Asia/Riyadh": "SA", "Asia/Qatar": "QA", "Asia/Kuwait": "KW", "Asia/Muscat": "OM",
+    "Asia/Bahrain": "BH", "Asia/Singapore": "SG", "Asia/Kuala_Lumpur": "MY", "Asia/Manila": "PH",
+    "Asia/Jakarta": "ID", "Asia/Bangkok": "TH", "Asia/Tokyo": "JP", "Asia/Shanghai": "CN", "Asia/Hong_Kong": "HK",
+    "Europe/London": "GB", "Europe/Dublin": "IE", "Europe/Berlin": "DE", "Europe/Paris": "FR",
+    "Europe/Amsterdam": "NL", "Europe/Rome": "IT", "Europe/Madrid": "ES", "Europe/Stockholm": "SE",
+    "Europe/Moscow": "RU", "Europe/Istanbul": "TR",
+    "America/New_York": "US", "America/Chicago": "US", "America/Denver": "US", "America/Los_Angeles": "US",
+    "America/Phoenix": "US", "America/Anchorage": "US", "Pacific/Honolulu": "US", "America/Detroit": "US",
+    "America/Toronto": "CA", "America/Vancouver": "CA", "America/Edmonton": "CA", "America/Winnipeg": "CA",
+    "America/Sao_Paulo": "BR", "America/Mexico_City": "MX",
+    "Australia/Sydney": "AU", "Australia/Melbourne": "AU", "Australia/Brisbane": "AU", "Australia/Perth": "AU",
+    "Pacific/Auckland": "NZ", "Africa/Johannesburg": "ZA", "Africa/Lagos": "NG", "Africa/Nairobi": "KE",
+    "Africa/Cairo": "EG",
+}
+
+
+def geo_from_headers(headers: Mapping[str, str], timezone: Optional[str] = None) -> dict:
     """
-    Country always (CF-IPCountry). City and region need Cloudflare → Rules →
-    Transform Rules → Managed Transforms → "Add visitor location headers".
+    City and region come from Cloudflare's "Add visitor location headers".
+
+    The API is reached through the `backend-proxy` Worker (apigcp.testoza.com), and
+    Cloudflare drops CF-IPCountry on a Worker's request to Cloud Run, so the Worker
+    forwards the visitor's country as X-Visitor-Country. The browser's time zone is
+    the last resort.
     """
-    country = (headers.get("cf-ipcountry") or "").strip().upper()
-    if len(country) != 2 or country == "XX":
-        country = None
+    country = (
+        _country(headers.get("cf-ipcountry"))
+        or _country(headers.get("x-visitor-country"))
+        or TIMEZONE_COUNTRY.get(timezone or "")
+    )
     return {
         "country_code": country,
         "region": _header_text(headers.get("cf-region")),
         "city": _header_text(headers.get("cf-ipcity")),
     }
+
+
+# ── Data-centre traffic (crawlers that run JavaScript with a normal browser UA) ──
+# Networks people don't browse from: Meta (link previews for Facebook/WhatsApp/
+# Instagram and ad review), Google, Microsoft, Amazon, Oracle and hosting companies.
+DATACENTER_ASNS = {
+    32934: "Meta", 63293: "Meta", 15169: "Google", 396982: "Google Cloud", 8075: "Microsoft",
+    16509: "Amazon", 14618: "Amazon", 31898: "Oracle", 14061: "DigitalOcean", 16276: "OVH",
+    24940: "Hetzner", 63949: "Akamai Linode", 20473: "Vultr", 45102: "Alibaba", 132203: "Tencent",
+}
+# Small towns that host Meta data centres; real visitors from them are vanishingly rare.
+META_DATACENTER_TOWNS = {
+    ("prineville", "oregon"), ("forest city", "north carolina"), ("altoona", "iowa"), ("luleå", "norrbotten"),
+    ("clonee", "leinster"), ("clonee", "meath"), ("los lunas", "new mexico"), ("papillion", "nebraska"),
+    ("springfield", "nebraska"), ("sarpy", "nebraska"), ("new albany", "ohio"), ("henrico", "virginia"),
+    ("sandston", "virginia"), ("eagle mountain", "utah"), ("gallatin", "tennessee"), ("kuna", "idaho"),
+    ("rosemount", "minnesota"),
+}
+PACIFIC_REGIONS = {"california", "oregon", "washington", "nevada", "idaho", "british columbia", "baja california"}
+
+
+def datacenter_reason(geo: Mapping[str, Optional[str]], timezone: Optional[str], screen: Optional[str],
+                      asn: Optional[str] = None) -> Optional[str]:
+    """
+    A reason when the visit almost certainly came from a data centre, else None.
+    These crawlers run the page with an iPhone or Chrome user agent, so the
+    user-agent rules in detect_bot() can't see them.
+    """
+    try:
+        owner = DATACENTER_ASNS.get(int(asn)) if asn else None
+    except ValueError:
+        owner = None
+    if owner:
+        return f"{owner} data centre"
+    city = (geo.get("city") or "").lower()
+    region = (geo.get("region") or "").lower()
+    if (city, region) in META_DATACENTER_TOWNS:
+        return "Meta data centre"
+    if screen == "2000x2000":
+        return "headless browser screen"
+    # Meta's renderer reports California time wherever it runs (Sweden, Ireland, Ohio…).
+    if timezone == "America/Los_Angeles" and region and region not in PACIFIC_REGIONS:
+        return "time zone doesn't match location"
+    return None

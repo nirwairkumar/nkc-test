@@ -145,6 +145,7 @@ export function siteLabel(host: string | null | undefined): string {
 export function place(r: { city?: string | null; region?: string | null; country_code?: string | null }): string {
     // City-states (Dhaka, Delhi, Dubai) report the same city and region.
     const parts = [r.city, r.region !== r.city ? r.region : null].filter(Boolean);
+    if (!r.country_code) return parts.length ? parts.join(', ') : 'Unknown';
     const country = countryName(r.country_code);
     if (!parts.length) return country;
     return r.country_code === 'IN' ? parts.join(', ') : `${parts.join(', ')}, ${country}`;

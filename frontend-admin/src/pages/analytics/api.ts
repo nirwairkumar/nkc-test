@@ -36,6 +36,9 @@ export interface Summary {
     guest_submissions: number;
     ai_generations: number;
     pdf_exports: number;
+    /** Accounts created automatically for people who took an exam without one (not sign-ups). */
+    candidates?: number;
+    candidate_submissions?: number;
 }
 
 export interface SeriesPoint {
@@ -200,6 +203,10 @@ export interface Person {
         is_premium: boolean | null;
         avatar_url: string | null;
         is_team: boolean;
+        is_candidate?: boolean;
+        candidate_name?: string | null;
+        is_verified_creator?: boolean;
+        recent_attempts?: { id: string; test_id: string; created_at: string; score: number | null; title: string | null; total_max_marks: number | null; creator_name: string | null; own_test: boolean | null }[];
         tests_created: number;
         tests_taken: number;
         submissions_received: number;
@@ -216,6 +223,7 @@ export interface Growth {
     visitors: number;
     new_visitors: number;
     signups: number;
+    candidates?: number;
     created_test: number;
     got_submission: number;
     took_test: number;
@@ -276,6 +284,44 @@ export interface Health {
     legacy: { page_views: number; first_at: string | null; last_at: string | null };
 }
 
+export type PeopleSegment = 'members' | 'educator' | 'student' | 'unset' | 'candidate' | 'team' | 'follow_up';
+export type PeopleSort = 'newest' | 'active' | 'tests' | 'results';
+export type PersonKind = 'team' | 'candidate' | 'educator' | 'student' | 'unset';
+export type EducatorStage = 'signed_up' | 'created_test' | 'getting_results' | 'went_quiet';
+export type FollowUp = 'no_results' | 'no_test' | 'went_quiet';
+
+export interface PeopleRow {
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    candidate_name: string | null;
+    avatar_url: string | null;
+    designation: string | null;
+    kind: PersonKind;
+    stage: EducatorStage | null;
+    follow_up: FollowUp | null;
+    created_at: string;
+    last_active_at: string | null;
+    last_result_at: string | null;
+    tests_created: number;
+    results: number;
+    tests_taken: number;
+    visits: number;
+    ai_generations: number;
+    is_verified_creator: boolean;
+    is_premium: boolean;
+}
+
+export interface PeopleReport {
+    counts: {
+        members: number; educator: number; student: number; unset: number; candidate: number; team: number;
+        follow_up: number; new_7d: number;
+        stages: Record<EducatorStage, number>;
+    };
+    total: number;
+    rows: PeopleRow[];
+}
+
 /** Thrown when the analytics v2 SQL migration has not been applied yet. */
 export class NotInstalledError extends Error {
     constructor() {
@@ -307,4 +353,6 @@ export const insightsApi = {
     growth: (period: Period) => get<GrowthReport>('growth', { period }),
     tests: (period: Period) => get<TestsReport>('tests', { period, limit: 50 }),
     health: () => get<Health>('health'),
+    people: (p: { segment: PeopleSegment; q?: string; sort: PeopleSort; limit?: number; offset?: number }) =>
+        get<PeopleReport>('people', { ...p, q: p.q || undefined, limit: p.limit ?? 40, offset: p.offset ?? 0 }),
 };

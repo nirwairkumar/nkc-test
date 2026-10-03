@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import AdminLoginPanel from './AdminLoginPanel';
 import AnalyticsPanel from './analytics/AnalyticsPanel';
+import UsersPanel from './users/UsersPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
 import AITestImporter from './AITestImporter';
@@ -257,8 +258,9 @@ export default function AdminDashboard() {
             <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
                     {activeTab === 'analytics' && <AnalyticsPanel />}
+                    {activeTab === 'users' && <UsersPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
-                    {['tests', 'categories', 'users', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
+                    {['tests', 'categories', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
                         <ManageTests activeTab={activeTab} />
                     )}
                     {activeTab === 'builder' && <CreateTestPage />}

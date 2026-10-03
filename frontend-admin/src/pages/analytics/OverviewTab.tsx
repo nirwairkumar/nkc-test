@@ -127,9 +127,11 @@ function Tiles({ d, period, metric, setMetric }: { d: Overview; period: Period; 
                 {...tile('engagement')} deltaUnit=" pts" sub={cur.bounceRate !== null ? `bounce ${pct(cur.bounceRate)}` : undefined}
                 info="Visits with 10+ seconds of active time, 2+ pages or an action (GA4 definition). Change shown in percentage points." />
             <StatTile label="Sign-ups" value={num(s.signups)} delta={change(s.signups, p.signups)} {...tile('signups')}
-                sub={s.new_visitors ? `${pct((s.signups / s.new_visitors) * 100, 1)} of new visitors` : undefined} />
+                sub={s.candidates ? `+${num(s.candidates)} exam candidates` : s.new_visitors ? `${pct((s.signups / s.new_visitors) * 100, 1)} of new visitors` : undefined}
+                info="People who created an account. Exam candidates — hidden logins made automatically when someone takes an exam without an account — are counted separately." />
             <StatTile label="Tests taken" value={num(s.submissions)} delta={change(s.submissions, p.submissions)} {...tile('submissions')}
-                sub={`${num(s.guest_submissions)} by guests`} info="North Star. Submissions by students — excluding a creator taking their own test and your team." />
+                sub={`${num((s.candidate_submissions ?? 0) + s.guest_submissions)} without an account`}
+                info="North Star. Tests submitted by candidates — excluding a creator taking their own test and your team. Includes people who took an exam without an account." />
             <StatTile label="Tests created" value={num(s.tests_created)} delta={change(s.tests_created, p.tests_created)} {...tile('tests_created')}
                 sub="by educators" />
         </>

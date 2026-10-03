@@ -134,6 +134,9 @@ def build_ingest_payload(beacon: Beacon, host: str, headers) -> dict:
         ref_host, ref_path = None, None  # moving between our own sites is not a referral
 
     screen = f"{beacon.sw}x{beacon.sh}" if beacon.sw and beacon.sh else None
+    geo = enrich.geo_from_headers(headers, beacon.tz)
+    if bot_reason is None:
+        bot_reason = enrich.datacenter_reason(geo, beacon.tz, screen, headers.get("x-visitor-asn"))
     events = []
     for e in beacon.events:
         item = e.model_dump(mode="json", exclude_none=True)
@@ -159,7 +162,7 @@ def build_ingest_payload(beacon: Beacon, host: str, headers) -> dict:
             "utm_campaign": utm.get("campaign"),
             "utm_term": utm.get("term"),
             "utm_content": utm.get("content"),
-            **enrich.geo_from_headers(headers),
+            **geo,
             **device,
             "screen": screen,
             "language": beacon.lang,

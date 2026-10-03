@@ -268,3 +268,24 @@ def tests(period: str = "30d", limit: int = Query(25, ge=1, le=200),
 @router.get("/health")
 def health():
     return _rpc("analytics_report_health", {})
+
+
+PEOPLE_SEGMENTS = ("members", "educator", "student", "unset", "candidate", "team", "follow_up")
+PEOPLE_SORTS = ("newest", "active", "tests", "results")
+
+
+@router.get("/people")
+def people(segment: str = "members", q: Optional[str] = None, sort: str = "newest",
+           limit: int = Query(40, ge=1, le=200), offset: int = Query(0, ge=0, le=100_000)):
+    """Accounts for Admin → Users: role, educator stage, activity, follow-up reason, counts per segment."""
+    if segment not in PEOPLE_SEGMENTS:
+        raise HTTPException(status_code=400, detail=f"segment must be one of {', '.join(PEOPLE_SEGMENTS)}")
+    if sort not in PEOPLE_SORTS:
+        raise HTTPException(status_code=400, detail=f"sort must be one of {', '.join(PEOPLE_SORTS)}")
+    return _rpc("analytics_report_people", {
+        "p_segment": segment,
+        "p_q": (q or "").strip()[:100] or None,
+        "p_sort": sort,
+        "p_limit": limit,
+        "p_offset": offset,
+    })

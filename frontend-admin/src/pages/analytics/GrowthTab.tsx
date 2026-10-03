@@ -61,7 +61,7 @@ export default function GrowthTab({ period }: { period: Period }) {
                 {g && p ? (
                     <>
                         <StatTile label="Sign-ups" value={num(g.signups)} delta={change(g.signups, p.signups)} deltaTitle={vs}
-                            sub={`in ${PERIOD_LABEL[period]}`} />
+                            sub={g.candidates ? `+${num(g.candidates)} exam candidates (not counted)` : `in ${PERIOD_LABEL[period]}`} />
                         <StatTile label="Visitor → sign-up" value={pct(ratio(g.signups, g.new_visitors), 1)}
                             info="Sign-ups divided by new visitors in the period." sub={`${num(g.new_visitors)} new visitors`} />
                         <StatTile label="Created a test" value={pct(ratio(g.created_test, g.signups))}

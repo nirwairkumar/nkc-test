@@ -180,3 +180,68 @@ SELECT pg_get_expr(adbin, adrelid) FROM pg_attrdef
 - **Admin UI** — rendered against fixtures produced by the real SQL functions over ~3,200 synthetic visits: all five tabs and the sheets at 1440 px and 390 px, no page errors, no horizontal scrolling. Builds: frontend, pdf site (6 pre-rendered pages), admin.
 - Pre-existing TypeScript errors in unrelated files (frontend: `TestLikeButton.tsx`, `NotificationsPage.tsx`; admin: 12 in `components/ui/*` etc.) are unchanged.
 
+
+---
+
+## 9. Part 2 — people, Users page, data quality (2026-10-03)
+
+### What was wrong after a week of live data
+- **"Sign-ups" counted exam candidates.** When someone takes an exam without an account, the backend creates a hidden login (`candidate_<id>@guest.testoza.com`; `attempts.py` and `services/exam_session_store.py`). Every attempt row needs one: `user_tests.user_id` is a foreign key to `auth.users`. The 3 "sign-ups" on 3 Oct were all candidates (9 since 1 Oct).
+- **59% of "people" visits were Meta's link-preview crawlers.** WhatsApp/Facebook load every shared link from Meta data centres with an iPhone user agent. All had California time and 440×956 or 2000×2000 screens; they came from Prineville, Forest City, Luleå and Clonee, with zero engagement. That was 52 of 88 visits.
+- **Country empty for every visit.** `apigcp.testoza.com` is the `backend-proxy` Worker, and Cloudflare drops `CF-IPCountry` when a Worker calls Cloud Run. City and region still arrive.
+- **Roles don't match across the product:**
+  - Onboarding page: Student · Teacher · Institution · Other.
+  - Sign-up pop-up: Teacher / Educator · School / Coaching Institution · **"Student / Independent Creator" saved as `Other`**.
+  - Profile page: Student · Teacher · Institution · Guest.
+  - Old admin Users table: Student · Teacher · Institution · Guest · Admin. It had no "Other", and an empty role displayed as "Student".
+
+### What changed
+- **SQL** `supabase/migrations/20261003120000_analytics_people.sql` (idempotent):
+  - `analytics_candidate_user_ids()` / `analytics_non_member_ids()`: sign-ups, active users and retention now exclude team **and** exam candidates. Candidates' attempts still count as tests taken; there is a new `candidates` / `candidate_submissions` count.
+  - `analytics_candidate_name()` reads the name typed in the join-code roster or the start form.
+  - `analytics_report_people()` powers the new Users page.
+  - Back-fill: past crawler visits are flagged as bots, and country is filled from the browser time zone.
+- **Backend:**
+  - `enrich.datacenter_reason()` catches crawlers through a data-centre ASN (via the Worker), Meta data-centre towns, a 2000×2000 screen, or a California time zone in another region.
+  - Country comes from `CF-IPCountry`, then `X-Visitor-Country` (Worker), then the time zone.
+  - `GET /api/analytics/v2/people` (admin only).
+- **Admin → Users** (`frontend-admin/src/pages/users/`) replaces the old table:
+  - Educators' journey (signed up → made a test → getting results / went quiet) and "Educators who need a nudge", with a pre-written follow-up email.
+  - Segments: All users · Educators · Students · No role · Exam candidates · Team · Follow up. Search and sort.
+  - Account sheet:
+    - Role picker with exactly the onboarding choices; Admin is not a role.
+    - Verified-creator switch, their tests and attempts, and where they first came from.
+    - Delete that says what is lost and requires typing "delete". Deleting cascades to their exam results.
+
+### Rollout
+1. Supabase SQL editor: run `20261003120000_analytics_people.sql`.
+2. Deploy the backend, then the admin app.
+3. Cloudflare → Workers & Pages → `backend-proxy` → Edit code, replace with:
+```js
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    url.hostname = 'nkc-test-2-0-backend-865364912760.asia-south1.run.app';
+    const proxyRequest = new Request(url.toString(), request);
+    // Cloudflare drops CF-IPCountry on this hop: pass the visitor's country and network on.
+    // Always overwrite, so a client can't send its own values.
+    const cf = request.cf || {};
+    proxyRequest.headers.delete('X-Visitor-Country');
+    proxyRequest.headers.delete('X-Visitor-Asn');
+    if (cf.country) proxyRequest.headers.set('X-Visitor-Country', String(cf.country));
+    if (cf.asn) proxyRequest.headers.set('X-Visitor-Asn', String(cf.asn));
+    return fetch(proxyRequest);
+  },
+};
+```
+   Deploy it. Order doesn't matter: the backend works with or without these headers.
+
+### Verified
+- SQL on PGlite, 28 new checks:
+  - Sign-ups 5 → 3 with candidates counted apart, while candidate tests still count.
+  - Candidate names come from the roster and the start form (never the phone number).
+  - Educator stages and the follow-up order work, along with paging and search.
+  - Crawlers are flagged; real Portland and Tambaram visits are untouched.
+  - Grants are locked.
+- Original suite: 73 checks pass. Backend: 120 checks pass, 23 of them new (Worker headers, time-zone fallback, crawler rules, collect flags Meta, people endpoint, admin-only).
+- Users page screenshots at 1440 px and 390 px against fixtures from the real SQL, with no page errors and no horizontal scroll.
