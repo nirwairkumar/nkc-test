@@ -366,6 +366,22 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: Hindi online test maker (https://testoza.com/hindi-online-test-maker)
+
+A long-form guide for Hindi-medium schools and coaching institutes on making online tests in Hindi, with TestoZa as the worked example, and a short summary in Hindi. Product details checked against the app on 3 October 2026.
+
+- **What to check in any Hindi test maker:** Unicode storage (legacy fonts such as Kruti Dev, Chanakya and DevLys store English letters, so “भारत की राजधानी” arrives as “Hkkjr dh jkt/kkuh”); typing without a Hindi keyboard; reading existing papers; a Hindi typeface that renders matras and conjuncts on cheap phones; bilingual papers (NEET gives Hindi-medium candidates one Hindi + English booklet; the English version is final). Census 2011: 52.8 crore people (43.6%) counted under Hindi as mother tongue.
+- **Typing:** every question card in TestoZa's test builder has an English | हिंदी switch (question, options, passage; the test description has one; the test name does not). Type in English letters and press space: a word made only of letters becomes Hindi via Google's transliteration service (“prashn” → प्रश्न), with up to five suggestions in a bar until the next letter is typed. New questions follow the last language used. Needs the internet. Capitals make no difference; doubling long vowels fixes most wrong first guesses (kaaran → कारण, shoonya → शून्य, vigyaan → विज्ञान); kam gives काम first (कम is second). English abbreviations (SI, km, pH) are converted too (सी, कम), so switch the card to English for them. Type the space before a question mark. Alternatives: Gboard or the iPhone's Hindi keyboards, Windows Hindi Phonetic, Inscript.
+- **Importing:** Fill from photo types one printed or handwritten question into a card, keeps Hindi, maps (क)–(घ) to A–D, takes the answer only from a mark or a printed “उत्तर: (ग)”, drops “प्रश्न 5”. Import from PDF or photos (AI test generator) reads PDFs and PNG/JPG/WEBP; Word files must be saved as PDF. A PDF's own text is read where it has text, so a Kruti Dev PDF can come through as English letters; photos are read as pictures. Convert legacy-font files to Unicode or upload photos. TestoZa does not convert Kruti Dev.
+- **Language Output (AI import):** Same as Material, English, Hindi, or English + Hindi (bilingual: every question and option in both, one under the other, the first-selected language on top). Hindi for an English source is a translation: check terms against the Hindi-medium textbook (e.g. NCERT's फोकस दूरी, अपवर्तनांक).
+- **On students' phones:** TestoZa's screens use Mukta (Ek Type, Devanagari + Latin); a faint − / + at the top right of the question sets the text size from 12 to 32 px (18 to start); exam buttons (Back, Clear, Flag, Save & Next, Submit Test) are in English. No language switch on the exam screen: bilingual papers show both languages together.
+- **Formulas and numbers:** numbers and symbols stay as typed in Hindi mode; formulas go in with Sy Pad (Maths & symbols); numerical answers use 0–9 from the exam screen's keypad (Article 343: international numerals are the official form).
+- **Coaching:** NEET-UG (Hindi + English booklet, 180 questions, 180 min, +4/−1), SSC CGL Tier 1 (Hindi and English except English Comprehension, 100 questions, 60 min, +2/−0.5), RRB NTPC CBT 1 (15 languages, 100 questions, 90 min, −1/3), CTET (Hindi and English, 150 questions, 150 min, no negative marking).
+- **Google Forms:** stores Unicode Hindi and grades quizzes, but has no Hindi typing of its own, no reading of papers, no timer or negative marking without add-ons.
+- **Limits:** no exam-screen language switch; the app interface is in English; AI output in English, Hindi or both only; no Kruti Dev conversion; Hindi typing needs the internet; option letters are A–D; objective questions only. Building tests, Hindi typing, AI import (hourly limits), links, join codes and results are free; paid plans ₹49/week, ₹149/month, ₹799/year.
+
+---
+
 ## Guide: How to conduct an online exam (https://testoza.com/how-to-conduct-online-exam)
 
 A long-form, step-by-step guide for school teachers, coaching institutes, college exam cells and recruiters, with TestoZa as the worked example. Product details checked against the app on 2 October 2026.

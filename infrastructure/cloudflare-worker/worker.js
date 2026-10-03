@@ -1265,7 +1265,9 @@ function securityHeaders() {
     'https://www.google-analytics.com',
     'https://*.google-analytics.com',
     'https://apigcp.testoza.com',
-    'https://challenges.cloudflare.com'
+    'https://challenges.cloudflare.com',
+    // Hindi typing (components/ui/IMEInput.tsx and the demo on /hindi-online-test-maker).
+    'https://inputtools.google.com'
   ].join(' ');
 
   return {

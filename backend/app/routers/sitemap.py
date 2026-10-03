@@ -55,6 +55,7 @@ STATIC_PAGES = [
     {"loc": "/neet-online-test-software", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/moodle-alternative", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/how-to-conduct-online-exam", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/hindi-online-test-maker", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
     {"loc": "/more-tests", "priority": "0.85", "changefreq": "daily"},

@@ -119,6 +119,7 @@ async function generateSitemap() {
             { url: '/neet-online-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
             { url: '/moodle-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },
             { url: '/how-to-conduct-online-exam', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },
+            { url: '/hindi-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-03T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

@@ -43,6 +43,7 @@ const LINK_COLUMNS = [
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
             // Long-form guides (src/guides).
+            { label: 'Hindi online test maker', to: '/hindi-online-test-maker' },
             { label: 'How to conduct an online exam', to: '/how-to-conduct-online-exam' },
             { label: 'Moodle alternative', to: '/moodle-alternative' },
             { label: 'AI test generator guide', to: '/ai-test-generator' },

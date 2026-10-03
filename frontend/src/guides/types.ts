@@ -50,7 +50,12 @@ export type GuideWidget =
     | 'conduct-new-exam'
     | 'conduct-rules'
     | 'conduct-exam-day'
-    | 'conduct-checklist';
+    | 'conduct-checklist'
+    // hindi-online-test-maker
+    | 'hindi-typing'
+    | 'hindi-unicode-check'
+    | 'hindi-ai-language'
+    | 'hindi-exam-screen';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

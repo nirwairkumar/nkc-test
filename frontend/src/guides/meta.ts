@@ -251,8 +251,45 @@ export const CONDUCT_META: GuideMeta = {
     cta: { label: 'Make your exam paper, free', href: '/generate-with-ai' },
 };
 
+export const HINDI_META: GuideMeta = {
+    slug: 'hindi-online-test-maker',
+    path: '/hindi-online-test-maker',
+    title: 'Hindi online test maker: make tests in Hindi without a Hindi keyboard',
+    seoTitle: 'Hindi Online Test Maker: Make Tests in Hindi Free',
+    description:
+        'Make online tests in Hindi without a Hindi keyboard: type in English letters, import Hindi papers with AI, make bilingual tests and share them free.',
+    dek:
+        'Most Hindi papers still begin as a Kruti Dev file, a photocopied booklet or a photo on WhatsApp. Here is how to turn them into online tests that read correctly on every student’s phone: typing Hindi in English letters, bringing old papers in without retyping, Hindi and English bilingual papers, and the mistakes that turn भारत into “Hkkjr”.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-03T12:00:00+05:30',
+    dateModified: '2026-10-03T12:00:00+05:30',
+    readMinutes: 22,
+    cover: {
+        src: '/guides/hindi-online-test-maker/cover.png',
+        alt: 'TestoZa’s question card on a phone in हिंदी mode with the question “निर्वात में प्रकाश की चाल कितनी होती है”, typed in English letters, and Hindi word suggestions above it, beside the words Hindi online test maker',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Hindi online test maker',
+        'online test maker in Hindi',
+        'create online test in Hindi',
+        'Hindi quiz maker',
+        'Hindi MCQ test maker',
+        'bilingual test maker Hindi English',
+        'type Hindi in online test',
+        'Hindi medium online test',
+        'Kruti Dev to Unicode online test',
+        'हिंदी में ऑनलाइन टेस्ट कैसे बनाएं',
+        'ऑनलाइन टेस्ट मेकर',
+        'TestoZa',
+    ],
+    // Hindi typing lives in the test builder; AI import is one tap from there.
+    cta: { label: 'Make a Hindi test, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;
