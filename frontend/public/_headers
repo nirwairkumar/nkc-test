@@ -1,5 +1,14 @@
 # Caching rules for static assets on Cloudflare Pages
 
+# 0. Copies of the site that must stay out of search: the raw pages.dev hosts
+#    (production and previews) and the staging site. One public site per page.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
+https://testing.testoza.com/*
+  X-Robots-Tag: noindex
+
 # 1. Vite hashed assets inside /assets/ (JS, CSS, images) - 1 year cache (immutable)
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

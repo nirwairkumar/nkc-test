@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { safeJsonLd } from '@/utils/sanitize';
+import { publicUrl } from '@/utils/marketingPaths';
 
 interface SEOProps {
     title: string;
@@ -19,6 +20,13 @@ interface SEOProps {
 const DEFAULT_IMAGE = "https://testoza.com/default-og.png";
 const SITE_URL = "https://testoza.com";
 const DEFAULT_SITE_NAME = "TestoZa";
+
+// testoza.com answers app pages with a 301 to app.testoza.com (utils/marketingPaths.ts),
+// so their canonical and og:url name app.testoza.com — the URL people actually land on.
+const toPublicUrl = (href: string) =>
+    href === SITE_URL || href.startsWith(`${SITE_URL}/`) || href.startsWith(`${SITE_URL}?`)
+        ? publicUrl(href.slice(SITE_URL.length) || '/')
+        : href;
 
 export const SEO: React.FC<SEOProps> = ({
     title,
@@ -41,11 +49,12 @@ export const SEO: React.FC<SEOProps> = ({
             : `${title} | ${siteName}`;
     const metaImage = image || DEFAULT_IMAGE;
 
-    // Ensure URL is absolute if provided, otherwise use current path on the main domain to consolidate indexing authority.
-    const metaUrl = url 
-        ? (url.startsWith('http') ? url : `${SITE_URL}${url}`) 
-        : `${SITE_URL}${window.location.pathname}${window.location.search}`;
-    const finalCanonicalUrl = canonicalUrl || metaUrl;
+    // Ensure URL is absolute if provided, otherwise use the current path: marketing pages on
+    // testoza.com, app pages on app.testoza.com.
+    const metaUrl = url
+        ? (url.startsWith('http') ? toPublicUrl(url) : publicUrl(url))
+        : publicUrl(`${window.location.pathname}${window.location.search}`);
+    const finalCanonicalUrl = canonicalUrl ? toPublicUrl(canonicalUrl) : metaUrl;
 
     // Build description including categories if relevant
     let finalDescription = description;

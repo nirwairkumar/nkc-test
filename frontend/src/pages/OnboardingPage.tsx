@@ -95,6 +95,19 @@ export default function OnboardingPage() {
 
             localStorage.setItem('user_designation', values.designation);
 
+            // GA4 "sign_up" — imported into Google Ads as the sign-up conversion. The page
+            // navigates away below, so wait (at most 1 s) for the hit to be sent.
+            await new Promise<void>((resolve) => {
+                const gtag = (window as any).gtag;
+                if (typeof gtag !== 'function') return resolve();
+                setTimeout(resolve, 1000);
+                gtag('event', 'sign_up', {
+                    method: user.app_metadata?.provider || 'email',
+                    user_role: values.designation,
+                    event_callback: () => resolve(),
+                });
+            });
+
             toast.success('Profile updated successfully!');
             const redirectIntent = localStorage.getItem('auth_redirect_intent');
             if (redirectIntent) {

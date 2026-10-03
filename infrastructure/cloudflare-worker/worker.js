@@ -27,6 +27,9 @@ import {
   mockGuideJsonLd,
   mockGuideUrl
 } from '../../frontend/src/guides/worker.ts';
+// Which paths testoza.com serves itself; everything else lives on app.testoza.com.
+// The app's in-browser redirect and canonical tags use the same rule.
+import { APP_ORIGIN, isAuthReturn, isMarketingPath } from '../../frontend/src/utils/marketingPaths.ts';
 
 // Configuration
 const CONFIG = {
@@ -186,12 +189,17 @@ async function handleSitemap(request) {
   if (!apiResponse.ok) {
     const originResponse = await fetch(request);
     if (originResponse.ok) {
-      return originResponse;
+      return new Response(appHostLocs(await originResponse.text()), {
+        headers: {
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.SITEMAP}`
+        }
+      });
     }
     return new Response('Sitemap not found', { status: 404 });
   }
 
-  const body = await apiResponse.text();
+  const body = appHostLocs(await apiResponse.text());
 
   // Cache the response
   const response = new Response(body, {
@@ -208,6 +216,46 @@ async function handleSitemap(request) {
   await cache.put(cacheKey, response.clone());
 
   return response;
+}
+
+/**
+ * Sitemap entries for app pages name app.testoza.com, the URL testoza.com 301s
+ * them to (see appRedirect). Sitemap files and marketing pages keep testoza.com.
+ */
+function appHostLocs(xml) {
+  return xml.replace(/<loc>https:\/\/testoza\.com(\/[^<]*)?<\/loc>/g, (match, path = '/') => {
+    const pathname = path.split(/[?#]/)[0];
+    if (/\.[a-z0-9]+$/i.test(pathname) || isMarketingPath(pathname)) return match;
+    return `<loc>${APP_ORIGIN}${path}</loc>`;
+  });
+}
+
+/**
+ * testoza.com serves only marketing pages; every other page lives on
+ * app.testoza.com. Answer those with an HTTP redirect, the same for every
+ * visitor and every crawler. Serving a 200 page that the browser then leaves with
+ * a JavaScript redirect is what Google Ads flags as cloaking ("Circumventing systems").
+ * Returns null when testoza.com serves the URL itself.
+ */
+function appRedirect(request, url) {
+  if (url.hostname !== 'testoza.com') return null;
+  if (request.method !== 'GET' && request.method !== 'HEAD') return null;
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/cdn-cgi/')) return null;
+
+  // OAuth sign-in responses finish on the app (the in-app guard does the same for hash tokens).
+  if (isAuthReturn(url.search) || url.pathname.startsWith('/auth/callback')) {
+    return redirectTo(`${APP_ORIGIN}/auth/callback${url.search}`, 302);
+  }
+  if (isMarketingPath(url.pathname)) return null;
+  return redirectTo(`${APP_ORIGIN}${url.pathname}${url.search}`, 301);
+}
+
+/** A redirect browsers keep for an hour only, so moving a page between hosts later is not stuck in caches. */
+function redirectTo(location, status) {
+  return new Response(null, {
+    status,
+    headers: { Location: location, 'Cache-Control': status === 301 ? 'public, max-age=3600' : 'no-store' }
+  });
 }
 
 /**
@@ -1851,6 +1899,12 @@ export default {
       const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
       if (hasStaticExtension) {
         return fetch(request);
+      }
+
+      // App pages (pricing, tests, sign-in …) → app.testoza.com, as a real HTTP redirect.
+      const appTarget = appRedirect(request, url);
+      if (appTarget) {
+        return appTarget;
       }
 
       // Guides (frontend/src/guides): full text and structured data for crawlers.

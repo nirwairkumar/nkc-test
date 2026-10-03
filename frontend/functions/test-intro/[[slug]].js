@@ -43,7 +43,8 @@ export async function onRequest(context) {
             if (parts.length > 0) description += ` | ${parts.join(' | ')}`;
 
             const image = test.og_image || "https://testoza.com/default-og.png";
-            const canonicalUrl = test.slug ? `https://testoza.com/test/${test.slug}` : `https://testoza.com/test-intro/${slugOrId}`;
+            // Test pages live on app.testoza.com; testoza.com/test-intro/… 301s here.
+            const canonicalUrl = test.slug ? `https://app.testoza.com/test/${test.slug}` : `https://app.testoza.com/test-intro/${slugOrId}`;
 
             // Rewriter
             return new HTMLRewriter()

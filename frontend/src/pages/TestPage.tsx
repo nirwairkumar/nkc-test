@@ -799,10 +799,9 @@ export default function TestPage() {
     if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
 
-    // Safety guard: Never intercept or disrupt interactions for search engine crawlers or Google Ad review bots
-    const isBot = /googlebot|adsbot|bingbot|crawler|spider/i.test(navigator.userAgent || '');
-    if (isBot) return;
-
+    // No user-agent exceptions here: every visitor, people and crawlers alike, gets the same
+    // page. Code that behaves differently for Google's crawlers is cloaking under Google Ads'
+    // "Circumventing systems" policy. Crawlers never reach this point (it needs a started exam).
     const settings = test.settings;
     if (!settings) return;
 
@@ -811,7 +810,6 @@ export default function TestPage() {
 
     // 1. Action Blocking (applies to all test types if enabled)
     const handleContextMenu = (e: Event) => {
-      if (isBot) return;
       if (settings.disable_actions) {
         e.preventDefault();
         return false;
@@ -819,7 +817,6 @@ export default function TestPage() {
     };
 
     const handleCopyPaste = (e: ClipboardEvent) => {
-      if (isBot) return;
       if (settings.disable_copy_paste) {
         e.preventDefault();
         toast.error("Copy/Paste is disabled for this test.");
