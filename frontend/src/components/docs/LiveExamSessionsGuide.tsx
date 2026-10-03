@@ -55,7 +55,7 @@ export default function LiveExamSessionsGuide() {
                         ['results', '6. Results, rank list and report cards'],
                         ['students', 'What candidates see'],
                         ['safety', 'What TestoZa enforces for you'],
-                        ['faq', 'Questions teachers ask'],
+                        ['faq', 'Common questions'],
                     ].map(([id, label]) => (
                         <li key={id}><a href={`#${id}`} className="text-sky-700 hover:underline dark:text-sky-400">{label}</a></li>
                     ))}
@@ -204,7 +204,7 @@ export default function LiveExamSessionsGuide() {
             <h2 id="day" className={H2}>4. On exam day</h2>
             <ol className="mt-4 space-y-3">
                 <Step n={1} title="Put the code on the projector">Open the exam and tap <Kbd>Projector</Kbd>. The code, QR code and the names of candidates who have joined fill the screen. Nothing private (no marks) is shown on it.</Step>
-                <Step n={2} title="Candidates join and wait">They see “You’re in” and a countdown, or “Waiting for your teacher to start”. You see “23 of 40 in the lobby”.</Step>
+                <Step n={2} title="Candidates join and wait">They see “You’re in” and a countdown, or “Waiting for your examiner to start”. You see “23 of 40 in the lobby”.</Step>
                 <Step n={3} title="Start">With <em>On time</em> the exam starts by itself. With <em>I tap Start</em>, tap <Kbd>Start exam now</Kbd> and every candidate gets a Start button at the same moment. Their timer begins when they tap it.</Step>
             </ol>
             <div className="mt-6 flex justify-center">
@@ -258,9 +258,10 @@ export default function LiveExamSessionsGuide() {
             <ol className="mt-4 space-y-3">
                 <Step n={1} title="testoza.com/join">Six boxes for the code, with the phone’s number pad. No account, no email, no OTP.</Step>
                 <Step n={2} title="Their details">The exam name, your institute, time and number of questions, then name / roll number / PIN — whatever you chose.</Step>
-                <Step n={3} title="The lobby">“You’re in, Rahul”, a countdown or “Waiting for your teacher”, how many have joined, and tips: keep the page open, charge the phone.</Step>
+                <Step n={3} title="The lobby">“You’re in, Rahul”, a countdown or “Waiting for your examiner”, how many have joined, and tips: keep the page open, charge the phone.</Step>
                 <Step n={4} title="The exam">The normal TestoZa exam screen, in full screen if your paper asks for it. Answers are saved to the server every 20 seconds.</Step>
                 <Step n={5} title="Submitted">“Submitted at 10:47”. Their marks, rank, section marks and strong / weak topics appear on the same page once results are released.</Step>
+                <Step n={6} title="Later, on any phone">Closed the page? At testoza.com/join they tap <Kbd>See your result</Kbd>, type the code and the same details as at the start (name, roll number, or roll number + PIN), and see their result, or when it will come out.</Step>
             </ol>
 
             {/* ── Safety ────────────────────────────────────────────────── */}
@@ -275,8 +276,9 @@ export default function LiveExamSessionsGuide() {
             </div>
 
             {/* ── FAQ ───────────────────────────────────────────────────── */}
-            <h2 id="faq" className={H2}>Questions teachers ask</h2>
+            <h2 id="faq" className={H2}>Common questions</h2>
             <div className="mt-4 space-y-3">
+                <Faq q="A candidate closed the result. How do they see it again?">At testoza.com/join they tap “See your result”, then type the exam code and the same details they gave at the start. It works after the exam has ended, on any phone. With “when I release them”, they see “Result not out yet” until you release. With roll number only, anyone who knows a roll number can open that result, so use roll number + PIN when results must stay private.</Faq>
                 <Faq q="Is the old “Conduct exam” link still there?">Yes. It still works the way it did, and you can add a code to it with “Get a join code”. Exam rooms are for exams you run with a batch.</Faq>
                 <Faq q="Is it only for students?">No. Anyone can be a candidate: school and coaching students, job applicants in a recruitment test, or staff in a training quiz. Use name check-in, or put the application numbers in a batch as roll numbers.</Faq>
                 <Faq q="Which check-in should I use?">Name only for a quick class quiz. Roll number for weekly tests. Roll number + PIN for monthly mocks and anything that goes to parents — it is the only one that stops a friend typing someone else’s roll number.</Faq>

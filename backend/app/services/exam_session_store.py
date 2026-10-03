@@ -128,7 +128,7 @@ def participant_by_token(db: Any, token: Optional[str]) -> Tuple[Dict[str, Any],
             "This exam was opened on another device. Continue there, or join again here with the code.",
         )
     if participant.get("status") == "removed":
-        raise SessionError(403, "removed", "Your teacher removed you from this exam.")
+        raise SessionError(403, "removed", "Your examiner removed you from this exam.")
     session = load_session(db, participant["session_id"])
     return participant, session
 

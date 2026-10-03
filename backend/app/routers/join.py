@@ -8,16 +8,23 @@ Student side of exam sessions: testoza.com/join.
     POST /api/join/me/heartbeat         progress + answer draft; returns time / force-submit
     GET  /api/join/me/result            score and rank, once results are released
 
+    GET  /api/join/result/{code}        "See your result": which details to ask for
+    POST /api/join/result/{code}        the result for those details, from any device
+
 Submission goes through POST /api/attempts/save with the X-Exam-Token header.
 Students never log in: identity comes from the session's check-in rule, and each device
 holds a random token (only its SHA-256 is stored). Joining again from another device
 moves the exam there and logs the old device out.
+
+"See your result" works after the sitting has ended, when the join code may already
+belong to a newer exam, so it looks at every sitting and exam link that has used the
+code (newest first) and answers for the first one where the details match.
 """
 
 import logging
 import re
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, Header, Request
 from pydantic import BaseModel, Field
@@ -33,7 +40,7 @@ from app.utils.attempt_control import calculate_test_max_marks
 from app.utils.safe_route import SafeRoute
 from app.utils.rate_limiter import (
     client_ip, enforce_limit, join_enter_per_ip, join_heartbeat_per_token, join_lookup_per_ip,
-    join_pin_per_student,
+    join_pin_per_student, join_result_per_ip,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,6 +62,14 @@ class HeartbeatRequest(BaseModel):
     violations: Optional[int] = None
 
 
+class ResultRequest(BaseModel):
+    name: Optional[str] = Field(default=None, max_length=120)
+    roll_no: Optional[str] = Field(default=None, max_length=40)
+    pin: Optional[str] = Field(default=None, max_length=8)
+    # Exam links: the start-form answers, by field label.
+    fields: Optional[Dict[str, str]] = None
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 def _open_session_by_code(db: Client, code: str) -> Dict[str, Any]:
@@ -65,7 +80,7 @@ def _open_session_by_code(db: Client, code: str) -> Dict[str, Any]:
         .eq("join_code", code).is_("ended_at", "null").limit(1).execute()
     )
     if not session:
-        raise SessionError(404, "no_exam", "No exam with this code is open right now. Check the code with your teacher.")
+        raise SessionError(404, "no_exam", "No exam with this code is open right now. Check the code with your examiner.")
     session = store.finalize_if_over(db, session)
     if rules.session_phase(session) == "ended":
         raise SessionError(410, "ended", "This exam has ended.")
@@ -196,19 +211,19 @@ async def enter(
             )
         if mode == "roll_pin":
             if not roster_student:
-                raise SessionError(404, "roll_not_found", f"Roll number {roll} is not on this batch's list. Check it with your teacher.")
+                raise SessionError(404, "roll_not_found", f"Roll number {roll} is not on this batch's list. Check it with your examiner.")
             enforce_limit(
                 join_pin_per_student, f"{session['id']}:{rules.roll_key(roll)}",
-                "Too many wrong PINs. Wait 10 minutes or ask your teacher to reset your PIN.",
+                "Too many wrong PINs. Wait 10 minutes or ask your examiner to reset your PIN.",
             )
             if not roster_student.get("pin_hash"):
-                raise SessionError(403, "no_pin", "You don't have a PIN yet. Ask your teacher for your PIN slip.")
+                raise SessionError(403, "no_pin", "You don't have a PIN yet. Ask your examiner for your PIN slip.")
             if not rules.verify_pin(payload.pin or "", roster_student["pin_hash"]):
                 raise SessionError(401, "wrong_pin", "That PIN is not right. Check your PIN slip.")
             pin_verified = True
         elif not roster_student:
             if session.get("class_id") and not session.get("allow_walk_in"):
-                raise SessionError(404, "roll_not_found", f"Roll number {roll} is not on this batch's list. Check it with your teacher.")
+                raise SessionError(404, "roll_not_found", f"Roll number {roll} is not on this batch's list. Check it with your examiner.")
         roll_display = roster_student["roll_no"] if roster_student else roll
         display = roster_student["full_name"] if roster_student else name
         if not roster_student:
@@ -231,7 +246,7 @@ async def enter(
             ).data or []
             roster_student = next((m for m in matches if rules.name_key(m.get("full_name")) == rules.name_key(name)), None)
             if not roster_student and not session.get("allow_walk_in"):
-                raise SessionError(404, "name_not_found", "Your name is not on this batch's list. Type it exactly as your teacher has it.")
+                raise SessionError(404, "name_not_found", "Your name is not on this batch's list. Type it exactly as your examiner has it.")
         display = roster_student["full_name"] if roster_student else name
         roll_display = roster_student["roll_no"] if roster_student else None
 
@@ -255,7 +270,7 @@ async def enter(
 
     if existing:
         if existing.get("status") == "removed":
-            raise SessionError(403, "removed", "Your teacher removed you from this exam.")
+            raise SessionError(403, "removed", "Your examiner removed you from this exam.")
         if existing.get("status") == "submitted":
             if not (same_device or pin_verified):
                 raise SessionError(409, "already_submitted", f"{display} has already submitted this exam.")
@@ -264,7 +279,7 @@ async def enter(
         if mode == "name" and not same_device and rules.is_online(existing):
             raise SessionError(
                 409, "name_taken",
-                f"Someone called {display} is already in this exam. Add your surname, or ask your teacher.",
+                f"Someone called {display} is already in this exam. Add your surname, or ask your examiner.",
             )
         token = x_exam_token if same_device else _issue_token(db, existing, replace_device=bool(existing.get("device_token_hash")))
         return {"token": token, "participant": _public_participant(existing), "session": _public_info(db, session)}
@@ -274,7 +289,7 @@ async def enter(
         raise SessionError(403, "not_open", "This exam is not open yet.", opens_at=session.get("opens_at"))
     if reason == "late":
         until = rules.late_entry_until(session)
-        raise SessionError(403, "late", "Entry to this exam has closed. Talk to your teacher.", late_entry_until=rules.iso(until))
+        raise SessionError(403, "late", "Entry to this exam has closed. Talk to your examiner.", late_entry_until=rules.iso(until))
     if reason == "ended":
         raise SessionError(410, "ended", "This exam has ended.")
 
@@ -415,37 +430,33 @@ async def result(x_exam_token: Optional[str] = Header(default=None), db: Client 
     participant, session = store.participant_by_token(db, x_exam_token)
     if participant.get("status") != "submitted" or not participant.get("attempt_id"):
         raise SessionError(409, "not_submitted", "You have not submitted this exam yet.")
-    if not rules.results_released(session):
-        return {"released": False, "release_at": rules.results_release_at(session), "submitted_at": participant.get("submitted_at")}
+    return _session_result(db, session, participant)
 
-    attempts = (
-        db.table("user_tests").select("id, score, metadata, participant_id")
-        .eq("session_id", session["id"]).limit(5000).execute()
-    ).data or []
+
+def _rank_rows(attempts: List[Dict[str, Any]], key: str) -> List[Dict[str, Any]]:
     rows = []
     for a in attempts:
-        stats = (a.get("metadata") or {}).get("stats") or {}
+        stats = (a.get("metadata") or {}).get("stats") or a.get("stats") or {}
         rows.append({
-            "participant_id": a.get("participant_id"),
+            key: a.get(key),
             "score": float(a.get("score") or 0),
             "wrong": stats.get("wrongCount") or 0,
             "unattempted": stats.get("unattemptedCount") or 0,
             "time_taken_seconds": None,
         })
-    ranked = rules.rank_results(rows)
-    mine = next((r for r in ranked if r["participant_id"] == participant["id"]), None)
+    return rules.rank_results(rows)
 
-    paper = store.load_paper(db, session["test_id"])
-    attempt = store._first(db.table("user_tests").select("answers, score, metadata").eq("id", participant["attempt_id"]).limit(1).execute()) or {}
+
+def _scorecard(paper: Dict[str, Any], attempt: Dict[str, Any], ranked: List[Dict[str, Any]], mine: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Score, rank and breakdown, the same shape for sittings and exam links."""
     max_marks = float(calculate_test_max_marks(paper).get("total_max_marks") or paper.get("total_max_marks") or 0)
     summary = rules.summarise_scores(ranked, max_marks)
     breakdown = breakdown_attempt(paper, attempt.get("answers") or {})
     score = float(attempt.get("score") or 0)
     return {
         "released": True,
-        "name": participant.get("display_name"),
-        "exam": session.get("name"),
         "test_title": paper.get("title"),
+        "institution_name": paper.get("institution_name"),
         "score": score,
         "max_marks": max_marks,
         "percent": round(score / max_marks * 100, 1) if max_marks else None,
@@ -456,5 +467,235 @@ async def result(x_exam_token: Optional[str] = Header(default=None), db: Client 
         "stats": (attempt.get("metadata") or {}).get("stats") or {},
         "sections": breakdown["sections"],
         "topics": breakdown["topics"],
+    }
+
+
+def _session_result(db: Client, session: Dict[str, Any], participant: Dict[str, Any]) -> Dict[str, Any]:
+    who = {
+        "name": participant.get("display_name"),
+        "roll_no": participant.get("roll_no"),
+        "exam": session.get("name"),
         "submitted_at": participant.get("submitted_at"),
     }
+    if not rules.results_released(session):
+        test = store.load_test_summary(db, session["test_id"]) or {}
+        return {"released": False, "release_at": rules.results_release_at(session), "test_title": test.get("title"), **who}
+
+    attempts = (
+        db.table("user_tests").select("id, score, metadata, participant_id")
+        .eq("session_id", session["id"]).limit(5000).execute()
+    ).data or []
+    ranked = _rank_rows(attempts, "participant_id")
+    mine = next((r for r in ranked if r["participant_id"] == participant["id"]), None)
+    paper = store.load_paper(db, session["test_id"])
+    attempt = store._first(db.table("user_tests").select("answers, score, metadata").eq("id", participant["attempt_id"]).limit(1).execute()) or {}
+    return {**_scorecard(paper, attempt, ranked, mine), **who}
+
+
+# ── "See your result": any device, after the exam ──────────────────────────
+
+LINK_FIELDS_MAX = 8
+
+
+def _match_key(value: Any) -> str:
+    """'Rahul  Kumar' = 'rahul kumar', '23 A-017' = '23a017'. Keeps Hindi and other letters."""
+    return re.sub(r"[\W_]+", "", str(value or "").casefold())
+
+
+def _code_owners(db: Client, code: str) -> List[Tuple[str, Dict[str, Any]]]:
+    """Every sitting and exam link that has used this code, newest first."""
+    if not re.fullmatch(r"\d{6}", code or ""):
+        raise SessionError(404, "bad_code", "Exam codes have 6 digits.")
+    owners: List[Tuple[str, str, Dict[str, Any]]] = []
+    sessions = (
+        db.table("exam_sessions").select(store.SESSION_COLS)
+        .eq("join_code", code).order("created_at", desc=True).limit(10).execute()
+    ).data or []
+    for s in sessions:
+        owners.append((str(s.get("created_at") or ""), "session", store.finalize_if_over(db, s)))
+    tests = (
+        db.table("tests").select("id, title, duration, total_questions, institution_name, institution_logo, settings")
+        .eq("settings->conduct_exam->>join_code", code).limit(10).execute()
+    ).data or []
+    for t in tests:
+        conduct = (t.get("settings") or {}).get("conduct_exam") or {}
+        owners.append((str(conduct.get("join_code_at") or conduct.get("started_at") or ""), "link", t))
+    owners.sort(key=lambda o: rules.parse_ts(o[0]) or rules.parse_ts("1970-01-01T00:00:00+00:00"), reverse=True)
+    if not owners:
+        raise SessionError(404, "no_exam", "No exam has used this code. Check the code and try again.")
+    return [(kind, row) for _, kind, row in owners]
+
+
+def _link_results_visible(test: Dict[str, Any]) -> bool:
+    """
+    A live link follows its "Result visibility" switch, so turning it on later releases
+    the results. Stopping a link from the dashboard resets its settings, so a stopped link
+    uses what was recorded when it stopped (conductExam.ts). An expired schedule stops a
+    link without touching its settings; with nothing recorded and the settings reset,
+    results stay closed.
+    """
+    settings = test.get("settings") or {}
+    conduct = settings.get("conduct_exam") or {}
+    if conduct.get("enabled"):
+        return settings.get("show_results_immediate") is not False
+    if "results_visible" in conduct:
+        return conduct.get("results_visible") is True
+    untouched = bool((settings.get("start_form") or {}).get("enabled"))
+    return untouched and settings.get("show_results_immediate") is not False
+
+
+def _link_attempts(db: Client, test: Dict[str, Any], limit: int = 5000) -> List[Dict[str, Any]]:
+    """Attempts made through this run of the exam link (not sittings, not earlier runs), newest first."""
+    conduct = (test.get("settings") or {}).get("conduct_exam") or {}
+    query = (
+        db.table("user_tests")
+        .select("id, score, created_at, form:metadata->startFormData, stats:metadata->stats")
+        .eq("test_id", test["id"]).is_("session_id", "null")
+    )
+    if conduct.get("started_at"):
+        query = query.gte("created_at", conduct["started_at"])
+    rows = query.order("created_at", desc=True).limit(limit).execute().data or []
+    for row in rows:
+        meta = row.get("metadata") or {}
+        row.setdefault("form", meta.get("startFormData"))
+        row.setdefault("stats", meta.get("stats"))
+    return [r for r in rows if isinstance(r.get("form"), dict) and r["form"]]
+
+
+def _link_fields(db: Client, test: Dict[str, Any], attempts: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+    """The details the exam's start form asked for (rebuilt from the attempts once the link has stopped)."""
+    settings = test.get("settings") or {}
+    conduct = settings.get("conduct_exam") or {}
+    form = settings.get("start_form") or {}
+    fields = []
+    if form.get("enabled"):  # live, or stopped without a reset
+        fields = [
+            {"label": str(f.get("label")).strip(), "required": bool(f.get("required"))}
+            for f in form.get("fields") or [] if str(f.get("label") or "").strip()
+        ]
+    if not fields:
+        fields = [{"label": str(f).strip(), "required": True} for f in conduct.get("start_fields") or [] if str(f).strip()]
+    if not fields:
+        latest = attempts if attempts is not None else _link_attempts(db, test, limit=20)
+        if latest:
+            fields = [{"label": str(k).strip(), "required": True} for k in latest[0]["form"].keys() if str(k).strip()]
+    seen, unique = set(), []
+    for f in fields:
+        if _match_key(f["label"]) and _match_key(f["label"]) not in seen:
+            seen.add(_match_key(f["label"]))
+            unique.append(f)
+    return unique[:LINK_FIELDS_MAX]
+
+
+def _link_card(test: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "title": test.get("title"),
+        "duration": test.get("duration"),
+        "questions": test.get("total_questions"),
+        "institution_name": test.get("institution_name"),
+        "institution_logo": test.get("institution_logo"),
+    }
+
+
+def _session_lookup(db: Client, session: Dict[str, Any], payload: ResultRequest) -> Dict[str, Any]:
+    mode = session.get("identity_mode") or "name"
+    if mode in ("roll", "roll_pin"):
+        roll = rules.clean_roll(payload.roll_no)
+        key = rules.roll_key(roll)
+        if not key:
+            raise SessionError(400, "roll_required", "Enter your roll number.")
+        if mode == "roll_pin":
+            # Same budget as check-in, so the two together can't double the guesses.
+            enforce_limit(join_pin_per_student, f"{session['id']}:{key}", "Too many wrong PINs. Wait 10 minutes and try again.")
+            student = None
+            if session.get("class_id"):
+                student = store._first(
+                    db.table("roster_students").select("id, pin_hash")
+                    .eq("class_id", session["class_id"]).eq("roll_key", key).limit(1).execute()
+                )
+            if not student or not rules.verify_pin(payload.pin or "", student.get("pin_hash")):
+                raise SessionError(401, "wrong_details", "That roll number and PIN don't match. Check your PIN slip.")
+        identity = rules.identity_key_for(mode, "", roll)
+    else:
+        name = rules.clean_name(payload.name)
+        if len(name) < 2:
+            raise SessionError(400, "name_required", "Enter your full name.")
+        identity = rules.identity_key_for("name", name, "")
+    participant = store._first(
+        db.table("session_participants").select(store.PARTICIPANT_COLS)
+        .eq("session_id", session["id"]).eq("identity_key", identity).limit(1).execute()
+    )
+    if not participant or participant.get("status") != "submitted" or not participant.get("attempt_id"):
+        raise SessionError(404, "not_found", "No submitted exam matches these details. Check them and try again.")
+    return _session_result(db, session, participant)
+
+
+def _link_lookup(db: Client, test: Dict[str, Any], payload: ResultRequest) -> Dict[str, Any]:
+    if not _link_results_visible(test):
+        raise SessionError(403, "results_hidden", "Results for this exam are not open yet. Your examiner will share them.")
+    attempts = _link_attempts(db, test)
+    fields = _link_fields(db, test, attempts)
+    if not fields:
+        raise SessionError(409, "no_details", "This exam didn't ask for your details, so its results can't be looked up here.")
+    given = {_match_key(k): _match_key(v) for k, v in (payload.fields or {}).items() if len(str(v or "")) <= 200}
+    asked = [(_match_key(f["label"]), f) for f in fields]
+    if any(f["required"] and not given.get(k) for k, f in asked) or not any(given.get(k) for k, _ in asked):
+        raise SessionError(400, "details_required", "Fill in your details exactly as you did at the start of the exam.")
+
+    def matches(attempt: Dict[str, Any]) -> bool:
+        # Every field must match, blanks included: one optional field alone must not
+        # be enough to open someone else's result.
+        theirs = {_match_key(k): _match_key(v) for k, v in attempt["form"].items()}
+        return all(theirs.get(k, "") == given.get(k, "") for k, _ in asked)
+
+    mine = next((a for a in attempts if matches(a)), None)  # newest first: a retake wins
+    if not mine:
+        raise SessionError(404, "not_found", "No submitted exam matches these details. Check them and try again.")
+    ranked = _rank_rows(attempts, "id")
+    me_ranked = next((r for r in ranked if r["id"] == mine["id"]), None)
+    paper = store.load_paper(db, test["id"])
+    attempt = store._first(db.table("user_tests").select("answers, score, metadata").eq("id", mine["id"]).limit(1).execute()) or {}
+    form = mine["form"]
+    name = next((str(v) for k, v in form.items() if _match_key(k) in ("name", "fullname", "candidatename", "studentname")), None)
+    return {
+        **_scorecard(paper, attempt, ranked, me_ranked),
+        "name": name or next(iter(form.values()), None),
+        "exam": None,
+        "submitted_at": mine.get("created_at"),
+    }
+
+
+@router.get("/result/{code}")
+async def result_form(code: str, request: Request, db: Client = Depends(get_db)):
+    """Which details to ask for: the sitting's check-in rule, or the exam link's start form."""
+    enforce_limit(join_lookup_per_ip, client_ip(request), "Too many tries. Wait a minute and try again.")
+    kind, row = _code_owners(db, code)[0]
+    if kind == "session":
+        return {
+            "kind": "session",
+            **_public_info(db, row),
+            "results_released": rules.results_released(row),
+            "results_release_at": rules.results_release_at(row),
+        }
+    visible = _link_results_visible(row)
+    return {
+        "kind": "link",
+        "test": _link_card(row),
+        "results_visible": visible,
+        "fields": _link_fields(db, row) if visible else [],
+    }
+
+
+@router.post("/result/{code}")
+async def result_lookup(code: str, payload: ResultRequest, request: Request, db: Client = Depends(get_db)):
+    enforce_limit(join_result_per_ip, client_ip(request), "Too many tries. Wait a few minutes and try again.")
+    first_error: Optional[SessionError] = None
+    for kind, row in _code_owners(db, code):
+        try:
+            if kind == "session":
+                return _session_lookup(db, row, payload)
+            return _link_lookup(db, row, payload)
+        except SessionError as err:
+            # An older exam that used the same code may be the one these details belong to.
+            first_error = first_error or err
+    raise first_error  # type: ignore[misc]

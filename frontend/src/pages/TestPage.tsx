@@ -163,7 +163,7 @@ export default function TestPage() {
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
     if (examSeat) {
-      toast.info("Tell your teacher about this question after the exam.");
+      toast.info("Tell your examiner about this question after the exam.");
       return;
     }
     if (!user) {
@@ -710,14 +710,14 @@ export default function TestPage() {
           sessionClockRef.current.deadline = next;
           if (previous && next - previous >= 60_000) {
             const added = Math.round((next - previous) / 60_000);
-            toast.success(`Your teacher gave you ${added} more minute${added === 1 ? '' : 's'}.`);
+            toast.success(`Your examiner gave you ${added} more minute${added === 1 ? '' : 's'}.`);
             setIsTimeUp(false);
           }
           setTimeRemaining(sessionSecondsLeft());
         }
         if ((res.force_submit || res.ended) && !sessionAutoSubmitRef.current) {
           sessionAutoSubmitRef.current = true;
-          toast.info(res.ended ? 'Your teacher ended the exam. Submitting your answers…' : 'Your teacher asked everyone to submit. Submitting your answers…');
+          toast.info(res.ended ? 'Your examiner ended the exam. Submitting your answers…' : 'Your examiner asked everyone to submit. Submitting your answers…');
           confirmSubmitRef.current();
         }
       } catch (err) {

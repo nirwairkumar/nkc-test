@@ -206,8 +206,10 @@ export interface StudentResult {
     released: boolean;
     release_at?: string | null;
     name?: string;
-    exam?: string;
+    roll_no?: string | null;
+    exam?: string | null;
     test_title?: string;
+    institution_name?: string | null;
     score?: number;
     max_marks?: number;
     percent?: number | null;
@@ -219,6 +221,24 @@ export interface StudentResult {
     sections?: Breakdown[];
     topics?: Breakdown[];
     submitted_at?: string | null;
+}
+
+/** GET /join/result/{code}: what "See your result" should ask for. */
+export type ResultForm =
+    | (PublicSession & { kind: 'session'; results_released: boolean; results_release_at: string | null })
+    | {
+        kind: 'link';
+        test: { title: string; duration: number | null; questions: number | null; institution_name: string | null; institution_logo: string | null };
+        results_visible: boolean;
+        /** The exam's start-form fields, asked again exactly as at the start. */
+        fields: { label: string; required: boolean }[];
+    };
+
+export interface ResultDetails {
+    name?: string;
+    roll_no?: string;
+    pin?: string;
+    fields?: Record<string, string>;
 }
 
 /* ── Errors ────────────────────────────────────────────────────────────────── */
@@ -321,6 +341,10 @@ export const joinApi = {
             'join/me/heartbeat', body, tokenHeader(token),
         ).then(r => r.data),
     result: (token: string) => studentClient.get<StudentResult>('join/me/result', tokenHeader(token)).then(r => r.data),
+    /** "See your result" from any device: no token, just the code and the candidate's details. */
+    resultForm: (code: string) => studentClient.get<ResultForm>(`join/result/${code}`).then(r => r.data),
+    lookupResult: (code: string, details: ResultDetails) =>
+        studentClient.post<StudentResult>(`join/result/${code}`, details).then(r => r.data),
 
     /** Final submission. Retries network/server errors only — never "time over" or "already submitted". */
     async submit(token: string, payload: Record<string, any>, onRetry?: (attempt: number) => void) {

@@ -60,7 +60,7 @@ export default function ResultsPanel({ sessionId, version, onChanged }: { sessio
                 row['Time (min)'] = r.time_taken_seconds !== null ? Math.round(r.time_taken_seconds / 60) : null;
                 row['Warnings'] = r.violations;
                 row['Parent Phone'] = r.parent_phone;
-                row['Note'] = [r.collected ? 'Answers collected by teacher' : '', r.late_seconds ? `Submitted ${Math.round(r.late_seconds / 60)} min late` : ''].filter(Boolean).join('; ');
+                row['Note'] = [r.collected ? 'Answers collected by examiner' : '', r.late_seconds ? `Submitted ${Math.round(r.late_seconds / 60)} min late` : ''].filter(Boolean).join('; ');
                 return row;
             });
             data.absent.forEach(a => rows.push({ Rank: null, Name: a.name, 'Roll No': a.roll_no, Note: 'Absent', 'Parent Phone': a.parent_phone }));

@@ -372,6 +372,146 @@ def test_join_code_for_a_live_exam_link(env):
     assert c.get(f"/api/join/code/{session['join_code']}").json()["kind"] == "session"
 
 
+# ── "See your result" from any device ──────────────────────────────────────
+
+def test_see_result_with_roll_and_pin_waits_for_release(env):
+    c = env["client"]
+    c.post("/api/batches/class-a/students", json={"students": [
+        {"roll_no": "23A017", "full_name": "Rahul Kumar"}, {"roll_no": "23A018", "full_name": "Priya Sharma"},
+    ]}, headers=auth())
+    pins = {p["roll_no"]: p["pin"] for p in c.post("/api/batches/class-a/pins", json={"only_missing": True}, headers=auth()).json()["pins"]}
+    session = create_session(c, class_id="class-a", identity_mode="roll_pin", results_release="manual")
+    code = session["join_code"]
+    token = c.post(f"/api/join/code/{code}/enter", json={"roll_no": "23A017", "pin": pins["23A017"]}).json()["token"]
+    c.post("/api/join/me/start", headers=exam(token))
+    submit(c, token, {"1": "4", "2": "6"})
+
+    form = c.get(f"/api/join/result/{code}").json()
+    assert form["kind"] == "session" and form["identity_mode"] == "roll_pin" and form["results_released"] is False
+    wrong_pin = "0000" if pins["23A017"] != "0000" else "1111"
+    bad = c.post(f"/api/join/result/{code}", json={"roll_no": "23A017", "pin": wrong_pin})
+    assert bad.status_code == 401 and bad.json()["detail"]["code"] == "wrong_details"
+    # Priya has a PIN but never sat the exam.
+    absent = c.post(f"/api/join/result/{code}", json={"roll_no": "23A018", "pin": pins["23A018"]})
+    assert absent.status_code == 404 and absent.json()["detail"]["code"] == "not_found"
+
+    waiting = c.post(f"/api/join/result/{code}", json={"roll_no": "23 a 017", "pin": pins["23A017"]}).json()
+    assert waiting["released"] is False and waiting["name"] == "Rahul Kumar" and waiting["submitted_at"]
+    assert "score" not in waiting
+
+    # The examiner ends the sitting (the code stops opening the exam) and releases results.
+    c.post(f"/api/exam-sessions/{session['id']}/end", json={"collect": False}, headers=auth())
+    assert c.get(f"/api/join/code/{code}").status_code in (404, 410)
+    c.post(f"/api/exam-sessions/{session['id']}/release", headers=auth())
+    shown = c.post(f"/api/join/result/{code}", json={"roll_no": "23A017", "pin": pins["23A017"]}).json()
+    assert shown["released"] and shown["score"] == 8.0 and shown["rank"] == 1 and shown["roll_no"] == "23A017"
+
+
+def test_see_result_with_roll_or_name_only(env):
+    c = env["client"]
+    session = create_session(c, identity_mode="roll")
+    code = session["join_code"]
+    token = c.post(f"/api/join/code/{code}/enter", json={"roll_no": "7", "name": "Asha Rao"}).json()["token"]
+    c.post(f"/api/join/code/{code}/enter", json={"roll_no": "8", "name": "Never Submitted"})
+    c.post("/api/join/me/start", headers=exam(token))
+    submit(c, token, {"1": "4"})
+
+    form = c.get(f"/api/join/result/{code}").json()
+    assert form["identity_mode"] == "roll"
+    # Results come "when the sitting ends" (the default).
+    assert c.post(f"/api/join/result/{code}", json={"roll_no": "7"}).json()["released"] is False
+    c.post(f"/api/exam-sessions/{session['id']}/end", json={"collect": False}, headers=auth())
+    shown = c.post(f"/api/join/result/{code}", json={"roll_no": " 7 "}).json()
+    assert shown["released"] and shown["name"] == "Asha Rao" and shown["score"] == 4.0
+    assert c.post(f"/api/join/result/{code}", json={"roll_no": "8"}).status_code == 404
+    assert c.post(f"/api/join/result/{code}", json={}).json()["detail"]["code"] == "roll_required"
+
+    by_name = create_session(c, identity_mode="name", results_release="immediate")
+    t2 = c.post(f"/api/join/code/{by_name['join_code']}/enter", json={"name": "Bilal Khan"}).json()["token"]
+    c.post("/api/join/me/start", headers=exam(t2))
+    submit(c, t2, {"3": "Delhi"})
+    shown = c.post(f"/api/join/result/{by_name['join_code']}", json={"name": "bilal  khan"}).json()
+    assert shown["released"] and shown["name"] == "Bilal Khan"
+
+
+def test_see_result_when_the_code_was_reused(env):
+    c, db = env["client"], env["db"]
+    old = create_session(c, identity_mode="roll", results_release="immediate")
+    token = c.post(f"/api/join/code/{old['join_code']}/enter", json={"roll_no": "11", "name": "Old Timer"}).json()["token"]
+    c.post("/api/join/me/start", headers=exam(token))
+    submit(c, token, {"1": "4"})
+    c.post(f"/api/exam-sessions/{old['id']}/end", json={"collect": False}, headers=auth())
+
+    # A newer sitting, with a different check-in rule, now holds the same code.
+    newer = create_session(c, identity_mode="name")
+    next(s for s in db.tables["exam_sessions"] if s["id"] == newer["id"])["join_code"] = old["join_code"]
+    assert c.get(f"/api/join/result/{old['join_code']}").json()["session_id"] == newer["id"]
+    shown = c.post(f"/api/join/result/{old['join_code']}", json={"roll_no": "11"}).json()
+    assert shown["released"] and shown["name"] == "Old Timer"
+
+
+def test_see_result_for_an_exam_link(env):
+    c, db = env["client"], env["db"]
+    test = db.tables["tests"][0]
+    started = iso(now() - timedelta(hours=2))
+    test["settings"] = {
+        "conduct_exam": {"enabled": True, "conduct_slug": "physics-mock-3-k9x2m7qa", "started_at": started, "join_code": "482913", "join_code_at": started},
+        "show_results_immediate": True,
+        "start_form": {"enabled": True, "fields": [{"label": "Name", "required": True}, {"label": "Roll No", "required": True}, {"label": "School", "required": False}]},
+    }
+
+    def attempt(form, answers, score, minutes_ago):
+        db.tables.setdefault("user_tests", []).append({
+            "id": f"a-{len(db.tables['user_tests'])}", "user_id": "guest", "test_id": "test-1", "answers": answers, "score": score,
+            "metadata": {"startFormData": form, "is_conducted_attempt": True, "stats": {"wrongCount": 0, "unattemptedCount": 0}},
+            "created_at": iso(now() - timedelta(minutes=minutes_ago)), "session_id": None, "participant_id": None,
+        })
+
+    attempt({"Name": "Meera Iyer", "Roll No": "21", "School": ""}, {"1": "4", "2": "6", "3": "Delhi"}, 12, 30)
+    attempt({"Name": "Meera Iyer", "Roll No": "22", "School": "DPS"}, {"1": "4"}, 4, 20)
+    attempt({"Name": "Earlier Run", "Roll No": "21"}, {"1": "4"}, 4, 60 * 5)  # before this run started
+
+    form = c.get("/api/join/result/482913").json()
+    assert form["kind"] == "link" and form["results_visible"] is True
+    assert [f["label"] for f in form["fields"]] == ["Name", "Roll No", "School"]
+
+    shown = c.post("/api/join/result/482913", json={"fields": {"Name": "meera iyer", "Roll No": "21"}}).json()
+    assert shown["released"] and shown["score"] == 12.0 and shown["name"] == "Meera Iyer" and shown["rank"] == 1 and shown["of"] == 2
+    # One optional field alone is not enough, and every field must match.
+    assert c.post("/api/join/result/482913", json={"fields": {"School": "DPS"}}).json()["detail"]["code"] == "details_required"
+    assert c.post("/api/join/result/482913", json={"fields": {"Name": "Meera Iyer", "Roll No": "22"}}).status_code == 404
+    assert c.post("/api/join/result/482913", json={"fields": {"Name": "Earlier Run", "Roll No": "21"}}).status_code == 404
+
+    # Results hidden: nothing to ask for, nothing shown.
+    test["settings"]["show_results_immediate"] = False
+    assert c.get("/api/join/result/482913").json()["results_visible"] is False
+    hidden = c.post("/api/join/result/482913", json={"fields": {"Name": "Meera Iyer", "Roll No": "21"}})
+    assert hidden.status_code == 403 and hidden.json()["detail"]["code"] == "results_hidden"
+
+    # An expired schedule stops the link without resetting its settings: they still count.
+    test["settings"]["show_results_immediate"] = True
+    test["settings"]["conduct_exam"]["enabled"] = False
+    assert c.get("/api/join/result/482913").json()["results_visible"] is True
+    assert c.post("/api/join/result/482913", json={"fields": {"Name": "Meera Iyer", "Roll No": "21"}}).json()["score"] == 12.0
+
+    # Stopped from the dashboard: settings are reset (start form off, visibility on), so
+    # only what was recorded at stop counts; the form is rebuilt from the attempts.
+    test["settings"] = {"show_results_immediate": True, "start_form": {"enabled": False, "fields": []},
+                        "conduct_exam": {**test["settings"]["conduct_exam"], "enabled": False}}
+    assert c.get("/api/join/result/482913").json()["results_visible"] is False
+    test["settings"]["conduct_exam"]["results_visible"] = True
+    rebuilt = c.get("/api/join/result/482913").json()["fields"]
+    assert [f["label"] for f in rebuilt] == ["Name", "Roll No", "School"]
+    again = c.post("/api/join/result/482913", json={"fields": {"Name": "Meera Iyer", "Roll No": "22", "School": "dps"}}).json()
+    assert again["released"] and again["score"] == 4.0
+
+
+def test_see_result_unknown_code(env):
+    c = env["client"]
+    assert c.get("/api/join/result/12").json()["detail"]["code"] == "bad_code"
+    assert c.get("/api/join/result/482913").json()["detail"]["code"] == "no_exam"
+
+
 def test_unexpected_errors_keep_cors_headers(env, monkeypatch):
     from app.routers import join as join_router
 

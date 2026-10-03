@@ -67,7 +67,7 @@ function remark(percent: number | null, pctile: number, classSize: number): stri
     if (p >= 85 || (classSize >= 10 && pctile >= 90 && p >= 60)) return 'Excellent work. Keep up this level of preparation.';
     if (p >= 65) return 'Good performance. Revising the weaker sections will lift the score further.';
     if (p >= 40) return 'Fair attempt. Regular practice of the weak topics is needed.';
-    return 'Needs attention. Please meet the teacher to plan extra practice.';
+    return 'Needs attention. Please meet us to plan extra practice.';
 }
 
 function ReportCard({ data, row }: { data: SessionResults; row: ResultRow }) {
@@ -170,7 +170,7 @@ function ReportCard({ data, row }: { data: SessionResults; row: ResultRow }) {
             </section>
 
             <footer className="mt-12 grid grid-cols-2 gap-10 text-[12px] text-slate-500">
-                <div className="border-t border-slate-400 pt-1.5">Teacher's signature</div>
+                <div className="border-t border-slate-400 pt-1.5">Authorised signatory</div>
                 <div className="border-t border-slate-400 pt-1.5">Parent's signature</div>
             </footer>
             <p className="mt-6 text-center text-[10px] text-slate-400">Marks checked automatically by TestoZa</p>

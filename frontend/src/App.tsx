@@ -366,6 +366,8 @@ const App = () => (
 
                     {/* Exam sessions — students join with a 6-digit code (no account) */}
                     <Route path="/join" element={<JoinPage />} />
+                    <Route path="/join/result" element={<JoinPage />} />
+                    <Route path="/join/result/:code" element={<JoinPage />} />
                     <Route path="/join/:code" element={<JoinPage />} />
                     <Route path="/join/:code/exam" element={<TestPage />} />
                     <Route path="/j/:code" element={<ShortJoinRedirect />} />

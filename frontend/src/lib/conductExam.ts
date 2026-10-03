@@ -55,6 +55,8 @@ export function buildStartConductPayload(test: any, conductSlug: string) {
 
 /** Update payload that stops a live exam; its results stay under "Ended exams". */
 export function buildStopConductPayload(test: any) {
+    const s = test.settings || {};
+    const startForm = s.start_form?.enabled ? (s.start_form.fields || []) : [];
     return {
         visibility: 'private' as const,
         is_public: false,
@@ -62,7 +64,15 @@ export function buildStopConductPayload(test: any) {
         slug: `unlisted-${test.custom_id || test.id}`,
         settings: {
             ...DEFAULT_ENVIRONMENT_SETTINGS,
-            conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false, ended_at: new Date().toISOString() },
+            conduct_exam: {
+                ...(s.conduct_exam || {}),
+                enabled: false,
+                ended_at: new Date().toISOString(),
+                // The settings above go back to defaults, so keep what "See your result"
+                // (testoza.com/join/result) needs: were results shown, and what did the start form ask.
+                results_visible: s.show_results_immediate !== false,
+                start_fields: startForm.map((f: { label?: string }) => String(f?.label || '').trim()).filter(Boolean),
+            },
         },
     };
 }

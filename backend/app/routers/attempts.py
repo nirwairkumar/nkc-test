@@ -79,7 +79,7 @@ def _save_session_attempt(payload: SaveAttemptRequest, token: str):
     if not allowed:
         raise session_store.SessionError(
             403, "time_over",
-            "The exam time is over. Your teacher can still collect your last saved answers.",
+            "The exam time is over. Your examiner can still collect your last saved answers.",
         )
     row = session_store.submit_attempt(
         supabase, session=session, participant=participant, test=paper,

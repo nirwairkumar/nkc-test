@@ -13,8 +13,15 @@
  *
  * The laptop shows the desktop exam view; the phone shows the mobile exam
  * view. Both are static: no cursor, no option-picking, no typing.
+ *
+ * The questions are real JEE Main 2026 maths questions (from the papers in the
+ * question bank), drawn with KaTeX the way the exam screen draws them. KaTeX is
+ * loaded on demand (the same chunk the JEE guide uses) so the landing bundle does
+ * not grow; the question text fades in once it is ready.
  */
 
+import { Fragment, useMemo } from 'react';
+import { texToHtml, useKatex, type Katex } from '@/pages/guides/jeeKatex';
 import './LiveTestShowcase.css';
 import './DeviceShowcase.css';
 
@@ -25,24 +32,95 @@ const MaximizeIcon = () => (<svg width="11" height="11" viewBox="0 0 24 24" fill
 const EyeOffIcon = () => (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>);
 const ChevronLeftIcon = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>);
 
-/* ── Static question content (same papers as the live showcase) ──────────── */
+/* ── Static question content: real JEE Main maths questions ──────────────── */
+const TEST_NAME = 'JEE Main 2026 Session 1 Mock Test';
+
+/** JEE Main 2026, 21 Jan Shift 2, Q11. Area = 16/3 − 1/4 = 61/12, so α + β = 73 (A). */
 const DESKTOP_Q = {
-    num: 15,
-    text: 'A body of mass 2 kg moving with velocity of v⃗ = 3î + 4ĵ enters into a constant force field of 6 N. The velocity when it emerges is',
-    opts: ['4î + 3ĵ + 5k̂', '3î + 4ĵ + 5k̂', '3î + 4ĵ − 5k̂', '3î + 4ĵ + √5 k̂'],
-    pick: 1,
-};
-const MOBILE_Q = {
-    num: 17,
-    text: 'The amplitude and phase of a wave formed by the superposition of y₁ = 4 sin(kx − ωt) and y₂ = 2 sin(kx − ωt + 2π/3) are:',
-    opts: ['[6, 2π/3]', '[6, π/3]', '[√3, π/6]', '[2√3, π/6]'],
+    num: 11,
+    text: 'If the area of the region $\\{(x,y): 1-2x \\le y \\le 4-x^{2},\\ x \\ge 0,\\ y \\ge 0\\}$ is $\\frac{\\alpha}{\\beta}$, where $\\alpha, \\beta \\in \\mathbb{N}$ and $\\gcd(\\alpha, \\beta)=1$, then the value of $(\\alpha+\\beta)$ is:',
+    opts: ['73', '85', '91', '67'],
     pick: 0,
 };
 
-/** Physics palette: 14 answered, 15 current, rest unvisited — as students see it. */
-const PILL_STATE = (i: number) => (i < 14 ? 'ans' : i === 14 ? 'cur' : '');
+/** JEE Main 2026, 23 Jan Shift 2, Q9. b² = 8, h² = 24/5, area = h²/√3 = 8√3/5 (B). */
+const MOBILE_Q = {
+    num: 9,
+    text: 'Let $PQ$ be a chord of the hyperbola $\\frac{x^{2}}{4}-\\frac{y^{2}}{b^{2}}=1$ perpendicular to the $x$-axis such that $OPQ$ is an equilateral triangle, $O$ being the centre of the hyperbola. If the eccentricity of the hyperbola is $\\sqrt{3}$, then the area of the triangle $OPQ$ is:',
+    opts: ['$2\\sqrt{3}$', '$\\frac{8\\sqrt{3}}{5}$', '$\\frac{11}{5}$', '$\\frac{9}{5}$'],
+    pick: 1,
+};
+
+/** Mathematics palette: 10 answered, 11 current, rest unvisited — as candidates see it. */
+const PILL_STATE = (i: number) => (i < 10 ? 'ans' : i === 10 ? 'cur' : '');
+
+/**
+ * Text with $…$ maths, the way questions are stored. Like the exam screen's
+ * LatexRenderer, inline maths is drawn in \displaystyle (full-size fractions).
+ * Shown once KaTeX is ready.
+ */
+function MathText({ k, text }: { k: Katex | null; text: string }) {
+    const parts = useMemo(() => text.split(/(\$[^$]+\$)/g).filter(Boolean), [text]);
+    return (
+        <>
+            {parts.map((part, i) => {
+                const tex = part.length > 2 && part.startsWith('$') && part.endsWith('$') ? part.slice(1, -1) : null;
+                if (tex === null) return <Fragment key={i}>{part}</Fragment>;
+                const html = k ? texToHtml(k, `\\displaystyle ${tex}`) : null;
+                return html
+                    ? <span key={i} dangerouslySetInnerHTML={{ __html: html }} />
+                    : <Fragment key={i}>{tex}</Fragment>;
+            })}
+        </>
+    );
+}
+
+/* The figure for DESKTOP_Q: the region between y = 4 − x² and y = 1 − 2x (or the
+   x-axis) for x ≥ 0, framed the way the exam screen frames a question image. */
+const FIG = { ox: 34, oy: 70, ux: 46, uy: 14.5 };
+const fx = (x: number) => FIG.ox + FIG.ux * x;
+const fy = (y: number) => FIG.oy - FIG.uy * y;
+const curve = (f: (x: number) => number, from: number, to: number, steps = 24) =>
+    Array.from({ length: steps + 1 }, (_, i) => {
+        const x = from + ((to - from) * i) / steps;
+        return `${fx(x).toFixed(1)},${fy(f(x)).toFixed(1)}`;
+    });
+const PARABOLA = (x: number) => 4 - x * x;
+const REGION = `M${curve(PARABOLA, 0, 2).join(' L')} L${fx(0.5)},${fy(0)} L${fx(0)},${fy(1)} Z`;
+const MATH_FONT = { fontFamily: "KaTeX_Math, 'Times New Roman', serif", fontStyle: 'italic' as const };
+const NUM_FONT = { fontFamily: "KaTeX_Main, 'Times New Roman', serif" };
+
+function RegionFigure() {
+    return (
+        <div className="dsw-figure-row">
+            <div className="dsw-figure">
+                <svg viewBox="0 0 168 81" width="168" height="81" role="img" aria-label="Shaded region between the parabola y = 4 − x² and the line y = 1 − 2x for x ≥ 0">
+                    <defs>
+                        <marker id="dsw-arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="5" markerHeight="5" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 z" fill="#334155" />
+                        </marker>
+                    </defs>
+                    <path d={REGION} fill="rgba(14,165,233,0.2)" />
+                    <line x1={6} y1={fy(0)} x2={162} y2={fy(0)} stroke="#334155" strokeWidth="0.8" markerEnd="url(#dsw-arrow)" />
+                    <line x1={fx(0)} y1={79} x2={fx(0)} y2={3} stroke="#334155" strokeWidth="0.8" markerEnd="url(#dsw-arrow)" />
+                    <polyline points={curve(PARABOLA, -0.05, 2.17).join(' ')} fill="none" stroke="#0369a1" strokeWidth="1.2" />
+                    <line x1={fx(-0.25)} y1={fy(1.5)} x2={fx(0.72)} y2={fy(-0.44)} stroke="#7c3aed" strokeWidth="1.1" />
+                    <text x={fx(1.42)} y={fy(2.55)} fontSize="7" fill="#0369a1" style={MATH_FONT}>y = 4 − x²</text>
+                    <text x={fx(0.8)} y={fy(0) + 8} fontSize="7" fill="#7c3aed" style={MATH_FONT}>y = 1 − 2x</text>
+                    <text x={fx(0) - 7} y={fy(0) + 7} fontSize="6.5" fill="#334155" style={MATH_FONT}>O</text>
+                    <text x={fx(2) - 2} y={fy(0) + 7} fontSize="6.5" fill="#334155" style={NUM_FONT}>2</text>
+                    <text x={fx(0) - 6.5} y={fy(4) + 5} fontSize="6.5" fill="#334155" style={NUM_FONT}>4</text>
+                    <text x={157} y={fy(0) - 3} fontSize="7" fill="#334155" style={MATH_FONT}>x</text>
+                    <text x={fx(0) + 3} y={8} fontSize="7" fill="#334155" style={MATH_FONT}>y</text>
+                </svg>
+            </div>
+        </div>
+    );
+}
 
 export default function DeviceShowcase() {
+    const k = useKatex();
+    const tex = `dsw-tex${k ? ' is-ready' : ''}`;
     return (
         <div className="dsw-root">
             <div className="dsw-stage">
@@ -60,7 +138,7 @@ export default function DeviceShowcase() {
                                                 <div className="lt-inst-name">Your Institution Name here, Location</div>
                                             </div>
                                             <div className="lt-toolbar">
-                                                <div className="lt-test-name">JEE Main 2025 Session 2 April 8 Question Papers</div>
+                                                <div className="lt-test-name">{TEST_NAME}</div>
                                                 <div className="lt-tr-right">
                                                     <div className="lt-fs-icon"><MaximizeIcon /></div>
                                                     <div className="lt-timer-badge"><ClockIcon /> 2:58:43</div>
@@ -73,9 +151,9 @@ export default function DeviceShowcase() {
                                             <div className="lt-content">
                                                 <div className="lt-q-area">
                                                     <div className="lt-tabs">
-                                                        <div className="lt-tab active">Physics <span className="lt-tab-i">i</span></div>
+                                                        <div className="lt-tab active">Mathematics <span className="lt-tab-i">i</span></div>
+                                                        <div className="lt-tab" style={{ color: '#64748b', borderColor: 'transparent' }}>Physics <span className="lt-tab-i">i</span></div>
                                                         <div className="lt-tab" style={{ color: '#64748b', borderColor: 'transparent' }}>Chemistry <span className="lt-tab-i">i</span></div>
-                                                        <div className="lt-tab" style={{ color: '#64748b', borderColor: 'transparent' }}>Mathematics <span className="lt-tab-i">i</span></div>
                                                     </div>
                                                     <div className="lt-q-body">
                                                         <div className="lt-q-hdr">
@@ -89,13 +167,14 @@ export default function DeviceShowcase() {
                                                             </div>
                                                         </div>
                                                         <hr className="lt-q-hr" />
-                                                        <p className="lt-q-text">{DESKTOP_Q.text}</p>
+                                                        <p className={`lt-q-text ${tex}`}><MathText k={k} text={DESKTOP_Q.text} /></p>
+                                                        <RegionFigure />
                                                         <div className="lt-opts-lbl">OPTIONS</div>
-                                                        <div className="lt-opts-list">
+                                                        <div className={`lt-opts-list ${tex}`}>
                                                             {['A', 'B', 'C', 'D'].map((l, i) => (
                                                                 <div className={`lt-opt${i === DESKTOP_Q.pick ? ' selected' : ''}`} key={l}>
                                                                     <div className="lt-opt-badge">{l}</div>
-                                                                    <span className="lt-opt-lbl">{DESKTOP_Q.opts[i]}</span>
+                                                                    <span className="lt-opt-lbl"><MathText k={k} text={DESKTOP_Q.opts[i]} /></span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -121,22 +200,22 @@ export default function DeviceShowcase() {
                                                     </div>
                                                     <hr className="lt-pal-hr" />
                                                     <div className="lt-pal-scroll">
+                                                        <div className="lt-pal-sec">Mathematics</div>
+                                                        <div className="lt-pill-grid" style={{ marginBottom: 10 }}>
+                                                            {Array.from({ length: 25 }, (_, i) => (
+                                                                <div key={`m${i}`} className={`lt-pill${PILL_STATE(i) ? ' ' + PILL_STATE(i) : ''}`}>{i + 1}</div>
+                                                            ))}
+                                                        </div>
                                                         <div className="lt-pal-sec">Physics</div>
                                                         <div className="lt-pill-grid" style={{ marginBottom: 10 }}>
                                                             {Array.from({ length: 25 }, (_, i) => (
-                                                                <div key={`p${i}`} className={`lt-pill${PILL_STATE(i) ? ' ' + PILL_STATE(i) : ''}`}>{i + 1}</div>
+                                                                <div key={`p${i}`} className="lt-pill">{i + 26}</div>
                                                             ))}
                                                         </div>
                                                         <div className="lt-pal-sec">Chemistry</div>
                                                         <div className="lt-pill-grid" style={{ marginBottom: 10 }}>
                                                             {Array.from({ length: 25 }, (_, i) => (
-                                                                <div key={`c${i}`} className="lt-pill">{i + 26}</div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="lt-pal-sec">Mathematics</div>
-                                                        <div className="lt-pill-grid" style={{ marginBottom: 10 }}>
-                                                            {Array.from({ length: 25 }, (_, i) => (
-                                                                <div key={`m${i}`} className="lt-pill">{i + 51}</div>
+                                                                <div key={`c${i}`} className="lt-pill">{i + 51}</div>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -163,7 +242,7 @@ export default function DeviceShowcase() {
                                                     <div className="lt-pn-logo">📚</div>
                                                     <div className="lt-pn-inst-name"><span style={{ color: '#0284c7' }}>Your Institution Name here, ...</span></div>
                                                 </div>
-                                                <div className="lt-pn-title-row">JEE Main 2025 Session 2...</div>
+                                                <div className="lt-pn-title-row">JEE Main 2026 Session 1...</div>
                                                 <div className="lt-pn-sub">
                                                     <div className="lt-pn-timer"><ClockIcon /> 2:58:43 &nbsp;<EyeOffIcon /></div>
                                                     <div className="lt-pn-badges">
@@ -174,9 +253,9 @@ export default function DeviceShowcase() {
                                                     </div>
                                                 </div>
                                                 <div className="lt-pn-tabs">
-                                                    <div className="lt-pn-tab active">Physics <span className="lt-tab-i">i</span></div>
-                                                    <div className="lt-pn-tab" style={{ color: '#64748b' }}>Chemistry <span className="lt-tab-i">i</span></div>
-                                                    <div className="lt-pn-tab" style={{ color: '#64748b' }}>Mathematics</div>
+                                                    <div className="lt-pn-tab active">Mathematics <span className="lt-tab-i">i</span></div>
+                                                    <div className="lt-pn-tab" style={{ color: '#64748b' }}>Physics <span className="lt-tab-i">i</span></div>
+                                                    <div className="lt-pn-tab" style={{ color: '#64748b' }}>Chemistry</div>
                                                 </div>
                                                 <div className="lt-pn-body">
                                                     <div className="lt-pn-card">
@@ -191,13 +270,15 @@ export default function DeviceShowcase() {
                                                             </div>
                                                         </div>
                                                         <hr className="lt-pn-hr" />
-                                                        <p className="lt-pn-q-text">{MOBILE_Q.text}</p>
-                                                        {['A', 'B', 'C', 'D'].map((l, i) => (
-                                                            <div className={`lt-pn-opt${i === MOBILE_Q.pick ? ' selected' : ''}`} key={l}>
-                                                                <div className="lt-pn-opt-badge">{l}</div>
-                                                                <span className="lt-pn-opt-lbl">{MOBILE_Q.opts[i]}</span>
-                                                            </div>
-                                                        ))}
+                                                        <p className={`lt-pn-q-text ${tex}`}><MathText k={k} text={MOBILE_Q.text} /></p>
+                                                        <div className={tex}>
+                                                            {['A', 'B', 'C', 'D'].map((l, i) => (
+                                                                <div className={`lt-pn-opt${i === MOBILE_Q.pick ? ' selected' : ''}`} key={l}>
+                                                                    <div className="lt-pn-opt-badge">{l}</div>
+                                                                    <span className="lt-pn-opt-lbl"><MathText k={k} text={MOBILE_Q.opts[i]} /></span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="lt-pn-footer">

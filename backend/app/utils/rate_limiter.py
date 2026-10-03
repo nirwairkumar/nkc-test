@@ -297,6 +297,9 @@ join_enter_per_ip = RateLimiter(requests=120, window=300, name="join_enter")
 join_pin_per_student = RateLimiter(requests=8, window=600, name="join_pin")
 # Heartbeats arrive every ~20 s per student; this only stops runaway clients.
 join_heartbeat_per_token = RateLimiter(requests=30, window=60, name="join_heartbeat")
+# "See your result" lookups: enough for a computer lab checking at once, slow for
+# anyone walking through roll numbers.
+join_result_per_ip = RateLimiter(requests=80, window=300, name="join_result")
 
 
 # ══════════════════════════════════════════════════════════════════

@@ -105,6 +105,28 @@
     pointer-events: none;
 }
 
+/* ══ QUESTION CONTENT ════════════════════════════════════════════
+   The maths is drawn by KaTeX, which loads after the page: until then the
+   question and options stay invisible rather than showing raw TeX.          */
+
+.dsw-tex { opacity: 0; transition: opacity 0.3s ease; }
+.dsw-tex.is-ready { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .dsw-tex { transition: none; } }
+/* An expression never splits across lines (x²/4 − | y²/b² = 1 reads badly). */
+.dsw-tex .katex { white-space: nowrap; }
+
+/* The question's figure, framed as the exam screen frames a question image
+   (centred, white, hairline border, small radius, faint shadow). */
+.dsw-figure-row { display: flex; justify-content: center; margin: -6px 0 6px; }
+.dsw-figure {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 3px 8px 2px;
+    line-height: 0;
+}
+
 /* ══ 1. BEZEL RE-GRADE ═══════════════════════════════════════════
    Pale silver (#e2e8f0 → #cbd5e1) is what made this look pasted on.
    Graphite with a warm-white rim reads as machined metal lit from
