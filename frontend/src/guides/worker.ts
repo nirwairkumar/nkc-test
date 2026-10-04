@@ -11,9 +11,10 @@ import { HINDI_ONLINE_TEST_MAKER } from './hindiOnlineTestMaker';
 import { JEE_MOCK_TEST_PLATFORM } from './jeeMockTestPlatform';
 import { MOODLE_ALTERNATIVE } from './moodleAlternative';
 import { NEET_ONLINE_TEST_SOFTWARE } from './neetOnlineTestSoftware';
+import { PREVENT_CHEATING_ONLINE_EXAMS } from './preventCheatingOnlineExams';
 import type { Guide } from './types';
 
-export const GUIDES: Guide[] = [HINDI_ONLINE_TEST_MAKER, CONDUCT_ONLINE_EXAM, MOODLE_ALTERNATIVE,NEET_ONLINE_TEST_SOFTWARE, AI_TEST_GENERATOR, JEE_MOCK_TEST_PLATFORM, CBT_EXAM_SOFTWARE, BEST_ONLINE_TEST_PLATFORM];
+export const GUIDES: Guide[] = [PREVENT_CHEATING_ONLINE_EXAMS, HINDI_ONLINE_TEST_MAKER, CONDUCT_ONLINE_EXAM, MOODLE_ALTERNATIVE,NEET_ONLINE_TEST_SOFTWARE, AI_TEST_GENERATOR, JEE_MOCK_TEST_PLATFORM, CBT_EXAM_SOFTWARE, BEST_ONLINE_TEST_PLATFORM];
 
 export { guideCrawlerHtml, guideJsonLd } from './render';
 export { guideAssetUrl, guideUrl } from './meta';

@@ -288,8 +288,44 @@ export const HINDI_META: GuideMeta = {
     cta: { label: 'Make a Hindi test, free', href: '/create-test' },
 };
 
+export const PREVENT_CHEATING_META: GuideMeta = {
+    slug: 'prevent-cheating-in-online-exams',
+    path: '/prevent-cheating-in-online-exams',
+    title: 'How to prevent cheating in online exams: what works, and what can’t',
+    seoTitle: 'How to Prevent Cheating in Online Exams: What Works',
+    description:
+        'How to prevent cheating in online exams: 16 ways candidates cheat, what a browser can and can’t catch, and the paper, check-in and rules that stop it.',
+    dek:
+        'Cheating in online exams is common, and most of it isn’t clever: a quick search, a chatbot, a screenshot in the class group, a friend who sits the test. Here is how candidates actually cheat, what exam software can and can’t notice (this page will notice when you switch tabs), and how to write, set up and check an exam so that cheating rarely pays.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-04T12:00:00+05:30',
+    dateModified: '2026-10-04T12:00:00+05:30',
+    readMinutes: 26,
+    cover: {
+        src: '/guides/prevent-cheating-in-online-exams/cover.png',
+        alt: 'A candidate’s phone on TestoZa’s exam screen showing “Warning 1/2: Tab Switching / Navigation is not allowed!”, beside the examiner’s exam room row with “1 warning”',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'prevent cheating in online exams',
+        'how to prevent cheating in online exams',
+        'how to stop cheating in online exams',
+        'anti cheating online exam',
+        'online exam cheating methods',
+        'tab switch detection online exam',
+        'can online exams detect cheating',
+        'online exam proctoring without webcam',
+        'prevent ChatGPT cheating in exams',
+        'online exam security',
+        'TestoZa',
+    ],
+    // Every secure exam starts with a paper; the rules are set on it.
+    cta: { label: 'Make your exam paper, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

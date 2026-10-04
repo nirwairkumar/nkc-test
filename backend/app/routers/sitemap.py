@@ -56,6 +56,7 @@ STATIC_PAGES = [
     {"loc": "/moodle-alternative", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/how-to-conduct-online-exam", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/hindi-online-test-maker", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/prevent-cheating-in-online-exams", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
     {"loc": "/more-tests", "priority": "0.85", "changefreq": "daily"},

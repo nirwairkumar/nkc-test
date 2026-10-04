@@ -680,7 +680,9 @@ export default function TestPage() {
       }
     }
   }, [warnings, test?.id, user?.id]);
-  const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
+  // null = warn only; 0 = Strict (submit at the first violation); 2–5 = warnings, then submit.
+  // `??`, not `||`: with `||` a limit of 0 became null and Strict only warned.
+  const MAX_WARNINGS: number | null = test?.settings?.violation_limit ?? null;
 
   // ── Exam session heartbeat (every 20 s and when the tab comes back) ──────────
   // Sends progress, violations and an answer draft (so a dead phone can continue on
@@ -843,7 +845,15 @@ export default function TestPage() {
     };
 
     // 3. Full Screen Check — violations ONLY for conduct-exam tests
+    // Safari on iPhone can't put a web page in full screen at all. Requiring it there
+    // would count a violation and leave the candidate stuck behind "Return to Full
+    // Screen", so the rule is skipped; app-switch detection still applies.
+    const fullScreenSupported = !!(document.fullscreenEnabled || (document as any).webkitFullscreenEnabled);
     const checkFullScreenState = () => {
+      if (!fullScreenSupported) {
+        setShowFullScreenWarning(false);
+        return;
+      }
       const currentFullScreen = !!(
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
@@ -2208,10 +2218,8 @@ export default function TestPage() {
             <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
               <TriangleAlert className={`w-3.5 h-3.5 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
               <span>
-                {test.settings?.tab_switch_mode === 'strict'
-                  ? `${warnings}/1`
-                  : `${warnings}/3`
-                }
+                {/* Warnings so far, out of the limit set on the paper (warn only: no limit). */}
+                {MAX_WARNINGS === null ? warnings : `${warnings}/${MAX_WARNINGS}`}
               </span>
             </div>
           )}

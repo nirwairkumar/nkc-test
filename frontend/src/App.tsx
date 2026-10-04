@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, CONDUCT_META, HINDI_META, JEE_META, MOODLE_META, NEET_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, CONDUCT_META, HINDI_META, JEE_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -144,6 +144,7 @@ const NeetOnlineTestSoftware = safeLazy(() => import("./pages/guides/neet/NeetOn
 const MoodleAlternative = safeLazy(() => import("./pages/guides/moodle/MoodleAlternative"));
 const ConductOnlineExam = safeLazy(() => import("./pages/guides/conduct/ConductOnlineExam"));
 const HindiOnlineTestMaker = safeLazy(() => import("./pages/guides/hindi/HindiOnlineTestMaker"));
+const PreventCheating = safeLazy(() => import("./pages/guides/cheating/PreventCheating"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -299,6 +300,7 @@ const App = () => (
                     <Route path={MOODLE_META.path} element={<MoodleAlternative />} />
                     <Route path={CONDUCT_META.path} element={<ConductOnlineExam />} />
                     <Route path={HINDI_META.path} element={<HindiOnlineTestMaker />} />
+                    <Route path={PREVENT_CHEATING_META.path} element={<PreventCheating />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

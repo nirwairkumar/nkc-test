@@ -55,7 +55,12 @@ export type GuideWidget =
     | 'hindi-typing'
     | 'hindi-unicode-check'
     | 'hindi-ai-language'
-    | 'hindi-exam-screen';
+    | 'hindi-exam-screen'
+    // prevent-cheating-in-online-exams
+    | 'cheat-methods'
+    | 'cheat-sandbox'
+    | 'cheat-copy-check'
+    | 'cheat-planner';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

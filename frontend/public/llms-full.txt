@@ -366,6 +366,23 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: How to prevent cheating in online exams (https://testoza.com/prevent-cheating-in-online-exams)
+
+A long-form guide for schools, coaching institutes, colleges and recruiters on preventing cheating in online exams, with TestoZa as the worked example. Product details checked against the app on 4 October 2026; research figures as published.
+
+- **How common:** Newton & Essex (Journal of Academic Ethics, 2024; 19 studies, 4,672 students): 44.7% admitted cheating in online exams, 29.9% before the pandemic, 54.7% during it. Chegg requests in five STEM subjects rose 196% in 2020 (Cotarlan & Lancaster, 2021). Chan & Ahn (PNAS, 2023) found unproctored online scores tracked in-person scores, suggesting cheating often doesn't help much; Newton disputed this.
+- **16 methods, four groups:** looking it up (another tab or app, a chatbot, a second device, Circle to Search/Google Lens, split screen or a second monitor, notes), getting help (the class group, someone in the room, impersonation, screen sharing), getting the answers early (early finishers, an answer key readable in the page, a leaked paper), gaming the test (a second attempt, a fake network failure, copying the question out).
+- **What a browser can see:** the page being hidden (tab or app switch, home screen, locked phone), leaving full screen, copy/paste/right-click inside the page. Not: a second device, people, screenshots, screen sharing, overlays or split screen (a partly visible page counts as visible). TestoZa doesn't count the window losing focus.
+- **TestoZa exam rules (paid plans from ₹49 a week):** Force full screen (skipped on iPhones, where Safari can't put web pages in full screen), Tab/App switch detection, after violations warn only / Strict (submit at the first) / 2–5 warnings then auto-submit, disable copy/paste, disable right click, block back button, disable exit button, shuffle question order (order only). Advice: 2–3 warnings for phones; Strict only on lab computers. In a sitting with a join code, warnings reach the examiner's exam room and the results export; on an exam link they act on the candidate's screen but aren't shown to the examiner.
+- **Paper design:** real exam timing (JEE Main ~2 min 24 s a question, NEET 1 min, SSC CGL 36 s), application questions, numerical answers, two versions (Klijn et al. 2024: later candidates finished 19.5% faster but scored no higher when versions differed), shuffled order, negative marking, never reuse a paper.
+- **Identity and leaks:** check-in by name, roll number, or roll number + 4-digit PIN (8 wrong tries per 10 minutes); one device per seat ("Changed device" in the exam room); one submission per candidate in a sitting. Answer keys are removed before the paper is sent and marked on the server; results can wait until the exam ends; scheduled links keep the key until the end time; questions are sent only when a sitting starts; late entry closes.
+- **AI:** GPT-4 answers went undetected in 94% of cases in real take-home exams at Reading and outscored real students 83.4% of the time (Scarfe et al., PLOS ONE, 2024); OpenAI withdrew its AI classifier in July 2023 (26% caught, 9% false positives). Defences: stay-in-exam rules, tight time, figure/data/multi-step questions, supervised rooms, short oral checks.
+- **After the exam:** identical wrong answers are the sign of copying (six shared wrong answers ≈ 1 in 729 by chance under an even spread), plus speed that doesn't fit the score, warnings, changed devices, jumps against history. TestoZa doesn't compare answer sheets automatically.
+- **Other tools:** webcam proctoring and lockdown browsers have costs (camera, private room, consent); TestoZa's exams use neither camera nor microphone. Google Forms locked mode needs Google Workspace for Education and school-managed Chromebooks; no timer without add-ons.
+- **Law:** Public Examinations (Prevention of Unfair Means) Act, 2024 (UPSC, SSC, RRBs, IBPS, NTA, central recruitment): 3–5 years and up to ₹10 lakh; organised cheating 5–10 years and at least ₹1 crore. Not school or coaching tests.
+
+---
+
 ## Guide: Hindi online test maker (https://testoza.com/hindi-online-test-maker)
 
 A long-form guide for Hindi-medium schools and coaching institutes on making online tests in Hindi, with TestoZa as the worked example, and a short summary in Hindi. Product details checked against the app on 3 October 2026.
