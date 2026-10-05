@@ -35,6 +35,7 @@ import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
 import VirtualNumericPad from '@/components/test/VirtualNumericPad';
 import CorporateTestView from '@/components/test/CorporateTestView';
 import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
+import { isNumericalCorrect } from '@/utils/numericalAnswer';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -1282,9 +1283,7 @@ export default function TestPage() {
                 const sectionNegative = parseMark((section as any).negative_marks, 1);
 
                 if (q.type === 'numerical') {
-                  const numAns = parseFloat(item.ans as string);
-                  const range = q.correctAnswer as { min: number, max: number };
-                  if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) itemScore = sectionMarks;
+                  if (isNumericalCorrect(q.correctAnswer, item.ans)) itemScore = sectionMarks;
                   else itemScore = -sectionNegative;
                 } else if (q.type === 'multiple') {
                   const correctArr = (Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String).sort();
@@ -1351,9 +1350,7 @@ export default function TestPage() {
       if (q.negativeMarks !== undefined) sectionNegative = parseMark(q.negativeMarks, sectionNegative);
 
       if (q.type === 'numerical') {
-        const numAns = parseFloat(userAns as string);
-        const range = q.correctAnswer as { min: number, max: number };
-        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+        if (isNumericalCorrect(q.correctAnswer, userAns)) {
           isCorrect = true;
           score += sectionMarks;
           positiveScore += sectionMarks;

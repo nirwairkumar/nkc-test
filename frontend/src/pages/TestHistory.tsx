@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import TestLinkPaster from '@/components/TestLinkPaster';
+import { isNumericalCorrect } from '@/utils/numericalAnswer';
 
 const formatQuestionTime = (seconds?: number | string): string => {
     if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
@@ -528,9 +529,7 @@ export default function TestHistory() {
                                                                                         // Calculate correctness
                                                                                         let isCorrect = false;
                                                                                         if (q.type === 'numerical') {
-                                                                                            const numAns = parseFloat(userAnswer);
-                                                                                            const range = q.correctAnswer;
-                                                                                            if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+                                                                                            if (isNumericalCorrect(q.correctAnswer, userAnswer)) {
                                                                                                 isCorrect = true;
                                                                                             }
                                                                                         } else if (q.type === 'multiple') {
@@ -853,9 +852,7 @@ export default function TestHistory() {
                                                                     const userAnswer = getAnswer(attempt.answers, q.id);
                                                                     let isCorrect = false;
                                                                     if (q.type === 'numerical') {
-                                                                        const numAns = parseFloat(userAnswer);
-                                                                        const range = q.correctAnswer;
-                                                                        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) isCorrect = true;
+                                                                        if (isNumericalCorrect(q.correctAnswer, userAnswer)) isCorrect = true;
                                                                     } else if (q.type === 'multiple') {
                                                                         const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
                                                                         const userArr = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];

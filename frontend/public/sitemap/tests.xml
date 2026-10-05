@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
+        <loc>https://testoza.com/test-intro/e2029458-47dd-4464-b473-4891d9a5bb89</loc>
+        <lastmod>2026-10-02T10:30:27.304Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://testoza.com/test-intro/2557fc81-9a83-4d8d-a3b0-0a3b76eb40dd</loc>
         <lastmod>2026-08-26T10:06:26.633Z</lastmod>
         <changefreq>daily</changefreq>

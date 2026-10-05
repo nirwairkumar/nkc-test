@@ -101,6 +101,13 @@ export function balanceLatex(expr: string): string {
         if ((ch === '^' || ch === '_')) {
             const rest = expr.slice(i + 1).trimStart();
             if (rest === '' || rest[0] === '}') {
+                // Inside \ce{}, a caret on its own (at the start, or after a space) is mhchem's
+                // "gas given off" arrow: the ↑ key writes \ce{^}, and "H2 ^" is typed by hand.
+                // An empty group there (\ce{^{}}) would draw nothing.
+                if (ch === '^' && /(^|[\s{])$/.test(expr.slice(0, i)) && contextAt(expr, i) === 'chemistry') {
+                    out += ch;
+                    continue;
+                }
                 out += ch + '{}';
                 continue;
             }

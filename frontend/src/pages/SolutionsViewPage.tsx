@@ -5,6 +5,7 @@ import { Loader2, ArrowLeft, ArrowRight, CheckCircle, XCircle, MinusCircle, Time
 import { fetchTestById, fetchSolutions } from '@/lib/testsApi';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Badge } from '@/components/ui/badge';
+import { isNumericalCorrect } from '@/utils/numericalAnswer';
 
 const formatQuestionTime = (seconds?: number | string): string => {
     if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
@@ -97,9 +98,7 @@ export default function SolutionsViewPage() {
 
     if (userAnswer !== undefined && userAnswer !== null) {
         if (currentQ.type === 'numerical') {
-            const numAns = parseFloat(userAnswer);
-            const range = currentQ.correctAnswer as any;
-            if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+            if (isNumericalCorrect(currentQ.correctAnswer, userAnswer)) {
                 isCorrect = true;
             }
             userAnswerDisplay = userAnswer;

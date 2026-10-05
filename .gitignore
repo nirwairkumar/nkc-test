@@ -3,6 +3,7 @@ node_modules/
 *.log
 .env
 .gemini/
+.codex/
 *_remotes.txt
 *_status.txt
 frontend/node_modules/

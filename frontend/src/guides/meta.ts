@@ -324,8 +324,85 @@ export const PREVENT_CHEATING_META: GuideMeta = {
     cta: { label: 'Make your exam paper, free', href: '/generate-with-ai' },
 };
 
+export const MATH_TEST_MAKER_META: GuideMeta = {
+    slug: 'math-test-maker',
+    path: '/math-test-maker',
+    title: 'Math test maker with equations: make a maths test without learning LaTeX',
+    seoTitle: 'Math Test Maker with Equations (No LaTeX Needed)',
+    description:
+        'Make a maths test with real equations: upload a PDF or photo and AI types the maths, or tap fractions, roots and integrals in. Sharp on any phone.',
+    dek:
+        'Typing one integral into an online form is hard enough; typing a whole paper takes a weekend. Here is how to get equations into a maths test the quick way (from the paper you already have, a photo, a few taps or a line of LaTeX), how to mark numerical answers fairly, and what students see on their phones. Every demo on this page works: type a formula, import a worksheet, sit a short test.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-04T12:00:00+05:30',
+    dateModified: '2026-10-04T12:00:00+05:30',
+    readMinutes: 20,
+    cover: {
+        src: '/guides/math-test-maker/cover.png',
+        alt: 'A handwritten question, “Find d/dx (tan² x)”, beside a phone showing the same question typeset on TestoZa’s exam screen with four options',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'math test maker with equations',
+        'math test maker',
+        'maths test maker',
+        'online math test maker',
+        'math quiz maker with equations',
+        'create math test online',
+        'equation editor for online test',
+        'how to add equations in online test',
+        'Google Forms math equations',
+        'maths question paper maker',
+        'online maths test for students',
+        'LaTeX quiz maker',
+        'TestoZa',
+    ],
+    // A maths test usually starts from a paper the teacher already has.
+    cta: { label: 'Make your maths test, free', href: '/generate-with-ai' },
+};
+
+export const CHEMISTRY_META: GuideMeta = {
+    slug: 'chemistry-question-paper-maker',
+    path: '/chemistry-question-paper-maker',
+    title: 'Chemistry question paper maker: tests and quizzes with real formulas and reactions',
+    seoTitle: 'Chemistry Question Paper Maker & Quiz Creator',
+    description:
+        'Make chemistry question papers, tests and quizzes with real formulas: upload a PDF or photo and AI types H₂SO₄ and ⇌, or tap them in. Sharp on any phone.',
+    dek:
+        'A chemistry paper is full of things online forms can’t hold: subscripts, charges, reaction arrows, structures. Here is how to put one online the quick way (from the PDF or photo you already have, a few taps, or a line of mhchem), how to set structure questions and pH answers fairly, and what students see on their phones. Every demo on this page works: type a reaction, import a worksheet, sit a short test.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-05T12:00:00+05:30',
+    dateModified: '2026-10-05T12:00:00+05:30',
+    readMinutes: 24,
+    cover: {
+        src: '/guides/chemistry-question-paper-maker/cover.png',
+        alt: 'A phone photo of a handwritten question on the precipitation of CaF₂ (Ksp = 1.7 × 10⁻¹⁰), read by TestoZa and shown typeset on a student’s exam screen',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'chemistry question paper maker',
+        'chemistry test maker',
+        'chemistry quiz maker',
+        'chemistry exam creator',
+        'online chemistry test',
+        'chemistry MCQ test maker',
+        'chemical equation editor for online test',
+        'how to type chemical formulas in an online test',
+        'Google Forms chemical formulas',
+        'mhchem',
+        'NEET chemistry test',
+        'JEE chemistry mock test',
+        'CBSE chemistry question paper',
+        'TestoZa',
+    ],
+    // A chemistry paper usually starts from a PDF the teacher already has.
+    cta: { label: 'Make your chemistry paper, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

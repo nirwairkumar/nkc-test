@@ -156,13 +156,15 @@ def score_question(
 
     if q_type == "numerical":
         num = _js_parse_float(answer)
-        if (
-            not math.isnan(num)
-            and isinstance(correct, dict)
-            and num >= parse_mark(correct.get("min"), float("inf"))
-            and num <= parse_mark(correct.get("max"), float("-inf"))
-        ):
-            return marks, "correct"
+        if not math.isnan(num) and isinstance(correct, dict):
+            if correct.get("exactMatch"):
+                # "Exact value(s)" in the builder: any of a comma-separated list.
+                # min/max stay at their 0 defaults then, so they must not be read.
+                exacts = [_js_parse_float(v) for v in str(correct.get("exactAnswers") or "").split(",")]
+                if num in [v for v in exacts if not math.isnan(v)]:
+                    return marks, "correct"
+            elif parse_mark(correct.get("min"), float("inf")) <= num <= parse_mark(correct.get("max"), float("-inf")):
+                return marks, "correct"
         return -negative, "wrong"
 
     if q_type == "multiple":

@@ -60,7 +60,23 @@ export type GuideWidget =
     | 'cheat-methods'
     | 'cheat-sandbox'
     | 'cheat-copy-check'
-    | 'cheat-planner';
+    | 'cheat-planner'
+    // math-test-maker
+    | 'math-paste'
+    | 'math-ai-import'
+    | 'math-sypad'
+    | 'math-notation'
+    | 'math-numerical'
+    | 'math-exam'
+    | 'math-options'
+    // chemistry-question-paper-maker
+    | 'chem-paste'
+    | 'chem-ai-import'
+    | 'chem-sypad'
+    | 'chem-notation'
+    | 'chem-numerical'
+    | 'chem-exam'
+    | 'chem-options';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

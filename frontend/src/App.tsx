@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, CONDUCT_META, HINDI_META, JEE_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -145,6 +145,8 @@ const MoodleAlternative = safeLazy(() => import("./pages/guides/moodle/MoodleAlt
 const ConductOnlineExam = safeLazy(() => import("./pages/guides/conduct/ConductOnlineExam"));
 const HindiOnlineTestMaker = safeLazy(() => import("./pages/guides/hindi/HindiOnlineTestMaker"));
 const PreventCheating = safeLazy(() => import("./pages/guides/cheating/PreventCheating"));
+const MathTestMaker = safeLazy(() => import("./pages/guides/math/MathTestMaker"));
+const ChemistryQuestionPaperMaker = safeLazy(() => import("./pages/guides/chem/ChemistryQuestionPaperMaker"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -301,6 +303,8 @@ const App = () => (
                     <Route path={CONDUCT_META.path} element={<ConductOnlineExam />} />
                     <Route path={HINDI_META.path} element={<HindiOnlineTestMaker />} />
                     <Route path={PREVENT_CHEATING_META.path} element={<PreventCheating />} />
+                    <Route path={MATH_TEST_MAKER_META.path} element={<MathTestMaker />} />
+                    <Route path={CHEMISTRY_META.path} element={<ChemistryQuestionPaperMaker />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />
