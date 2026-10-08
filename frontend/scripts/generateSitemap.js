@@ -114,7 +114,7 @@ async function generateSitemap() {
             // Guides (src/guides)
             { url: '/best-online-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
             { url: '/cbt-exam-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-28T00:00:00.000Z' },
-            { url: '/jee-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-28T00:00:00.000Z' },
+            { url: '/jee-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
             { url: '/ai-test-generator', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
             { url: '/neet-online-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
             { url: '/moodle-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },

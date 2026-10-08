@@ -123,8 +123,9 @@ export default function CombinedBreakScreen() {
     const CurrentTip = TIPS[tipIndex].icon;
     const tipColor = TIPS[tipIndex].color;
 
+    // pt-28 keeps the content below the see-through "Submitted" banner when the page is taller than the screen.
     return (
-        <div className="min-h-[100dvh] w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex flex-col items-center justify-center py-12 px-4 md:p-6 relative overflow-x-hidden overflow-y-auto">
+        <div className="min-h-[100dvh] w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex flex-col items-center justify-center pt-28 pb-12 px-4 md:px-6 relative overflow-x-hidden overflow-y-auto">
             {/* Animated background orbs */}
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-700/20 rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-700/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />

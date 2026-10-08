@@ -279,7 +279,7 @@ export const CHEMISTRY_QUESTION_PAPER_MAKER: Guide = {
 <p>TestoZa has four question types, and a chemistry paper uses all of them:</p>
 <ul>
 <li><strong>Single correct</strong>: the standard four options, and the only type in NEET. Assertion–reason questions are single correct, with the four standard statements as the options (“Both A and R are true, and R is the correct explanation of A”, and so on), the way CBSE sets them in Section A.</li>
-<li><strong>Multiple correct</strong>: tick every true statement, as in JEE Advanced questions on the properties of a compound. Partial credit is proportional: pick two of three correct options and you get two-thirds of the marks, but any wrong option costs the negative mark.</li>
+<li><strong>Multiple correct</strong>: tick every true statement, as in JEE Advanced questions on the properties of a compound. Partial credit is proportional by default (pick two of three correct options and you get two-thirds of the marks); set a question’s partial marks to JEE Advanced and each correct option is worth +1 instead. Either way, any wrong option costs the negative mark.</li>
 <li><strong>Numerical answer</strong>: no options; the student types a number. Moles, molarity, pH, rate constants, the number of isomers, the number of unpaired electrons.</li>
 <li><strong>Passage / case study</strong>: one passage with several questions under it, the shape of the case-based questions in Section D of a CBSE paper.</li>
 </ul>

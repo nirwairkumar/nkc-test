@@ -5,7 +5,7 @@
  *      and marks; Paper I → break → Paper II cards; instructions; the confirmation box
  *      and "Begin — Start Paper 1").
  *   2. Between the papers: CombinedBreakScreen.tsx ("Take a Breath.", a live countdown,
- *      starting below the see-through banner so nothing shows through it on a phone-height screen;
+ *      starting below the see-through banner (pt-28, as the product does);
  *      Add 5 Minutes, Skip Break, a rotating tip, "Start Paper 2 Now"), with the
  *      "Paper 1 Submitted Successfully" banner it opens with.
  *   3. After Paper 2: ResultsPage.tsx's combined view (total out of 360, the combined

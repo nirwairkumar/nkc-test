@@ -49,7 +49,8 @@
  *     upload a sheet, or type one; roll number, name, parent's phone (optional).
  *   - Marks (components/test-builder/QuestionCard.tsx, backend services/scoring.py):
  *     Marks and Wrong on every question card, new questions copy the previous one's;
- *     multiple-correct: proportional partial marks, negative if any wrong option;
+ *     multiple-correct: proportional (or JEE Advanced +1 per option) partial marks,
+ *     negative if any wrong option;
  *     numerical answers as a min–max range; scored on the server.
  *   - Question types in the builder: single, multiple, numerical, comprehension.
  *   - AI import accepts PDF, PNG, JPG, WEBP (backend routers/ai.py valid_extensions).

@@ -17,7 +17,8 @@
  *   - Progress saved in localStorage; signed-in students get a resume prompt.
  *   - Scoring: backend/app/services/scoring.py — server-side; marks precedence
  *     question > section > test > 4/−1; fractions like "1/3"; numerical answers are
- *     a min–max range; multi-correct partial credit is proportional, any wrong
+ *     a min–max range; multi-correct partial credit is proportional or JEE Advanced's
+ *     +1 per option (per question, since 2026-10-08), any wrong
  *     option costs the negative mark; section attempt control hard / soft (best N
  *     or first N).
  *   - Results: show_results_immediate false → "submitted" page; attempts appear in
@@ -148,7 +149,7 @@ export const CBT_EXAM_SOFTWARE: Guide = {
 <li><strong>Multi-correct questions give partial credit.</strong> Picking some of the right options earns a share of the marks; picking any wrong option costs the negative mark.</li>
 <li><strong>Section rules.</strong> "Attempt any 5 of these 10" works in two ways: stop students at the limit, or let them answer more and count their best five (or their first five).</li>
 </ul>
-<p>Scores are worked out on our server from the saved answers, not in the student's browser, so nobody can edit their marks on the way in. One honest caveat: partial credit on multi-correct questions is proportional, and not every exam works that way. GATE, for example, gives nothing for a partly correct multi-select answer. If your exam is all-or-nothing, tell your students how TestoZa's rule differs, or avoid multi-correct questions in that paper.</p>
+<p>Scores are worked out on our server from the saved answers, not in the student's browser, so nobody can edit their marks on the way in. One honest caveat: partial credit on multi-correct questions is either proportional (the default) or JEE Advanced’s one mark per correct option, and not every exam works either way. GATE, for example, gives nothing for a partly correct multi-select answer. If your exam is all-or-nothing, tell your students how TestoZa's rule differs, or avoid multi-correct questions in that paper.</p>
 `),
                 ],
             },
@@ -219,7 +220,7 @@ export const CBT_EXAM_SOFTWARE: Guide = {
 <li><strong>No separate section timers.</strong> A paper runs on one clock. If your exam locks each section on its own timer, as SSC CGL now does, you can't reproduce that exactly yet.</li>
 <li><strong>A browser isn't a test centre.</strong> Full-screen and tab-switch rules make cheating harder, not impossible. For high-stakes papers, use a supervised lab.</li>
 <li><strong>Time's up needs a tap.</strong> When the clock ends, answers lock, but the student still confirms the submission.</li>
-<li><strong>Partial marking is proportional.</strong> See the marking section above if your exam is all-or-nothing.</li>
+<li><strong>No all-or-nothing multi-correct marking.</strong> Partial credit is proportional or JEE Advanced’s +1 per option; see the marking section above if your exam is all-or-nothing.</li>
 <li><strong>The exam-security rules are paid.</strong> Full screen, tab-switch limits, start forms and scheduling come with the weekly, monthly or yearly plans on the <a href="/pricing">pricing page</a>.</li>
 </ul>
 <p>We'd rather you knew these before you run an exam than found them out during one.</p>

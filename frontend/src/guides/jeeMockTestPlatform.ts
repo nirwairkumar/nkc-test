@@ -31,7 +31,9 @@
  *   - Numerical answers: a range or exact value(s) (QuestionCard.tsx). Hindi typing
  *     with English letters (LanguageToggle).
  *   - Scoring: backend/app/services/scoring.py — marks test > section > question;
- *     fractions; multi-correct partial credit is marks × picked ÷ correct, any wrong
+ *     fractions; multi-correct partial credit per question: Proportional (marks ×
+ *     picked ÷ correct, default) or JEE Advanced (+1 per correct option, since
+ *     2026-10-08, utils/multiCorrect.ts); any wrong
  *     option costs the negative mark; attempt control hard / soft (best N, first N).
  *   - Teacher analysis: src/pages/FullTestAnalysisPage.tsx — rank list, per-question
  *     accuracy, average time, option (distractor) distribution, discrimination index.
@@ -39,8 +41,8 @@
  *   - Student results: src/pages/ResultsPage.tsx — correct / wrong / partial /
  *     skipped, time per question, AI mentor (AIChatBot), rank predictor for tests
  *     tagged JEE Main / JEE Advanced, retake.
- *   - NOT in the product: per-section timers, JEE Advanced's exact +1/+2/+3 partial
- *     rule, server-side time enforcement. Don't claim them.
+ *   - NOT in the product: per-section timers, server-side time enforcement. Don't
+ *     claim them.
  * Exam facts: see `sources`. Sources disagree on negative marking for JEE Main
  * numericals, so the text sends readers to the year's bulletin.
  */
@@ -68,7 +70,7 @@ const AI_FALLBACK = `
 <p>A question as printed in a PDF: “The number of moles of KMnO₄ that will be needed to react completely with one mole of ferrous oxalate (FeC₂O₄) in acidic solution is (a) 3/5 (b) 2/5 (c) 4/5 (d) 1”. A typical copy-paste flattens it: KMnO4 and FeC2O4 lose their subscripts and each fraction breaks into two lines. TestoZa’s AI returns the same question typeset, with <code>$\\ce{KMnO4}$</code>, <code>$\\ce{FeC2O4}$</code> and <code>$\\frac{3}{5}$</code> written for you, ready to edit.</p>`;
 
 const PARTIAL_FALLBACK = `
-<p>Example: a question with three correct options (A, B and D), marked +4 with −2 for a wrong option. A student who picks A and B only scores +2 in JEE Advanced (one mark per correct option picked) and 4 × 2 ÷ 3 = 2.67 in TestoZa. A student who picks all three scores +4 in both; a student who picks C scores −2 in both.</p>`;
+<p>Example: a question with three correct options (A, B and D), marked +4 with −2 for a wrong option. A student who picks A and B only scores +2 in JEE Advanced (one mark per correct option picked), and +2 in TestoZa with Partial marks set to JEE Advanced; the default Proportional setting gives 4 × 2 ÷ 3 = 2.67. A student who picks all three scores +4 under every rule; a student who picks C scores −2 under every rule.</p>`;
 
 const BATCH_FALLBACK = `
 <p>After a mock, the teacher sees the rank list with each student’s score, marks gained and lost, accuracy and time taken, and, for every question, the share of the batch that got it right, the average time spent on it and how the batch split across options A to D. A question where most of the batch chose the same wrong option points to a misconception worth reteaching.</p>`;
@@ -218,13 +220,13 @@ export const JEE_MOCK_TEST_PLATFORM: Guide = {
 <li><strong>Check it as a student.</strong> Open the test the way your students will, in the NTA-style exam screen, and read every question once.</li>
 <li><strong>Set the time and go live.</strong> 180 minutes and no calculator, as in JEE Main. Then Conduct gives the paper its own exam link for your batch.</li>
 </ol>
-<p>For JEE Advanced, build Paper 1 and Paper 2 as two tests and link them as a combined test, which puts a timed break between the papers (30 minutes unless you change it). Multi-correct questions, numerical answers and List-I/List-II matching all work. There’s one difference in how partial marks are counted, which is next.</p>
+<p>For JEE Advanced, build Paper 1 and Paper 2 as two tests and link them as a combined test, which puts a timed break between the papers (30 minutes unless you change it). Multi-correct questions, numerical answers and List-I/List-II matching all work, and partial marks can follow JEE Advanced’s rule exactly, which is next. Our <a href="/jee-advanced-mock-test-software">JEE Advanced mock test software guide</a> covers the two-paper side in full.</p>
 `),
                 ],
             },
             {
                 id: 'marking',
-                title: 'Marking exactly like JEE, and the one place it differs',
+                title: 'Marking exactly like JEE, partial marks included',
                 tocLabel: 'Marking',
                 kicker: 'Getting the numbers right',
                 blocks: [
@@ -236,11 +238,11 @@ export const JEE_MOCK_TEST_PLATFORM: Guide = {
 <li><strong>Old “any 5 of 10” papers.</strong> JEE Main papers from 2021 to 2024 let candidates choose 5 of 10 numerical questions per subject. Section attempt control reproduces that: stop students after five answers, or let them answer more and count their first five or their best five.</li>
 <li><strong>Multi-correct questions.</strong> Any wrong option costs the negative mark you set (−2 for JEE Advanced), and picking some of the right options with no wrong one earns partial credit.</li>
 </ul>
-<p>That last point is the one place TestoZa doesn’t copy JEE exactly. JEE Advanced gives one mark for each correct option a candidate picks, and the full 4 only when they pick them all. TestoZa divides the question’s marks by the number of correct options. The two agree whenever all four options are correct, whenever a student picks every correct option, and whenever a student picks a wrong one. They differ when two or three options are correct and a student stops short. Try a few combinations:</p>
+<p>How much partial credit is worth is a setting on each multi-correct question. JEE Advanced gives one mark for each correct option a candidate picks, and the full 4 only when they pick them all: set the question’s <strong>Partial marks</strong> to <strong>JEE Advanced</strong> and TestoZa does exactly that. The default, <strong>Proportional</strong>, divides the question’s marks by the number of correct options instead. The two agree whenever all four options are correct, whenever a student picks every correct option, and whenever a student picks a wrong one. They differ when two or three options are correct and a student stops short. Try a few combinations:</p>
 `),
                     { type: 'widget', widget: 'partial-marks', fallbackHtml: PARTIAL_FALLBACK },
                     html(`
-<p>The difference is at most one mark on a question, always in the student’s favour. It rarely changes a rank, but tell your batch before a JEE Advanced mock so nobody reads two-thirds of a mark as something the real exam would give.</p>
+<p>The difference is at most one mark on a question, always in the student’s favour under Proportional. For a JEE Advanced mock, use the JEE Advanced setting: a new question copies the setting of the one before it, so in practice you set it once per subject, and the server, the results and the teacher analysis all mark the same way.</p>
 `),
                 ],
             },
@@ -301,7 +303,7 @@ export const JEE_MOCK_TEST_PLATFORM: Guide = {
                 blocks: [
                     html(`
 <ul class="jee-limits">
-<li><strong>JEE Advanced partial marks are proportional.</strong> As the marking section shows, a partly correct multi-correct answer can score up to one mark more than in the real exam.</li>
+<li><strong>Partial marks are set per question.</strong> JEE Advanced’s rule is a setting on each multi-correct question; questions brought in by the AI import start on Proportional, so switch them before a JEE Advanced mock.</li>
 <li><strong>AI needs a human check.</strong> A blurred subscript or a faint minus sign can change an answer. Read the paper once before it goes live.</li>
 <li><strong>A browser isn’t a test centre.</strong> Full-screen and tab-switch rules make cheating harder, not impossible. Run the mocks that matter in a supervised lab.</li>
 <li><strong>Time’s up needs a tap.</strong> When the clock runs out, answering locks, but the student still confirms the submission.</li>
@@ -340,7 +342,7 @@ export const JEE_MOCK_TEST_PLATFORM: Guide = {
             },
             {
                 q: 'Can I create JEE Advanced multi-correct questions with partial marking?',
-                a: 'Yes. A student who picks some of the correct options and no wrong one gets partial credit, and any wrong option costs the negative mark you set, such as −2. TestoZa’s partial credit is proportional (marks × options picked ÷ correct options), so when two or three options are correct it can give up to one mark more than JEE Advanced’s one-mark-per-option rule.',
+                a: 'Yes. A student who picks some of the correct options and no wrong one gets partial credit, and any wrong option costs the negative mark you set, such as −2. Set the question’s Partial marks to “JEE Advanced” and TestoZa gives one mark per correct option picked and the full marks only for all of them, exactly as JEE Advanced does; the default, Proportional, gives marks × options picked ÷ correct options.',
             },
             {
                 q: 'Can students take JEE mock tests on a phone?',

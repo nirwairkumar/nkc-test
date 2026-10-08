@@ -3,7 +3,7 @@
  *   notation-table    what you want → what you tap in the Sy Pad → code written → what students see
  *   ai-before-after   a PDF question, a typical copy-paste, TestoZa's AI import and the code behind it
  *   sypad-playground  a working Sy Pad (SyPadPlayground.tsx)
- *   partial-marks     JEE Advanced multi-correct marking vs TestoZa's proportional credit
+ *   partial-marks     TestoZa's two partial-marks settings: JEE Advanced vs Proportional
  *   batch-report      the teacher's analysis after a mock: rank list and option split per question
  * Illustrations use example data and say so. Everything is readable without motion.
  */
@@ -328,7 +328,10 @@ function jeeAdvanced(key: Set<string>, picked: Set<string>) {
     return { score: picked.size, rule: `${picked.size} of ${key.size} correct options picked, none wrong: +${picked.size}.` };
 }
 
-/** TestoZa (backend/app/services/scoring.py): marks × picked ÷ correct, any wrong option costs the negative mark. */
+/**
+ * TestoZa's default "Proportional" partial marks (backend/app/services/scoring.py): marks × picked ÷
+ * correct, any wrong option costs the negative mark. Its "JEE Advanced" setting is jeeAdvanced() above.
+ */
 function testoza(key: Set<string>, picked: Set<string>) {
     if (picked.size === 0) return { score: 0, rule: 'Nothing picked: 0.' };
     if ([...picked].some((p) => !key.has(p))) return { score: -2, rule: 'A wrong option costs the negative mark: −2.' };
@@ -431,16 +434,16 @@ function PartialMarks() {
                         <span className="jp-score-rule">{adv.rule}</span>
                     </div>
                     <div className="jp-score jp-score--us">
-                        <span className="jp-score-who">TestoZa</span>
+                        <span className="jp-score-who">Proportional</span>
                         <b className={tz.score < 0 ? 'is-neg' : undefined}>{fmt(tz.score)}</b>
                         <span className="jp-score-rule">{tz.rule}</span>
                     </div>
                 </div>
                 <p className={`jp-verdict${diff === 0 ? ' is-same' : ''}`}>
-                    {diff === 0 ? 'Same score.' : `TestoZa gives ${fmt(diff).replace('+', '')} more on this question.`}
+                    {diff === 0 ? 'Same score either way.' : `Proportional gives ${fmt(diff).replace('+', '')} more here. With Partial marks set to JEE Advanced, TestoZa gives ${fmt(adv.score)}, as the real paper does.`}
                 </p>
             </div>
-            <figcaption>A +4 question with −2 for a wrong option. Tap the circles to change the answer key and the student’s picks.</figcaption>
+            <figcaption>A +4 question with −2 for a wrong option, under TestoZa’s two partial-marks settings: JEE Advanced and Proportional. Tap the circles to change the answer key and the student’s picks.</figcaption>
         </figure>
     );
 }

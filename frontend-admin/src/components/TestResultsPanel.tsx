@@ -27,6 +27,8 @@ import {
 import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { isNumericalCorrect } from '@/utils/numericalAnswer';
+import { multiPartialScore } from '@/utils/multiCorrect';
 import {
     Tooltip,
     TooltipContent,
@@ -381,6 +383,9 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
         const getCorrectAnswerDisplay = (q: any) => {
             if (q.correctAnswer === undefined || q.correctAnswer === null) return '';
+            if (q.type === 'numerical' && typeof q.correctAnswer === 'object' && q.correctAnswer.exactMatch) {
+                return String(q.correctAnswer.exactAnswers ?? '');
+            }
             if (q.type === 'numerical' && typeof q.correctAnswer === 'object' && 'min' in q.correctAnswer && 'max' in q.correctAnswer) {
                 return `[${q.correctAnswer.min}, ${q.correctAnswer.max}]`;
             }
@@ -414,26 +419,20 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                 if (isCorrect) {
                     return { status: "Correct", score: maxScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
                 }
-                const partialEnabled = !!q.enable_partial_marks;
-                if (partialEnabled) {
-                    const incorrectCount = userList.filter(v => !correctSet.has(v)).length;
-                    if (incorrectCount === 0 && userList.length > 0) {
-                        const correctCount = userList.length;
-                        const partialMark = q.partial_marks_per_option !== undefined ? parseFloat(String(q.partial_marks_per_option)) : 1;
-                        const earned = correctCount * partialMark;
-                        return { status: "Partial", score: earned, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
-                    }
+                // Same rule as the server (scoring.py): some correct options and no wrong one
+                // earn partial marks, proportional or JEE Advanced's +1 per option.
+                const incorrectCount = userList.filter(v => !correctSet.has(v)).length;
+                if (incorrectCount === 0 && userList.length > 0) {
+                    const earned = multiPartialScore(q, userList.length, correctSet.size, maxScore);
+                    return { status: "Partial", score: earned, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
                 }
                 return { status: "Wrong", score: -negScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
             } else if (q.type === 'numerical') {
                 let isCorrect = false;
                 const userNum = parseFloat(String(userAns));
-                if (q.correctAnswer && typeof q.correctAnswer === 'object' && 'min' in q.correctAnswer && 'max' in q.correctAnswer) {
-                    const minVal = parseFloat(String(q.correctAnswer.min));
-                    const maxVal = parseFloat(String(q.correctAnswer.max));
-                    if (!isNaN(userNum) && !isNaN(minVal) && !isNaN(maxVal)) {
-                        isCorrect = userNum >= minVal && userNum <= maxVal;
-                    }
+                if (q.correctAnswer && typeof q.correctAnswer === 'object') {
+                    // A range, or "Exact value(s)" (exactMatch), as the server marks it.
+                    isCorrect = isNumericalCorrect(q.correctAnswer, userAns);
                 } else {
                     const corrNum = parseFloat(String(q.correctAnswer));
                     if (!isNaN(userNum) && !isNaN(corrNum)) {

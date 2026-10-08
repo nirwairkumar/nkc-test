@@ -68,9 +68,11 @@ jeeadv.ac.in: 2026 organised by IIT Roorkee, Sunday 17 May 2026, pattern "consis
 6. Check `https://testoza.com/jee-advanced-mock-test-software` stays on testoza.com and view-source contains "What a JEE Advanced mock has to copy".
 7. Search Console → URL inspection → Request indexing; Bing Webmaster Tools → submit URL.
 
-## 7. Flagged, not fixed
+## 7. Follow-up fixes (same day, after the first push; owner approved fixing)
 
-- `/jee-mock-test-platform` (earlier guide, not touched) still says TestoZa's partial credit is proportional and differs from JEE Advanced; true by default, but the JEE Advanced switch now exists. Its `partial-marks` widget and FAQ should mention the switch and link here.
-- `frontend-admin/src/components/TestResultsPanel.tsx` has the same old export scoring as the frontend copy had.
-- Combined-test break screen (product): the "Paper I Submitted Successfully" banner is see-through and sits over the coffee icon on phone-height screens for its first 7 seconds.
-- No faculty-side merged rank list across Paper 1 and Paper 2 (stated as a limit on the page).
+- `/jee-mock-test-platform`: marking section, limit, FAQ and `partial-marks` widget (JeeWidgets.tsx) now describe the two settings (JEE Advanced = exact; Proportional = default) and link to this guide; dateModified and sitemap lastmod 2026-10-08.
+- CBT, maths and chemistry guides: "partial credit is proportional" sentences now say proportional by default or JEE Advanced's +1 per option (dates not bumped). `llms-full.txt` CBT line likewise.
+- `frontend-admin/src/components/TestResultsPanel.tsx`: same export fix as the frontend (copied `utils/multiCorrect.ts` and `utils/numericalAnswer.ts` into frontend-admin).
+- `frontend/src/pages/CombinedBreakScreen.tsx`: content starts at `pt-28` (was `py-12`, `md:p-6`) so the see-through "Paper I Submitted Successfully" banner no longer covers the coffee icon on short screens.
+
+Still open: no faculty-side merged rank list across Paper 1 and Paper 2 (stated as a limit on the page); the break can be skipped or extended (by design).

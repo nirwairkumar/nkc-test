@@ -84,7 +84,7 @@ export const JEE_META: GuideMeta = {
         'A JEE paper is the hardest kind of paper to put online. Integrals, determinants, reaction arrows and List-I/List-II tables usually mean someone learns LaTeX, or the questions go up as blurry screenshots. Here is how faculty build a real JEE Main or Advanced mock with AI and an on-screen maths keyboard, how an institute runs it for every batch, and how a student uses the same platform alone.',
     author: 'TestoZa Team',
     datePublished: '2026-09-28T12:00:00+05:30',
-    dateModified: '2026-09-28T12:00:00+05:30',
+    dateModified: '2026-10-08T12:00:00+05:30',
     readMinutes: 19,
     cover: {
         src: '/guides/jee-mock-test-platform/cover.png',
