@@ -634,6 +634,33 @@ export function QuestionCard({
                         >
                             <Plus className="h-4 w-4" /> Add option
                         </button>
+                        {type === 'multiple' && (
+                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-900/[0.06]">
+                                <p className="text-[13px] font-semibold text-slate-500">Partial marks</p>
+                                <div role="radiogroup" aria-label="Partial marks" className="flex w-fit rounded-full bg-slate-200/70 p-0.5 text-[13px] font-semibold">
+                                    {([['proportional', 'Proportional'], ['per_option', 'JEE Advanced']] as const).map(([mode, text]) => {
+                                        const on = (q.partialMarking ?? 'proportional') === mode;
+                                        return (
+                                            <button
+                                                key={mode}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={on}
+                                                onClick={() => set('partialMarking', mode)}
+                                                className={cn('h-8 rounded-full px-3.5 transition-all', on ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
+                                            >
+                                                {text}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="w-full text-[12px] leading-snug text-slate-500">
+                                    {q.partialMarking === 'per_option'
+                                        ? '+1 for each correct option picked. Full marks only for all of them; any wrong option gets the Wrong mark.'
+                                        : 'Marks × correct options picked ÷ all correct options. Any wrong option gets the Wrong mark.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

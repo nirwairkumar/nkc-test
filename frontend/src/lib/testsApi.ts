@@ -126,6 +126,7 @@ export interface Question {
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
     marks?: number | string;
     negativeMarks?: number | string;
+    partialMarking?: 'proportional' | 'per_option'; // Multiple correct only; default proportional
     typingMode?: 'en' | 'hi';
     originalIndex?: number; // Added to strictly track index when shuffling
     topic?: string; // AI generated or manual topic

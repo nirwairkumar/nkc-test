@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
 from app.core.auth import verify_auth_token, is_admin_user
 from app.routers.tests.utils import exam_window_still_open, strip_answer_key
+from app.services.scoring import multi_partial_score
 
 import logging
 logger = logging.getLogger(__name__)
@@ -325,8 +326,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
                         q_score = marks
                     elif len(user_arr) > 0:
                         is_partial = True
-                        fraction = len(user_arr) / len(correct_arr)
-                        q_score = fraction * marks
+                        q_score = multi_partial_score(q, len(user_arr), len(correct_arr), marks)
                         
             else: # single
                 if str(ans) == str(q.get("correctAnswer")):

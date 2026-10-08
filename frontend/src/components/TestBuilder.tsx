@@ -737,7 +737,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             options: { ...DEFAULT_QUESTION.options },
             typingMode: lastTypingMode,
             marks: lastQ ? (lastQ.marks || '4') : '4',
-            negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
+            negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1',
+            ...(lastQ?.partialMarking ? { partialMarking: lastQ.partialMarking } : {})
         };
 
         flashNew(newQ.id);
@@ -1221,7 +1222,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             correctAnswer: '',
             typingMode: lastTypingMode,
             marks: lastQuestion ? lastQuestion.marks : (section.marks_per_question?.toString() || '1'),
-            negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0')
+            negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0'),
+            ...(lastQuestion?.partialMarking ? { partialMarking: lastQuestion.partialMarking } : {})
         };
 
         flashNew(newQ.id);

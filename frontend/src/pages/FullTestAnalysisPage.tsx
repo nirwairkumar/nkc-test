@@ -24,6 +24,7 @@ import { fetchAttemptsForTest } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { isSampleUser } from '@/lib/teacherDashboardApi';
 import { supabase } from '@/integrations/supabase/client';
+import { multiPartialScore } from '@/utils/multiCorrect';
 
 // --- MOCK / FALLBACK DATASETS ---
 const MOCK_TEST_DETAILS = {
@@ -487,8 +488,7 @@ const evalQuestionResult = (q: any, userAns: any) => {
             return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
         }
         if (uArr.length > 0) {
-            const frac = uArr.length / caArr.length;
-            return { isCorrect: false, isWrong: false, isSkipped: false, isPartial: true, score: frac * qMarks };
+            return { isCorrect: false, isWrong: false, isSkipped: false, isPartial: true, score: multiPartialScore(q, uArr.length, caArr.length, qMarks) };
         }
         return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
     }

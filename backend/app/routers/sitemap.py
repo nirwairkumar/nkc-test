@@ -59,6 +59,7 @@ STATIC_PAGES = [
     {"loc": "/prevent-cheating-in-online-exams", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/math-test-maker", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/chemistry-question-paper-maker", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/jee-advanced-mock-test-software", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
     {"loc": "/more-tests", "priority": "0.85", "changefreq": "daily"},

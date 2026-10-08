@@ -263,7 +263,7 @@ export const HINDI_META: GuideMeta = {
     author: 'TestoZa Team',
     datePublished: '2026-10-03T12:00:00+05:30',
     dateModified: '2026-10-03T12:00:00+05:30',
-    readMinutes: 22,
+    readMinutes: 24,
     cover: {
         src: '/guides/hindi-online-test-maker/cover.png',
         alt: 'TestoZa’s question card on a phone in हिंदी mode with the question “निर्वात में प्रकाश की चाल कितनी होती है”, typed in English letters, and Hindi word suggestions above it, beside the words Hindi online test maker',
@@ -401,8 +401,46 @@ export const CHEMISTRY_META: GuideMeta = {
     cta: { label: 'Make your chemistry paper, free', href: '/generate-with-ai' },
 };
 
+export const JEE_ADVANCED_META: GuideMeta = {
+    slug: 'jee-advanced-mock-test-software',
+    path: '/jee-advanced-mock-test-software',
+    title: 'JEE Advanced mock test software: two papers, real partial marking, one combined rank',
+    seoTitle: 'JEE Advanced Mock Test Software for Institutes',
+    description:
+        'Run JEE Advanced mocks that mark like the real paper: Paper 1 and 2 with a break, +1-per-option partial marks, two-decimal answers, one score out of 360.',
+    dek:
+        'A JEE Advanced mock is two papers, four kinds of question and a marking scheme where one wrong tick costs more than a skipped question. Here is how to build one that marks exactly like the real paper, run both papers as one sitting, and read what the result says about each candidate. Every demo on this page works: tick options and watch the marks, sit a short paper, take the break.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-08T12:00:00+05:30',
+    dateModified: '2026-10-08T12:00:00+05:30',
+    readMinutes: 24,
+    cover: {
+        src: '/guides/jee-advanced-mock-test-software/cover.png',
+        alt: 'A candidate’s phone on TestoZa’s exam screen with a JEE Advanced one-or-more-correct question worth +4 with −2 for a wrong option, marked +1 for each correct option chosen',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'JEE Advanced mock test software',
+        'JEE Advanced mock test platform',
+        'JEE Advanced online test series software',
+        'JEE Advanced test series for coaching institutes',
+        'JEE Advanced partial marking',
+        'JEE Advanced marking scheme',
+        'JEE Advanced paper 1 and paper 2 mock',
+        'multiple correct questions with partial marks',
+        'JEE Advanced numerical answer two decimal places',
+        'match the list questions online test',
+        'IIT JEE mock test software',
+        'JEE Advanced CBT practice',
+        'TestoZa',
+    ],
+    // An institute starts by building Paper 1.
+    cta: { label: 'Build a JEE Advanced mock, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

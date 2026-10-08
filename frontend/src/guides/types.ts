@@ -76,7 +76,13 @@ export type GuideWidget =
     | 'chem-notation'
     | 'chem-numerical'
     | 'chem-exam'
-    | 'chem-options';
+    | 'chem-options'
+    // jee-advanced-mock-test-software
+    | 'jadv-marking'
+    | 'jadv-papers'
+    | 'jadv-numerical'
+    | 'jadv-exam'
+    | 'jadv-options';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

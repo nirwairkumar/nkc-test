@@ -36,6 +36,7 @@ import VirtualNumericPad from '@/components/test/VirtualNumericPad';
 import CorporateTestView from '@/components/test/CorporateTestView';
 import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
+import { multiPartialScore } from '@/utils/multiCorrect';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -1290,7 +1291,7 @@ export default function TestPage() {
                   const userArr = (Array.isArray(item.ans) ? item.ans : [item.ans]).map(String).sort();
                   if (userArr.some(ans => !correctArr.includes(ans))) itemScore = -sectionNegative;
                   else if (userArr.length === correctArr.length) itemScore = sectionMarks;
-                  else if (userArr.length > 0) itemScore = (userArr.length / correctArr.length) * sectionMarks;
+                  else if (userArr.length > 0) itemScore = multiPartialScore(q, userArr.length, correctArr.length, sectionMarks);
                 } else {
                   if (item.ans === q.correctAnswer) itemScore = sectionMarks;
                   else itemScore = -sectionNegative;
@@ -1382,8 +1383,7 @@ export default function TestPage() {
             correctCount++;
           } else if (userArr.length > 0) {
             // Partial Correct
-            const fraction = userArr.length / correctArr.length;
-            const partialScore = fraction * sectionMarks;
+            const partialScore = multiPartialScore(q, userArr.length, correctArr.length, sectionMarks);
             score += partialScore;
             positiveScore += partialScore;
             partialCount++;

@@ -144,6 +144,20 @@ def _marks_for_question(
     return marks, negative
 
 
+def multi_partial_score(question: Dict[str, Any], picked: int, correct: int, marks: float) -> float:
+    """
+    Marks for a multiple-correct answer with some correct options and no wrong one.
+    `partialMarking: "per_option"` is JEE Advanced's +1 per correct option picked;
+    anything else is proportional (marks x picked / correct). Mirrors
+    multiPartialScore in frontend/src/utils/multiCorrect.ts.
+    """
+    if picked <= 0 or correct <= 0:
+        return 0.0
+    if question.get("partialMarking") == "per_option":
+        return float(min(picked, marks))
+    return (picked / correct) * marks
+
+
 def score_question(
     question: Dict[str, Any], answer: Any, marks: float, negative: float
 ) -> Tuple[float, str]:
@@ -180,7 +194,7 @@ def score_question(
         if len(user_list) == len(correct_list):
             return marks, "correct"
         if user_list:
-            return (len(user_list) / len(correct_list)) * marks, "partial"
+            return multi_partial_score(question, len(user_list), len(correct_list), marks), "partial"
         return 0.0, "partial"
 
     # Single choice (and every other type the client treats as single).
