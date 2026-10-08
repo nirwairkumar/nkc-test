@@ -82,7 +82,12 @@ export type GuideWidget =
     | 'jadv-papers'
     | 'jadv-numerical'
     | 'jadv-exam'
-    | 'jadv-options';
+    | 'jadv-options'
+    // ssc-mock-test-platform
+    | 'ssc-patterns'
+    | 'ssc-planner'
+    | 'ssc-exam'
+    | 'ssc-guess';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

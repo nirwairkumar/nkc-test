@@ -10,7 +10,7 @@ import {
     Plus, Trash2, Save, ArrowLeft, Loader2, Upload, X, Check, ChevronsUpDown, Cloud, CloudOff, Info, PenLine,
     MoreHorizontal, Monitor, ChevronDown, ChevronUp, Grip, Type, Smartphone, ExternalLink, Sparkles, Calculator,
     WifiOff, Layers, Building2, Sigma, BookOpen, Eraser, FileQuestion, AlertTriangle, Lock, Globe, Clock,
-    SlidersHorizontal, Copy, Combine,
+    SlidersHorizontal, Copy, Combine, Timer,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -226,6 +226,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     // Section Mode & Calculator State
     type SectionState = Omit<TestSection, 'questions'> & { questions: QuestionState[]; colorIndex?: number };
     const [enableSectionMode, setEnableSectionMode] = useState(false);
+    // Timed sections (SSC CGL / CHSL 2026): each section has its own minutes, saved as
+    // sections[].duration_minutes; the test's time limit becomes their sum.
+    const [sectionTiming, setSectionTiming] = useState(false);
     const [sectionMarkingModel, setSectionMarkingModel] = useState<'section-wise' | 'question-wise'>('section-wise');
     const [hasScientificCalculator, setHasScientificCalculator] = useState(false);
     const [sections, setSections] = useState<SectionState[]>([
@@ -239,6 +242,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             colorIndex: 0
         }
     ]);
+    // Timed sections: the time limit is the sum of the sections' minutes.
+    const timedTotal = enableSectionMode && sectionTiming ? sections.reduce((sum, s) => sum + (Number(s.duration_minutes) || 0), 0) : null;
+    useEffect(() => {
+        if (timedTotal) setTime(timedTotal);
+    }, [timedTotal]);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const [swappedSections, setSwappedSections] = useState<Set<string>>(new Set());
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
@@ -685,6 +693,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setTimeout(() => {
             if (data.enable_section_mode && hasSections) {
                 setEnableSectionMode(true);
+                setSectionTiming(parsedSections.length > 0 && parsedSections.every((s: any) => Number(s?.duration_minutes) > 0));
                 setSections(parsedSections.map((s: any, sIdx: number) => ({
                     ...s,
                     colorIndex: s.colorIndex !== undefined ? s.colorIndex : sIdx,
@@ -830,8 +839,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
         const sanitizedQuestions = questions.map(sanitizeQ);
 
-        const sanitizedSections = enableSectionMode ? sections.map(s => ({
+        const sanitizedSections = enableSectionMode ? sections.map(({ duration_minutes, ...s }) => ({
             ...s,
+            // Saved only while "Time each section" is on, so switching it off really turns it off.
+            ...(sectionTiming ? { duration_minutes: Number(duration_minutes) } : {}),
             questions: s.questions.map(sanitizeQ)
         })) : undefined;
 
@@ -843,7 +854,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             title,
             description,
             revision_notes: revisionNotes,
-            duration: time,
+            duration: timedTotal || time,
             is_public: isPublic,
             total_questions: totalQs,
             // If section mode, we can either save empty questions or flat map them.
@@ -1008,6 +1019,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 const section = sections[sIdx];
                 if (!section.name.trim()) { toast.error(`Section ${sIdx + 1} name is required`); return; }
                 if (section.questions.length === 0) { toast.error(`Section "${section.name}" must have at least one question`); return; }
+                if (sectionTiming && !(Number(section.duration_minutes) >= 1)) { toast.error(`Give section "${section.name}" at least 1 minute`); return; }
 
                 const error = validateQuestions(section.questions, `Section "${section.name}" Question`);
                 if (error) { toast.error(error); jumpToFirstIssue(); return; }
@@ -1076,6 +1088,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             setIsPublic(false);
             setQuestions([{ ...DEFAULT_QUESTION, id: 1, options: { ...DEFAULT_QUESTION.options } }]);
             setEnableSectionMode(false);
+            setSectionTiming(false);
             setSections([{ id: 'section-1', name: 'Section A', questions: [{ ...DEFAULT_QUESTION }], marks_per_question: 1, negative_marks: 0, question_type: 'single', colorIndex: 0 }]);
             setMergedSections([]);
             setHasScientificCalculator(false);
@@ -1126,6 +1139,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     // Section Helpers
     const toggleSectionMode = (checked: boolean) => {
         setEnableSectionMode(checked);
+        setSectionTiming(false);
         if (checked) {
             // Flatten -> Sections
             if (questions.length > 0) {
@@ -1146,6 +1160,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 setQuestions(flatQuestions);
             }
         }
+    };
+
+    const toggleSectionTiming = (checked: boolean) => {
+        setSectionTiming(checked);
+        setSections(prev => prev.map(s => {
+            if (!checked) {
+                const { duration_minutes, ...rest } = s;
+                return rest as SectionState;
+            }
+            // Start from an even split of the current time limit.
+            const share = Math.max(1, Math.round((Number.isFinite(time) && time > 0 ? time : 15 * prev.length) / prev.length));
+            return { ...s, duration_minutes: Number(s.duration_minutes) > 0 ? s.duration_minutes : share };
+        }));
     };
 
     const handleAddSection = (insertAtIndex?: number) => {
@@ -1174,7 +1201,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             marks_per_question: 1,
             negative_marks: 0,
             question_type: 'single',
-            colorIndex: nextColorIndex
+            colorIndex: nextColorIndex,
+            // Timed sections: a new section starts with the previous one's minutes.
+            ...(sectionTiming ? { duration_minutes: Number(sections[(typeof insertAtIndex === 'number' ? insertAtIndex : sections.length) - 1]?.duration_minutes) || 15 } : {})
         };
 
         if (typeof insertAtIndex === 'number') {
@@ -1700,10 +1729,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             aria-label="Time limit in minutes"
                                             value={Number.isFinite(time) ? time : ''}
                                             onChange={e => setTime(parseInt(e.target.value))}
-                                            className={cn(TEXT_FIELD, 'pl-9 pr-12 font-semibold tabular-nums')}
+                                            disabled={!!timedTotal}
+                                            className={cn(TEXT_FIELD, 'pl-9 pr-12 font-semibold tabular-nums disabled:opacity-100 disabled:bg-slate-50 disabled:text-slate-500')}
                                         />
                                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-500">min</span>
                                     </div>
+                                    {timedTotal ? (
+                                        <p className="text-[13px] leading-snug text-slate-500">The sections’ times added up. Change them on each section below.</p>
+                                    ) : (
                                     <div className="flex flex-wrap gap-1.5">
                                         {TIME_PRESETS.map(m => (
                                             <button key={m} type="button" onClick={() => setTime(m)}
@@ -1712,6 +1745,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             </button>
                                         ))}
                                     </div>
+                                    )}
                                 </div>
                             </div>
                             <div>
@@ -1880,6 +1914,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                         >
                             <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} aria-label="Split into sections" />
                         </SettingRow>
+                        {enableSectionMode && (
+                            <SettingRow
+                                icon={<Timer className="h-[18px] w-[18px]" />}
+                                tone="sky"
+                                title="Time each section"
+                                detail="Sections open one after another, each with its own minutes; a section closes when its time is up, as in SSC CGL and CHSL."
+                            >
+                                <Switch checked={sectionTiming} onCheckedChange={toggleSectionTiming} aria-label="Time each section" />
+                            </SettingRow>
+                        )}
 
                         {/* Merge Section Marks Config */}
                         {enableSectionMode && sections.length >= 2 && (
@@ -2171,11 +2215,26 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
                                                     placeholder={`Section ${sIdx + 1}`}
                                                     aria-label="Section name"
-                                                    className="h-10 min-w-0 flex-1 rounded-xl bg-white/60 px-3 text-[18px] font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                                                    className="h-10 min-w-[7rem] flex-1 rounded-xl bg-white/60 px-3 text-[18px] font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/40 sm:min-w-0"
                                                 />
                                                 <span className="hidden shrink-0 rounded-full bg-white/80 px-3 py-1 text-[13px] font-semibold tabular-nums text-slate-600 sm:inline">
                                                     {section.questions.length} Q · {sectionMarks} marks
                                                 </span>
+                                                {sectionTiming && (
+                                                    <label className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-white/80 pl-3 pr-3 text-[13px] font-semibold text-slate-600 focus-within:ring-2 focus-within:ring-sky-500/40 max-sm:order-last max-sm:ml-[42px]" title="This section's own time">
+                                                        <Timer className="h-4 w-4 text-sky-600" aria-hidden="true" />
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            inputMode="numeric"
+                                                            aria-label={`Minutes for ${section.name || `Section ${sIdx + 1}`}`}
+                                                            value={Number(section.duration_minutes) > 0 ? section.duration_minutes : ''}
+                                                            onChange={(e) => updateSection(sIdx, 'duration_minutes', Math.max(0, parseInt(e.target.value) || 0))}
+                                                            className="w-9 bg-transparent text-right tabular-nums text-slate-900 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                        />
+                                                        min
+                                                    </label>
+                                                )}
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <button type="button" className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold transition-colors',

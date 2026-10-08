@@ -349,7 +349,7 @@ A long-form guide for coaching institutes, schools and teachers on computer-base
 - **Marking:** marks and negative marks per test, per section or per question (fractions such as 1/3 accepted); numerical answers can accept a min–max range; multi-correct questions give partial credit, proportional by default or JEE Advanced's +1 per correct option, and any wrong option costs the negative mark; section attempt control ("attempt any N") either blocks extra answers or counts the best N or first N. Scores are calculated on the server.
 - **Running a CBT:** build a paper with the AI generator or upload a full paper (sections and solutions) as JSON; Conduct gives the test its own exam link and private results; progress is kept on the student's device with a resume prompt for signed-in students; when time is up answering locks and the student submits; results show immediately or can be held; combined tests link two papers with a timed break (30 minutes by default).
 - **Paid plans** add exam-security rules (full screen, tab-switch limits, copy-paste block), scheduling, start forms, branding and Excel export.
-- **Limits:** no separate per-section timers; a browser cannot lock down a device like a test centre; the student confirms submission when time is up.
+- **Limits:** section timers (optional, as SSC CGL uses) are enforced in the browser; a browser cannot lock down a device like a test centre; the student confirms submission when time is up.
 
 ---
 
@@ -366,6 +366,21 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: SSC mock test platform (https://testoza.com/ssc-mock-test-platform)
+
+A long-form guide for SSC coaching institutes and faculty on running mocks that behave like the 2026 SSC exams, with TestoZa as the worked example. Exam facts checked on 8 October 2026; product details checked against the code the same day.
+
+- **What changed in 2026:** CGL 2026 Tier 1 (30 September to 30 October 2026), CHSL 2026 Tier 1 and Selection Post Phase 14 give each of four 25-question sections its own 15 minutes. A section closes when its time ends, candidates can't go back, and unused time isn't carried forward (coaching sources report candidates who finish early wait). CGL/CHSL Tier 2 time every module (CGL Paper I: Maths 30 min, Reasoning 30, English 40, GA 20, Computer 15, then a 15-minute typing task). MTS: two 45-minute sessions. GD Constable: one 60-minute clock.
+- **Marking:** CGL/CHSL Tier 1 +2/−0.5; Tier 2 and MTS Session II +3/−1; MTS Session I +3, no negative; GD +2/−0.25. A blind guess at +2/−0.5 is worth +0.125 on average (+0.33 after ruling out one option, +0.75 after two); at +3/−1 it is worth 0; ten blind guesses at +2/−0.5 end below zero about 24% of the time.
+- **Timed sections in TestoZa:** test builder: Split into sections, then Time each section, minutes per section; the time limit becomes their sum. On the exam screen the sections open in order, the clock shows the open section's time, other sections' tabs and palette numbers are faded and say why they won't open, Save & Next stops at a section's last question; when the time ends the next section opens. Which section is open follows the time left, so refreshes, resumed attempts and join-code sittings on another device return to the right section; extra time from an examiner lengthens the open section. Randomize Questions shuffles within each section.
+- **Setups:** CGL/CHSL Tier 1: 4 sections, 15 min each, 2/0.5. CGL Tier 2 Paper I: 5 sections, 30/30/40/20/15, 3/1. MTS: 2 sections (one per session), 45 min each, 3/0 then 3/1. GD: 4 sections, one 60-minute clock, 2/0.25. Calculator off.
+- **Languages:** a bilingual question carries English and Hindi one under the other (options too); AI import writes English, Hindi or both from PDFs and photos; the builder types Hindi from English letters. No language switch on the exam screen; no regional languages beyond Hindi.
+- **Running a series:** topic tests, then 15-minute sectional drills three or four times a week, then full timed mocks weekly; full mocks at the centre with a six-digit join code and roll number (no accounts); compare batches on different papers by rank, as SSC itself normalises across shifts (equipercentile method since a June 2025 notice).
+- **Results:** score, correct/wrong/skipped, every section's own score (Subject-Wise Split), time per question; rough rank estimate for tests tagged SSC; faculty rank list and option analysis on paid plans from ₹49 a week. Making and sharing tests, timed sections included, is free.
+- **Limits:** no exam-screen language switch, no regional languages, no typing or data-entry tests, no ready-made SSC question bank, no normalisation, no automatic PwBD compensatory time (copy the test with 20-minute sections), section locks enforced in the browser.
+
+---
+
 ## Guide: JEE Advanced mock test software (https://testoza.com/jee-advanced-mock-test-software)
 
 A long-form guide for JEE Advanced faculty and coaching institutes on building and running JEE Advanced mocks that behave like the real exam, with TestoZa as the worked example. Exam facts checked on 8 October 2026; product details checked against the app the same day.
@@ -376,7 +391,7 @@ A long-form guide for JEE Advanced faculty and coaching institutes on building a
 - **Two papers in one sitting:** a combined test (dashboard: Combine two papers): Paper 1, a break of 0–180 minutes (30 by default), Paper 2; candidates sign in and get one link; results only after both papers, as one total out of 360 with each paper's marks and correct / partial / wrong / skipped counts. The break can be skipped or extended by 5 minutes at a time.
 - **Candidate screen:** NTA-style, on phones, laptops and lab computers; each question shows its marks (+4 | −2); multiple-correct options have square keys with a tick; numerical answers on an on-screen keypad.
 - **After the mock:** per question, option breakdown, accuracy, average time and discrimination index; rank estimate for tests tagged JEE Advanced; read marks lost to −2s, partial answers, unattempted numericals and Paper 2 against Paper 1. Rank lists and full analysis on paid plans (from ₹49 a week); making, combining and sharing tests is free.
-- **Limits:** no merged faculty rank list across Paper 1 and Paper 2 (each paper is its own test in the analysis); the break isn't enforced; partial marks are set per question (imported questions start on Proportional); no per-section timers (JEE Advanced has none either); AI output needs a human check; no step marking.
+- **Limits:** no merged faculty rank list across Paper 1 and Paper 2 (each paper is its own test in the analysis); the break isn't enforced; partial marks are set per question (imported questions start on Proportional); optional section timers stay off (JEE Advanced has none); AI output needs a human check; no step marking.
 
 ---
 

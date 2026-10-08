@@ -22,6 +22,10 @@ export interface CorporateTestViewProps {
   currentQuestion: any;
   currentQuestionIndex: number;
   setCurrentQuestionIndex: (idx: number) => void;
+  /** First question Previous can reach (timed sections: the open section's first). */
+  firstQuestionIndex?: number;
+  /** Timed sections: false for a closed or not-yet-open section. */
+  isSectionOpen?: (sectionIndex: number) => boolean;
   answers: Record<number, string | string[]>;
   setAnswers: React.Dispatch<React.SetStateAction<Record<number, string | string[]>>>;
   markedForReview: Set<number>;
@@ -35,6 +39,8 @@ export interface CorporateTestViewProps {
   handleNumericKeypadPress: (key: string, questionId: number) => void;
   checkAttemptLimit: (questionId: number) => boolean;
   timeRemaining: number;
+  /** Below this many seconds the clock turns red and can't be hidden (default 300). */
+  criticalSeconds?: number;
   isTimerDisabled: boolean;
   isTimeHidden: boolean;
   setIsTimeHidden: (val: boolean) => void;
@@ -59,6 +65,8 @@ export default function CorporateTestView({
   currentQuestion,
   currentQuestionIndex,
   setCurrentQuestionIndex,
+  firstQuestionIndex = 0,
+  isSectionOpen,
   answers,
   setAnswers,
   markedForReview,
@@ -72,6 +80,7 @@ export default function CorporateTestView({
   handleNumericKeypadPress,
   checkAttemptLimit,
   timeRemaining,
+  criticalSeconds = 300,
   isTimerDisabled,
   isTimeHidden,
   setIsTimeHidden,
@@ -93,7 +102,7 @@ export default function CorporateTestView({
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
 
   const totalQuestions = test.questions?.length || 0;
-  const isCriticalTime = !isTimerDisabled && timeRemaining < 300;
+  const isCriticalTime = !isTimerDisabled && timeRemaining < criticalSeconds;
   const shouldShowTime = !isTimeHidden || isCriticalTime;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
@@ -264,9 +273,9 @@ export default function CorporateTestView({
                                 key={q.id}
                                 onClick={() => {
                                   setCurrentQuestionIndex(globalIdx);
-                                  setIsNavigatorOpen(false);
+                                  if (!isSectionOpen || isSectionOpen(sIdx)) setIsNavigatorOpen(false);
                                 }}
-                                className={`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all border relative ${
+                                className={`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all border relative ${isSectionOpen && !isSectionOpen(sIdx) ? 'opacity-40 cursor-not-allowed ' : ''}${
                                   isCurrent
                                     ? 'ring-2 ring-indigo-500 ring-offset-2 border-indigo-600 bg-indigo-600 text-white'
                                     : isAns && isMarked
@@ -421,11 +430,12 @@ export default function CorporateTestView({
                 <button
                   key={section.id || idx}
                   onClick={() => setCurrentQuestionIndex(startIndex)}
+                  aria-disabled={isSectionOpen && !isSectionOpen(idx) ? true : undefined}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
                     isActive
                       ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300 shadow-2xs'
                       : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400'
-                  }`}
+                  }${isSectionOpen && !isSectionOpen(idx) ? ' opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span>{section.name}</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-indigo-200/70 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'}`}>
@@ -670,7 +680,7 @@ export default function CorporateTestView({
               variant="outline"
               size="sm"
               onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
+              disabled={currentQuestionIndex === firstQuestionIndex}
               className="rounded-xl px-3 text-xs font-semibold border-slate-200 dark:border-slate-700 h-9"
               title="Previous Question"
             >

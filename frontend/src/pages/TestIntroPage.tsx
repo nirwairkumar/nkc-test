@@ -19,6 +19,7 @@ import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { runBrowserDiagnosticsAndVacateStorage, SystemCheckResult } from '@/lib/browserCheck';
 import { sanitizeHtml, safeJsonLd } from '@/utils/sanitize';
+import { formatSectionMinutes, sectionMinutes } from '@/utils/sectionTiming';
 
 const formatDateCustom = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -803,7 +804,9 @@ export default function TestIntroPage() {
                                         </span>
                                     </div>
                                     <span className="text-[11px] text-muted-foreground mt-0.5">
-                                        {test.sections?.length || 0} Sections configured for this assessment
+                                        {sectionMinutes(test)
+                                            ? `${test.sections?.length || 0} timed sections: each opens when the one before it ends, with no going back`
+                                            : `${test.sections?.length || 0} Sections configured for this assessment`}
                                     </span>
                                 </div>
                             )}
@@ -818,10 +821,11 @@ export default function TestIntroPage() {
                                             <th className="p-2.5 sm:p-3">Section</th>
                                             <th className="p-2.5 sm:p-3 text-center">Questions</th>
                                             <th className="p-2.5 sm:p-3 text-center">Total Marks</th>
+                                            {sectionMinutes(test) && <th className="p-2.5 sm:p-3 text-center">Time</th>}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {test.sections.map((sec: any) => {
+                                        {test.sections.map((sec: any, secIdx: number) => {
                                             const { totalQs, maxAllowed, sectionMaxMarks, isEnabled } = getSectionDetails(sec);
                                             return (
                                                 <tr key={sec.id} className={isEnabled ? "bg-indigo-50/30 dark:bg-indigo-950/20" : ""}>
@@ -844,6 +848,9 @@ export default function TestIntroPage() {
                                                         </div>
                                                     </td>
                                                     <td className="p-2.5 sm:p-3 text-center text-emerald-600 font-bold">{sectionMaxMarks}</td>
+                                                    {sectionMinutes(test) && (
+                                                        <td className="p-2.5 sm:p-3 text-center font-semibold tabular-nums">{formatSectionMinutes(sectionMinutes(test)![secIdx])}</td>
+                                                    )}
                                                 </tr>
                                             );
                                         })}

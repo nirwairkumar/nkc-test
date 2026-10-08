@@ -8,6 +8,8 @@ export interface TestSection {
     marks_per_question?: number | string;
     negative_marks?: number | string;
     question_type?: string;
+    /** Timed sections: this section's own minutes (see utils/sectionTiming.ts). */
+    duration_minutes?: number;
     questions: Question[];
     attempt_control?: {
         enabled: boolean;

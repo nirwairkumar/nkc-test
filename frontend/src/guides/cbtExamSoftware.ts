@@ -25,7 +25,8 @@
  *     history once visibility is switched on. Rank list in FullTestAnalysisPage.
  *     Excel export and branding are paid. Combined tests link two papers with a
  *     break (default 30 minutes).
- *   - NOT in the product: per-section timers, server-side time validation
+ *   - Per-section timers exist since 2026-10-08 (utils/sectionTiming.ts, see sscMockTestPlatform.ts).
+ *   - NOT in the product: server-side time validation
  *     (strict_timer is stored but not enforced), QR codes. Don't claim them.
  * Exam facts come from official notices and exam-pattern pages (see `sources`).
  */
@@ -99,7 +100,7 @@ export const CBT_EXAM_SOFTWARE: Guide = {
 <li><strong>Buttons to move and flag.</strong> Save &amp; Next to go forward, a way to mark for review with or without an answer, and a button to clear a response you regret.</li>
 <li><strong>An on-screen keypad.</strong> JEE numericals and GATE numerical-answer questions are typed on a number pad on the screen.</li>
 <li><strong>A calculator, when the exam allows one.</strong> GATE gives candidates a virtual scientific calculator. Most other exams don't.</li>
-<li><strong>Sections and one clock.</strong> Subject tabs along the top and a countdown for the whole paper.</li>
+<li><strong>Sections and their clocks.</strong> Subject tabs along the top and a countdown for the whole paper, or, with timed sections, for each section in turn.</li>
 </ol>
 <p>TestoZa's exam screen follows this layout. Every test opens in what the settings call Standard Mode, the "traditional JEE / NEET / government exam format with right-side question palette". It has the same five palette states, buttons labelled Save &amp; Next, Review, Ans &amp; Review and Clear, a virtual numeric keypad on numerical questions, subject sections, and an A−/A+ control for students who find small text hard to read. You can switch on a scientific calculator for any test. On a paid plan there's also a cleaner Modern Mode for school or company tests that don't need to look like NTA.</p>
 <p>If your students have never used a palette, our <a href="/create-mock-test-online">mock test guide</a> has an interactive one they can click through before their first exam.</p>
@@ -217,7 +218,7 @@ export const CBT_EXAM_SOFTWARE: Guide = {
                 blocks: [
                     html(`
 <ul class="gd-limits">
-<li><strong>No separate section timers.</strong> A paper runs on one clock. If your exam locks each section on its own timer, as SSC CGL now does, you can't reproduce that exactly yet.</li>
+<li><strong>Section timers are enforced in the browser.</strong> Timed sections (as SSC CGL now uses) open in order and close when their time ends, but the lock lives on the candidate's screen, not on our server; see our <a href="/ssc-mock-test-platform">SSC mock test platform guide</a>.</li>
 <li><strong>A browser isn't a test centre.</strong> Full-screen and tab-switch rules make cheating harder, not impossible. For high-stakes papers, use a supervised lab.</li>
 <li><strong>Time's up needs a tap.</strong> When the clock ends, answers lock, but the student still confirms the submission.</li>
 <li><strong>No all-or-nothing multi-correct marking.</strong> Partial credit is proportional or JEE Advanced’s +1 per option; see the marking section above if your exam is all-or-nothing.</li>

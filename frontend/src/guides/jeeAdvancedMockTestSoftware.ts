@@ -50,7 +50,8 @@
  *     as checked for jeeMockTestPlatform.ts, mathTestMaker.ts and
  *     chemistryQuestionPaperMaker.ts.
  *   - NOT in the product: a merged faculty rank list across Paper 1 and Paper 2, an
- *     enforced (unskippable) break, per-section timers, step marking. Don't claim them.
+ *     enforced (unskippable) break, step marking. Don't claim them. (Per-section timers
+ *     exist since 2026-10-08, utils/sectionTiming.ts.)
  */
 import { JEE_ADVANCED_META } from './meta';
 import { EXAM, MARKING_PRESETS, NUMERIC, OPTION_KEYS, OPTION_SPLIT, PAPER, RULE, SESSION } from './jadvData';
@@ -420,7 +421,7 @@ export const JEE_ADVANCED_MOCK_TEST_SOFTWARE: Guide = {
 <li><strong>No merged rank list across both papers for faculty.</strong> Candidates see one combined total, but in the faculty analysis Paper 1 and Paper 2 are separate tests, each with its own rank list. For a combined batch ranking, download both papers’ results and add them.</li>
 <li><strong>The break isn’t enforced.</strong> Candidates can skip it or extend it. For a strict, everyone-together mock, run it in a hall at fixed times.</li>
 <li><strong>Partial marks are set per question.</strong> New questions copy the previous question’s setting, but imported questions start on Proportional; switch them before the paper goes live.</li>
-<li><strong>No per-section timers.</strong> JEE Advanced doesn’t have them either (candidates move freely within a paper), so this matters only if you want drills that lock a section.</li>
+<li><strong>Section timers are optional, and off for JEE Advanced.</strong> TestoZa can time each section and lock it when its time ends (SSC uses this), but JEE Advanced lets candidates move freely within a paper, so leave “Time each section” off.</li>
 <li><strong>AI needs a human check.</strong> Clean print reads very well; a faint photocopy less so, and a lost minus sign or a misread subscript changes a JEE question completely. Read every imported paper once.</li>
 <li><strong>No step marking.</strong> Everything is marked automatically, so subjective answers and derivations stay on paper.</li>
 </ul>

@@ -797,7 +797,7 @@ const ResultsPage = () => {
                                 </div>
                                 <div className="flex flex-col items-center bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">
                                   <span className="text-base font-black text-slate-600 dark:text-slate-400 leading-none">{sec.skipped}</span>
-                                  <span className="text-[8px] font-black text-slate-500 uppercase mt-1">Split</span>
+                                  <span className="text-[8px] font-black text-slate-500 uppercase mt-1">Skipped</span>
                                 </div>
                               </div>
                             </div>

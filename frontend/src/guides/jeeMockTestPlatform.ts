@@ -41,7 +41,8 @@
  *   - Student results: src/pages/ResultsPage.tsx — correct / wrong / partial /
  *     skipped, time per question, AI mentor (AIChatBot), rank predictor for tests
  *     tagged JEE Main / JEE Advanced, retake.
- *   - NOT in the product: per-section timers, server-side time enforcement. Don't
+ *   - NOT in the product: server-side time enforcement (per-section timers exist since
+ *     2026-10-08, utils/sectionTiming.ts). Don't
  *     claim them.
  * Exam facts: see `sources`. Sources disagree on negative marking for JEE Main
  * numericals, so the text sends readers to the year's bulletin.

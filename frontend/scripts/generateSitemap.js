@@ -124,6 +124,7 @@ async function generateSitemap() {
             { url: '/math-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-04T00:00:00.000Z' },
             { url: '/chemistry-question-paper-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-05T00:00:00.000Z' },
             { url: '/jee-advanced-mock-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
+            { url: '/ssc-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

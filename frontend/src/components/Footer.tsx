@@ -43,6 +43,7 @@ const LINK_COLUMNS = [
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
             // Long-form guides (src/guides).
+            { label: 'SSC mock test platform', to: '/ssc-mock-test-platform' },
             { label: 'JEE Advanced mock test software', to: '/jee-advanced-mock-test-software' },
             { label: 'Chemistry question paper maker', to: '/chemistry-question-paper-maker' },
             { label: 'Math test maker with equations', to: '/math-test-maker' },

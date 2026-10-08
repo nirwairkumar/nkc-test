@@ -37,6 +37,7 @@ import CorporateTestView from '@/components/test/CorporateTestView';
 import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
 import { multiPartialScore } from '@/utils/multiCorrect';
+import { formatSectionMinutes, openSection, sectionMinutes, sectionMinutesTotal, sectionRanges } from '@/utils/sectionTiming';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -325,6 +326,30 @@ export default function TestPage() {
     };
   }, [timeRemaining, isTimeUp, isExamStarted]);
 
+  // ── Timed sections (SSC CGL / CHSL 2026): every section has its own minutes, they open
+  // one after another and close when the minutes run out (utils/sectionTiming.ts). The
+  // open section comes from the time left, so refreshes and session deadlines just work.
+  // Off with the flexible "no time limit" timer.
+  const timedMinutes = useMemo(() => (isTimerDisabled ? null : sectionMinutes(test)), [test, isTimerDisabled]);
+  const timedRanges = useMemo(() => (timedMinutes && test?.sections ? sectionRanges(test.sections) : null), [timedMinutes, test]);
+  const [sectionFloor, setSectionFloor] = useState(0);
+  const timedOpen = timedMinutes ? openSection(timedMinutes, timeRemaining, sectionFloor) : null;
+  const openRange = timedOpen && timedRanges ? timedRanges[timedOpen.index] : null;
+  const announcedSectionRef = useRef<number | null>(null);
+  const sectionName = (index: number) => test?.sections?.[index]?.name || `Section ${index + 1}`;
+
+  useEffect(() => {
+    if (!timedOpen || !openRange || !isExamStarted) return;
+    if (timedOpen.index > sectionFloor) setSectionFloor(timedOpen.index);
+    if (currentQuestionIndex < openRange.start || currentQuestionIndex > openRange.end) setCurrentQuestionIndex(openRange.start);
+    const previous = announcedSectionRef.current;
+    announcedSectionRef.current = timedOpen.index;
+    if (previous !== null && timedOpen.index > previous) {
+      toast.info(`${sectionName(previous)} is closed. ${sectionName(timedOpen.index)} has started: ${formatSectionMinutes(timedMinutes![timedOpen.index])}.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timedOpen?.index, openRange?.start, isExamStarted, currentQuestionIndex]);
+
   // ── Helper to flush active question's elapsed seconds into questionTimesRef ──
   const flushActiveQuestionTime = (resetEnterTime: boolean = true) => {
     const qId = currentQuestionIdRef.current;
@@ -409,6 +434,7 @@ export default function TestPage() {
       visited: Array.from(visited),
       currentQuestionIndex,
       timeRemaining,
+      sectionFloor,
       questionTimes: liveQuestionTimes,
       timestamp: Date.now()
     };
@@ -421,7 +447,7 @@ export default function TestPage() {
     } catch (e) {
       console.warn("Storage quota exceeded, could not save session draft", e);
     }
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted, questionTimes]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, sectionFloor, user, id, test?.id, isExamStarted, questionTimes]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -638,6 +664,7 @@ export default function TestPage() {
     setMarkedForReview(new Set(resumeData.markedForReview || []));
     setVisited(new Set(resumeData.visited || [0]));
     setCurrentQuestionIndex(resumeData.currentQuestionIndex || 0);
+    setSectionFloor(resumeData.sectionFloor || 0);
     if (resumeData.questionTimes) {
       setQuestionTimes(resumeData.questionTimes);
       questionTimesRef.current = { ...resumeData.questionTimes };
@@ -993,16 +1020,28 @@ export default function TestPage() {
       // Randomize questions if setting is enabled
       const settings = data.settings;
       if (settings?.shuffle_questions && data.questions && data.questions.length > 0) {
-        // Fisher-Yates shuffle
-        for (let i = data.questions.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [data.questions[i], data.questions[j]] = [data.questions[j], data.questions[i]];
+        // Fisher-Yates shuffle of questions[from..to]
+        const shuffle = (from: number, to: number) => {
+          for (let i = to; i > from; i--) {
+            const j = from + Math.floor(Math.random() * (i - from + 1));
+            [data.questions[i], data.questions[j]] = [data.questions[j], data.questions[i]];
+          }
+        };
+        const ranges = data.enable_section_mode && Array.isArray(data.sections) ? sectionRanges(data.sections) : null;
+        if (ranges && ranges.length && ranges[ranges.length - 1].end === data.questions.length - 1) {
+          // Sections: shuffle inside each one, so questions stay in their section (its marks,
+          // its tab, its timer), and keep each section's own list in the same order.
+          ranges.forEach(r => shuffle(r.start, r.end));
+          data.sections = data.sections.map((s: any, i: number) => ({ ...s, questions: data.questions.slice(ranges[i].start, ranges[i].end + 1) }));
+        } else {
+          shuffle(0, data.questions.length - 1);
         }
       }
 
       setTest(data);
-      // Initialize timer: Use test duration if available, else calc from question count
-      const durationMins = data.duration || (data.questions?.length || 0);
+      // Initialize timer: timed sections add up their minutes; otherwise the test duration,
+      // else a minute per question
+      const durationMins = sectionMinutesTotal(data) || data.duration || (data.questions?.length || 0);
       setTimeRemaining(durationMins * 60);
 
       // Save start time if not already stored
@@ -1039,6 +1078,7 @@ export default function TestPage() {
           setMarkedForReview(new Set(local.markedForReview || []));
           setVisited(new Set(local.visited || [0]));
           setCurrentQuestionIndex(local.currentQuestionIndex || 0);
+          setSectionFloor(local.sectionFloor || 0);
           if (local.questionTimes) {
             setQuestionTimes(local.questionTimes);
             questionTimesRef.current = { ...local.questionTimes };
@@ -1184,18 +1224,34 @@ export default function TestPage() {
     });
   };
 
+  /** With timed sections only the open section's questions can be reached. */
+  const canReach = (index: number) => !openRange || (index >= openRange.start && index <= openRange.end);
+
   const jumpToQuestion = (index: number) => {
+    if (!canReach(index)) {
+      const target = timedRanges?.findIndex(r => index >= r.start && index <= r.end) ?? -1;
+      if (target >= 0 && timedOpen) {
+        toast.info(target < timedOpen.index
+          ? `${sectionName(target)} is closed. Its time is over.`
+          : `${sectionName(target)} opens when ${sectionName(timedOpen.index)}’s time is over.`);
+      }
+      return;
+    }
     setCurrentQuestionIndex(index);
   };
 
   const handleNext = () => {
+    if (openRange && timedOpen && currentQuestionIndex >= openRange.end) {
+      toast.info(`This is the last question of ${sectionName(timedOpen.index)}. ${sectionName(timedOpen.index + 1)} opens when this section’s time is over.`);
+      return;
+    }
     if (test && currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
+    if (currentQuestionIndex > (openRange?.start ?? 0)) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
@@ -1892,13 +1948,18 @@ export default function TestPage() {
                     if (isCurrent) {
                       baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
                     }
+                    // Timed sections: a closed or not-yet-open section's questions are dimmed.
+                    if (!canReach(globalIdx)) {
+                      baseClasses += " opacity-40 cursor-not-allowed";
+                    }
 
                     return (
                       <button
                         key={q.id}
                         onClick={() => {
                           jumpToQuestion(globalIdx);
-                          onQuestionClick?.();
+                          // A locked question keeps the sheet open, so the toast is seen.
+                          if (canReach(globalIdx)) onQuestionClick?.();
                         }}
                         className={`${baseClasses} ${colorClasses}`}
                       >
@@ -2051,6 +2112,16 @@ export default function TestPage() {
                   <span className="font-semibold text-slate-800 dark:text-slate-200">Continuous Timer:</span> Once started, the countdown timer cannot be paused or stopped under any circumstances.
                 </div>
               </div>
+              {timedMinutes && (
+                <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                  <Layers className="w-5 h-5 text-sky-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Timed Sections:</span>{' '}
+                    {(test?.sections || []).map((s: any, i: number) => `${s.name || `Section ${i + 1}`} (${formatSectionMinutes(timedMinutes[i])})`).join(', then ')}.
+                    {' '}Each section opens when the one before it ends. You cannot go back to a section, and time left in one is not added to the next.
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
                 <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
@@ -2095,7 +2166,9 @@ export default function TestPage() {
           test={test}
           currentQuestion={currentQuestion}
           currentQuestionIndex={currentQuestionIndex}
-          setCurrentQuestionIndex={setCurrentQuestionIndex}
+          setCurrentQuestionIndex={jumpToQuestion}
+          firstQuestionIndex={openRange?.start ?? 0}
+          isSectionOpen={(sIdx: number) => !timedOpen || sIdx === timedOpen.index}
           answers={answers}
           setAnswers={setAnswers}
           markedForReview={markedForReview}
@@ -2108,7 +2181,8 @@ export default function TestPage() {
           handlePrevious={handlePrevious}
           handleNumericKeypadPress={handleNumericKeypadPress}
           checkAttemptLimit={checkAttemptLimit}
-          timeRemaining={timeRemaining}
+          timeRemaining={timedOpen ? timedOpen.secondsLeft : timeRemaining}
+          criticalSeconds={timedOpen ? Math.min(300, Math.round(timedOpen.seconds * 0.2)) : 300}
           isTimerDisabled={isTimerDisabled}
           isTimeHidden={isTimeHidden}
           setIsTimeHidden={setIsTimeHidden}
@@ -2178,7 +2252,9 @@ export default function TestPage() {
 
           {/* Timer Block */}
           {(() => {
-            const isCriticalTime = timeRemaining < 300;
+            // Timed sections show the open section's time; its last fifth (at most 5 min) is critical.
+            const clockSeconds = timedOpen ? timedOpen.secondsLeft : timeRemaining;
+            const isCriticalTime = clockSeconds < (timedOpen ? Math.min(300, Math.round(timedOpen.seconds * 0.2)) : 300);
             const shouldShow = !isTimeHidden || isCriticalTime;
 
             if (isTimerDisabled) {
@@ -2196,13 +2272,13 @@ export default function TestPage() {
               <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-semibold border transition-colors ${isCriticalTime ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50/80 text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'}`}>
                 <Clock className={`w-3.5 h-3.5 ${isCriticalTime ? 'animate-pulse text-red-500' : 'text-slate-400'}`} />
                 <span className="min-w-[40px] md:min-w-[45px] text-center font-mono">
-                  {shouldShow ? formatTime(timeRemaining) : '**:**'}
+                  {shouldShow ? formatTime(clockSeconds) : '**:**'}
                 </span>
                 <button
                   className="flex items-center justify-center p-0.5 rounded-full text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
                   onClick={() => setIsTimeHidden(!isTimeHidden)}
                   disabled={isCriticalTime}
-                  title={isCriticalTime ? "Time cannot be hidden (less than 5m left)" : (isTimeHidden ? "Show Time" : "Hide Time")}
+                  title={isCriticalTime ? (timedOpen ? "Time cannot be hidden (section ending)" : "Time cannot be hidden (less than 5m left)") : (isTimeHidden ? "Show Time" : "Hide Time")}
                 >
                   {shouldShow ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -2296,17 +2372,20 @@ export default function TestPage() {
                     runningIndex += count;
 
                     const isActive = currentQuestionIndex >= startIndex && currentQuestionIndex <= endIndex;
+                    const isLocked = !canReach(startIndex);
 
                     return (
                       <button
                         key={section.id}
-                        onClick={() => setCurrentQuestionIndex(startIndex)}
+                        onClick={() => jumpToQuestion(startIndex)}
                         title={section.name}
+                        aria-disabled={isLocked || undefined}
                         className={`
                                 flex items-center justify-between gap-2 px-4 py-2 text-sm font-bold border transition-colors whitespace-nowrap min-w-[140px]
                                 ${isActive
                             ? 'bg-[#0073E6] text-white border-[#0073E6]'
                             : 'bg-white text-[#0073E6] border-slate-300 hover:bg-blue-50'}
+                                ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
                       >
                         <span className="truncate">{section.name}</span>
@@ -2319,6 +2398,9 @@ export default function TestPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-2 text-sm max-w-[200px]" side="top">
                               <p className="font-semibold text-center">{section.name}</p>
+                              {timedMinutes && (
+                                <p className="text-xs text-slate-500 text-center mt-0.5">{formatSectionMinutes(timedMinutes[idx])}</p>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -2843,7 +2925,7 @@ export default function TestPage() {
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentQuestionIndex === 0}
+                  disabled={currentQuestionIndex === (openRange?.start ?? 0)}
                   size={window.innerWidth < 768 ? "default" : "icon"}
                   className="h-9 w-9 md:w-9 flex-1 md:flex-none"
                   title="Previous Question"

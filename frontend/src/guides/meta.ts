@@ -439,8 +439,46 @@ export const JEE_ADVANCED_META: GuideMeta = {
     cta: { label: 'Build a JEE Advanced mock, free', href: '/create-test' },
 };
 
+export const SSC_META: GuideMeta = {
+    slug: 'ssc-mock-test-platform',
+    path: '/ssc-mock-test-platform',
+    title: 'SSC mock test platform: run 2026-pattern mocks with 15-minute timed sections',
+    seoTitle: 'SSC Mock Test Platform with Sectional Timing (2026)',
+    description:
+        'Run SSC CGL, CHSL, MTS and GD mocks online the 2026 way: 15-minute timed sections, +2/−0.5 marking, Hindi and English, and a result for every section.',
+    dek:
+        'In 2026 SSC gave every section of CGL and CHSL Tier 1 its own 15 minutes: a section closes when its time ends, and there is no going back. Here is how to build and run mocks that work the same way, what the change means for candidates, how to handle Hindi and English and negative marking, and how to read a result section by section. Every demo on this page works, including a paper whose sections close on their own.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-08T12:00:00+05:30',
+    dateModified: '2026-10-08T12:00:00+05:30',
+    readMinutes: 24,
+    cover: {
+        src: '/guides/ssc-mock-test-platform/cover.png',
+        alt: 'A candidate’s phone on an SSC CGL Tier 1 mock in TestoZa with four sections, General Intelligence and Reasoning closed and General Awareness open with its own 15-minute clock',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'SSC mock test platform',
+        'SSC mock test',
+        'SSC CGL mock test 2026',
+        'SSC CGL sectional timing',
+        'SSC CHSL mock test',
+        'SSC online test series for coaching institutes',
+        'SSC test series software',
+        'SSC MTS mock test',
+        'SSC GD mock test',
+        'SSC exam pattern 2026',
+        'SSC negative marking',
+        'SSC mock test in Hindi',
+        'TestoZa',
+    ],
+    // An institute starts by building one Tier 1 paper.
+    cta: { label: 'Build an SSC mock, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;
