@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BANK_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -149,6 +149,7 @@ const MathTestMaker = safeLazy(() => import("./pages/guides/math/MathTestMaker")
 const ChemistryQuestionPaperMaker = safeLazy(() => import("./pages/guides/chem/ChemistryQuestionPaperMaker"));
 const JeeAdvancedMockTestSoftware = safeLazy(() => import("./pages/guides/jadv/JeeAdvancedMockTestSoftware"));
 const SscMockTestPlatform = safeLazy(() => import("./pages/guides/ssc/SscMockTestPlatform"));
+const BankExamMockTestPlatform = safeLazy(() => import("./pages/guides/bank/BankExamMockTestPlatform"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -309,6 +310,7 @@ const App = () => (
                     <Route path={CHEMISTRY_META.path} element={<ChemistryQuestionPaperMaker />} />
                     <Route path={JEE_ADVANCED_META.path} element={<JeeAdvancedMockTestSoftware />} />
                     <Route path={SSC_META.path} element={<SscMockTestPlatform />} />
+                    <Route path={BANK_META.path} element={<BankExamMockTestPlatform />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

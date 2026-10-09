@@ -477,8 +477,46 @@ export const SSC_META: GuideMeta = {
     cta: { label: 'Build an SSC mock, free', href: '/create-test' },
 };
 
+export const BANK_META: GuideMeta = {
+    slug: 'bank-exam-mock-test-platform',
+    path: '/bank-exam-mock-test-platform',
+    title: 'Bank exam mock test platform: IBPS and SBI mocks with real sectional timing',
+    seoTitle: 'Bank Exam Mock Test Platform for IBPS, SBI & RRB (2026)',
+    description:
+        'Run IBPS PO, SBI PO, Clerk and RRB mocks the way the real papers run: a 20-minute clock per section, five options, decimal marks, −¼ negative marking and sectional cut-offs.',
+    dek:
+        'A bank paper is not one test, it is three or four separate tests back to back: every section has its own clock, its own marks per question and, in IBPS, its own cut-off. Here is how to build and run mocks that behave that way, why marks like 1.5 and 0.857 break most test software, what a 20-minute section does to a candidate, and how to read a result section by section. Every demo on this page works, including a prelims paper whose sections close on their own.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-09T12:00:00+05:30',
+    dateModified: '2026-10-09T12:00:00+05:30',
+    readMinutes: 25,
+    cover: {
+        src: '/guides/bank-exam-mock-test-platform/cover.png',
+        alt: 'A candidate’s phone on an IBPS PO Prelims mock in TestoZa with three sections, English Language closed and Quantitative Aptitude open with its own 20-minute clock',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'bank exam mock test platform',
+        'bank exam mock test software',
+        'IBPS PO mock test',
+        'SBI PO mock test',
+        'IBPS Clerk mock test',
+        'IBPS RRB mock test',
+        'bank exam test series software for coaching institutes',
+        'sectional timing mock test',
+        'IBPS PO exam pattern 2026',
+        'bank exam negative marking',
+        'sectional cut off IBPS',
+        'bank mock test in Hindi',
+        'TestoZa',
+    ],
+    // A bank institute starts by building one prelims paper.
+    cta: { label: 'Build a bank mock, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;
