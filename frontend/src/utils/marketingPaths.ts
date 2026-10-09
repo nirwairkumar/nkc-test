@@ -31,6 +31,8 @@ export const MARKETING_PATHS = [
   '/quiz-creator',
   '/assessment-platform',
   '/create-mock-test-online',
+  // The guides index (pages/GuidesIndex.tsx), which lists every guide below.
+  '/guides',
   // Long-form guides (src/guides/meta.ts), so a new guide can't be left out.
   ...GUIDE_METAS.map(g => g.path)
 ];

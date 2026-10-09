@@ -111,7 +111,8 @@ async function generateSitemap() {
             { url: '/compare/quizizz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/compare/typeform-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
 
-            // Guides (src/guides)
+            // Guides (src/guides), and the index that lists them all
+            { url: '/guides', changefreq: 'weekly', priority: 0.9, lastmod: '2026-10-09T00:00:00.000Z' },
             { url: '/best-online-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
             { url: '/cbt-exam-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-28T00:00:00.000Z' },
             { url: '/jee-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },

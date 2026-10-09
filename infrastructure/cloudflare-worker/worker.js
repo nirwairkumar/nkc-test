@@ -16,7 +16,7 @@ import {
 } from '../../frontend/src/blog/articles/worker.ts';
 // Guides are long-form pages on testoza.com (e.g. /best-online-test-platform),
 // kept in frontend/src/guides for the same reason.
-import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd } from '../../frontend/src/guides/worker.ts';
+import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd, guideUrl } from '../../frontend/src/guides/worker.ts';
 // Google Ads landing pages (/quiz-creator, /assessment-platform): copy shared with the React page.
 import { ADS_LANDING, adsCrawlerHtml, adsFaqSchema } from '../../frontend/src/landing/adsLanding.ts';
 // /create-mock-test-online has its own content model (frontend/src/guides/mock-test).
@@ -432,9 +432,18 @@ function generateMetaTags(url, testData = null) {
     }
   }
 
+  // ─── GUIDES INDEX (frontend/src/pages/GuidesIndex.tsx) ──────────────
+  // The hub the footer points at; it lists every guide below.
+  let extra = '';
+  if (path === '/guides') {
+    title = 'Guides to online tests, exams and mock tests | TestoZa';
+    description =
+      'Long-form, practical guides for teachers and coaching institutes: exam patterns and mock tests, making question papers, and running an exam day without surprises.';
+    image = guideAssetUrl(GUIDES[0].meta.cover.src);
+  }
+
   // ─── GUIDES (frontend/src/guides) ───────────────────────────────────
   // Same title and description the React page sets, so nothing changes when the app loads.
-  let extra = '';
   const guide = GUIDES.find((g) => g.meta.path === path);
   if (guide) {
     const { meta } = guide;
@@ -519,6 +528,53 @@ function generateRouteContent(url, testData = null) {
   const ads = [ADS_LANDING.quiz, ADS_LANDING.assessment].find((a) => a.path === path);
   if (ads) {
     return { bodyHtml: adsCrawlerHtml(ads), faqSchema: adsFaqSchema(ads) };
+  }
+
+  // ─── 0b. GUIDES INDEX ───────────────────────────────────────────────────────
+  // Generated from GUIDES, like the React page, so a new guide needs no edit here.
+  if (path === '/guides') {
+    const items = GUIDES.map(({ meta }) => `
+      <li>
+        <h3><a href="${guideUrl(meta.path)}">${escapeHtml(meta.title)}</a></h3>
+        <p>${escapeHtml(meta.description)}</p>
+        <p>${meta.readMinutes} min read. Updated ${escapeHtml(meta.dateModified.slice(0, 10))}.</p>
+      </li>`).join('');
+    const bodyHtml = `
+      <h1>Guides to online tests, exams and mock tests</h1>
+      <p>Long-form, practical guides for teachers, coaching institutes and schools, with TestoZa as the worked example. Each one is practical rather than promotional: real exam patterns, demos that work on the page, and an honest list of what the software still can't do. ${GUIDES.length} guides, newest first.</p>
+      <ol>${items}</ol>`;
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          '@id': 'https://testoza.com/guides#page',
+          url: 'https://testoza.com/guides',
+          name: 'Guides to online tests, exams and mock tests'
+        },
+        {
+          '@type': 'ItemList',
+          '@id': 'https://testoza.com/guides#list',
+          itemListOrder: 'https://schema.org/ItemListOrderDescending',
+          numberOfItems: GUIDES.length,
+          itemListElement: GUIDES.map(({ meta }, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: guideUrl(meta.path),
+            name: meta.seoTitle
+          }))
+        },
+        {
+          '@type': 'BreadcrumbList',
+          '@id': 'https://testoza.com/guides#breadcrumb',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'TestoZa', item: 'https://testoza.com' },
+            { '@type': 'ListItem', position: 2, name: 'Guides', item: 'https://testoza.com/guides' }
+          ]
+        }
+      ]
+    };
+    return { bodyHtml, faqSchema };
   }
 
   // ─── 0. GUIDES ──────────────────────────────────────────────────────────────
@@ -1340,7 +1396,8 @@ const APP_SECTIONS = new Set([
   'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test', 'test-analysis', 'test-intro',
   'test-submitted', 'tests', 'update-password', 'user-guide', 'white-label-test-platform', 'youtube-to-quiz'
 ]);
-// Guides live on testoza.com too.
+// Guides and their index live on testoza.com too.
+APP_SECTIONS.add('guides');
 for (const { meta } of GUIDES) APP_SECTIONS.add(meta.slug);
 
 const BLOG_ROBOTS_TXT = `# TestoZa Blog — https://blog.testoza.com

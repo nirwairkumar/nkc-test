@@ -150,6 +150,7 @@ const ChemistryQuestionPaperMaker = safeLazy(() => import("./pages/guides/chem/C
 const JeeAdvancedMockTestSoftware = safeLazy(() => import("./pages/guides/jadv/JeeAdvancedMockTestSoftware"));
 const SscMockTestPlatform = safeLazy(() => import("./pages/guides/ssc/SscMockTestPlatform"));
 const BankExamMockTestPlatform = safeLazy(() => import("./pages/guides/bank/BankExamMockTestPlatform"));
+const GuidesIndex = safeLazy(() => import("./pages/GuidesIndex"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -310,6 +311,7 @@ const App = () => (
                     <Route path={CHEMISTRY_META.path} element={<ChemistryQuestionPaperMaker />} />
                     <Route path={JEE_ADVANCED_META.path} element={<JeeAdvancedMockTestSoftware />} />
                     <Route path={SSC_META.path} element={<SscMockTestPlatform />} />
+                    <Route path="/guides" element={<GuidesIndex />} />
                     <Route path={BANK_META.path} element={<BankExamMockTestPlatform />} />
 
                     {/* SEO Subject Hub Pages */}

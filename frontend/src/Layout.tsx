@@ -11,8 +11,8 @@ import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
 import { GUIDE_METAS } from '@/guides/meta';
 
-/** Guides are reading pages: no app sidebar. */
-const GUIDE_PATHS = new Set(GUIDE_METAS.map((g) => g.path));
+/** Guides and their index (pages/GuidesIndex.tsx) are reading pages: no app sidebar. */
+const GUIDE_PATHS = new Set(['/guides', ...GUIDE_METAS.map((g) => g.path)]);
 
 export default function Layout() {
     const location = useLocation();
