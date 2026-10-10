@@ -401,6 +401,8 @@ async def process_files_hybrid_stream(
     languages: Optional[str] = None,
     difficulty: Optional[str] = "Tough",
     user_instructions: Optional[str] = None,
+    marks_per_question: Optional[float] = None,
+    negative_marks: Optional[float] = None,
 ) -> Dict:
     """
     HYBRID OCR + Vision streaming pipeline.
@@ -502,7 +504,10 @@ async def process_files_hybrid_stream(
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
     # Step 3: Build content and call Gemini
-    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
+    prompt = build_prompt(
+        mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions,
+        marks_per_question=marks_per_question, negative_marks=negative_marks,
+    )
     result_data = None
 
     if not has_pdfs and image_files:

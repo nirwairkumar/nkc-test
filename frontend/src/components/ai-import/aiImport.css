@@ -1190,6 +1190,30 @@
         gap: 12px;
     }
 }
+
+/* Marking, under the widgets: what each question is worth and where that came from. */
+.aix-marking {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 12px 0 0;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background: var(--fill-2);
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ink-2);
+}
+.aix-marking svg {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    margin-top: 1px;
+    color: var(--indigo);
+}
+.aix-marking b {
+    font-weight: 650;
+}
 .aix-widget {
     display: flex;
     align-items: center;

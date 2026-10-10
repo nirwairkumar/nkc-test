@@ -426,6 +426,8 @@ async def parse_document(
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
     user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    marks_per_question: Optional[float] = Query(None, gt=0, le=100, description="Teacher's marks per question; blank = read from the paper, else +1"),
+    negative_marks: Optional[float] = Query(None, ge=0, le=100, description="Teacher's penalty per wrong answer; blank = read from the paper, else 0"),
     request: Request = None,
 ):
     """
@@ -489,8 +491,13 @@ async def parse_document(
             answer_key=answer_key_data,
             languages=languages,
             difficulty=difficulty,
-            user_instructions=user_instructions
+            user_instructions=user_instructions,
+            marks_per_question=marks_per_question,
+            negative_marks=negative_marks,
         )
+        # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
+        from ai_preview_importer.marking import resolve_marking
+        resolve_marking(result, marks_per_question, negative_marks)
         
         # 4. Return Result
         logger.info(f"Parsing complete ({mode} mode). Returning {len(result.get('questions', []))} questions.")
@@ -519,6 +526,8 @@ async def parse_document_stream(
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
     user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    marks_per_question: Optional[float] = Query(None, gt=0, le=100, description="Teacher's marks per question; blank = read from the paper, else +1"),
+    negative_marks: Optional[float] = Query(None, ge=0, le=100, description="Teacher's penalty per wrong answer; blank = read from the paper, else 0"),
     request: Request = None,
 ):
     """
@@ -624,9 +633,14 @@ async def parse_document_stream(
                     algorithm=algorithm,
                     languages=languages,
                     difficulty=difficulty,
-                    user_instructions=user_instructions
+                    user_instructions=user_instructions,
+                    marks_per_question=marks_per_question,
+                    negative_marks=negative_marks,
                 )
-                
+                # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
+                from ai_preview_importer.marking import resolve_marking
+                resolve_marking(result, marks_per_question, negative_marks)
+
                 final_result = result
                 processing_complete = True
                 

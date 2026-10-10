@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import { markTestAsNew } from '@/utils/newTest';
+import { cleanMarkInput, markingQuery, readMark } from '@/components/ai-import/marking';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -146,6 +147,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['default']);
     const [difficulty, setDifficulty] = useState<'Easy' | 'Moderate' | 'Tough'>('Tough');
     const [customInstructions, setCustomInstructions] = useState<string>('');
+    // Marking. Blank = the AI reads it from the paper; if the paper doesn't say, +1 and no
+    // negative (backend ai_preview_importer/marking.py). Kept as text so "2.5" can be typed.
+    const [marksInput, setMarksInput] = useState<string>('');
+    const [negativeInput, setNegativeInput] = useState<string>('');
+    const marksField = readMark(marksInput, false);
+    const negativeField = readMark(negativeInput, true);
 
     const handleLanguageToggle = (lang: string) => {
         if (lang === 'default') {
@@ -766,6 +773,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             return;
         }
 
+        if (marksField.error || negativeField.error) {
+            setError("Check the marks in AI Settings: " + (marksField.error ? `marks per question — ${marksField.error}` : `negative marks — ${negativeField.error}`) + '.');
+            document.getElementById('ai-marks-row')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         setMode(selectedMode);
         if (isContinue) {
             setGeneratingMore(true);
@@ -911,6 +924,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (customInstParam) {
                 queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
             }
+            queryParams += markingQuery(marksField.value, negativeField.value);
 
             // Use ULTRA-FAST streaming endpoint
             const response = await fetch(`${baseUrl}/ai/parse-stream?${queryParams}`, {
@@ -1038,6 +1052,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (customInstParam) {
                 queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
             }
+            // "Generate more" reads pages that rarely repeat the cover page's marking rules, so
+            // new questions match the teacher's values, or else the marking already on screen.
+            const shown = isContinue ? parsedData?.marking : undefined;
+            const asNumber = (v: number | string | null | undefined) => (v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v));
+            queryParams += markingQuery(
+                marksField.value ?? (shown && !shown.varies ? asNumber(shown.marks) : null),
+                negativeField.value ?? (shown && !shown.varies ? asNumber(shown.negativeMarks) : null),
+            );
 
             const response = await fetch(`${baseUrl}/ai/parse?${queryParams}`, {
                 method: 'POST',
@@ -1077,7 +1099,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                 const combinedData = {
                     ...data,
-                    questions: [...parsedData.questions, ...adjustedQuestions]
+                    questions: [...parsedData.questions, ...adjustedQuestions],
+                    marking: parsedData.marking ?? data.marking,
                 };
                 setParsedData(combinedData);
                 saveToHistory(combinedData);
@@ -1160,7 +1183,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         options: mapOptions(q.options, q.optionImages, q.type || 'single'),
                         correctAnswer: q.correctAnswer,
                         image: q.image,
-                        marks: String(q.marks || 4),
+                        marks: String(q.marks ?? 1),
                         // Only what the source paper actually asks for. `|| 1` turned every
                         // imported paper into a JEE paper (and turned an explicit 0 into 1).
                         negativeMarks: String(q.negativeMarks ?? 0),
@@ -1175,7 +1198,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     name: sec.name || 'Untitled Section',
                     attempt_control: sec.attempt_control || { enabled: false },
                     questions: mappedQuestions,
-                    marks_per_question: sec.marks_per_question || 4,
+                    marks_per_question: sec.marks_per_question ?? 1,
                     negative_marks: sec.negative_marks ?? 0,
                     question_type: sec.question_type || 'single'
                 };
@@ -1204,7 +1227,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 options: mapOptions(q.options, q.optionImages, q.type || 'single'),
                 correctAnswer: q.correctAnswer,
                 image: q.image,
-                marks: String(q.marks || 1),
+                marks: String(q.marks ?? 1),
                 negativeMarks: String(q.negativeMarks || 0),
                 explanation: "",
                 passageContent: q.passageContent || "",
@@ -1309,7 +1332,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
                             correctAnswer: q.correctAnswer || 'A',
                             image: q.image || undefined,
-                            marks: String(q.marks || sec.marks_per_question || 4),
+                            marks: String(q.marks ?? sec.marks_per_question ?? 1),
                             negativeMarks: String(q.negativeMarks ?? sec.negative_marks ?? 0),
                             passageContent: q.passageContent || "",
                             groupId: q.groupId || ""
@@ -1321,7 +1344,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         name: sec.name || 'Untitled Section',
                         attempt_control: sec.attempt_control || { enabled: false },
                         questions: mappedQuestions,
-                        marks_per_question: sec.marks_per_question || 4,
+                        marks_per_question: sec.marks_per_question ?? 1,
                         negative_marks: sec.negative_marks ?? 0,
                         question_type: sec.question_type || 'single'
                     };
@@ -1338,7 +1361,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
                         correctAnswer: q.correctAnswer || 'A',
                         image: q.image || undefined,
-                        marks: String(q.marks || 1),
+                        marks: String(q.marks ?? 1),
                         negativeMarks: String(q.negativeMarks || 0),
                         passageContent: q.passageContent || "",
                         groupId: q.groupId || ""
@@ -1368,8 +1391,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             toast.success("Test saved successfully!");
             // Point /my-tests at the card the teacher has never seen before.
             if (data?.id) markTestAsNew(data.id);
-            // Straight to the send step when we know the id; otherwise the grid, as before.
-            navigate(data?.id ? `/send/${data.id}` : '/my-tests');
+            navigate('/my-tests'); // Redirect to creator dashboard
         } catch (err: any) {
             console.error("Error direct saving test:", err);
             toast.error("Failed to save test: " + (err.message || String(err)));
@@ -1934,17 +1956,50 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </div>
                                 </div>
 
+                                {/* Row 2: Marking. Blank = read from the paper; else +1 / 0. */}
+                                <div id="ai-marks-row" className="space-y-2 pt-1">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <span className="text-xs font-semibold text-slate-650 dark:text-slate-300">⚖️ Marking</span>
+                                        <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800/50">
+                                            Optional — leave blank to read it from the paper
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <MarkInput
+                                            id="ai-marks"
+                                            label="Marks per question"
+                                            sign="+"
+                                            value={marksInput}
+                                            onChange={setMarksInput}
+                                            presets={['1', '2', '3', '4']}
+                                            error={marksField.error}
+                                        />
+                                        <MarkInput
+                                            id="ai-negative"
+                                            label="Negative marks per wrong answer"
+                                            sign="−"
+                                            value={negativeInput}
+                                            onChange={setNegativeInput}
+                                            presets={['0', '0.25', '0.5', '1']}
+                                            error={negativeField.error}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 leading-tight">
+                                        {markingHint(marksField.value, negativeField.value)}
+                                    </p>
+                                </div>
+
                                 {/* Custom Instructions Textarea */}
                                 <div className="space-y-1.5 pt-1">
                                     <label className="text-xs font-semibold text-slate-650 dark:text-slate-300 flex items-center justify-between">
                                         <span>📝 Custom Instructions (Optional)</span>
-                                        <span className="text-[10px] text-slate-400 font-normal">e.g. Marks, Negative marking, Count</span>
+                                        <span className="text-[10px] text-slate-400 font-normal">e.g. Count, Topic focus</span>
                                     </label>
                                     <textarea
                                         rows={2}
                                         value={customInstructions}
                                         onChange={(e) => setCustomInstructions(e.target.value)}
-                                        placeholder="e.g. Each question 2 marks, 0.5 negative. Generate minimum 30 questions with top conceptual focus..."
+                                        placeholder="e.g. Generate at least 30 questions, focus on numericals from Chapter 3..."
                                         className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all resize-none"
                                     />
                                 </div>
@@ -2104,4 +2159,67 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     }
 
     return null;
+}
+
+/** What the marking fields will do, in one sentence, as the teacher types. */
+function markingHint(marks: number | null, negative: number | null): string {
+    const penalty = (n: number) => (n === 0 ? 'no negative marking' : `−${n} for a wrong answer`);
+    if (marks !== null && negative !== null) return `Every question: +${marks}, ${penalty(negative)}.`;
+    if (marks !== null) return `Every question: +${marks}. Negative marks read from your paper (none if it doesn't say).`;
+    if (negative !== null) return `Every question: ${penalty(negative)}. Marks read from your paper (+1 if it doesn't say).`;
+    return "Blank: the AI reads the marking from your paper. If the paper doesn't say, each question gets +1 and no negative marking.";
+}
+
+/** One marking field: a small decimal input with quick picks beside it. */
+function MarkInput({ id, label, sign, value, onChange, presets, error }: {
+    id: string;
+    label: string;
+    sign: string;
+    value: string;
+    onChange: (v: string) => void;
+    presets: string[];
+    error: string | null;
+}) {
+    return (
+        <div className="space-y-1.5">
+            <label htmlFor={id} className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</label>
+            <div className="flex items-center gap-1.5 flex-wrap">
+                <div className={`flex items-center rounded-lg border bg-slate-50/50 dark:bg-slate-900/50 focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-1 transition-all ${
+                    error
+                        ? 'border-rose-300 dark:border-rose-800 focus-within:ring-rose-500'
+                        : 'border-slate-200 dark:border-slate-800 focus-within:ring-indigo-500'
+                }`}>
+                    <span aria-hidden="true" className="pl-2.5 text-xs font-semibold text-slate-400">{sign}</span>
+                    <input
+                        id={id}
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={value}
+                        onChange={(e) => onChange(cleanMarkInput(e.target.value))}
+                        placeholder="Auto"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? `${id}-error` : undefined}
+                        className="w-16 bg-transparent px-1.5 py-1 text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 focus:outline-none"
+                    />
+                </div>
+                {presets.map((p) => (
+                    <button
+                        key={p}
+                        type="button"
+                        onClick={() => onChange(value === p ? '' : p)}
+                        aria-pressed={value === p}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium tabular-nums transition-all ${
+                            value === p
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        {p}
+                    </button>
+                ))}
+            </div>
+            {error && <p id={`${id}-error`} className="text-[10px] font-medium text-rose-600 dark:text-rose-400">{error}</p>}
+        </div>
+    );
 }

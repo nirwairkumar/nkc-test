@@ -1045,14 +1045,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             const saved = await performSave(false);
             localStorage.removeItem('create_test_draft');
             toast.success(isEditMode ? "Changes saved" : "Paper saved");
-            // So /my-tests can point at this card whenever the teacher gets there —
-            // from the send screen, the sidebar or a reload.
+            // /my-tests rings this card and glows its "Conduct exam" tile on arrival.
             if (!isEditMode && saved?.id) markTestAsNew(saved.id);
             if (onSuccess) onSuccess();
-            // The highest-intent moment in the product: the paper is ready and a batch is
-            // waiting. It used to answer that with a toast and a table. Now it answers with
-            // the link, the WhatsApp message and the QR code.
-            else if (saved?.id) navigate(`/send/${saved.id}`);
             else navigate('/my-tests');
         } catch (error: any) {
             console.error("Error saving test:", error);

@@ -362,8 +362,8 @@ You MUST structure the output using the "sections" field instead of the top-leve
             "D": "Option text only"
           },
           "correctAnswer": "A",
-          "marks": 4,
-          "negativeMarks": 1,
+          "marks": null,
+          "negativeMarks": null,
           "crossPage": false,
           "passageContent": null,
           "groupId": null
@@ -400,8 +400,8 @@ Otherwise, set "attempt_control" to {"enabled": false}.
         "D": "Option text only"
       },
       "correctAnswer": "A",
-      "marks": 4,
-      "negativeMarks": 1,
+      "marks": null,
+      "negativeMarks": null,
       "crossPage": false,
       "passageContent": null,
       "groupId": null
@@ -564,8 +564,8 @@ Analyze the content density and decide if the exam should be structured section-
             "D": "Option D"
           },
           "correctAnswer": "A",
-          "marks": 4,
-          "negativeMarks": 1,
+          "marks": null,
+          "negativeMarks": null,
           "passageContent": null,
           "groupId": null
         }
@@ -592,8 +592,8 @@ Analyze the content density and decide if the exam should be structured section-
         "D": "Option D"
       },
       "correctAnswer": "A",
-      "marks": 1,
-      "negativeMarks": 0,
+      "marks": null,
+      "negativeMarks": null,
       "passageContent": null,
       "groupId": null
     }
@@ -606,11 +606,16 @@ def build_prompt(
     mode: str = "extract",
     languages: Optional[str] = None,
     difficulty: Optional[str] = "Tough",
-    user_instructions: Optional[str] = None
+    user_instructions: Optional[str] = None,
+    marks_per_question: Optional[float] = None,
+    negative_marks: Optional[float] = None,
 ) -> str:
     base_prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
 
-    prompt_additions = []
+    from ai_preview_importer.marking import marking_prompt
+
+    # Marking first: teacher's values when given, otherwise read from the paper.
+    prompt_additions = [marking_prompt(marks_per_question, negative_marks)]
 
     # 1. Difficulty Level Instruction
     if difficulty:
@@ -1340,7 +1345,9 @@ async def process_files(
     answer_key: Optional[Dict] = None,
     languages: Optional[str] = None,
     difficulty: Optional[str] = "Tough",
-    user_instructions: Optional[str] = None
+    user_instructions: Optional[str] = None,
+    marks_per_question: Optional[float] = None,
+    negative_marks: Optional[float] = None,
 ) -> Dict:
     """
     Main pipeline entry point for processing multiple files (PDFs and/or images).
@@ -1399,7 +1406,10 @@ async def process_files(
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
     # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
     SINGLE_BATCH_PAGE_LIMIT = 3
-    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
+    prompt = build_prompt(
+        mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions,
+        marks_per_question=marks_per_question, negative_marks=negative_marks,
+    )
     total_pages = len(all_page_images)
     
     if total_pages <= SINGLE_BATCH_PAGE_LIMIT:
@@ -1857,8 +1867,16 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
                 sec_name = s.get("name") or s.get("title") or "General"
                 sec_id = s.get("id")
                 sec_attempt = s.get("attempt_control")
+                # The final result keeps marking per question only, so carry a scheme the
+                # model stated on the section down to questions that didn't repeat it.
+                sec_marks = s.get("marks_per_question")
+                sec_negative = s.get("negative_marks")
                 for q in s.get("questions", []):
                     if isinstance(q, dict):
+                        if q.get("marks") is None and sec_marks is not None:
+                            q["marks"] = sec_marks
+                        if q.get("negativeMarks") is None and sec_negative is not None:
+                            q["negativeMarks"] = sec_negative
                         q["section_name"] = sec_name
                         if sec_id:
                             q["section_id"] = sec_id
@@ -1994,8 +2012,10 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "options": options,
             "optionImages": q.get("optionImages", {k: None for k in options.keys()} if options else {}),
             "correctAnswer": q.get("correctAnswer"),
-            "marks": q.get("marks", 4),
-            "negativeMarks": q.get("negativeMarks", 1),
+            # Undecided stays None here; ai_preview_importer/marking.py settles it once
+            # the whole paper has been read (teacher > paper > +1/0).
+            "marks": q.get("marks"),
+            "negativeMarks": q.get("negativeMarks"),
             "crossPage": q.get("crossPage", False),
             "groupId": q.get("groupId", ""),
             "passageContent": q.get("passageContent", ""),
@@ -2099,7 +2119,9 @@ async def process_files_stream(
     max_concurrent: int = 15,
     languages: Optional[str] = None,
     difficulty: Optional[str] = "Tough",
-    user_instructions: Optional[str] = None
+    user_instructions: Optional[str] = None,
+    marks_per_question: Optional[float] = None,
+    negative_marks: Optional[float] = None,
 ) -> Dict:
     """
     ULTRA-FAST Stream-enabled file processing with:
@@ -2244,7 +2266,10 @@ async def process_files_stream(
             
     await asyncio.gather(*[upload_and_update(img) for img in all_embedded_images])
     
-    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
+    prompt = build_prompt(
+        mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions,
+        marks_per_question=marks_per_question, negative_marks=negative_marks,
+    )
     
     # Step 5: Process pages
     SINGLE_BATCH_PAGE_LIMIT = 3

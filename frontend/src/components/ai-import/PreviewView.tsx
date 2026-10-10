@@ -18,6 +18,7 @@ import {
     PenLine,
     Plus,
     RotateCcw,
+    Scale,
     ScanText,
     Search,
     Sparkles,
@@ -29,7 +30,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDuration } from './progressModel';
-import type { ExtractionMeta, ParseResponse, ProcessMode, Question } from './types';
+import type { ExtractionMeta, MarkingSummary, ParseResponse, ProcessMode, Question } from './types';
 import './aiImport.css';
 
 interface PreviewViewProps {
@@ -220,6 +221,45 @@ function JumpGrid({ questions, current, onJump }: { questions: Question[]; curre
                 <span><i className="is-warn" />Needs answer</span>
             </div>
         </>
+    );
+}
+
+// ── Marking line ─────────────────────────────────────────────────────────────
+
+const fmtMark = (v: number | string) => String(v);
+
+/**
+ * What every question is worth, and why — so the teacher sees the marking before they
+ * save rather than discovering it as a negative score after they've shared the test.
+ */
+function MarkingLine({ marking }: { marking: MarkingSummary }) {
+    const { marks, negativeMarks, marks_source, negative_source, varies } = marking;
+
+    let scheme: string;
+    if (varies || marks === null || negativeMarks === null) {
+        scheme = 'Marks differ between sections or questions';
+    } else {
+        const penalty = Number(negativeMarks) === 0 ? 'no negative marking' : `−${fmtMark(negativeMarks)} for a wrong answer`;
+        scheme = `+${fmtMark(marks)} per question, ${penalty}`;
+    }
+
+    const sources = new Set([marks_source, negative_source]);
+    let why: string;
+    if (sources.size === 1 && sources.has('teacher')) why = 'as you set it';
+    else if (sources.size === 1 && sources.has('paper')) why = 'read from your paper';
+    else if (sources.size === 1 && sources.has('default')) why = "your paper didn't state marks, so we used the default";
+    else {
+        const part = (s: string) => (s === 'teacher' ? 'set by you' : s === 'paper' ? 'read from your paper' : 'default');
+        why = `marks ${part(marks_source)}, penalty ${part(negative_source)}`;
+    }
+
+    return (
+        <p className="aix-marking" role="note">
+            <Scale aria-hidden="true" />
+            <span>
+                <b>{scheme}</b> — {why}. You can change it in the editor.
+            </span>
+        </p>
     );
 }
 
@@ -421,6 +461,8 @@ export default function PreviewView({
                             </div>
                         )}
                     </div>
+
+                    {data.marking && <MarkingLine marking={data.marking} />}
                 </header>
 
                 <div className="aix-rv-grid">

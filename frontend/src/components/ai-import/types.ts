@@ -46,6 +46,19 @@ export interface ParseResponse {
     duration?: number;
     /** Set when the run finishes (and stored with AI history). */
     execution_time_seconds?: number;
+    /** How marks were decided (backend ai_preview_importer/marking.py): teacher > paper > +1/0. */
+    marking?: MarkingSummary;
+}
+
+export type MarkingSource = 'teacher' | 'paper' | 'default';
+
+export interface MarkingSummary {
+    /** The value every question shares, or null when it varies between questions. */
+    marks: number | string | null;
+    negativeMarks: number | string | null;
+    marks_source: MarkingSource;
+    negative_source: MarkingSource;
+    varies: boolean;
 }
 
 export type ProcessMode = 'extract' | 'generate';

@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowDown, Check, Info, ScanText, Sparkles, TriangleAlert } from 'lucide-react';
+import { ArrowDown, Check, ScanText, Sparkles, TriangleAlert } from 'lucide-react';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import {
     AlertDialog,
@@ -255,15 +255,9 @@ function LiveStatus({ mode, files, progress, info, questions, stageTimes, starte
                 )}
 
                 {!complete && (
-                    <>
-                        <p className="aix-note">
-                            <Info />
-                            <span>You can switch to another tab or window. Processing keeps running, and the tab title shows the progress.</span>
-                        </p>
-                        <button type="button" className="aix-btn aix-btn--danger" onClick={() => setConfirmOpen(true)}>
-                            Stop processing
-                        </button>
-                    </>
+                    <button type="button" className="aix-btn aix-btn--danger" onClick={() => setConfirmOpen(true)}>
+                        Stop processing
+                    </button>
                 )}
             </section>
 

@@ -7,14 +7,13 @@
  * picks it up once: it highlights that card and draws the eye to its "Conduct
  * exam" tile, then clears itself so the page never nags on later visits.
  *
- * Deliberately localStorage and not router state: the teacher may reach /my-tests
- * from the send screen, the sidebar or a reload, and the hint should survive all
- * three without surviving the day.
+ * Deliberately localStorage and not router state: the hint should survive a reload
+ * or a detour through the sidebar without surviving the day.
  */
 
 const KEY = 'testoza_new_test';
 
-/** Long enough to cover a detour through the send screen; short enough to never resurface. */
+/** Long enough to survive a reload or a detour; short enough to never resurface. */
 const FRESH_FOR_MS = 10 * 60 * 1000;
 
 /** Called once, by the builder, after a brand-new test is saved. */
