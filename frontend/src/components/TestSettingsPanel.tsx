@@ -48,7 +48,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         shuffle_questions: false,
         show_results_immediate: true,
         schedule: { enabled: false },
-        start_form: { enabled: false, fields: [] },
+        start_form: { enabled: true, fields: [{ label: 'Name', required: true }] },
         exam_interface_mode: 'nta',
         ...test.settings // Merge existing settings
     });

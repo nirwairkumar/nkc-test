@@ -21,7 +21,8 @@ export const DEFAULT_ENVIRONMENT_SETTINGS = {
     shuffle_questions: false,
     show_results_immediate: true,
     schedule: { enabled: false },
-    start_form: { enabled: false, fields: [] },
+    // Candidate inputs start on (just Name) so every result can be matched to a person.
+    start_form: { enabled: true, fields: [{ label: 'Name', required: true }] },
 };
 
 /** Update payload that makes `test` a live exam reachable at /test/<conductSlug>. */
@@ -40,6 +41,11 @@ export function buildStartConductPayload(test: any, conductSlug: string) {
             started_at: new Date().toISOString(),
         },
     };
+
+    // A test that never set candidate inputs gets the default (on, Name).
+    if (!settings.start_form) {
+        settings.start_form = DEFAULT_ENVIRONMENT_SETTINGS.start_form;
+    }
 
     // An expired schedule would close the new link straight away.
     if (settings.schedule?.end_time && new Date(settings.schedule.end_time) < new Date()) {
