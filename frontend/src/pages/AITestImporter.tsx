@@ -24,6 +24,7 @@ import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
+import { markTestAsNew } from '@/utils/newTest';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -1365,7 +1366,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (error) throw error;
 
             toast.success("Test saved successfully!");
-            navigate('/my-tests'); // Redirect to creator dashboard
+            // Point /my-tests at the card the teacher has never seen before.
+            if (data?.id) markTestAsNew(data.id);
+            // Straight to the send step when we know the id; otherwise the grid, as before.
+            navigate(data?.id ? `/send/${data.id}` : '/my-tests');
         } catch (err: any) {
             console.error("Error direct saving test:", err);
             toast.error("Failed to save test: " + (err.message || String(err)));

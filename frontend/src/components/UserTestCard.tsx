@@ -29,6 +29,7 @@ import {
     ListChecks,
     Clock,
     Users,
+    Sparkles,
 } from 'lucide-react';
 
 /**
@@ -56,6 +57,9 @@ interface UserTestCardProps {
     onConductExam: (test: any) => void;
     onViewReports?: (test: any) => void;
     unresolvedReportsCount?: number;
+    /** Just created, and this is the teacher's first sight of it: ring the card and
+     *  draw the eye to "Conduct exam". Settles by itself after a few seconds. */
+    isNew?: boolean;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -85,7 +89,7 @@ export function StatusPill({ status }: { status: 'live' | 'public' | 'private' |
 }
 
 function ActionTile({
-    icon: Icon, label, onClick, primary = false, id, badge,
+    icon: Icon, label, onClick, primary = false, id, badge, glow = false,
 }: {
     icon: ComponentType<{ className?: string }>;
     label: string;
@@ -93,6 +97,8 @@ function ActionTile({
     primary?: boolean;
     id?: string;
     badge?: ReactNode;
+    /** Pulse a halo a few times, to point a first-time teacher at the next step. */
+    glow?: boolean;
 }) {
     return (
         <button
@@ -106,6 +112,7 @@ function ActionTile({
                 primary
                     ? 'bg-primary text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_18px_-10px_rgba(2,132,199,0.8)] hover:bg-[hsl(200,95%,30%)]'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/10',
+                glow ? 'tz-cta-glow' : '',
             ].join(' ')}
         >
             <Icon className={`h-[18px] w-[18px] ${primary ? 'text-white' : 'text-sky-600 dark:text-sky-400'}`} />
@@ -130,6 +137,7 @@ export function UserTestCard({
     onConductExam,
     onViewReports,
     unresolvedReportsCount = 0,
+    isNew = false,
 }: UserTestCardProps) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
     const isConducted = !!test.settings?.conduct_exam?.enabled;
@@ -147,12 +155,18 @@ export function UserTestCard({
                 'transition-[box-shadow,transform] duration-300 ease-out motion-safe:hover:-translate-y-0.5',
                 'hover:shadow-[0_2px_4px_rgba(15,23,42,0.05),0_20px_40px_-20px_rgba(2,132,199,0.30)]',
                 'dark:bg-slate-900 dark:ring-white/10',
+                isNew ? 'tz-new-card ring-sky-500/40' : '',
             ].join(' ')}
         >
             {/* ── Status row ── */}
             <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                     <StatusPill status={status} />
+                    {isNew && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-600 px-2 py-1 text-xs font-semibold leading-none text-white">
+                            <Sparkles className="h-3 w-3" /> Just created
+                        </span>
+                    )}
                     {test.custom_id && (
                         <span className="truncate font-mono text-xs text-slate-500 dark:text-slate-400" title="Test ID">
                             #{test.custom_id}
@@ -340,6 +354,7 @@ export function UserTestCard({
                 ) : (
                     <ActionTile
                         primary
+                        glow={isNew}
                         id={isExample ? 'tour-conduct-btn' : undefined}
                         icon={Radio}
                         label="Conduct exam"

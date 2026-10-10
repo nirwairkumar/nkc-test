@@ -893,3 +893,52 @@
   0%, 100% { transform: scale(1); opacity: 0.55; }
   50% { transform: scale(1.18); opacity: 0.18; }
 }
+
+/* ── "Here is the test you just made" (/my-tests) ─────────────────────────────
+   A teacher who has just saved a paper lands on a grid of identical cards. These
+   two classes point at the new one and at the tile that runs it, then settle: both
+   animations are `forwards` and end on the card's normal appearance, so nothing is
+   left pulsing on the page. Restrained on purpose — a sky ring that recedes, not a
+   flashing banner. */
+@keyframes tz-new-card {
+  0% {
+    box-shadow: 0 0 0 1px rgba(2, 132, 199, 0.55), 0 0 0 7px rgba(2, 132, 199, 0.13), 0 18px 40px -18px rgba(2, 132, 199, 0.45);
+  }
+  55% {
+    box-shadow: 0 0 0 1px rgba(2, 132, 199, 0.45), 0 0 0 5px rgba(2, 132, 199, 0.10), 0 16px 34px -18px rgba(2, 132, 199, 0.34);
+  }
+  100% {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+  }
+}
+
+.tz-new-card {
+  animation: tz-new-card 6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* The "Conduct exam" tile: three slow sweeps of a halo, then back to normal. */
+@keyframes tz-cta-glow {
+  0%, 100% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 18px -10px rgba(2, 132, 199, 0.8);
+  }
+  50% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 5px rgba(2, 132, 199, 0.22), 0 12px 26px -8px rgba(2, 132, 199, 0.95);
+  }
+}
+
+.tz-cta-glow {
+  animation: tz-cta-glow 1.6s ease-in-out 3 forwards;
+}
+
+/* Someone who asked for less movement still gets the pointer, just without the pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .tz-new-card,
+  .tz-cta-glow {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+  }
+
+  .tz-new-card {
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.45), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+  }
+}

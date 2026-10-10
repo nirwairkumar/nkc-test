@@ -50,6 +50,7 @@ import {
 } from '@/lib/conductExam';
 import { examSessionsApi, problemOf } from '@/lib/examSessionsApi';
 import JoinCodeLine from '@/components/exams/JoinCodeLine';
+import { takeNewTestId } from '@/utils/newTest';
 
 /* Shared control styles — iOS-flavoured, in the landing page's sky palette. */
 const PRIMARY_BTN =
@@ -144,6 +145,29 @@ export default function UserTestManager() {
     };
     const findTest = (testId: string) =>
         tests.find(t => t.id === testId) || conductedTests.find(t => t.id === testId);
+
+    /* ── "Here is the test you just made" ──────────────────────────────────────
+       Read once on arrival (the marker clears itself), ring that card, glow its
+       "Conduct exam" tile, and scroll it into view if the grid pushed it below the
+       fold. Then drop the flag so the page looks ordinary from the next render on. */
+    const [newTestId, setNewTestId] = useState<string | null>(null);
+    useEffect(() => {
+        const id = takeNewTestId();
+        if (!id) return;
+        setNewTestId(id);
+        // Slightly longer than the 6s card animation, so nothing cuts off mid-fade.
+        const timer = setTimeout(() => setNewTestId(null), 6500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const newCardRef = React.useRef<HTMLDivElement | null>(null);
+    const scrolledToNew = React.useRef(false);
+    useEffect(() => {
+        if (!newTestId || scrolledToNew.current || !newCardRef.current) return;
+        scrolledToNew.current = true;
+        // 'nearest' so a card already on screen (the usual case — newest first) stays put.
+        newCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, [newTestId, tests]);
 
     const {
         registerSkeleton,
@@ -1235,9 +1259,10 @@ export default function UserTestManager() {
                                         );
                                     }
 
-                                    return (
+                                    const isNew = testId === newTestId;
+
+                                    const card = (
                                         <UserTestCard
-                                            key={testId}
                                             test={test}
                                             classes={classes}
                                             onEdit={openTestEditor}
@@ -1252,8 +1277,13 @@ export default function UserTestManager() {
                                             onConductExam={handleConductExam}
                                             onViewReports={handleOpenTestReports}
                                             unresolvedReportsCount={unresolvedReportsByTestId[test.id] || 0}
+                                            isNew={isNew}
                                         />
                                     );
+
+                                    return isNew
+                                        ? <div key={testId} ref={newCardRef} className="h-full">{card}</div>
+                                        : <React.Fragment key={testId}>{card}</React.Fragment>;
                                 })
                             )}
                         </div>
