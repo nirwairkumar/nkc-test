@@ -515,8 +515,155 @@ export const BANK_META: GuideMeta = {
     cta: { label: 'Build a bank mock, free', href: '/create-test' },
 };
 
+/*
+ * The four "alternative" guides share a page shell and four widgets
+ * (pages/guides/alt) and a data file (guides/altData.ts). Each one answers a
+ * different question, so they don't compete with each other in search:
+ * Classplus is an app business, Teachmint now sells classroom hardware, Kahoot
+ * is a game, Testportal is a hiring tool.
+ */
+export const CLASSPLUS_META: GuideMeta = {
+    slug: 'classplus-alternative',
+    path: '/classplus-alternative',
+    title: 'Classplus alternative: keep the app, or only move the tests?',
+    seoTitle: 'Classplus Alternative for Tests & Mock Exams (2026)',
+    description:
+        'A Classplus alternative for the testing half: +4/−1 marking, join codes instead of student logins, AI papers from a PDF, rank lists and report cards.',
+    dek:
+        'Most people searching for a Classplus alternative don’t want another app. They want the tests to stop being the weakest part of the week, without a sales call, a yearly contract or a share of their fees. This guide separates the two halves of what Classplus sells — the app and the exams — says plainly which half a test platform can replace, and shows what moving just the exams looks like.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-10T12:00:00+05:30',
+    dateModified: '2026-10-10T12:00:00+05:30',
+    readMinutes: 17,
+    cover: {
+        src: '/guides/classplus-alternative/cover.png',
+        alt: 'Two lists side by side: what a branded coaching app is for, and the testing jobs a dedicated exam platform does',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Classplus alternative',
+        'Classplus alternatives for coaching institutes',
+        'Classplus competitors',
+        'alternative to Classplus app',
+        'Classplus pricing alternative',
+        'online test platform for coaching institutes',
+        'coaching institute test series software',
+        'mock test platform with negative marking',
+        'test platform without a branded app',
+        'Classplus vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+export const TEACHMINT_META: GuideMeta = {
+    slug: 'teachmint-alternative',
+    path: '/teachmint-alternative',
+    title: 'Teachmint alternative: exams on the phones your students already carry',
+    seoTitle: 'Teachmint Alternative for Online Tests & Exams (2026)',
+    description:
+        'A Teachmint alternative for tests, not hardware: exam-pattern papers, +4/−1 marking, a six-digit join code, results per question, and prices you can read.',
+    dek:
+        'Teachmint began as a mobile-first teaching app. In 2026 its own homepage leads with Teachmint X, an interactive panel for classrooms, and a demo form. If you run a coaching institute or teach a batch whose students have phones rather than panels, the thing you need is smaller and more specific: software that builds a paper, runs it fairly and tells you what the batch got wrong.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-10T12:00:00+05:30',
+    dateModified: '2026-10-10T12:00:00+05:30',
+    readMinutes: 17,
+    cover: {
+        src: '/guides/teachmint-alternative/cover.png',
+        alt: 'A classroom panel beside a student’s phone showing a timed test, over the words: the exam part, on the device they already have',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Teachmint alternative',
+        'Teachmint alternatives for coaching',
+        'Teachmint competitors',
+        'alternative to Teachmint app',
+        'Teachmint for online tests',
+        'online exam software for schools and coaching',
+        'test platform for a batch on phones',
+        'unit test software with negative marking',
+        'Teachmint vs TestoZa',
+        'school test software India',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+export const KAHOOT_META: GuideMeta = {
+    slug: 'kahoot-alternative',
+    path: '/kahoot-alternative',
+    title: 'Kahoot alternative: when a quiz game stops being a test',
+    seoTitle: 'Kahoot Alternative for Real Tests & Mock Exams (2026)',
+    description:
+        'Kahoot scores on speed, up to 1000 points a question. A test scores on accuracy, with −1 for a wrong tick. Here is when to keep Kahoot and what to use instead.',
+    dek:
+        'Kahoot is the best thing in the room for the last ten minutes of a class, and the wrong thing for a paper whose marks go on a record. The reason is in its own documentation: points fall with every second a player takes, so it rewards the reflex that JEE, NEET, SSC and bank papers punish. This guide shows where that line falls, and how to run the tests that count without giving up the games.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-10T12:00:00+05:30',
+    dateModified: '2026-10-10T12:00:00+05:30',
+    readMinutes: 16,
+    cover: {
+        src: '/guides/kahoot-alternative/cover.png',
+        alt: 'A game question worth 1000 points falling with the clock beside an exam question worth +4 with −1 for a wrong answer',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Kahoot alternative',
+        'Kahoot alternatives for teachers',
+        'Kahoot alternative for exams',
+        'Kahoot competitors',
+        'free Kahoot alternative',
+        'quiz game vs online test',
+        'mock test platform with negative marking',
+        'online test platform for teachers',
+        'Kahoot player limit',
+        'Kahoot vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a test that counts, free', href: '/create-test' },
+};
+
+export const TESTPORTAL_META: GuideMeta = {
+    slug: 'testportal-alternative',
+    path: '/testportal-alternative',
+    title: 'Testportal alternative for Indian exams: marking, Hindi and phones',
+    seoTitle: 'Testportal Alternative for Indian Exams (2026)',
+    description:
+        'Testportal is built for hiring and certification, metered by results a month. Indian exams need +4/−1, partial marks, Hindi papers and a batch on phones.',
+    dek:
+        'Testportal is a capable assessment tool, built for human resources, training and certification, with its own site offering English and Polski and its plans metered by test results a month. An Indian coaching institute needs something else: +4/−1 and partial marks, Hindi and bilingual papers, 400 candidates in one sitting, and a result read batch-first. This guide compares the two honestly and says where Testportal still wins.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-10T12:00:00+05:30',
+    dateModified: '2026-10-10T12:00:00+05:30',
+    readMinutes: 17,
+    cover: {
+        src: '/guides/testportal-alternative/cover.png',
+        alt: 'A hiring test on a laptop beside an Indian entrance mock on a phone marked +4 and −1, in Hindi and English',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Testportal alternative',
+        'Testportal alternatives',
+        'Testportal competitors',
+        'alternative to Testportal for schools',
+        'Testportal pricing alternative',
+        'online exam software for Indian entrance exams',
+        'test platform with negative marking and partial marks',
+        'Hindi online test platform',
+        'unlimited respondents online test',
+        'Testportal vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build an exam-pattern paper, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

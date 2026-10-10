@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BANK_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -150,6 +150,11 @@ const ChemistryQuestionPaperMaker = safeLazy(() => import("./pages/guides/chem/C
 const JeeAdvancedMockTestSoftware = safeLazy(() => import("./pages/guides/jadv/JeeAdvancedMockTestSoftware"));
 const SscMockTestPlatform = safeLazy(() => import("./pages/guides/ssc/SscMockTestPlatform"));
 const BankExamMockTestPlatform = safeLazy(() => import("./pages/guides/bank/BankExamMockTestPlatform"));
+// The four "alternative" guides share one shell (pages/guides/alt/AlternativePage.tsx).
+const ClassplusAlternative = safeLazy(() => import("./pages/guides/alt/ClassplusAlternative"));
+const TeachmintAlternative = safeLazy(() => import("./pages/guides/alt/TeachmintAlternative"));
+const KahootAlternative = safeLazy(() => import("./pages/guides/alt/KahootAlternative"));
+const TestportalAlternative = safeLazy(() => import("./pages/guides/alt/TestportalAlternative"));
 const GuidesIndex = safeLazy(() => import("./pages/GuidesIndex"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
@@ -313,6 +318,10 @@ const App = () => (
                     <Route path={SSC_META.path} element={<SscMockTestPlatform />} />
                     <Route path="/guides" element={<GuidesIndex />} />
                     <Route path={BANK_META.path} element={<BankExamMockTestPlatform />} />
+                    <Route path={CLASSPLUS_META.path} element={<ClassplusAlternative />} />
+                    <Route path={TEACHMINT_META.path} element={<TeachmintAlternative />} />
+                    <Route path={KAHOOT_META.path} element={<KahootAlternative />} />
+                    <Route path={TESTPORTAL_META.path} element={<TestportalAlternative />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

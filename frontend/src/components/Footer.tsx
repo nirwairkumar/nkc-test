@@ -56,6 +56,10 @@ interface FooterLink {
 
 /** Short labels: a footer column is ~180px wide, and long names wrap to three lines. */
 const GUIDE_LABELS: Record<string, string> = {
+    'classplus-alternative': 'Classplus alternative',
+    'teachmint-alternative': 'Teachmint alternative',
+    'kahoot-alternative': 'Kahoot alternative',
+    'testportal-alternative': 'Testportal alternative',
     'bank-exam-mock-test-platform': 'Bank exam mock tests',
     'ssc-mock-test-platform': 'SSC mock tests',
     'jee-advanced-mock-test-software': 'JEE Advanced mocks',

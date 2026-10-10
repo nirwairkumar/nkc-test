@@ -366,6 +366,64 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: Classplus alternative (https://testoza.com/classplus-alternative)
+
+A long-form guide for coaching institute owners weighing an app platform against a dedicated exam platform, with TestoZa as the worked example. Classplus facts are from its own website and public listings, checked 10 October 2026.
+
+- **The two halves:** an app platform sells a business platform (a branded app on Play Store, a storefront for batches and courses, fee collection with instalments and reminders, live and recorded lectures, parent announcements) and an exam engine (question bank, paper, clock, marking scheme, exam screen, mark sheet) in one yearly contract. Only the second half is replaceable by a test platform; the guide says so plainly and points app shoppers at the app-builder category.
+- **Why institutes look:** no price on the website (a form and a sales call; reseller and listing sites quote roughly ₹8,000–₹50,000 a year with mentions of a setup fee and a commission on course sales, numbers that contradict each other and are not the company's own); a yearly platform contract rather than per-test pricing; a login for every student, which becomes a support call on exam day; marking that is not the exam's marking; and teacher-evenings spent typing questions into a form.
+- **Marking:** TestoZa puts Marks and Wrong on every question card (+4/−1, +2/−0.5, +1/−0.25), with proportional or JEE Advanced partial marks on multiple-correct questions, numerical answers as a range, sections with their own clock, and scoring on the server. The guide gives a four-part demo script to run in any vendor's sales call.
+- **Exam day:** a six-digit code at testoza.com/join with check-in by name, roll number or roll plus a four-digit PIN; a lobby; Start; a live list with minutes left, questions answered and flags; +5/+10 minutes for one candidate or 5–30 for everyone; answers saved every 20 seconds; rejoin on another device; a projector view with the code, QR and countdown.
+- **Getting questions in:** AI reads PDFs, PNG, JPG and WEBP, including photographed printed and handwritten pages, with diagrams cropped and equations typeset rather than screenshotted; Hindi, English or bilingual; every question still read once (about eight minutes for thirty).
+- **Results:** rank list with class average, highest and lowest; per-question attempted, correct, time spent and the wrong option the batch chose; report cards to print or PDF; a WhatsApp message you send yourself; Excel; results released on end, immediately or by hand; candidates can look their own result up with the code.
+- **Honest limits:** no branded app, no course selling, no fee collection, no live classes, no attendance or admissions, no essays or file uploads, no LTI/ERP integration (the bridge is an Excel download). Recommended arrangement for institutes that need both: keep the app, put the link or join code inside it.
+- **Price:** building and running tests free; ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year; no setup fee, no per-student charge, no commission.
+
+---
+
+## Guide: Teachmint alternative (https://testoza.com/teachmint-alternative)
+
+A long-form guide for coaching institutes, school exam cells and teachers who want the exam half on its own, with TestoZa as the worked example. Teachmint facts are from teachmint.com as it stood on 10 October 2026.
+
+- **What the product is in 2026:** the homepage leads with Teachmint X, an "AI-Powered Connected Classroom® Device" — interactive flat panels at 65, 75 and 86 inches — with Vision X for managing devices across campuses, Share X and Click X clickers, and a connected-classroom platform that automates attendance and grading, plus EduAI (quiz generator, homework generator, class recap). Solutions cover Schools, Higher Education and Coaching. No prices are published; the call to action is Book a Demo, with an order link for the devices.
+- **Administration versus assessment:** registers, receipts, admission forms and term report cards are a system of record; a paper, a clock, a marking scheme and a mark sheet are a tool. The guide's first widget separates them and often answers "keep the school platform".
+- **The device question:** classroom hardware improves teaching and does nothing for an exam, which happens on one device per candidate — in India, usually a mid-range Android on mobile data. Answers saved to the server every 20 seconds, rejoining on another device, an exam screen built for a small display with a text-size control, typeset equations, nothing to install, and exam rules (forced full screen, counted tab switches with an auto-submit limit, copy and right-click off) in an ordinary browser. Suggested buying test: borrow a student's phone, turn off Wi-Fi, sit five questions.
+- **Marking:** "automated grading" says a machine checked the answers, not under which scheme. Unit tests are +1/0; entrance papers are +4/−1 (JEE Main, NEET), +2/−0.5 with 15-minute sections (SSC Tier 1, 2026) and −0.25 with 20-minute sections (bank prelims). TestoZa sets this as two fields per question, with partial marks, numerical ranges and sectional clocks.
+- **Exam day:** one period, one six-digit code, no accounts — code on the board or the projector view, a lobby, Start, a live list, extra time per candidate or for everyone, automatic submission at time-up, rank list before the bell.
+- **Results:** a rank list and per-question numbers for the teacher; printable or PDF report cards and a WhatsApp message for the parent; the paper and key for the student; Excel for the school's own records (there is no ERP integration).
+- **Honest limits:** no hardware, no attendance register, no fees, admissions or timetables, no parent portal, no term gradebook, no lessons or live classes, no essays or file uploads, no LTI.
+
+---
+
+## Guide: Kahoot alternative (https://testoza.com/kahoot-alternative)
+
+A long-form guide for teachers and coaching faculty on where a quiz game stops being a test, with TestoZa as the worked example. Kahoot's scoring and plan limits are from its own help centre and pricing pages, checked 10 October 2026.
+
+- **How Kahoot scores:** up to 1000 points for a correct answer on a single-select question and up to 500 per correct answer on multi-select, with the host able to set no points or double points; the number falls with response time on the published formula 1 − (response time ÷ time limit) ÷ 2 times the points possible, so Kahoot's own example scores 967 of 1000 for a 2-second answer on a 30-second timer. The speed reduction cannot be switched off in live games (Accuracy mode scores on correctness alone) and answer streaks add bonus points.
+- **Why that is wrong for a mock:** JEE Main and NEET are +4/−1, SSC Tier 1 is +2/−0.5, bank papers take off a quarter mark. A fast wrong answer is the most expensive thing a candidate can do, and a slow right answer is worth the same as a quick one. A game that pays nothing for a wrong answer teaches the opposite instinct twice a week.
+- **Player caps:** live games are capped per plan — the free tier commonly around 10 players, paid personal, teacher and business tiers rising through 50, 100, 200 and higher, with names and numbers changing over time. Check the cap on the plan you hold before promising a mock to a batch. A TestoZa live exam has no per-session player tier.
+- **What an exam screen carries that a game screen does not:** a colour-coded question palette, Mark for review, one clock for the whole paper (or sections that close on their own), numerical answers accepted within a range, multiple-correct questions with partial marks, comprehension passages, two-decimal answers, exam rules, and silence — a test is sat alone on the candidate's own phone.
+- **A whole batch:** a six-digit code at testoza.com/join, check-in by name or roll number, a lobby, a live list, extra time, answers saved every 20 seconds, rejoining on another device, automatic submission at time-up.
+- **After the test:** a rank list with class average, highest and lowest; per-question attempted, correct, average time and the wrong option the batch chose; report cards and Excel. A podium is not a mark sheet.
+- **Using both in one week:** Kahoot for 8 minutes at the end of class Monday to Thursday; a short, properly marked paper on Friday; a full mock monthly with exam rules on; then one Kahoot built from the five questions the per-question analysis says the batch got worst.
+- **Where Kahoot wins:** a room coming alive (music, countdown, leaderboard, podium), icebreakers and training sessions, zero setup for five questions, millions of ready public kahoots, younger classes, and polls, word clouds and brainstorms. TestoZa has none of these and no game modes.
+
+---
+
+## Guide: Testportal alternative (https://testoza.com/testportal-alternative)
+
+A long-form guide for institutes and training managers choosing between a business assessment tool and software built for Indian student exams, with TestoZa as the worked example. Testportal facts are from testportal.com as it stood on 10 October 2026; plan figures are from third-party listings and are described as such.
+
+- **Who it is for:** its own site splits customers into Business (Human Resources, training companies and departments, certification, sales and customer service, language schools) and Education (teachers, schools, universities), with Business first and the pricing link going to business plans. The interface language switch offers English and Polski. Listed features include self-grading open-ended and choice questions, automatic grading, an AI generator that writes choice questions from uploaded material or a topic, and proctoring and security.
+- **Two trades under one word:** deciding whether a person is good enough (one candidate, a pass mark, identity the hard part) versus ranking people against each other (a batch, a position, marking fidelity the hard part).
+- **The marking gap:** the feature list does not name negative marking, partial credit on multiple-correct questions, or sections with their own clock. TestoZa sets Marks and Wrong per question (+4/−1, +2/−0.5, +1/−0.25, decimal marks such as 0.857), proportional or JEE Advanced partial marks, numerical answers as a range, two-decimal answers, and sections that close themselves, scored on the server.
+- **What the price meter counts:** listings describe Standard, PRO and MAX tiers roughly $29–$35 at entry and $99–$159 at the top, metered by test results a month (about 30 on the cheapest, a few thousand at the top, a custom tier above). A per-result meter is generous for recruitment and punishing for a test series, where one mock for 150 students is 150 results. The guide gives a two-line method for working out cost per sitting. TestoZa caps nothing: no limit on results, candidates, tests or sittings; ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year, billed in rupees.
+- **The device:** camera and desktop recordings, a secure browser, up to 150 test-takers per proctor in live mode and a Microsoft Teams app suit an invigilated desktop test; an Indian coaching batch is on mid-range Androids on mobile data, where answers saved every 20 seconds, rejoining on another device, browser exam rules, a live list and a projector view are the honest answer. No browser rule makes cheating impossible.
+- **Results:** a batch rank list with class average, highest and lowest and per-section averages; per-question attempted, correct, time spent and the wrong option chosen; printable report cards, a WhatsApp message you send, Excel. No certificates.
+- **Where Testportal wins:** certificates, open-ended answers graded by a person with a rubric, camera and screen proctoring with a secure browser, recruitment workflows, compliance and training records, and English/Polish working languages.
+
+---
+
 ## Guide: Bank exam mock test platform (https://testoza.com/bank-exam-mock-test-platform)
 
 A long-form guide for banking coaching institutes and faculty on running IBPS, SBI and RRB mocks that behave like the real papers, with TestoZa as the worked example. Exam facts as reported by coaching sources for the 2026 cycle and checked on 9 October 2026 (the official notifications on ibps.in and sbi.bank.in are the final word); product details checked against the code the same day.

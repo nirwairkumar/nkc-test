@@ -1,0 +1,3135 @@
+/*
+ * The shell shared by the four "alternative" guides on testoza.com:
+ *
+ *   /classplus-alternative   /teachmint-alternative
+ *   /kahoot-alternative      /testportal-alternative
+ *
+ * One stylesheet for all four (scoped to .al, prefix al-), because these pages are
+ * the same page with different text: the React shell is pages/guides/alt/AlternativePage.tsx
+ * and the four widgets are AltWidgets.tsx, both driven by src/guides/altData.ts. Nothing
+ * here is imported by the older guides, and nothing here imports from them: the shell
+ * below is a copy of the bank guide's, so editing this file can't change a live page.
+ *
+ * Type: system font (SF on Apple devices, Inter elsewhere). 16px body, H1 28–40px,
+ * H2 21–26px, H3 17px, lists 15px, tables 14px, captions 12.5–13px. The one product
+ * replica (the question card in the marking lab) uses Mukta, the app's own typeface.
+ * Nothing on these pages is set larger than the headline it sits under.
+ *
+ * Screen size: these pages are mostly reading, and the four widgets are small on
+ * purpose — each is shorter than the window on a 1366 × 768 laptop, so none of them
+ * needs a scroller of its own and nothing is ever clipped. Tables scroll sideways in
+ * their own wrapper and become stacked rows at 639px and below (data-label on each td).
+ * The hero card is capped at 420px wide so the first screen stays a headline and a
+ * paragraph, not a diagram.
+ */
+
+.al {
+    --al-bg: #f5f5f7;
+    --al-card: #ffffff;
+    --al-card-2: #fafafc;
+    --al-ink: #1d1d1f;
+    --al-ink-2: #424245;
+    --al-ink-3: #6e6e73;
+    --al-ink-4: #86868b;
+    --al-sep: rgba(60, 60, 67, 0.13);
+    --al-sep-strong: rgba(60, 60, 67, 0.24);
+    --al-fill: rgba(118, 118, 128, 0.12);
+    --al-fill-2: rgba(118, 118, 128, 0.07);
+    --al-blue: #0071e3;
+    --al-blue-hover: #0077ed;
+    --al-link: #0066cc;
+    --al-blue-soft: rgba(0, 113, 227, 0.09);
+    --al-green: #34c759;
+    --al-green-ink: #1d7f3a;
+    --al-orange: #ff9500;
+    --al-orange-ink: #b25000;
+    --al-red: #ff3b30;
+    --al-red-ink: #d70015;
+    --al-indigo: #5856d6;
+    --al-purple: #af52de;
+    --al-glass: rgba(245, 245, 247, 0.78);
+    --al-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px -8px rgba(0, 0, 0, 0.1);
+    --al-r: 18px;
+    --al-f: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --al-fd: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI Variable Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --al-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+    --al-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --al-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --al-nav: 65px;
+
+    background: var(--al-bg);
+    color: var(--al-ink);
+    font-family: var(--al-f);
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+}
+.dark .al {
+    --al-bg: #000000;
+    --al-card: #1c1c1e;
+    --al-card-2: #232325;
+    --al-ink: #f5f5f7;
+    --al-ink-2: #d2d2d7;
+    --al-ink-3: #a1a1a6;
+    --al-ink-4: #8e8e93;
+    --al-sep: rgba(84, 84, 88, 0.55);
+    --al-sep-strong: rgba(120, 120, 128, 0.6);
+    --al-fill: rgba(118, 118, 128, 0.24);
+    --al-fill-2: rgba(118, 118, 128, 0.14);
+    --al-blue: #0a84ff;
+    --al-blue-hover: #2b95ff;
+    --al-link: #2997ff;
+    --al-blue-soft: rgba(10, 132, 255, 0.16);
+    --al-green: #30d158;
+    --al-green-ink: #4ae07a;
+    --al-orange: #ff9f0a;
+    --al-orange-ink: #ffb340;
+    --al-red: #ff453a;
+    --al-red-ink: #ff6961;
+    --al-glass: rgba(22, 22, 23, 0.78);
+    --al-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+}
+.al *,
+.al *::before,
+.al *::after {
+    box-sizing: border-box;
+}
+/* Tailwind's preflight already resets buttons; nothing here may outrank the replicas' utilities. */
+.al button {
+    -webkit-tap-highlight-color: transparent;
+}
+.al a:focus-visible,
+.al button:focus-visible,
+.al summary:focus-visible {
+    outline: 2px solid var(--al-blue);
+    outline-offset: 2px;
+}
+
+/* Icons (Lucide paths) used by the guide's HTML: white strokes on a tinted tile. */
+.al {
+    --al-i-doc: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3Cpath d='M16 13H8'/%3E%3Cpath d='M16 17H8'/%3E%3Cpath d='M10 9H8'/%3E%3C/svg%3E");
+    --al-i-sparkles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z'/%3E%3C/svg%3E");
+    --al-i-pencil: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E");
+    --al-i-key: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.59 18.59A2 2 0 0 0 2 20v2h4v-2h2v-2h2l1.41-1.41A6.5 6.5 0 1 0 7.41 12.59Z'/%3E%3Ccircle cx='16.5' cy='7.5' r='.5' fill='white'/%3E%3C/svg%3E");
+    --al-i-layers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z'/%3E%3Cpath d='m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65'/%3E%3Cpath d='m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65'/%3E%3C/svg%3E");
+    --al-i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E");
+    --al-i-bang: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M12 6.5v7'/%3E%3Cpath d='M12 17.6v.1'/%3E%3C/svg%3E");
+    --al-i-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M12 11v6'/%3E%3Cpath d='M12 7.2v.1'/%3E%3C/svg%3E");
+}
+
+/* ── Reading progress ─────────────────────────────────────────────────── */
+.al-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    height: 2px;
+    pointer-events: none;
+}
+.al-progress > i {
+    display: block;
+    height: 100%;
+    background: var(--al-blue);
+    transform-origin: 0 50%;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+.al-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--al-card) 0%, var(--al-card) 40%, var(--al-bg) 100%);
+}
+.al-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(520px 420px at 82% 16%, rgba(14, 165, 233, 0.12), transparent 70%),
+        radial-gradient(560px 460px at 70% 82%, rgba(255, 149, 0, 0.07), transparent 70%),
+        radial-gradient(420px 320px at 8% 4%, rgba(88, 86, 214, 0.05), transparent 70%);
+}
+.dark .al .al-hero {
+    background: linear-gradient(180deg, #0a0a0b 0%, #000 100%);
+}
+.al-hero-in {
+    display: grid;
+    gap: 44px;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 20px 52px;
+}
+@media (min-width: 1024px) {
+    .al-hero-in {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 80px;
+        padding: 44px 32px 56px;
+    }
+}
+.al-crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: var(--al-ink-3);
+}
+.al-crumbs a {
+    color: var(--al-ink-2);
+    text-decoration: none;
+}
+.al-crumbs a:hover {
+    color: var(--al-link);
+}
+.al-crumbs svg {
+    width: 12px;
+    height: 12px;
+}
+.al-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--al-ink-3);
+}
+.al-eyebrow b {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--al-blue-soft);
+    color: var(--al-blue);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+.al-h1 {
+    margin: 14px 0 0;
+    font-family: var(--al-fd);
+    font-size: clamp(1.75rem, 1.25rem + 1.8vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.09;
+    letter-spacing: -0.028em;
+    color: var(--al-ink);
+    text-wrap: balance;
+}
+.al-h1-key {
+    background: linear-gradient(95deg, #f56300 0%, #e0397a 45%, #0071e3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+.dark .al .al-h1-key {
+    background-image: linear-gradient(95deg, #ff9f0a 0%, #ff6482 45%, #2997ff 100%);
+}
+.al-dek {
+    max-width: 35rem;
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--al-ink-3);
+    text-wrap: pretty;
+}
+@media (min-width: 640px) {
+    .al-dek {
+        font-size: 16.5px;
+    }
+}
+.al-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 22px;
+    margin-top: 24px;
+}
+.al-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: var(--al-blue);
+    color: #fff !important;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none !important;
+    transition:
+        background-color 0.2s ease,
+        transform 0.35s var(--al-spring);
+}
+.al-btn:hover {
+    background: var(--al-blue-hover);
+}
+.al-btn:active {
+    transform: scale(0.97);
+}
+.al-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--al-link) !important;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none !important;
+}
+.al-more:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.al-more svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.25s var(--al-ease);
+}
+.al-more:hover svg {
+    transform: translateX(2px);
+}
+.al-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+    max-width: 35rem;
+    margin: 28px 0 0;
+    padding: 16px 0 0;
+    border-top: 0.5px solid var(--al-sep-strong);
+}
+@media (min-width: 560px) {
+    .al-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+.al-stats div {
+    min-width: 0;
+}
+.al-stats dt {
+    font-size: 12px;
+    color: var(--al-ink-3);
+}
+.al-stats dd {
+    margin: 2px 0 0;
+    font-family: var(--al-fd);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--al-ink);
+    font-variant-numeric: tabular-nums;
+}
+.al-stats dd small {
+    margin-left: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--al-ink-3);
+    letter-spacing: 0;
+}
+.al-byline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--al-ink-3);
+}
+.al-byline img {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+}
+.al-byline strong {
+    color: var(--al-ink-2);
+    font-weight: 600;
+}
+
+.al-stage-in {
+    animation: al-stage-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.al-stage-out {
+    animation: al-stage-out 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.al-digit {
+    display: inline-block;
+    animation: al-pop 0.22s var(--al-spring);
+}
+.al-count,
+.al-swap {
+    display: inline-block;
+    animation: al-rise 0.35s var(--al-ease);
+}
+.al-swap {
+    display: block;
+}
+.al-ring-fill {
+    animation: al-ring 0.9s var(--al-ease) both;
+}
+.al-bar {
+    animation: al-grow 0.8s var(--al-ease) both;
+    transform-origin: 0 50%;
+}
+
+/* What the animation is showing: a glass capsule floating on the phone's faded edge. */
+.al-stage-wrap {
+    position: relative;
+    width: 284px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+.al-stage-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    z-index: 2;
+    width: calc(100% + 24px);
+    max-width: 316px;
+    padding: 10px 14px 9px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.08),
+        0 10px 30px -12px rgba(15, 23, 42, 0.35);
+    text-align: center;
+    transform: translateX(-50%);
+}
+.dark .al .al-stage-caption {
+    background: rgba(44, 44, 46, 0.82);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.1),
+        0 10px 30px -12px rgba(0, 0, 0, 0.8);
+}
+.al-stage-caption p {
+    min-height: 2.5em;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.3;
+    color: var(--al-ink-3);
+}
+.al-stage-caption p b {
+    display: block;
+    font-size: 13.5px;
+    color: var(--al-ink);
+    font-weight: 600;
+}
+.al-stage-caption p.is-swap {
+    animation: al-rise 0.45s var(--al-ease);
+}
+.al-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 7px;
+}
+.al-dots i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--al-sep-strong);
+    transition:
+        width 0.4s var(--al-ease),
+        background-color 0.3s ease;
+}
+.al-dots i.is-on {
+    width: 20px;
+    background: var(--al-ink);
+}
+
+/* Product replicas render light whatever the site theme (theme tokens reset). */
+.al-screen {
+    --background: 210 20% 98%;
+    --foreground: 213 24% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 24% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 24% 10%;
+    --primary: 200 95% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 20% 95%;
+    --secondary-foreground: 213 24% 10%;
+    --muted: 160 10% 96%;
+    --muted-foreground: 213 16% 46%;
+    --accent: 160 60% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 160 20% 90%;
+    --input: 160 20% 90%;
+    --ring: 200 95% 35%;
+    color-scheme: light;
+    font-family: 'Mukta', sans-serif;
+    letter-spacing: normal;
+    line-height: 1.5;
+    color: hsl(213 24% 10%);
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+}
+.al-screen *,
+.al-screen *::before,
+.al-screen *::after {
+    border-color: hsl(160 20% 90%);
+}
+.al-screen button {
+    cursor: pointer;
+}
+/* A scripted tap: the pressed control dips, as a finger would make it. */
+.al-screen .is-pressed {
+    transform: scale(0.97);
+    filter: brightness(0.92);
+    transition:
+        transform 0.12s ease,
+        filter 0.12s ease;
+}
+
+/* ── Chapter bar (sticky) and contents menu ────────────────────────────── */
+.al-chapter {
+    position: sticky;
+    top: var(--al-nav);
+    z-index: 40;
+    border-bottom: 0.5px solid var(--al-sep-strong);
+    background: var(--al-glass);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.al-chapter-in {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 760px;
+    height: 48px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.al-ring {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    transform: rotate(-90deg);
+}
+.al-ring circle {
+    fill: none;
+    stroke-width: 3;
+}
+.al-ring .bg {
+    stroke: var(--al-fill);
+}
+.al-ring .fg {
+    stroke: var(--al-blue);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s linear;
+}
+.al-chapter-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--al-ink);
+}
+.al-chapter-title > span {
+    display: inline-block;
+    animation: al-rise 0.4s var(--al-ease);
+}
+.al-chapter-title small {
+    margin-right: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--al-ink-4);
+    font-variant-numeric: tabular-nums;
+}
+.al-chapter-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--al-fill);
+    color: var(--al-ink) !important;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.3s var(--al-spring);
+}
+.al-chapter-btn:hover {
+    background: rgba(118, 118, 128, 0.18);
+}
+.al-chapter-btn:active {
+    transform: scale(0.95);
+}
+.al-chapter-btn svg {
+    width: 14px;
+    height: 14px;
+}
+.al-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 12px;
+    z-index: 50;
+    width: min(340px, calc(100vw - 24px));
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.08),
+        0 24px 60px -16px rgba(0, 0, 0, 0.3);
+    transform-origin: top right;
+    animation: al-menu-in 0.32s var(--al-spring);
+}
+.dark .al .al-menu {
+    background: rgba(37, 37, 39, 0.9);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.1),
+        0 24px 60px -16px rgba(0, 0, 0, 0.8);
+}
+.al-menu ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.al-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    color: var(--al-ink);
+    font-size: 15px;
+    text-decoration: none;
+}
+.al-menu a:hover {
+    background: var(--al-fill-2);
+}
+.al-menu a small {
+    width: 18px;
+    font-size: 13px;
+    color: var(--al-ink-4);
+    font-variant-numeric: tabular-nums;
+}
+.al-menu a span {
+    flex: 1;
+}
+.al-menu a[aria-current='true'] {
+    color: var(--al-blue);
+    font-weight: 600;
+}
+.al-menu a svg {
+    width: 16px;
+    height: 16px;
+    color: var(--al-blue);
+}
+
+/* ── Article ───────────────────────────────────────────────────────────── */
+.al-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 36px 20px 72px;
+}
+@media (min-width: 640px) {
+    .al-body {
+        padding: 52px 20px 96px;
+    }
+}
+/*
+ * Wide figures break out of the text column, centred on the page. Two classes, so the
+ * figure's own `margin` shorthand (.al-widget, later in this file) can't reset the
+ * left margin and push the figure off the right edge of the screen.
+ */
+.al .al-wide {
+    width: min(1000px, calc(100vw - 24px));
+    margin-left: calc((100% - min(1000px, 100vw - 24px)) / 2);
+}
+/* The exam-day demo: room and phone side by side need the room. */
+.al .al-wide-xl {
+    width: min(1120px, calc(100vw - 32px));
+    margin-left: calc((100% - min(1120px, 100vw - 32px)) / 2);
+}
+@media (min-width: 900px) {
+    .al .al-wide-md {
+        width: min(880px, calc(100vw - 48px));
+        margin-left: calc((100% - min(880px, 100vw - 48px)) / 2);
+    }
+}
+.al-prose {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--al-ink-2);
+}
+.al-prose p {
+    margin: 0 0 1em;
+}
+.al-prose strong {
+    color: var(--al-ink);
+    font-weight: 600;
+}
+.al-prose a {
+    color: var(--al-link);
+    text-decoration: none;
+}
+.al-prose a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.al-prose h3 {
+    margin: 36px 0 10px;
+    font-family: var(--al-fd);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.al-prose code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--al-fill-2);
+    font-family: var(--al-mono);
+    font-size: 0.86em;
+    color: var(--al-ink);
+}
+.al-lead > .al-prose > p:first-child {
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--al-ink);
+}
+
+/* The short answer: a gradient edge. */
+.al-answer {
+    position: relative;
+    margin: 30px 0 28px;
+    padding: 20px 20px 18px;
+    border-radius: 20px;
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+.al-answer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(120deg, #ff9f0a, #ff375f 30%, #0a84ff 65%, #34c759);
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+@media (min-width: 640px) {
+    .al-answer {
+        padding: 22px 24px 20px;
+    }
+}
+.al-answer-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--al-ink-3);
+}
+.al-answer-label svg {
+    width: 16px;
+    height: 16px;
+    color: var(--al-purple);
+}
+.al-answer p:last-child {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--al-ink);
+}
+
+/* "In this guide": an iOS grouped list. */
+.al-group-label {
+    margin: 0 0 7px 16px;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--al-ink-3);
+}
+.al-toc {
+    margin: 0 0 8px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--al-r);
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+    list-style: none;
+}
+.al-toc li + li a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 52px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep-strong);
+}
+.al-toc a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 16px;
+    color: var(--al-ink);
+    font-size: 15px;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+.al-toc a:hover {
+    background: var(--al-fill-2);
+}
+.al-toc a:active {
+    background: var(--al-fill);
+}
+.al-toc a small {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--al-blue-soft);
+    color: var(--al-blue);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.al-toc a span {
+    flex: 1;
+    min-width: 0;
+}
+.al-toc a svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--al-ink-4);
+}
+
+/* Sections */
+.al-section {
+    margin-top: 72px;
+    scroll-margin-top: calc(var(--al-nav) + 64px);
+}
+.al-lead {
+    margin-top: 0;
+}
+.al-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--al-ink-3);
+}
+.al-kicker small {
+    display: grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: var(--al-blue-soft);
+    color: var(--al-blue);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.al-h2 {
+    margin: 0 0 16px;
+    font-family: var(--al-fd);
+    font-size: clamp(1.3125rem, 1.12rem + 0.75vw, 1.625rem);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -0.024em;
+    color: var(--al-ink);
+    text-wrap: balance;
+}
+
+/* Reveal on scroll, only once JS runs (crawlers and no-JS readers see everything). */
+.al.is-js .al-reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+        opacity 0.6s ease,
+        transform 0.75s var(--al-ease);
+}
+.al.is-js .al-reveal.is-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* ── Guide HTML: tables ────────────────────────────────────────────────── */
+.al-table-wrap {
+    margin: 20px 0 16px;
+    overflow: hidden;
+    border-radius: var(--al-r);
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+@media (min-width: 900px) {
+    .al .al-table-wrap--wide {
+        width: min(940px, calc(100vw - 48px));
+        margin-left: calc((100% - min(940px, 100vw - 48px)) / 2);
+    }
+}
+.al-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    line-height: 1.45;
+}
+.al-table th,
+.al-table td {
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: top;
+}
+.al-table thead th {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--al-sep-strong);
+    background: var(--al-card-2);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--al-ink-3);
+}
+.al-table tbody tr + tr > * {
+    border-top: 0.5px solid var(--al-sep);
+}
+.al-table tbody th {
+    font-weight: 600;
+    color: var(--al-ink);
+}
+.al-table td {
+    color: var(--al-ink-2);
+}
+
+/* Grouped list rows */
+.al-list,
+.al-checks,
+.al-limits {
+    margin: 20px 0 24px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--al-r);
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+    list-style: none;
+}
+.al-list li,
+.al-checks li,
+.al-limits li {
+    position: relative;
+    padding: 13px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.al-list li + li::before,
+.al-checks li + li::before,
+.al-limits li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.al-list strong,
+.al-checks strong,
+.al-limits strong {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--al-ink);
+    font-weight: 600;
+}
+.al-list--num {
+    counter-reset: al-n;
+}
+.al-list--num li {
+    counter-increment: al-n;
+    padding-left: 54px;
+}
+.al-list--num li + li::before,
+.al-checks li + li::before,
+.al-limits li + li::before {
+    left: 54px;
+}
+.al-list--num li::after {
+    content: counter(al-n);
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--al-blue-soft);
+    color: var(--al-blue);
+    font-size: 12px;
+    font-weight: 700;
+}
+.al-checks li,
+.al-limits li {
+    padding-left: 54px;
+}
+.al-checks li::after,
+.al-limits li::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--al-i-check) center / 13px no-repeat, var(--al-green);
+}
+.al-limits li::after {
+    background: var(--al-i-bang) center / 15px no-repeat, var(--al-orange);
+}
+
+/* Steps */
+.al-steps {
+    counter-reset: al-s;
+    margin: 20px 0 24px;
+    padding: 0;
+    list-style: none;
+}
+.al-steps li {
+    counter-increment: al-s;
+    position: relative;
+    padding: 0 0 18px 46px;
+    font-size: 15.5px;
+    line-height: 1.6;
+}
+.al-steps li strong {
+    display: block;
+}
+.al-steps li::before {
+    content: counter(al-s);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--al-card);
+    box-shadow:
+        inset 0 0 0 1.5px var(--al-blue),
+        0 1px 2px rgba(0, 0, 0, 0.06);
+    color: var(--al-blue);
+    font-size: 13px;
+    font-weight: 700;
+}
+.al-steps li::after {
+    content: '';
+    position: absolute;
+    left: 13.25px;
+    top: 32px;
+    bottom: 4px;
+    width: 1.5px;
+    border-radius: 1px;
+    background: var(--al-sep-strong);
+}
+.al-steps li:last-child::after {
+    display: none;
+}
+
+/* Cards with an app-icon tile */
+.al-cards {
+    display: grid;
+    gap: 12px;
+    margin: 20px 0 24px;
+}
+@media (min-width: 640px) {
+    .al-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+.al-card {
+    padding: 16px 16px 15px;
+    border-radius: var(--al-r);
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+.al-card::before,
+.al-path::before {
+    content: '';
+    display: block;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--al-icon, none) center / 18px no-repeat, linear-gradient(160deg, var(--c1, #64d2ff), var(--c2, #0071e3));
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+}
+.al-prose .al-card h3 {
+    margin: 12px 0 4px;
+    font-size: 16px;
+}
+.al-card p {
+    margin: 0 !important;
+    font-size: 14.5px;
+    line-height: 1.55;
+}
+.al [data-icon='doc'] {
+    --al-icon: var(--al-i-doc);
+}
+.al [data-icon='sparkles'] {
+    --al-icon: var(--al-i-sparkles);
+}
+.al [data-icon='pencil'] {
+    --al-icon: var(--al-i-pencil);
+}
+.al [data-icon='key'] {
+    --al-icon: var(--al-i-key);
+}
+.al [data-icon='layers'] {
+    --al-icon: var(--al-i-layers);
+}
+.al-card[data-tone='blue'] {
+    --c1: #64d2ff;
+    --c2: #0071e3;
+}
+.al-card[data-tone='purple'] {
+    --c1: #da8fff;
+    --c2: #8e44ad;
+}
+.al-card[data-tone='orange'] {
+    --c1: #ffb340;
+    --c2: #f56300;
+}
+
+/* Callout */
+.al-prose .al-note {
+    position: relative;
+    margin: 22px 0;
+    padding: 15px 18px 15px 52px;
+    border-radius: 16px;
+    background: var(--al-blue-soft);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.al-note::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 15px;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--al-i-info) center / 15px no-repeat, var(--al-blue);
+}
+
+/* Closing paths */
+.al-paths {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 22px;
+}
+@media (min-width: 720px) {
+    .al-paths {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+.al-prose .al-path {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--al-bg);
+    color: var(--al-ink);
+    text-decoration: none;
+    transition:
+        transform 0.35s var(--al-spring),
+        background-color 0.2s ease;
+}
+.al-prose .al-path:hover {
+    background: var(--al-fill);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+.al-path::before {
+    margin-bottom: 8px;
+}
+.al-path:nth-child(1) {
+    --c1: #64d2ff;
+    --c2: #0071e3;
+}
+.al-path:nth-child(2) {
+    --c1: #ffb340;
+    --c2: #f56300;
+}
+.al-path:nth-child(3) {
+    --c1: #8e8cff;
+    --c2: #4b49c9;
+}
+.al-path::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    right: 18px;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid var(--al-ink-4);
+    border-right: 2px solid var(--al-ink-4);
+    transform: rotate(45deg);
+}
+.al-path-who {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--al-ink-3);
+}
+.al-path-what {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+/* FAQ */
+.al-faq {
+    margin: 20px 0 0;
+    overflow: hidden;
+    border-radius: var(--al-r);
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+.al-faq details {
+    position: relative;
+}
+.al-faq details + details::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.al-faq summary {
+    position: relative;
+    display: block;
+    padding: 14px 48px 14px 16px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 15.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.012em;
+    color: var(--al-ink);
+    transition: background-color 0.15s ease;
+}
+.al-faq summary::-webkit-details-marker {
+    display: none;
+}
+.al-faq summary:hover {
+    background: var(--al-fill-2);
+}
+.al-faq summary::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin-top: -6px;
+    border-right: 2px solid var(--al-ink-4);
+    border-bottom: 2px solid var(--al-ink-4);
+    transform: rotate(45deg);
+    transition: transform 0.3s var(--al-ease);
+}
+.al-faq details[open] summary::after {
+    margin-top: -2px;
+    transform: rotate(225deg);
+}
+.al-faq details p {
+    margin: 0;
+    padding: 0 16px 16px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--al-ink-2);
+}
+.al-faq details[open] p {
+    animation: al-rise 0.35s var(--al-ease);
+}
+
+/* Closing card */
+.al-closing {
+    margin: 72px 0 0;
+    padding: 28px 18px 14px;
+    border-radius: 24px;
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+@media (min-width: 640px) {
+    .al-closing {
+        padding: 32px 28px 18px;
+    }
+}
+
+/* Sources */
+.al-sources {
+    margin-top: 44px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--al-sep-strong);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--al-ink-3);
+}
+.al-sources h2 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--al-ink-2);
+}
+.al-sources ul {
+    margin: 0 0 12px;
+    padding-left: 18px;
+}
+.al-sources a {
+    color: var(--al-ink-3);
+}
+.al-sources a:hover {
+    color: var(--al-link);
+}
+
+/* Floating call to action: a glass capsule. */
+.al-float {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 6px 0 20px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.74);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.1),
+        0 12px 32px -12px rgba(0, 0, 0, 0.3);
+    color: var(--al-ink) !important;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none !important;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, 150%);
+    transition:
+        transform 0.55s var(--al-spring),
+        opacity 0.3s ease;
+}
+.dark .al .al-float {
+    background: rgba(44, 44, 46, 0.74);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        0 12px 32px -12px rgba(0, 0, 0, 0.8);
+}
+.al-float.is-on {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+.al-float i {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--al-blue);
+    color: #fff;
+}
+.al-float i svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ── Widgets: shared pieces ────────────────────────────────────────────── */
+.al-widget {
+    margin: 26px 0 30px;
+}
+.al-widget > figcaption {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+    text-align: center;
+    text-wrap: balance;
+}
+.al-panel {
+    padding: 18px;
+    border-radius: 22px;
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+@media (min-width: 640px) {
+    .al-panel {
+        padding: 20px 22px;
+    }
+}
+.al-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 16px;
+}
+.al-panel-title {
+    margin: 0;
+    font-family: var(--al-fd);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.al-panel-sub {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--al-ink-3);
+}
+
+/* iOS segmented control */
+.al-seg {
+    position: relative;
+    display: inline-grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--al-fill);
+    isolation: isolate;
+}
+.al-seg::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    z-index: -1;
+    width: calc((100% - 4px) / var(--n, 2));
+    border-radius: 7px;
+    background: var(--al-card);
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.12),
+        0 3px 1px rgba(0, 0, 0, 0.04),
+        0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    transform: translateX(calc(100% * var(--i, 0)));
+    transition: transform 0.35s var(--al-ease);
+}
+.dark .al .al-seg::before {
+    background: #636366;
+}
+.al-seg button {
+    min-width: 0;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--al-ink);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.al-seg button[aria-pressed='true'] {
+    font-weight: 600;
+}
+
+/* iOS switch (51 × 31) */
+.al-switch {
+    position: relative;
+    flex: none;
+    width: 51px;
+    height: 31px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(120, 120, 128, 0.16);
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+}
+.dark .al .al-switch {
+    background: rgba(120, 120, 128, 0.32);
+}
+.al-switch[aria-checked='true'] {
+    background: var(--al-green);
+}
+.al-switch i {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        0 3px 1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.35s var(--al-spring);
+}
+.al-switch[aria-checked='true'] i {
+    transform: translateX(20px);
+}
+.al-switch:active i {
+    width: 32px;
+}
+.al-switch[aria-checked='true']:active i {
+    transform: translateX(15px);
+}
+
+/* iOS Settings icon tiles */
+.al-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 29px;
+    height: 29px;
+    border-radius: 7px;
+    background: var(--t, #007aff);
+    color: #fff;
+}
+.al-tile svg {
+    width: 17px;
+    height: 17px;
+}
+.al-tile[data-tone='blue'] {
+    --t: #007aff;
+}
+.al-tile[data-tone='orange'] {
+    --t: #ff9500;
+}
+.al-tile[data-tone='green'] {
+    --t: #34c759;
+}
+.al-tile[data-tone='purple'] {
+    --t: #af52de;
+}
+.al-tile[data-tone='teal'] {
+    --t: #30b0c7;
+}
+.al-tile[data-tone='indigo'] {
+    --t: #5856d6;
+}
+.al-tile[data-tone='pink'] {
+    --t: #ff2d55;
+}
+.al-tile[data-tone='red'] {
+    --t: #ff3b30;
+}
+.al-chips {
+    display: flex;
+    gap: 6px;
+    margin: 0 -18px 14px;
+    padding: 0 18px 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.al-chips::-webkit-scrollbar {
+    display: none;
+}
+@media (min-width: 640px) {
+    .al-chips {
+        flex-wrap: wrap;
+        margin: 0 0 14px;
+        padding: 0;
+    }
+}
+.al-chips button {
+    flex: none;
+    height: 32px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--al-fill);
+    color: var(--al-ink);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.3s var(--al-spring);
+}
+.al-chips button:active {
+    transform: scale(0.95);
+}
+.al-chips button[aria-pressed='true'] {
+    background: var(--al-blue);
+    color: #fff;
+    font-weight: 600;
+}
+.al-steppers {
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--al-bg);
+}
+.al-stepper-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 50px;
+    padding: 8px 12px 8px 16px;
+}
+.al-stepper-row + .al-stepper-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.al-stepper-label {
+    flex: 1;
+    font-size: 15px;
+    color: var(--al-ink);
+}
+.al-stepper-value {
+    min-width: 48px;
+    font-size: 17px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--al-ink);
+    font-variant-numeric: tabular-nums;
+}
+.al-stepper {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--al-fill);
+}
+.al-stepper button {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 32px;
+    border: 0;
+    background: none;
+    color: var(--al-ink);
+    cursor: pointer;
+}
+.al-stepper button:disabled {
+    color: var(--al-ink-4);
+    opacity: 0.45;
+    cursor: default;
+}
+.al-stepper button:not(:disabled):active {
+    background: var(--al-fill);
+}
+.al-stepper button:first-child {
+    border-radius: 9px 0 0 9px;
+}
+.al-stepper button:last-child {
+    border-radius: 0 9px 9px 0;
+}
+.al-stepper button svg {
+    width: 16px;
+    height: 16px;
+}
+.al-stepper i {
+    width: 0.5px;
+    height: 18px;
+    background: var(--al-sep-strong);
+}
+
+.al-demo-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 16px;
+    margin: 0 4px 14px;
+}
+.al-demo-title {
+    margin: 0;
+    font-family: var(--al-fd);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.al-demo-tip {
+    min-height: 1.45em;
+    margin: 2px 0 0;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.al-demo-tip span {
+    display: inline-block;
+    animation: al-rise 0.4s var(--al-ease);
+}
+.al-demo-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.al-restart {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--al-fill);
+    color: var(--al-ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.al-restart svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* A browser window around in-page product replicas */
+.al-window {
+    overflow: hidden;
+    border-radius: 14px;
+    background: #f8fafc;
+    box-shadow:
+        0 0 0 0.5px rgba(0, 0, 0, 0.14),
+        0 2px 6px rgba(0, 0, 0, 0.05),
+        0 30px 60px -30px rgba(15, 23, 42, 0.35);
+}
+.dark .al .al-window {
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.16),
+        0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.al-window-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 14px;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+    background: #ececee;
+    font-family: var(--al-f);
+}
+.al-window-lights {
+    display: flex;
+    gap: 7px;
+}
+.al-window-lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+.al-window-lights i:nth-child(2) {
+    background: #febc2e;
+}
+.al-window-lights i:nth-child(3) {
+    background: #28c840;
+}
+.al-window-url {
+    position: absolute;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: min(340px, 56%);
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #3c3c43;
+    font-size: 12.5px;
+    transform: translateX(-50%);
+}
+.al-window-url svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0.6;
+}
+.al-window--phone {
+    border-radius: 20px;
+}
+.al-window--phone .al-window-lights {
+    display: none;
+}
+.al-window--phone .al-window-url {
+    width: calc(100% - 28px);
+    border-radius: 9px;
+}
+.al-window-body {
+    position: relative;
+    overflow: hidden;
+}
+.al-fit {
+    position: relative;
+    overflow: hidden;
+}
+
+.al-modal {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+.al-modal-scrim {
+    position: absolute;
+    inset: 0;
+    animation: al-fade 0.2s ease both;
+}
+.al-modal-card {
+    position: relative;
+    animation: al-dialog-in 0.2s ease-out both;
+}
+.al-menu-pop {
+    z-index: 50;
+    transform-origin: top right;
+    animation: al-menu-pop 0.16s ease-out both;
+}
+
+/* The control the reader should try next, pulsing like an iOS hint. */
+.al-nudge {
+    animation: al-nudge 1.8s ease-in-out infinite;
+}
+.al-nudge--red {
+    animation-name: al-nudge-red;
+}
+/* sonner's default toast */
+.al-toasts {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    width: min(356px, calc(100% - 32px));
+    pointer-events: none;
+}
+.al-window--phone .al-toasts {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    align-items: stretch;
+}
+.al-toast {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid hsl(0 0% 93%);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: hsl(0 0% 9%);
+    font-family: 'Mukta', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    animation: al-toast-in 0.4s var(--al-ease) both;
+}
+.al-toast svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+/* ══ Demos that fit the window ═════════════════════════════════════════════
+ * --al-fit-h is the height a demo's window may take: what's left of the screen
+ * under the site bar (65px), the chapter bar (48px), the demo's title row and a
+ * little air. A 1366 × 768 laptop gets about 450px, a 1080p screen 640px (the cap),
+ * a phone about 530px. Demos scroll inside this height instead of growing past it.
+ */
+.al {
+    --al-fit-h: clamp(440px, calc(100vh - 205px), 640px);
+}
+@supports (height: 100svh) {
+    .al {
+        --al-fit-h: clamp(440px, calc(100svh - 205px), 640px);
+    }
+}
+/* Phones: the demo's title row wraps, so leave it a little more room. */
+@media (max-width: 639px) {
+    .al {
+        --al-fit-h: clamp(420px, calc(100vh - 240px), 600px);
+    }
+    @supports (height: 100svh) {
+        .al {
+            --al-fit-h: clamp(420px, calc(100svh - 240px), 600px);
+        }
+    }
+}
+
+.al-demo {
+    scroll-margin-top: calc(var(--al-nav) + 56px);
+}
+.al-demo-head {
+    min-width: 0;
+}
+.al-demo-tip span {
+    display: inline-block;
+    animation: al-rise 0.4s var(--al-ease);
+}
+.al-demo-controls {
+    flex-wrap: wrap;
+}
+.al-restart {
+    transition:
+        background-color 0.2s ease,
+        transform 0.3s var(--al-spring);
+}
+.al-restart:hover {
+    background: rgba(118, 118, 128, 0.18);
+}
+.al-restart:active {
+    transform: scale(0.95);
+}
+.al-restart:focus-visible {
+    outline: 2px solid var(--al-blue);
+    outline-offset: 2px;
+}
+.al-expand[aria-pressed='true'] {
+    background: var(--al-blue);
+    color: #fff;
+}
+@media (max-width: 479px) {
+    .al-demo-controls .al-restart span {
+        display: none;
+    }
+    .al-demo-controls .al-restart {
+        width: 30px;
+        padding: 0;
+        justify-content: center;
+    }
+}
+.al-inline-icon {
+    display: inline;
+    width: 13px;
+    height: 13px;
+    margin: 0 2px -2px 4px;
+}
+
+/* Full window: the demo takes the whole screen; Esc or Done returns. */
+.al-demo.is-full {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 12px max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    overflow-y: auto;
+    background: var(--al-bg);
+    animation: al-fade 0.2s ease both;
+    --al-fit-h: max(420px, calc(100vh - 84px));
+}
+@supports (height: 100svh) {
+    .al-demo.is-full {
+        --al-fit-h: max(420px, calc(100svh - 84px));
+    }
+}
+.al-demo.is-full .al-demo-bar {
+    margin-bottom: 10px;
+}
+.al-demo.is-full > figcaption {
+    display: none;
+}
+.al-demo.is-full .al-demo-body {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ── Windows ────────────────────────────────────────────────────────────── */
+.al-window-url--title {
+    font-weight: 600;
+    color: #3c3c43;
+}
+.al-window-back {
+    position: absolute;
+    right: 10px;
+    height: 26px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.06);
+    color: #0066cc;
+    font-family: var(--al-f);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.al-window-back:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+.al-window--fit,
+.al-room {
+    display: flex;
+    flex-direction: column;
+}
+.al-window--fit {
+    height: var(--al-fit-h);
+}
+.al-room {
+    height: 100%;
+    min-width: 0;
+}
+.al-window--fit > .al-window-body,
+.al-room > .al-window-body {
+    flex: 1;
+    min-height: 0;
+}
+.al-room-scroller {
+    scroll-behavior: auto;
+}
+@media (max-width: 559px) {
+    .al-window-lights {
+        display: none;
+    }
+    .al-window-url {
+        width: calc(100% - 28px);
+    }
+    .al-window-back ~ .al-window-url,
+    .al-window-url:has(+ .al-window-back) {
+        left: 14px;
+        width: calc(100% - 150px);
+        transform: none;
+    }
+}
+
+/* Toasts: the sonner colours by tone, and a phone-width stack. */
+.al-toast[data-tone='info'] svg {
+    color: #475569;
+}
+.al-toast[data-tone='error'] svg {
+    color: #dc2626;
+}
+.al-toast[data-tone='warning'] svg {
+    color: #d97706;
+}
+.al-toasts--compact {
+    left: 10px;
+    right: 10px;
+    bottom: 22px;
+    width: auto;
+    align-items: stretch;
+    z-index: 110;
+}
+.al-toasts--compact .al-toast {
+    padding: 12px 14px;
+    font-size: 13px;
+}
+
+/* Dialogs in replicas: fade only (their own transforms centre them). */
+.al-dialog {
+    animation: al-fade 0.2s ease both;
+}
+
+/* ── The phone around interactive replicas (natural size, never scaled) ─── */
+.al-phone {
+    position: relative;
+    flex: none;
+    width: 376px;
+    max-width: 100%;
+    height: 100%;
+    padding: 8px;
+    border-radius: 46px;
+    background: linear-gradient(150deg, #4a4b4f 0%, #1d1e21 18%, #0d0e10 50%, #26272b 100%);
+    box-shadow:
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.16),
+        inset 0 0 0 4px #050506,
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 30px 50px -30px rgba(15, 23, 42, 0.55);
+}
+.al-phone-screen {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 38px;
+    background: #f2f2f7;
+    isolation: isolate;
+}
+.al-phone-status {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    padding: 2px 24px 0 30px;
+    background: #fff;
+    font-family: var(--al-f);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #000;
+}
+.al-phone-island {
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    width: 84px;
+    height: 24px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateX(-50%);
+}
+.al-phone-view {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.al-phone-scroll {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+}
+.al-phone-scroll::-webkit-scrollbar {
+    display: none;
+}
+.al-phone-scroll > div {
+    min-height: 100%;
+}
+.al-phone-home {
+    position: absolute;
+    bottom: 7px;
+    left: 50%;
+    z-index: 120;
+    width: 108px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.8);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.al-statusbar-icons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes al-rise {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+@keyframes al-fade {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes al-stage-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+}
+@keyframes al-stage-out {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+@keyframes al-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+    70% {
+        opacity: 1;
+        transform: scale(1.06);
+    }
+}
+@keyframes al-ring {
+    from {
+        stroke-dashoffset: var(--al-c);
+    }
+}
+@keyframes al-grow {
+    from {
+        transform: scaleX(0);
+    }
+}
+@keyframes al-menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+}
+@keyframes al-menu-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+@keyframes al-sheet-up {
+    from {
+        transform: translateY(100%);
+    }
+}
+@keyframes al-dialog-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+@keyframes al-chip-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+@keyframes al-toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+}
+@keyframes al-nudge {
+    0%,
+    100% {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 10px 24px -12px rgba(2, 132, 199, 0.85),
+            0 0 0 0 rgba(14, 165, 233, 0.45);
+    }
+    50% {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 10px 24px -12px rgba(2, 132, 199, 0.85),
+            0 0 0 7px rgba(14, 165, 233, 0);
+    }
+}
+@keyframes al-nudge-red {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 0 7px rgba(220, 38, 38, 0);
+    }
+}
+
+/* ── Reduced motion: everything visible, nothing moves ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .al *,
+    .al *::before,
+    .al *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .al .al-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+
+
+
+/* ══ These four pages ══════════════════════════════════════════════════════
+ * The hero's transfer card and the four widgets. Everything above this line is
+ * the shared shell; everything below is only used by AltHero.tsx and AltWidgets.tsx.
+ */
+
+/* ── Hero: what stays where, as two grouped lists ───────────────────────── */
+.al-swap-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px;
+    border-radius: 24px;
+    background: var(--al-card);
+    box-shadow: var(--al-shadow);
+}
+@media (min-width: 1024px) {
+    .al-swap-card {
+        width: 420px;
+        padding: 18px;
+    }
+}
+.al-swap-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 2px 12px;
+}
+.al-swap-head h2 {
+    flex: 1;
+    margin: 0;
+    font-family: var(--al-fd);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    color: var(--al-ink);
+}
+.al-swap-head span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--al-ink-4);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.al-swap-group {
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--al-fill-2);
+}
+.al-swap-group + .al-swap-group {
+    margin-top: 10px;
+}
+.al-swap-group > p {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 9px 13px;
+    border-bottom: 0.5px solid var(--al-sep);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--al-ink-3);
+}
+.al-swap-group > p svg {
+    width: 14px;
+    height: 14px;
+}
+.al-swap-group[data-side='us'] {
+    background: var(--al-blue-soft);
+}
+.al-swap-group[data-side='us'] > p {
+    color: var(--al-link);
+}
+.al-swap-list {
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+}
+.al-swap-list li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--al-ink-2);
+}
+.al-swap-list li svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    color: var(--al-ink-4);
+}
+.al-swap-group[data-side='us'] .al-swap-list li svg {
+    color: var(--al-blue);
+}
+/* Rows arrive one by one when the card first appears; nothing moves afterwards. */
+.al.is-js .al-swap-list li {
+    animation: al-rise 0.5s var(--al-ease) both;
+    animation-delay: calc(var(--i) * 70ms + 120ms);
+}
+.al-swap-arrow {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+}
+.al-swap-arrow svg {
+    width: 15px;
+    height: 15px;
+    color: var(--al-ink-4);
+}
+.al-swap-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 2px 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.al-swap-foot svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: var(--al-green-ink);
+}
+
+/* ── Tables in the guide text ───────────────────────────────────────────── */
+/* A comparison table's first column names the question; the others answer it. */
+.al-table--vs tbody th {
+    width: 190px;
+}
+.al-table .al-us {
+    background: var(--al-blue-soft);
+}
+.al-table .al-no {
+    color: var(--al-ink-3);
+}
+.al-table tr.al-table-group th {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    background: var(--al-card-2);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--al-ink-3);
+}
+/* Phones: each row becomes a card, every cell labelled (data-label on the td). */
+@media (max-width: 639px) {
+    .al-table thead {
+        display: none;
+    }
+    .al-table,
+    .al-table tbody,
+    .al-table tr,
+    .al-table th,
+    .al-table td {
+        display: block;
+        width: auto !important;
+    }
+    .al-table tbody tr + tr > * {
+        border-top: 0;
+    }
+    .al-table tbody tr + tr {
+        border-top: 0.5px solid var(--al-sep-strong);
+    }
+    .al-table tbody th {
+        padding: 13px 16px 4px;
+        font-size: 15px;
+    }
+    .al-table td {
+        padding: 3px 16px;
+        font-size: 14px;
+    }
+    .al-table td:last-child {
+        padding-bottom: 13px;
+    }
+    .al-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--al-ink-3);
+    }
+}
+
+/* ── Widgets: common frame ──────────────────────────────────────────────── */
+/* Each widget is a card that never grows past the window: it scrolls inside. */
+/*
+ * No inner scroller here. Each of these four widgets is built to come out shorter than
+ * the window on a 1366 × 768 laptop (the tallest, the marking lab, is about 460px), so
+ * the page scrolls rather than a box inside it — a nested scroll area on a phone hides
+ * controls and feels broken. Anything that could get wide (the comparison tables in the
+ * crawler text) scrolls sideways in its own .al-table-wrap instead.
+ */
+.al-wbody {
+    min-width: 0;
+}
+.al-wfoot {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding-top: 13px;
+    border-top: 0.5px solid var(--al-sep);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--al-ink-3);
+}
+.al-wfoot svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+    color: var(--al-ink-4);
+}
+.al-wfoot b {
+    color: var(--al-ink-2);
+    font-weight: 600;
+}
+
+/* ── alt-fit: what you use it for → keep it, move the exams, or switch ──── */
+.al-split {
+    display: grid;
+    gap: 14px;
+}
+@media (min-width: 700px) {
+    .al-split {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+}
+.al-rows {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 13px;
+    background: var(--al-bg);
+    list-style: none;
+}
+.dark .al .al-rows {
+    background: var(--al-card-2);
+}
+.al-rows li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 48px;
+    padding: 7px 12px 7px 13px;
+}
+.al-rows li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 13px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.al-rows label {
+    flex: 1;
+    font-size: 14.5px;
+    line-height: 1.35;
+    color: var(--al-ink);
+    cursor: pointer;
+}
+.al-rows-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 2px 7px;
+}
+.al-rows-label b {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--al-ink);
+}
+.al-rows-label span {
+    font-size: 12.5px;
+    color: var(--al-ink-4);
+}
+.al-verdict {
+    margin-top: 16px;
+    padding: 15px 16px;
+    border-radius: 16px;
+    background: var(--al-fill-2);
+}
+.al-verdict[data-tone='keep'] {
+    background: rgba(255, 149, 0, 0.1);
+}
+.al-verdict[data-tone='split'] {
+    background: var(--al-blue-soft);
+}
+.al-verdict[data-tone='switch'] {
+    background: rgba(52, 199, 89, 0.12);
+}
+.al-verdict h4 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 5px;
+    font-family: var(--al-fd);
+    font-size: 15.5px;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    color: var(--al-ink);
+}
+.al-verdict h4 svg {
+    flex: none;
+    width: 17px;
+    height: 17px;
+}
+.al-verdict[data-tone='keep'] h4 svg {
+    color: var(--al-orange-ink);
+}
+.al-verdict[data-tone='split'] h4 svg {
+    color: var(--al-blue);
+}
+.al-verdict[data-tone='switch'] h4 svg {
+    color: var(--al-green-ink);
+}
+.al-verdict p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.al-verdict p + p {
+    margin-top: 7px;
+}
+.al-verdict-count {
+    margin: 9px 0 0;
+    font-size: 12.5px;
+    color: var(--al-ink-3);
+}
+.al-verdict-count b {
+    color: var(--al-ink-2);
+    font-weight: 600;
+}
+
+/* ── alt-compare: one question at a time, their answer and ours ─────────── */
+.al-vs-q {
+    margin: 0 2px 12px;
+    font-family: var(--al-fd);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.al-vs {
+    display: grid;
+    gap: 12px;
+}
+@media (min-width: 700px) {
+    .al-vs {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+.al-vs-card {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 15px 13px;
+    border-radius: 16px;
+    background: var(--al-bg);
+}
+.dark .al .al-vs-card {
+    background: var(--al-card-2);
+}
+.al-vs-card[data-side='us'] {
+    background: var(--al-blue-soft);
+}
+.al-vs-card > h4 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--al-ink-4);
+}
+.al-vs-card[data-side='us'] > h4 {
+    color: var(--al-link);
+}
+.al-vs-card > h4 svg {
+    width: 14px;
+    height: 14px;
+}
+.al-vs-list {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.al-vs-list li {
+    position: relative;
+    padding: 0 0 8px 17px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--al-ink-2);
+}
+.al-vs-list li:last-child {
+    padding-bottom: 0;
+}
+.al-vs-list li::before {
+    content: '';
+    position: absolute;
+    top: 7.5px;
+    left: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--al-ink-4);
+}
+.al-vs-card[data-side='us'] .al-vs-list li::before {
+    background: var(--al-blue);
+}
+.al-vs-list strong {
+    color: var(--al-ink);
+    font-weight: 600;
+}
+.al.is-js .al-vs-card {
+    animation: al-rise 0.4s var(--al-ease) both;
+}
+/* Ours arrives a beat after theirs, so the eye reads left to right. */
+.al.is-js .al-vs-card--us {
+    animation-delay: 60ms;
+}
+.al-vs-takeaway {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 14px 0 0;
+    padding: 13px 15px;
+    border-radius: 14px;
+    background: var(--al-fill-2);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.al-vs-takeaway svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--al-ink-3);
+}
+.al-vs-takeaway b {
+    color: var(--al-ink);
+    font-weight: 600;
+}
+
+/* ── alt-marking: one question, two ways of scoring it ──────────────────── */
+.al-lab {
+    display: grid;
+    gap: 14px;
+}
+@media (min-width: 760px) {
+    .al-lab {
+        grid-template-columns: minmax(0, 1fr) 232px;
+        align-items: start;
+        gap: 16px;
+    }
+}
+/* The question as the candidate sees it in TestoZa (Mukta, the app's typeface). */
+.al-qcard {
+    padding: 15px 16px 16px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.07), 0 4px 14px -8px rgba(0, 0, 0, 0.2);
+}
+.dark .al .al-qcard {
+    background: #fff;
+}
+.al-qcard-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #64748b;
+}
+.al-qcard-top b {
+    font-weight: 600;
+    color: #0f172a;
+}
+.al-qcard-marks {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155;
+}
+.al-qcard-q {
+    margin: 0 0 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #0f172a;
+}
+.al-opts {
+    display: grid;
+    gap: 8px;
+}
+.al-opts button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    color: #1e293b;
+    font-family: 'Mukta', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        transform 0.28s var(--al-spring);
+}
+.al-opts button:active {
+    transform: scale(0.99);
+}
+.al-opts button > i {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    color: #475569;
+}
+.al-opts button[aria-pressed='true'] {
+    border-color: #0284c7;
+    background: #f0f9ff;
+}
+.al-opts button[aria-pressed='true'] > i {
+    border-color: #0284c7;
+    background: #0284c7;
+    color: #fff;
+}
+.al-opts button[data-key] svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+}
+.al-opts button[data-verdict='right'] svg {
+    color: #16a34a;
+}
+.al-opts button[data-verdict='wrong'] svg {
+    color: #dc2626;
+}
+/* Kahoot-style countdown: the points a correct answer is still worth. */
+.al-clock {
+    margin: 0 0 12px;
+}
+.al-clock-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--al-fill);
+    overflow: hidden;
+}
+.al-clock-bar > i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--al-blue);
+    transform-origin: 0 50%;
+    transition: transform 0.1s linear;
+}
+.al-clock-read {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 6px;
+    font-size: 12.5px;
+    color: var(--al-ink-3);
+}
+.al-clock-read b {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--al-ink);
+    font-variant-numeric: tabular-nums;
+}
+.al-score {
+    display: grid;
+    gap: 10px;
+}
+.al-score-tile {
+    padding: 13px 14px;
+    border-radius: 15px;
+    background: var(--al-bg);
+}
+.dark .al .al-score-tile {
+    background: var(--al-card-2);
+}
+.al-score-tile[data-side='us'] {
+    background: var(--al-blue-soft);
+}
+.al-score-tile > p {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--al-ink-4);
+}
+.al-score-tile[data-side='us'] > p {
+    color: var(--al-link);
+}
+.al-score-tile > p svg {
+    width: 13px;
+    height: 13px;
+}
+.al-score-value {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--al-fd);
+    /* Tracks below .al-h2 (21–26px) at every width: a readout never outranks its heading. */
+    font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--al-ink);
+    font-variant-numeric: tabular-nums;
+}
+.al-score-value small {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--al-ink-3);
+}
+.al-score-value[data-sign='minus'] {
+    color: var(--al-red-ink);
+}
+.al-score-why {
+    margin: 5px 0 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.al.is-js .al-score-value > span {
+    display: inline-block;
+    animation: al-pop 0.22s var(--al-spring);
+}
+
+/* ── alt-move: moving one paper across, as a checklist ──────────────────── */
+.al-move {
+    display: grid;
+    gap: 14px;
+}
+@media (min-width: 760px) {
+    .al-move {
+        grid-template-columns: minmax(0, 1fr) 196px;
+        align-items: start;
+        gap: 18px;
+    }
+}
+.al-todo {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 15px;
+    background: var(--al-bg);
+    list-style: none;
+}
+.dark .al .al-todo {
+    background: var(--al-card-2);
+}
+.al-todo li {
+    position: relative;
+}
+.al-todo li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.al-todo button {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px 13px;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+.al-todo button > i {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    border: 1.5px solid var(--al-sep-strong);
+    border-radius: 50%;
+    color: transparent;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+.al-todo button > i svg {
+    width: 14px;
+    height: 14px;
+}
+.al-todo button[aria-pressed='true'] > i {
+    border-color: var(--al-green);
+    background: var(--al-green);
+    color: #fff;
+}
+.al-todo-text {
+    min-width: 0;
+}
+.al-todo-text b {
+    display: block;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--al-ink);
+}
+.al-todo button[aria-pressed='true'] .al-todo-text b {
+    color: var(--al-ink-3);
+    text-decoration: line-through;
+    text-decoration-color: var(--al-sep-strong);
+}
+.al-todo-text span {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.al-todo-mins {
+    flex: none;
+    margin-left: auto;
+    padding-top: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--al-ink-4);
+    font-variant-numeric: tabular-nums;
+}
+.al-done {
+    display: grid;
+    justify-items: center;
+    padding: 16px 14px;
+    border-radius: 15px;
+    background: var(--al-fill-2);
+    text-align: center;
+}
+.al-done-ring {
+    position: relative;
+    width: 84px;
+    height: 84px;
+}
+.al-done-ring svg {
+    width: 84px;
+    height: 84px;
+    transform: rotate(-90deg);
+}
+.al-done-ring circle {
+    fill: none;
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+.al-done-ring .bg {
+    stroke: var(--al-fill);
+}
+.al-done-ring .fg {
+    stroke: var(--al-green);
+    transition: stroke-dashoffset 0.5s var(--al-ease);
+}
+.al-done-ring b {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: var(--al-fd);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--al-ink);
+    font-variant-numeric: tabular-nums;
+}
+.al-done > p {
+    margin: 11px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--al-ink-3);
+}
+.al-done > p b {
+    display: block;
+    font-family: var(--al-fd);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--al-ink);
+}
+
+/* ── Phones: the widgets lose their padding, never their legibility ─────── */
+@media (max-width: 599px) {
+    /* The scheme picker takes the full width of the card, with tighter segments. */
+    .al-panel-head .al-demo-controls {
+        width: 100%;
+    }
+    .al-panel-head .al-seg {
+        flex: 1;
+        min-width: 0;
+    }
+    .al-panel-head .al-seg button {
+        padding: 6px 4px;
+        font-size: 12.5px;
+        text-align: center;
+    }
+}
+@media (max-width: 479px) {
+    .al-panel {
+        padding: 15px 14px;
+    }
+    .al-lab,
+    .al-move {
+        gap: 12px;
+    }
+}
+
+/* Reduced motion: the rows are simply there. */
+@media (prefers-reduced-motion: reduce) {
+    .al.is-js .al-swap-list li,
+    .al.is-js .al-vs-card,
+    .al.is-js .al-score-value > span {
+        animation: none;
+    }
+}

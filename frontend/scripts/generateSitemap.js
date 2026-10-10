@@ -127,6 +127,10 @@ async function generateSitemap() {
             { url: '/jee-advanced-mock-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
             { url: '/ssc-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
             { url: '/bank-exam-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-09T00:00:00.000Z' },
+            { url: '/classplus-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/teachmint-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/kahoot-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/testportal-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

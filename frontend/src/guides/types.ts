@@ -93,7 +93,12 @@ export type GuideWidget =
     | 'bank-planner'
     | 'bank-exam'
     | 'bank-marking'
-    | 'bank-cutoff';
+    | 'bank-cutoff'
+    // the four "alternative" guides (classplus, teachmint, kahoot, testportal) share these
+    | 'alt-fit'
+    | 'alt-compare'
+    | 'alt-marking'
+    | 'alt-move';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };
