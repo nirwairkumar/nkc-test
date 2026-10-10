@@ -708,7 +708,7 @@ export default function FullTestAnalysisPage() {
                             const accuracyPct = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
 
                             positiveMarks = positiveMarks ?? (correctCount * 4);
-                            negativeMarks = negativeMarks ?? (wrongCount * 1);
+                            negativeMarks = negativeMarks ?? 0;
 
                             return {
                                 id: att.id || `att-${idx}`,

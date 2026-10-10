@@ -1027,20 +1027,20 @@ const ResultsPage = () => {
 
                         // Determine marks for this question (Section Aware)
                         let marks = selectedTest.marks_per_question ? parseMark(selectedTest.marks_per_question, 4) : 4;
-                        let neg = selectedTest.negative_marks !== undefined ? parseMark(selectedTest.negative_marks, 1) : 1;
+                        let neg = parseMark(selectedTest.negative_marks, 0);
 
                         // For Display
                         let marksDisplay: string | number = selectedTest.marks_per_question ? getDisplayMark(selectedTest.marks_per_question, 4) : 4;
-                        let negDisplay: string | number = selectedTest.negative_marks !== undefined ? getDisplayMark(selectedTest.negative_marks, 1) : 1;
+                        let negDisplay: string | number = getDisplayMark(selectedTest.negative_marks, 0);
 
                         if (selectedTest.enable_section_mode && selectedTest.sections) {
                           let rCount = 0;
                           for (const section of selectedTest.sections) {
                             if (index >= rCount && index < rCount + section.questions.length) {
                               marks = parseMark(section.marks_per_question, 4);
-                              neg = parseMark(section.negative_marks, 1);
+                              neg = parseMark(section.negative_marks, 0);
                               marksDisplay = getDisplayMark(section.marks_per_question, 4);
-                              negDisplay = getDisplayMark(section.negative_marks, 1);
+                              negDisplay = getDisplayMark(section.negative_marks, 0);
                               break;
                             }
                             rCount += section.questions.length;

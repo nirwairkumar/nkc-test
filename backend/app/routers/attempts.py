@@ -295,10 +295,13 @@ async def save_attempt(
                     user_id=creator_id,
                     title="New Test Submission",
                     message=f'A candidate completed and submitted your test "{test_title}".',
-                    link="/my-tests",
+                    link=f"/test-analysis/{target_test_id}",
                     custom_test_id=target_test_id,
                     db=supabase
                 )
+                # …and by email at milestones (1st, 5th, 10th…), off the request path.
+                from app.services.submission_email import notify_creator_in_background
+                notify_creator_in_background(supabase, creator_id, target_test_id, test_title)
         except Exception as ne:
             logger.error(f"Failed to send submission notification: {ne}")
 

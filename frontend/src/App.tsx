@@ -86,6 +86,7 @@ const SupportPage = safeLazy(() => import("./pages/SupportPage"));
 const UserGuidePage = safeLazy(() => import("./pages/UserGuidePage"));
 const NotFound = safeLazy(() => import("./pages/NotFound"));
 const CreateTestPage = safeLazy(() => import("./pages/CreateTestPage"));
+const SendTestPage = safeLazy(() => import("./pages/SendTestPage"));
 const ProfilePage = safeLazy(() => import("./pages/ProfilePage"));
 const CreatorProfilePage = safeLazy(() => import("./pages/CreatorProfilePage"));
 const PrivacyPolicy = safeLazy(() => import("./pages/PrivacyPolicy"));
@@ -271,6 +272,8 @@ const App = () => (
                     <Route path="/user-guide/:slug" element={<UserGuidePage />} />
                     <Route path="/create-test" element={<CreateTestPage />} />
                     <Route path="/edit-test/:id" element={<CreateTestPage />} />
+                    {/* The step after saving a paper: the link, the message, the QR code. */}
+                    <Route path="/send/:id" element={<PrivateRoute><SendTestPage /></PrivateRoute>} />
                     <Route path="/creator/:id" element={<CreatorProfilePage />} />
                     <Route path="/generate-with-ai" element={<AIImportRoute />} />
 

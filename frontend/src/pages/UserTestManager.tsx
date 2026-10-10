@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Loader2, Pencil, Plus, Radio, Settings, BarChart3, Link as LinkIcon, X, GraduationCap, Search, Inbox,
     CheckCircle, AlertTriangle, Copy, Share2, Globe, Lock, Info, Trash2, MoreHorizontal, Check, FileText,
-    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown, KeyRound,
+    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown, KeyRound, Send,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
@@ -879,6 +879,9 @@ export default function UserTestManager() {
                             <LinkIcon className="mr-2.5 h-4 w-4 text-slate-500" /> Share link
                         </DropdownMenuItem>
                     )}
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => navigate(`/send/${test.id}`)}>
+                        <Send className="mr-2.5 h-4 w-4 text-sky-600" /> Send to candidates
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleUploadSolutions(test)}>
                         <FileText className="mr-2.5 h-4 w-4 text-slate-500" /> Upload solutions
                     </DropdownMenuItem>

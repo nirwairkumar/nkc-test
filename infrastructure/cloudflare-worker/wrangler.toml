@@ -18,9 +18,16 @@ CACHE_TTL_HTML = "300"
 [env.production]
 # Route patterns - all requests to testoza.com, and to blog.testoza.com (the blog's own
 # head, robots.txt and sitemap; the site itself is the same Pages project)
+# app.testoza.com is the running application and is served by Pages — the worker is
+# routed there ONLY for the three kinds of link a teacher sends to a batch, so their
+# WhatsApp preview names the paper instead of advertising a test maker. See
+# handleSharedLink() in worker.js; everything else on that host is untouched.
 routes = [
   { pattern = "testoza.com/*", zone_name = "testoza.com" },
-  { pattern = "blog.testoza.com/*", zone_name = "testoza.com" }
+  { pattern = "blog.testoza.com/*", zone_name = "testoza.com" },
+  { pattern = "app.testoza.com/test/*", zone_name = "testoza.com" },
+  { pattern = "app.testoza.com/test-intro/*", zone_name = "testoza.com" },
+  { pattern = "app.testoza.com/join/*", zone_name = "testoza.com" }
 ]
 
 [env.production.vars]

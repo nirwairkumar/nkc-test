@@ -379,7 +379,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
         // Helper to evaluate marks per question for correct / negative
         const testMarksPerQ = parseFractionOrFloat(activeTest?.marks_per_question, 4);
-        const testNegativeMarks = parseFractionOrFloat(activeTest?.negative_marks, 1);
+        const testNegativeMarks = parseFractionOrFloat(activeTest?.negative_marks, 0);
 
         const getCorrectAnswerDisplay = (q: any) => {
             if (q.correctAnswer === undefined || q.correctAnswer === null) return '';

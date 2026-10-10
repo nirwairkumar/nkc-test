@@ -46,6 +46,7 @@ import { QuestionCard, PassageHeader, PassageFooter, InsertBetween, type PhotoBa
 import {
     type QuestionState, DEFAULT_QUESTION, applyPhotoResult, questionIssue,
 } from './test-builder/builderUtils';
+import { type MarkingScheme, applyScheme, detectScheme, markingSummary } from './test-builder/marking';
 import type { PhotoQuestion } from '@/lib/photoQuestionApi';
 const JsonImporter = React.lazy(() => import('@/components/test-builder/JsonImporter'));
 const ScreenshotCaptureModal = React.lazy(() => import('@/components/test-builder/ScreenshotCaptureModal'));
@@ -652,7 +653,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 question: q.question || q.questionText || '',
                 typingMode: 'en' as const,
                 marks: q.marks !== undefined ? String(q.marks) : '4',
-                negativeMarks: q.negativeMarks !== undefined ? String(q.negativeMarks) : '1',
+                // No negative marking unless the paper actually asks for it. This used to
+                // default to '1', so a Class 5 GK quiz silently became a JEE paper and the
+                // teacher's own trial run scored minus eighteen. See "Marking scheme" below.
+                negativeMarks: q.negativeMarks !== undefined ? String(q.negativeMarks) : '0',
             };
 
             let flatOptions: { [key: string]: string } = {};
@@ -746,7 +750,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             options: { ...DEFAULT_QUESTION.options },
             typingMode: lastTypingMode,
             marks: lastQ ? (lastQ.marks || '4') : '4',
-            negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1',
+            // Inherit the previous question's marking, but start a fresh paper at no negative.
+            negativeMarks: lastQ ? (lastQ.negativeMarks ?? '0') : '0',
             ...(lastQ?.partialMarking ? { partialMarking: lastQ.partialMarking } : {})
         };
 
@@ -808,7 +813,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             options: { ...DEFAULT_QUESTION.options },
             typingMode: lastTypingMode,
             marks: parentQ.marks || '4',
-            negativeMarks: parentQ.negativeMarks || '1'
+            negativeMarks: parentQ.negativeMarks ?? '0'
         };
 
         const newQuestions = [...questions];
@@ -824,6 +829,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         flashNew(newQ.id);
     };
 
+    /** Saves, and returns the saved test so the caller can hand the teacher a link to send. */
     const performSave = async (isAuto: boolean) => {
         // Sanitize helper
         const sanitizeQ = (q: any) => {
@@ -884,12 +890,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
 
         if (isEditMode && testId) {
-            const { error } = await updateTest(testId, testDataPayload, isAdmin);
+            const { data, error } = await updateTest(testId, testDataPayload, isAdmin);
             if (error) throw error;
             if (selectedCategories.length > 0) {
                 const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
                 await assignCategoriesToTest(testId, selectedCategories, isAdmin);
             }
+            return { ...testDataPayload, ...(data || {}), id: testId } as any;
         } else {
             if (isAuto) throw new Error("Auto-save not supported for new unsaved tests yet");
 
@@ -933,6 +940,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     }
                 })();
             }
+
+            return data;
         }
     };
 
@@ -1032,10 +1041,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
         setLoading(true);
         try {
-            await performSave(false);
+            const saved = await performSave(false);
             localStorage.removeItem('create_test_draft');
-            toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
+            toast.success(isEditMode ? "Changes saved" : "Paper saved");
             if (onSuccess) onSuccess();
+            // The highest-intent moment in the product: the paper is ready and a batch is
+            // waiting. It used to answer that with a toast and a table. Now it answers with
+            // the link, the WhatsApp message and the QR code.
+            else if (saved?.id) navigate(`/send/${saved.id}`);
             else navigate('/my-tests');
         } catch (error: any) {
             console.error("Error saving test:", error);
@@ -1428,6 +1441,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     const allQuestions = enableSectionMode ? sections.flatMap(s => s.questions) : questions;
 
+    /* ── Marking: one named choice over the whole paper, and the total it adds up to ──
+       Per-question overrides still win; picking a named scheme rewrites them all. */
+    const markingScheme = useMemo(() => detectScheme(allQuestions), [allQuestions]);
+    const marking = useMemo(() => markingSummary(allQuestions), [allQuestions]);
+    const chooseMarkingScheme = (scheme: MarkingScheme) => {
+        if (scheme === 'custom') return;
+        if (enableSectionMode) {
+            setSections(prev => prev.map(s => ({
+                ...s,
+                marks_per_question: scheme === 'jee' ? 4 : s.marks_per_question,
+                negative_marks: scheme === 'jee' ? 1 : 0,
+                questions: s.questions.map(q => applyScheme(q, scheme)),
+            })));
+        } else {
+            setQuestions(prev => prev.map(q => applyScheme(q, scheme)));
+        }
+    };
+
     const issues = useMemo(() => {
         const list: { id: string; where: string; issue: string }[] = [];
         if (enableSectionMode) {
@@ -1763,6 +1794,35 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     {isPublic ? 'Listed on TestoZa — anyone can find and take it.' : 'Hidden — only people you send the link to can take it.'}
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Marking. Named on screen, with the total it adds up to — because the
+                            silent +4/−1 default was sending teachers' own trial runs negative. */}
+                        <div>
+                            <span className={FIELD_LABEL}>Marking</span>
+                            <Segmented
+                                label="Marking scheme"
+                                value={markingScheme}
+                                onChange={chooseMarkingScheme}
+                                options={[
+                                    { value: 'none' as MarkingScheme, label: <>No negative marking</> },
+                                    { value: 'jee' as MarkingScheme, label: <>JEE / NEET (+4, −1)</> },
+                                    ...(markingScheme === 'custom' ? [{ value: 'custom' as MarkingScheme, label: <>Custom</> }] : []),
+                                ]}
+                            />
+                            <p className="mt-1.5 text-[13px] text-slate-500">
+                                {marking.penalised === 0 ? (
+                                    <>A wrong answer simply scores nothing. <span className="font-semibold text-slate-700">{marking.count} question{marking.count === 1 ? '' : 's'}, {marking.total} marks in total.</span></>
+                                ) : (
+                                    <>
+                                        <span className="font-semibold text-rose-700">
+                                            {marking.uniformPenalty !== null ? `−${marking.uniformPenalty} for every wrong answer` : `${marking.penalised} of ${marking.count} questions deduct marks`}
+                                        </span>
+                                        {' '}— a student can finish below zero. <span className="font-semibold text-slate-700">{marking.count} question{marking.count === 1 ? '' : 's'}, {marking.total} marks in total.</span>
+                                        {markingScheme === 'custom' && ' Set per question below.'}
+                                    </>
+                                )}
+                            </p>
                         </div>
 
                         <div className="grid gap-5 md:grid-cols-2">

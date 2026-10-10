@@ -217,7 +217,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
         sec_neg = q.get("_section_neg")
         if sec_neg is None or sec_neg == "":
             sec_neg = test.get("negative_marks")
-        neg = parse_mark(sec_neg, 1.0)
+        neg = parse_mark(sec_neg, 0.0)
                 
         if q.get("marks") is not None:
             marks = parse_mark(q.get("marks"), marks)

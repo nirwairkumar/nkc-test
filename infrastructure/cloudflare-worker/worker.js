@@ -29,7 +29,7 @@ import {
 } from '../../frontend/src/guides/worker.ts';
 // Which paths testoza.com serves itself; everything else lives on app.testoza.com.
 // The app's in-browser redirect and canonical tags use the same rule.
-import { APP_ORIGIN, isAuthReturn, isMarketingPath } from '../../frontend/src/utils/marketingPaths.ts';
+import { APP_ORIGIN, isAuthReturn, isMarketingPath, publicUrl } from '../../frontend/src/utils/marketingPaths.ts';
 
 // Configuration
 const CONFIG = {
@@ -76,6 +76,27 @@ const CONFIG = {
     '/edit-test/'
   ]
 };
+
+/**
+ * The URLs a teacher sends to a batch. These need real meta tags on whichever host
+ * serves them, because WhatsApp builds its preview card from the page it lands on.
+ *
+ * Until October 2026 the worker ran on testoza.com only. Every one of these paths 301s
+ * to app.testoza.com, where no worker ran — so the crawler read the raw Pages
+ * index.html and every shared test and join link previewed as
+ * "TestoZa – Free Online Test Maker for Teachers", with og:url https://testoza.com/.
+ * Teachers were posting an advertisement for a test maker to their students' parents.
+ * They deleted the message. (wrangler.toml routes app.testoza.com/{test,test-intro,join}/*.)
+ */
+const SHAREABLE_PREFIXES = ['/test/', '/test-intro/', '/join/'];
+
+const isShareableRoute = (pathname) => SHAREABLE_PREFIXES.some((p) => pathname.startsWith(p));
+
+/** The join code in /join/<code> — six digits, nothing else. */
+function joinCodeFromPath(pathname) {
+  const m = pathname.match(/^\/join\/(\d{4,8})(?:\/|$)/);
+  return m ? m[1] : null;
+}
 
 /**
  * Check if request is from a search crawler
@@ -278,9 +299,11 @@ function formatCategoryName(slug) {
 /**
  * Generate comprehensive meta tags with strict canonical URLs
  */
-function generateMetaTags(url, testData = null) {
+function generateMetaTags(url, testData = null, joinData = null) {
   const siteUrl = CONFIG.FRONTEND_URL;
   const path = new URL(url).pathname;
+  // A join link is a private invitation to one batch; it must never be indexed.
+  let robots = null;
 
   // Default meta - matching high quality educational branding
   let title = 'TestoZa – Free Online Test Maker for Teachers | Create Exam Online with AI';
@@ -309,6 +332,25 @@ function generateMetaTags(url, testData = null) {
     } else {
       title = 'Online Test | TestoZa';
       description = 'Take this online test on TestoZa. Practice and improve your skills with real exam simulation.';
+    }
+  } else if (joinCodeFromPath(path)) {
+    // The invitation card a batch sees in WhatsApp. It used to inherit the homepage's
+    // title, description, og:url and image — an ad for a test maker, sent to parents.
+    const code = joinCodeFromPath(path);
+    const pretty = `${code.slice(0, 3)} ${code.slice(3)}`;
+    const test = joinData && joinData.test ? joinData.test : null;
+    robots = 'noindex, nofollow';
+    type = 'article';
+    if (test && test.title) {
+      title = test.institution_name ? `${test.title} — ${test.institution_name}` : `${test.title} | TestoZa`;
+      const facts = [
+        test.questions ? `${test.questions} questions` : null,
+        test.duration ? `${test.duration} minutes` : null
+      ].filter(Boolean).join(', ');
+      description = `Enter code ${pretty} and type your name to start${facts ? ` (${facts})` : ''}. No app and no account needed.`;
+    } else {
+      title = `Join your exam — enter code ${pretty} | TestoZa`;
+      description = `Open this link, enter code ${pretty} and type your name to start your exam. No app and no account needed.`;
     }
   } else if (path.startsWith('/tests/')) {
     const category = path.split('/')[2];
@@ -460,8 +502,10 @@ function generateMetaTags(url, testData = null) {
     <meta property="og:image:alt" content="${escapeHtml(meta.cover.alt)}">`;
   }
 
-  // Clean canonical URL without trailing slash or tracking parameters
-  const canonicalUrl = `${siteUrl}${path}`;
+  // The host that actually serves this URL. `${siteUrl}${path}` named testoza.com for
+  // every path, including the ones testoza.com 301s to app.testoza.com — so canonical
+  // tags and og:url pointed at a redirect, and WhatsApp showed the wrong address.
+  const canonicalUrl = publicUrl(path);
 
   // Build meta tag HTML
   return `
@@ -487,8 +531,8 @@ function generateMetaTags(url, testData = null) {
     <meta name="twitter:site" content="@testoza">
     
     <!-- Robots -->
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="googlebot" content="index, follow">
+    <meta name="robots" content="${robots || 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}">
+    <meta name="googlebot" content="${robots || 'index, follow'}">
   `;
 }
 
@@ -1186,6 +1230,7 @@ async function handleHTMLRequest(request) {
   // Skip homepage / so it keeps the default highly optimized static tags from index.html
   if (path !== '/' && path !== '') {
     const isTestRoute = path.startsWith('/test/') || path.startsWith('/test-intro/');
+    const joinCode = joinCodeFromPath(path);
 
     let testData = null;
     if (isTestRoute) {
@@ -1208,8 +1253,26 @@ async function handleHTMLRequest(request) {
       }
     }
 
+    // What paper a join code opens, so the WhatsApp card names the exam. The endpoint is
+    // public and rate-limited per IP, so pass the real caller's IP through rather than
+    // spending the edge's own allowance.
+    let joinData = null;
+    if (joinCode) {
+      try {
+        const headers = { 'Accept': 'application/json' };
+        const callerIp = request.headers.get('cf-connecting-ip');
+        if (callerIp) headers['CF-Connecting-IP'] = callerIp;
+        const joinResponse = await fetch(`${CONFIG.API_BASE_URL}/api/join/code/${joinCode}`, { headers });
+        if (joinResponse.ok) {
+          joinData = await joinResponse.json();
+        }
+      } catch (e) {
+        console.error('Failed to resolve join code in worker:', e);
+      }
+    }
+
     // Generate meta tags HTML and route-specific body/schema
-    const metaTags = generateMetaTags(request.url, testData);
+    const metaTags = generateMetaTags(request.url, testData, joinData);
     const routeContent = generateRouteContent(request.url, testData);
 
     // Use native HTMLRewriter to strip old SEO tags, inject new ones, and replace <main> body
@@ -1871,6 +1934,79 @@ const PANNA_MOVED = {
   '/convert': '/latex-to-pdf',
 };
 
+/** app.testoza.com — where the app itself lives, and where shared links land. */
+const APP_HOST = new URL(APP_ORIGIN).hostname;
+
+/**
+ * A shared link on app.testoza.com: /test/<slug>, /test-intro/<id> or /join/<code>.
+ *
+ * Deliberately narrow. The worker owns testoza.com, but app.testoza.com is the running
+ * application, so this touches one thing only — the <head> tags WhatsApp, Telegram and
+ * Google read — and leaves the response's own headers, caching and CSP exactly as
+ * Cloudflare Pages sent them. Every visitor and every crawler gets the same HTML, so
+ * there is no cloaking here: the page is identical, its description is just correct now.
+ */
+async function handleSharedLink(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  const originResponse = await fetch(request);
+  if (!originResponse.ok) return originResponse;
+  const contentType = originResponse.headers.get('content-type') || '';
+  if (!contentType.includes('text/html')) return originResponse;
+
+  let testData = null;
+  const identifier = path.split('/')[2];
+  if ((path.startsWith('/test/') || path.startsWith('/test-intro/')) && identifier) {
+    try {
+      const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (apiResponse.ok) testData = await apiResponse.json();
+    } catch (e) {
+      console.error('Failed to fetch test data for shared link:', e);
+    }
+  }
+
+  let joinData = null;
+  const joinCode = joinCodeFromPath(path);
+  if (joinCode) {
+    try {
+      const headers = { 'Accept': 'application/json' };
+      const callerIp = request.headers.get('cf-connecting-ip');
+      if (callerIp) headers['CF-Connecting-IP'] = callerIp;
+      const joinResponse = await fetch(`${CONFIG.API_BASE_URL}/api/join/code/${joinCode}`, { headers });
+      if (joinResponse.ok) joinData = await joinResponse.json();
+    } catch (e) {
+      console.error('Failed to resolve join code for shared link:', e);
+    }
+  }
+
+  const metaTags = generateMetaTags(request.url, testData, joinData);
+  const routeContent = generateRouteContent(request.url, testData);
+
+  const strip = [
+    'title', 'meta[name="description"]', 'meta[name="keywords"]', 'meta[name="author"]',
+    'meta[name="robots"]', 'meta[name="googlebot"]', 'link[rel="canonical"]',
+    'meta[property^="og:"]', 'meta[name^="twitter:"]', 'script#schema-faq'
+  ];
+  const rewriter = new HTMLRewriter();
+  for (const selector of strip) {
+    rewriter.on(selector, { element(el) { el.remove(); } });
+  }
+  rewriter.on('head', { element(el) { el.append(metaTags, { html: true }); } });
+  if (routeContent && routeContent.bodyHtml) {
+    // <main> is the boot skeleton inside #root; React replaces it the moment it mounts,
+    // so this is what crawlers read and nothing a person ever sees.
+    rewriter.on('main', { element(el) { el.setInnerContent(routeContent.bodyHtml, { html: true }); } });
+  }
+
+  const transformed = rewriter.transform(originResponse);
+  // Pages' own headers, untouched: this host serves the live exam and must keep its
+  // caching and its CSP.
+  return new Response(transformed.body, { status: originResponse.status, headers: transformed.headers });
+}
+
 /**
  * Main request handler
  */
@@ -1893,6 +2029,13 @@ export default {
 
     // Route handling
     try {
+      // app.testoza.com: this worker is routed there only for the links teachers send
+      // (see wrangler.toml). Fix their preview cards and pass everything else straight
+      // through — none of the testoza.com routing below applies to the app host.
+      if (url.hostname === APP_HOST) {
+        return isShareableRoute(url.pathname) ? await handleSharedLink(request) : fetch(request);
+      }
+
       // Panna (PDF tools) moved to https://pdf.testoza.com — permanent redirects
       // pass the old URLs' links and rankings to the new pages.
       const pannaTarget = PANNA_MOVED[url.pathname.replace(/\/+$/, '') || '/'];

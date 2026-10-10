@@ -5,6 +5,7 @@
  * `slug` to the conduct slug. The old dashboard only wrote `settings.conduct_exam`,
  * which produced a link that opened "test not found". Keep both pages on these helpers.
  */
+import { shareLink } from '@/utils/canonicalUrl';
 
 /** Exam settings a stopped exam goes back to (same defaults the settings panel starts from). */
 export const DEFAULT_ENVIRONMENT_SETTINGS = {
@@ -91,14 +92,21 @@ export function isProctoringEnabled(test: any): boolean {
     );
 }
 
-/** The link students open for this test. */
-export function getExamUrl(test: any, origin: string = window.location.origin): string {
+/**
+ * The link candidates open for this test.
+ *
+ * `shareLink` pins it to one host. Built from `window.location.origin` it used to come
+ * out as testoza.com/test/x or app.testoza.com/test/x depending on where the teacher
+ * happened to be standing, so the same paper had two links.
+ */
+export function getExamUrl(test: any, origin?: string): string {
+    const at = (path: string) => (origin ? `${origin}${path}` : shareLink(path));
     if (test?.settings?.conduct_exam?.enabled) {
         const conductSlug = test.settings.conduct_exam.conduct_slug || test.slug;
-        if (conductSlug) return `${origin}/test/${conductSlug}`;
+        if (conductSlug) return at(`/test/${conductSlug}`);
     }
-    if (test?.visibility !== 'public' && test?.slug) return `${origin}/test/${test.slug}`;
-    return `${origin}/test-intro/${test.id}`;
+    if (test?.visibility !== 'public' && test?.slug) return at(`/test/${test.slug}`);
+    return at(`/test-intro/${test.id}`);
 }
 
 /** wa.me link with a ready-to-send exam invitation. */
@@ -113,5 +121,7 @@ export function examWhatsAppUrl(test: any, opts: { startsAt?: Date | null } = {}
     lines.push('', `Start here: ${getExamUrl(test)}`);
     const code = test?.settings?.conduct_exam?.enabled ? test.settings.conduct_exam.join_code : null;
     if (code) lines.push(`Or open testoza.com/join and enter code *${code.slice(0, 3)} ${code.slice(3)}*`);
+    // The question every candidate asks first, answered before they ask it.
+    lines.push('', 'No app and no account needed — just type your name.');
     return `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
 }

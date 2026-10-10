@@ -127,7 +127,7 @@ export default function CorporateTestView({
       for (const section of test.sections) {
         if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
           marks = parseMark(section.marks_per_question, 4);
-          neg = parseMark(section.negative_marks, 1);
+          neg = parseMark(section.negative_marks, 0);
           const localIdx = currentQuestionIndex - runningCount;
           if (section.questions[localIdx]) {
             const qMarks = section.questions[localIdx].marks;

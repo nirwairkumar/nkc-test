@@ -97,7 +97,7 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
     const stat = (qId !== undefined ? questionStatus[qId] : undefined) || questionStatus[item.index] || questionStatus[String(item.index)];
     if (stat?.score !== undefined) return parseFloat(Number(stat.score).toFixed(2));
     if (item.status === 'correct') return item.question?.marks || 4;
-    if (item.status === 'wrong') return -(item.question?.negativeMarks !== undefined ? item.question.negativeMarks : 1);
+    if (item.status === 'wrong') return -(item.question?.negativeMarks ?? 0);
     return 0;
   };
 

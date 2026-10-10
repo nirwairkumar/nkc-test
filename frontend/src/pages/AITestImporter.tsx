@@ -1160,7 +1160,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         correctAnswer: q.correctAnswer,
                         image: q.image,
                         marks: String(q.marks || 4),
-                        negativeMarks: String(q.negativeMarks || 1),
+                        // Only what the source paper actually asks for. `|| 1` turned every
+                        // imported paper into a JEE paper (and turned an explicit 0 into 1).
+                        negativeMarks: String(q.negativeMarks ?? 0),
                         explanation: "",
                         passageContent: q.passageContent || "",
                         groupId: q.groupId || "",
@@ -1173,7 +1175,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     attempt_control: sec.attempt_control || { enabled: false },
                     questions: mappedQuestions,
                     marks_per_question: sec.marks_per_question || 4,
-                    negative_marks: sec.negative_marks || 1,
+                    negative_marks: sec.negative_marks ?? 0,
                     question_type: sec.question_type || 'single'
                 };
             });
@@ -1307,7 +1309,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             correctAnswer: q.correctAnswer || 'A',
                             image: q.image || undefined,
                             marks: String(q.marks || sec.marks_per_question || 4),
-                            negativeMarks: String(q.negativeMarks || sec.negative_marks || 1),
+                            negativeMarks: String(q.negativeMarks ?? sec.negative_marks ?? 0),
                             passageContent: q.passageContent || "",
                             groupId: q.groupId || ""
                         };
@@ -1319,7 +1321,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         attempt_control: sec.attempt_control || { enabled: false },
                         questions: mappedQuestions,
                         marks_per_question: sec.marks_per_question || 4,
-                        negative_marks: sec.negative_marks || 1,
+                        negative_marks: sec.negative_marks ?? 0,
                         question_type: sec.question_type || 'single'
                     };
                 });

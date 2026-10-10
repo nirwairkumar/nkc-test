@@ -324,7 +324,8 @@ async def import_json(
             mapped_q["question"] = q.get("question") or q.get("questionText", "")
             mapped_q["typingMode"] = "en"
             mapped_q["marks"] = str(q.get("marks", 4))
-            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 1))
+            # Never stamp a penalty the teacher did not ask for.
+            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 0))
             mapped_q["passageContent"] = q.get("passageContent", "")
             mapped_q["groupId"] = q.get("groupId", "")
             mapped_q["image"] = q.get("image", None)

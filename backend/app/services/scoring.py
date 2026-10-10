@@ -12,7 +12,11 @@ the `test.questions.forEach(...)` block in TestPage.tsx.
 Marks precedence (same as the client):
     per-question marks/negativeMarks  >  section marks_per_question/negative_marks
                                       >  test-level marks_per_question/negative_marks
-                                      >  hard defaults 4 / 1
+                                      >  hard defaults 4 / 0
+
+The negative default is 0 on purpose: a paper that never says "minus one" must not
+quietly deduct one. It used to be 1, which turned every unmarked test into a JEE
+paper and sent teachers' own trial runs negative.
 """
 
 import math
@@ -20,7 +24,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_MARKS = 4.0
-DEFAULT_NEGATIVE = 1.0
+DEFAULT_NEGATIVE = 0.0
 
 
 def parse_mark(value: Any, default_val: float = 0.0) -> float:

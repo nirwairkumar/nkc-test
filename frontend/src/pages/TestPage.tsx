@@ -1337,7 +1337,7 @@ export default function TestPage() {
                 // Simple score calculation (reusing logic from below but simplified)
                 let itemScore = 0;
                 const sectionMarks = parseMark((section as any).marks_per_question, 4);
-                const sectionNegative = parseMark((section as any).negative_marks, 1);
+                const sectionNegative = parseMark((section as any).negative_marks, 0);
 
                 if (q.type === 'numerical') {
                   if (isNumericalCorrect(q.correctAnswer, item.ans)) itemScore = sectionMarks;
@@ -1386,7 +1386,9 @@ export default function TestPage() {
       }
 
       let sectionMarks = test.marks_per_question ? parseMark(test.marks_per_question, 4) : 4;
-      let sectionNegative = test.negative_marks !== undefined ? parseMark(test.negative_marks, 1) : 1;
+      // A paper that never says "minus one" must not quietly deduct one. The old default
+      // of 1 is why teachers' own trial runs came back negative.
+      let sectionNegative = parseMark(test.negative_marks, 0);
 
       // Section-specific marks overrides
       if (test.enable_section_mode && test.sections) {
@@ -1395,7 +1397,7 @@ export default function TestPage() {
           // We can rely on the current question index 'index'
           if (index >= runningCount && index < runningCount + section.questions.length) {
             sectionMarks = parseMark(section.marks_per_question, 4);
-            sectionNegative = parseMark(section.negative_marks, 1);
+            sectionNegative = parseMark(section.negative_marks, 0);
             break;
           }
           runningCount += section.questions.length;
@@ -2493,7 +2495,7 @@ export default function TestPage() {
                         {(() => {
                           // 1. Determine Fallback Pattern (Section Default or Test Default)
                           let fallbackMarks = 4;
-                          let fallbackNeg = 1;
+                          let fallbackNeg = 0;
                           let targetQ = currentQuestion; // Default to flat question
                           let forceSectionMarks = false;
 
@@ -2507,7 +2509,7 @@ export default function TestPage() {
                             for (const section of test.sections) {
                               if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
                                 fallbackMarks = parseMark(section.marks_per_question, 4);
-                                fallbackNeg = parseMark(section.negative_marks, 1);
+                                fallbackNeg = parseMark(section.negative_marks, 0);
                                 const localIdx = currentQuestionIndex - runningCount;
                                 if (section.questions[localIdx]) {
                                   targetQ = section.questions[localIdx];
@@ -2518,7 +2520,7 @@ export default function TestPage() {
                             }
                           } else {
                             fallbackMarks = parseMark(test.marks_per_question, 4);
-                            fallbackNeg = parseMark(test.negative_marks, 1);
+                            fallbackNeg = parseMark(test.negative_marks, 0);
                           }
 
                           const marksVal = forceSectionMarks

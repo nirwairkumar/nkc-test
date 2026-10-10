@@ -6,7 +6,8 @@ class TestSection(BaseModel):
     name: str
     instructions: Optional[str] = None
     marks_per_question: Optional[float] = 4
-    negative_marks: Optional[float] = 1
+    # 0, not 1: negative marking is an explicit choice, never a default (see services/scoring.py).
+    negative_marks: Optional[float] = 0
     question_type: Optional[str] = "single"
     attempt_control: Optional[Dict[str, Any]] = {
         "enabled": False,
@@ -23,7 +24,7 @@ class CreateTestRequest(BaseModel):
     created_at: Optional[str] = None
     custom_id: Optional[str] = None
     marks_per_question: Optional[float] = 4
-    negative_marks: Optional[float] = 1
+    negative_marks: Optional[float] = 0
     duration: Optional[int] = 30
     revision_notes: Optional[str] = None
     is_public: Optional[bool] = False
