@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from . import track, stats, advanced, collect, insights
+from . import track, stats, advanced, collect, insights, exam_ops
 from app.core.auth import verify_is_admin
 
 router = APIRouter()
@@ -34,5 +34,10 @@ router.include_router(
 # Analytics v2 reports (documentation/2026-09-26-analytics-v2.md).
 router.include_router(
     insights.router, prefix="/v2", tags=["Analytics v2"],
+    dependencies=[Depends(_require_admin)],
+)
+# Live Activity / exam operations (documentation/2026-10-10-exam-activity.md).
+router.include_router(
+    exam_ops.router, prefix="/v2", tags=["Analytics v2"],
     dependencies=[Depends(_require_admin)],
 )
