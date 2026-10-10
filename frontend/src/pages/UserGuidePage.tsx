@@ -1004,7 +1004,7 @@ export default function UserGuidePage() {
                                     Turn on the <strong>Attempt Limit</strong> toggles to restrict students to a single attempt.
                                 </p>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Enable the <strong>Start Form</strong> to collect student credentials (e.g. Roll No, Name) before they are allowed to initiate the exam.
+                                    Turn on <strong>Candidate inputs</strong> to ask for details (e.g. Name, Roll No) before the exam starts. You can also edit them straight from a live exam's card on My Tests.
                                 </p>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                                     Now expand the <strong>Result & Timing</strong> section header.
@@ -1208,11 +1208,11 @@ export default function UserGuidePage() {
                                         </tr>
                                         <tr>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Name</td>
-                                            <td className="p-3">Full name entered by the candidate in the Start Form.</td>
+                                            <td className="p-3">Full name entered by the candidate in Candidate inputs.</td>
                                         </tr>
                                         <tr>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Roll number</td>
-                                            <td className="p-3">Roll number or candidate ID entered in the Start Form.</td>
+                                            <td className="p-3">Roll number or candidate ID entered in Candidate inputs.</td>
                                         </tr>
 
                                         <tr>

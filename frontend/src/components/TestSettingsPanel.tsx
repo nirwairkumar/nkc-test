@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight, Monitor, Info } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { CANDIDATE_INPUTS_TITLE, cleanInputs, suggestLabel, switchInputs } from '@/lib/candidateInputs';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -168,7 +169,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 ...settings,
                 schedule: settings.schedule?.enabled
                     ? settings.schedule
-                    : { enabled: false }
+                    : { enabled: false },
+                ...(settings.start_form
+                    ? { start_form: { ...settings.start_form, fields: cleanInputs(settings.start_form.fields || []) } }
+                    : {}),
             };
 
             const { data, error } = await updateTest(test.id, {
@@ -208,6 +212,16 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const updateSetting = (key: string, value: any) => {
         setSettings(prev => {
             const updated = { ...prev, [key]: value };
+            if (onSettingsChange) {
+                onSettingsChange(updated);
+            }
+            return updated;
+        });
+    };
+
+    const updateSettings = (fn: (prev: TestSettings) => TestSettings) => {
+        setSettings(prev => {
+            const updated = fn(prev);
             if (onSettingsChange) {
                 onSettingsChange(updated);
             }
@@ -539,29 +553,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 <div className="flex flex-col gap-4 border p-4 rounded-lg" id={mode === 'desktop' ? "tour-start-form-container" : undefined}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> Start Form</Label>
-                            <p className="text-sm text-muted-foreground">Collect details before start (Name is default).</p>
+                            <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> {CANDIDATE_INPUTS_TITLE}</Label>
+                            <p className="text-sm text-muted-foreground">What candidates fill in before the test starts (Name is default).</p>
                         </div>
                         <Switch
                             id={mode === 'desktop' ? "tour-start-form" : undefined}
                             checked={settings.start_form?.enabled}
                             onCheckedChange={(c) => {
-                                const currentFields = settings.start_form?.fields || [];
-                                const newFields = currentFields.length > 0
-                                    ? currentFields
-                                    : [{ label: 'Name', required: true }];
-                                const newState = { ...settings.start_form, enabled: c, fields: newFields };
-                                updateSetting('start_form', newState);
-                                if (!c && !settings.show_results_immediate) {
-                                    updateSetting('show_results_immediate', true);
-                                    toast.info("Result Visibility enabled automatically since Start Form was disabled.");
-                                }
+                                const { settings: next, notice } = switchInputs(settings, c);
+                                updateSettings(() => next);
+                                if (notice) toast.info(notice);
                             }}
                         />
                     </div>
                     {settings.start_form?.enabled && (
                         <div className="space-y-3 pt-1">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Form Fields</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Inputs</p>
                             <div className="space-y-2">
                                 {(settings.start_form?.fields || []).map((field, idx) => (
                                     <div key={idx} className={`flex gap-2 items-center p-2 rounded-lg border ${idx === 0 ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
@@ -578,7 +585,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                                 newFields[idx] = { ...newFields[idx], label: e.target.value };
                                                 updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                             }}
-                                            placeholder={idx === 0 ? "e.g. Name" : "Field label (e.g. Roll No)"}
+                                            placeholder={idx === 0 ? "Name" : suggestLabel(settings.start_form?.fields || [])}
                                             className={`h-8 text-sm flex-1 ${idx === 0 ? 'border-indigo-300 dark:border-indigo-700 focus-visible:ring-indigo-400' : ''}`}
                                         />
                                         <div className="flex items-center gap-1.5 shrink-0">
@@ -616,7 +623,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     const newFields = [...(settings.start_form?.fields || []), { label: '', required: true }];
                                     updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                 }}
-                            >+ Add Another Field</Button>
+                            >+ Add another input</Button>
                         </div>
                     )}
                 </div>
@@ -644,7 +651,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     enabled: true,
                                     fields: newFields
                                 });
-                                toast.info("Start Form enabled automatically for security.");
+                                toast.info(`${CANDIDATE_INPUTS_TITLE} turned on, so held results can be matched to names.`);
                             }
                         }}
                     />

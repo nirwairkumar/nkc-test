@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
+import { inputFields } from '@/lib/candidateInputs';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
@@ -366,9 +367,7 @@ export default function TestIntroPage() {
 
         // 2. Validate Candidate Start Form (if enabled)
         if (test.settings?.start_form?.enabled) {
-            const fields = test.settings.start_form.fields && test.settings.start_form.fields.length > 0
-                ? test.settings.start_form.fields
-                : [{ label: 'Name', required: true }];
+            const fields = inputFields(test.settings);
             const missing = fields.filter((f: any) => f.required && !startFormValues[f.label]?.trim());
             if (missing.length > 0) {
                 toast.error(`Please fill required candidate information: ${missing.map((f: any) => f.label).join(', ')}`);
@@ -892,9 +891,7 @@ export default function TestIntroPage() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {(() => {
-                                        const fields = test.settings?.start_form?.fields && test.settings.start_form.fields.length > 0
-                                            ? test.settings.start_form.fields
-                                            : [{ label: 'Name', required: true }];
+                                        const fields = inputFields(test.settings);
                                         return fields.map((field: any, idx: number) => (
                                             <div key={idx} className="space-y-1">
                                                 <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">

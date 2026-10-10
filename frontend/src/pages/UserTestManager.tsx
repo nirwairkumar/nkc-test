@@ -50,6 +50,9 @@ import {
 } from '@/lib/conductExam';
 import { examSessionsApi, problemOf } from '@/lib/examSessionsApi';
 import JoinCodeLine from '@/components/exams/JoinCodeLine';
+import CandidateInputsLine from '@/components/exams/CandidateInputsLine';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import type { TestSettings } from '@/lib/testsApi';
 import { takeNewTestId } from '@/utils/newTest';
 
 /* Shared control styles — iOS-flavoured, in the landing page's sky palette. */
@@ -546,6 +549,30 @@ export default function UserTestManager() {
 
     const handleShare = (test: any) => {
         shareTest(test);
+    };
+
+    // Candidate inputs edited on the live-exam card. Shown at once; saves go out one at a
+    // time so a slow request can never land after a newer one and undo it.
+    const { isPremium, loading: premiumLoading } = usePremiumStatus();
+    const inputsLocked = !isPremium && !premiumLoading;
+    const inputsSaves = React.useRef<Promise<void>>(Promise.resolve());
+    const showInputsUpgrade = () => {
+        toast.error("Premium feature required", {
+            description: "Upgrade to Premium to choose what candidates fill in",
+            action: { label: "Upgrade Now", onClick: () => navigate('/pricing') },
+        });
+    };
+    const saveCandidateInputs = (testId: string, settings: TestSettings, notice?: string) => {
+        mapAllTests(t => (t.id === testId ? { ...t, settings } : t));
+        if (notice) toast.info(notice);
+        inputsSaves.current = inputsSaves.current.then(async () => {
+            const { error } = await updateTest(testId, { settings });
+            if (error) {
+                toast.error("Couldn't save candidate inputs. Check your connection and try again.");
+                loadUserTests(true);
+                loadConductedTests();
+            }
+        });
     };
 
     // A second way into a live exam: testoza.com/join + a 6-digit code (same link, same results).
@@ -1093,6 +1120,13 @@ export default function UserTestManager() {
                                                 {test.settings?.conduct_exam?.join_code && (
                                                     <JoinCodeLine code={test.settings.conduct_exam.join_code} />
                                                 )}
+
+                                                <CandidateInputsLine
+                                                    settings={test.settings || {}}
+                                                    onChange={(next, notice) => saveCandidateInputs(test.id, next, notice)}
+                                                    locked={inputsLocked}
+                                                    onLocked={showInputsUpgrade}
+                                                />
 
                                                 {/* Actions */}
                                                 <div className="mt-3 flex flex-wrap items-center gap-2">
