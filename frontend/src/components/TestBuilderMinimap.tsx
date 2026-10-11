@@ -50,6 +50,17 @@ function cleanSnippet(text: unknown, maxLen = 50): string {
         .slice(0, maxLen);
 }
 
+/** A numerical answer is stored as a plain value, an exact answer, or a min–max range. */
+function numericalAnswerLabel(ans: unknown): string {
+    if (ans === undefined || ans === null || ans === '') return 'Numerical';
+    if (typeof ans !== 'object') return String(ans);
+    const a = ans as { exactMatch?: boolean; exactAnswers?: unknown; min?: unknown; max?: unknown };
+    if (a.exactMatch) return a.exactAnswers != null && a.exactAnswers !== '' ? String(a.exactAnswers) : 'Numerical';
+    const has = (v: unknown) => v !== undefined && v !== null && v !== '';
+    if (has(a.min) && has(a.max)) return String(a.min) === String(a.max) ? String(a.min) : `${a.min} – ${a.max}`;
+    return 'Numerical';
+}
+
 /**
  * One question in the map. Memoised: typing in one question re-renders only its own
  * entry (and the active one when scrolling), not all of them with their text clean-ups.
@@ -64,12 +75,15 @@ const MinimapItem = React.memo(function MinimapItem({ q, number, isCurrentActive
     const isPassage = !!q.groupId;
     const optionsKeys = q.options && q.type !== 'numerical' ? Object.keys(q.options) : [];
     const qSnippet = cleanSnippet(q.question, 50);
+    const optSnippets = optionsKeys.map((key) => cleanSnippet(q.options?.[key], 22));
+    // Short options ("[img]", "A and C only") sit two per row: half the height.
+    const twoCol = optionsKeys.length >= 2 && optSnippets.every((s) => s.length <= 12);
 
     return (
         <div
             data-minimap-item-id={q.id}
             onClick={() => onSelect(q.id)}
-            className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden antialiased ${
+            className={`group/qitem relative cursor-pointer px-1.5 py-[3px] rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden antialiased ${
                 isCurrentActive
                     ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-1 ring-indigo-400/40'
                     : isPassage
@@ -113,7 +127,7 @@ const MinimapItem = React.memo(function MinimapItem({ q, number, isCurrentActive
 
             {/* Actual Question Text with readable crisp typography */}
             <p
-                className={`text-[8px] leading-[1.25] font-medium line-clamp-2 break-words tracking-tight ${
+                className={`text-[7.5px] leading-[1.2] font-medium line-clamp-2 break-words tracking-tight ${
                     isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-slate-900'
                 }`}
             >
@@ -135,17 +149,17 @@ const MinimapItem = React.memo(function MinimapItem({ q, number, isCurrentActive
                 <div className={`mt-0.5 pt-0.5 border-t text-[7px] font-mono font-medium truncate leading-none ${
                     isCurrentActive ? 'border-indigo-500/50 text-emerald-200' : 'border-slate-100 text-emerald-600'
                 }`}>
-                    = {q.correctAnswer !== undefined && q.correctAnswer !== '' ? String(q.correctAnswer) : 'Numerical'}
+                    = {numericalAnswerLabel(q.correctAnswer)}
                 </div>
             )}
 
             {/* Options Text with crisp readable font size & line spacing */}
             {optionsKeys.length > 0 && q.type !== 'numerical' && (
-                <div className={`mt-0.5 pt-0.5 border-t space-y-[1.5px] ${
+                <div className={`mt-[2px] pt-[2px] border-t ${twoCol ? 'grid grid-cols-2 gap-x-1' : 'flex flex-col'} ${
                     isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100'
                 }`}>
-                    {optionsKeys.map((key) => {
-                        const optSnippet = cleanSnippet(q.options?.[key], 22);
+                    {optionsKeys.map((key, i) => {
+                        const optSnippet = optSnippets[i];
                         const isCorrect = Array.isArray(q.correctAnswer)
                             ? q.correctAnswer.includes(key)
                             : q.correctAnswer === key;
@@ -153,19 +167,20 @@ const MinimapItem = React.memo(function MinimapItem({ q, number, isCurrentActive
                         return (
                             <div
                                 key={key}
-                                className={`flex items-baseline gap-0.5 text-[7.5px] leading-[1.2] truncate ${
+                                className={`flex items-center gap-[2px] min-w-0 text-[6.5px] leading-[1.15] ${
                                     isCorrect
                                         ? isCurrentActive
                                             ? 'text-emerald-200 font-bold'
-                                            : 'text-emerald-600 font-semibold'
+                                            : 'text-emerald-700 font-semibold'
                                         : isCurrentActive
-                                            ? 'text-indigo-100/90 font-normal'
-                                            : 'text-slate-500 font-normal'
+                                            ? 'text-indigo-100/80 font-normal'
+                                            : 'text-slate-400 font-normal'
                                 }`}
                                 title={`${key}: ${optSnippet}`}
                             >
-                                <span className="font-semibold shrink-0">{key}.</span>
+                                <span className={`shrink-0 font-bold ${isCorrect ? '' : isCurrentActive ? 'text-indigo-200' : 'text-slate-500'}`}>{key}</span>
                                 <span className="truncate">{optSnippet || '—'}</span>
+                                {isCorrect && <span className={`shrink-0 pl-[1px] ${twoCol ? '' : 'ml-auto'}`}>✓</span>}
                             </div>
                         );
                     })}
