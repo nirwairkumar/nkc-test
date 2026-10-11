@@ -627,9 +627,14 @@ const ResultsPage = () => {
     negativeMarks: string | number;
   }>;
 
-  const allQuestions = selectedTest?.enable_section_mode && selectedTest?.sections
+  // The test copy from the exam carries no correctAnswer; the server sends the key with the analysis.
+  const answerKey: Record<string, any> = analysisData?.answerKey || {};
+  const allQuestions = (selectedTest?.enable_section_mode && selectedTest?.sections
     ? (selectedTest.sections as any[]).flatMap((s: any) => s.questions || [])
-    : selectedTest?.questions || [];
+    : selectedTest?.questions || []
+  ).map((q: any) => (q?.correctAnswer == null && answerKey[String(q?.id)] != null
+    ? { ...q, correctAnswer: answerKey[String(q.id)] }
+    : q));
 
   // Determine testId for feedback
 
@@ -1202,7 +1207,9 @@ const ResultsPage = () => {
                                     <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
                                     <div className="font-semibold text-blue-900 flex flex-col gap-1 min-w-max">
                                       <span>
-                                        {q.type === 'numerical' ? (
+                                        {q.correctAnswer == null || q.correctAnswer === '' ? (
+                                          <span className="text-sm font-medium text-slate-500">Shown after the exam ends</span>
+                                        ) : q.type === 'numerical' ? (
                                           (() => {
                                             const ca = q.correctAnswer as any;
                                             if (ca == null) return '—';
@@ -1215,9 +1222,9 @@ const ResultsPage = () => {
                                         ) : (
                                           `${q.correctAnswer}) `
                                         )}
-                                        {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options[q.correctAnswer as string]}</LatexRenderer>}
+                                        {q.correctAnswer != null && q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options?.[q.correctAnswer as string]}</LatexRenderer>}
                                       </span>
-                                      {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
+                                      {q.correctAnswer != null && q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                         <img
                                           src={q.optionImages[q.correctAnswer as string].trim()}
                                           alt="Correct Answer"
@@ -1375,7 +1382,7 @@ const ResultsPage = () => {
                 question: q.question?.substring(0, 200) || '',
                 type: q.type || 'single',
                 topic: q.topic || 'Uncategorized',
-                correctAnswer: q.correctAnswer,
+                correctAnswer: q.correctAnswer ?? analysisData.answerKey?.[qId],
                 userAnswer: answers[q.id as any] ?? null,
                 status: status?.status || 'skipped',
                 marks: q.marks,

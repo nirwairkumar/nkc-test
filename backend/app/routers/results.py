@@ -443,6 +443,14 @@ async def analyze_test_results(payload: AnalyzeRequest):
                 "maxScore": round(merged_max, 2)
             })
             
+    # The browser's copy of the test has no correctAnswer (C4), so the solution key reads
+    # it from here. Held back while a scheduled exam is still running, like GET /{attempt_id}.
+    answer_key = {}
+    if not exam_window_still_open(test.get("settings")):
+        for q in questions:
+            if isinstance(q, dict) and q.get("correctAnswer") is not None:
+                answer_key[str(q.get("id"))] = q.get("correctAnswer")
+
     # Post-process topicData for performance labels
     formatted_topics = []
     for t in topic_data.values():
@@ -471,6 +479,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "sectionData": section_data,
         "typeData": type_data,
         "questionStatus": question_status,
+        "answerKey": answer_key,
         "questionTimes": question_times,
         "pieData": pie_data,
         "radarData": radar_data,

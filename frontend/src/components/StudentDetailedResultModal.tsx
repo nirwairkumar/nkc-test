@@ -218,9 +218,13 @@ export default function StudentDetailedResultModal({
         topicData = []
     } = analysisData || {};
 
-    const allQuestions = test?.enable_section_mode && test?.sections
+    const answerKey: Record<string, any> = analysisData?.answerKey || {};
+    const allQuestions = (test?.enable_section_mode && test?.sections
         ? (test.sections as any[]).flatMap((s: any) => s.questions || [])
-        : test?.questions || [];
+        : test?.questions || []
+    ).map((q: any) => (q?.correctAnswer == null && answerKey[String(q?.id)] != null
+        ? { ...q, correctAnswer: answerKey[String(q.id)] }
+        : q));
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
