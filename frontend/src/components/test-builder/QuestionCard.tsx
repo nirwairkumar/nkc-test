@@ -26,10 +26,14 @@ const BARE_TEXTAREA =
     'w-full resize-none border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ' +
     'placeholder:text-slate-400 text-slate-900';
 const TOOL_BTN =
-    'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-semibold transition-[background-color,transform] ' +
+    'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold transition-[background-color,transform] ' +
+    'motion-safe:active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer';
+/** Small quiet buttons in the strip under the question text (photo, picture, maths). */
+const STRIP_BTN =
+    'inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[12.5px] font-semibold transition-[background-color,color,transform] ' +
     'motion-safe:active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer';
 const ICON_BTN =
-    'flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 ' +
+    'flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer';
 
 /** Picture strip under a question or option: paste a link, upload, snip the screen, or send to the cloud. */
@@ -99,10 +103,13 @@ function ImagePicker({
 
 function MarkField({ label, value, onChange, tone }: { label: string; value: string; onChange: (v: string) => void; tone: 'plus' | 'minus' }) {
     return (
-        <label className="flex h-9 items-center gap-1.5 rounded-full bg-slate-100 pl-3 pr-1 text-[12.5px] font-medium text-slate-600">
-            {label}
-            <span className="flex h-7 items-center rounded-full bg-white px-1.5 shadow-sm ring-1 ring-slate-900/[0.06]">
-                <span className={cn('text-[13px] font-bold', tone === 'plus' ? 'text-emerald-600' : 'text-red-600')}>{tone === 'plus' ? '+' : '−'}</span>
+        <label
+            className="flex h-7 items-center gap-1 rounded-full bg-slate-100 pl-2 pr-0.5 text-[11.5px] font-medium text-slate-500 sm:pl-2.5"
+            title={tone === 'plus' ? 'Marks for a right answer' : 'Marks taken away for a wrong answer'}
+        >
+            <span className="hidden sm:inline">{label}</span>
+            <span className="flex h-6 items-center rounded-full bg-white px-1 shadow-sm ring-1 ring-slate-900/[0.06]">
+                <span className={cn('text-[12px] font-bold', tone === 'plus' ? 'text-emerald-600' : 'text-red-600')}>{tone === 'plus' ? '+' : '−'}</span>
                 <input
                     type="text"
                     inputMode="decimal"
@@ -110,7 +117,7 @@ function MarkField({ label, value, onChange, tone }: { label: string; value: str
                     onChange={e => onChange(e.target.value)}
                     placeholder="0"
                     aria-label={label}
-                    className={cn('w-8 bg-transparent text-center text-[14px] font-bold tabular-nums focus:outline-none', tone === 'plus' ? 'text-slate-900' : 'text-red-600')}
+                    className={cn('w-7 bg-transparent text-center text-[13px] font-bold tabular-nums focus:outline-none', tone === 'plus' ? 'text-slate-900' : 'text-red-600')}
                 />
             </span>
         </label>
@@ -119,7 +126,7 @@ function MarkField({ label, value, onChange, tone }: { label: string; value: str
 
 function LanguageToggle({ value, onChange }: { value: 'en' | 'hi'; onChange: (v: 'en' | 'hi') => void }) {
     return (
-        <div role="radiogroup" aria-label="Typing language" className="flex h-8 items-center rounded-full bg-slate-100 p-0.5 text-[12.5px] font-semibold">
+        <div role="radiogroup" aria-label="Typing language" className="flex h-7 items-center rounded-full bg-slate-100 p-0.5 text-[12px] font-semibold">
             {([['en', 'English'], ['hi', 'हिंदी']] as const).map(([v, label]) => (
                 <button
                     key={v}
@@ -128,7 +135,7 @@ function LanguageToggle({ value, onChange }: { value: 'en' | 'hi'; onChange: (v:
                     aria-checked={value === v}
                     onClick={() => onChange(v)}
                     title={v === 'hi' ? 'Type in English letters, get Hindi (e.g. "namaste" → नमस्ते)' : 'Type in English'}
-                    className={cn('h-7 rounded-full px-2.5 transition-all', value === v ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)]' : 'text-slate-500 hover:text-slate-800')}
+                    className={cn('h-6 rounded-full px-2.5 transition-all', value === v ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)]' : 'text-slate-500 hover:text-slate-800')}
                 >
                     {label}
                 </button>
@@ -149,8 +156,8 @@ export function PassageHeader({
     refKey: string;
 }) {
     return (
-        <div className="mt-2 rounded-t-2xl border border-b-0 border-violet-200 bg-violet-50/70 p-4 sm:p-5">
-            <p className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-violet-800">
+        <div className="mt-1 rounded-t-2xl border border-b-0 border-violet-200 bg-violet-50/70 p-3 sm:p-4">
+            <p className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold text-violet-800">
                 <FileText className="h-4 w-4" /> Passage — every question below it uses this text
             </p>
             <div className={cn(FIELD, 'bg-white')}>
@@ -164,7 +171,7 @@ export function PassageHeader({
                     livePreview
                     data-sypad-target={refKey}
                     placeholder="Write or paste the passage here…"
-                    className={cn(BARE_TEXTAREA, 'min-h-[96px] p-3 text-[16px] leading-relaxed')}
+                    className={cn(BARE_TEXTAREA, 'min-h-[80px] p-3 text-[16px] leading-relaxed')}
                 />
             </div>
         </div>
@@ -173,7 +180,7 @@ export function PassageHeader({
 
 export function PassageFooter({ onAdd }: { onAdd: () => void }) {
     return (
-        <div className="mb-2 flex justify-center rounded-b-2xl border border-t-0 border-violet-200 bg-violet-50/70 px-4 py-3">
+        <div className="mb-1 flex justify-center rounded-b-2xl border border-t-0 border-violet-200 bg-violet-50/70 px-4 py-2">
             <button
                 type="button"
                 onClick={onAdd}
@@ -181,25 +188,6 @@ export function PassageFooter({ onAdd }: { onAdd: () => void }) {
             >
                 <Plus className="h-4 w-4" /> Add another question to this passage
             </button>
-        </div>
-    );
-}
-
-/** The thin "+" between two questions. */
-export function InsertBetween({ onInsert, label = 'Add a question here' }: { onInsert: () => void; label?: string }) {
-    return (
-        <div className="group/insert relative flex h-7 items-center justify-center">
-            <div className="h-px flex-1 bg-transparent transition-colors group-hover/insert:bg-sky-200" />
-            <button
-                type="button"
-                onClick={onInsert}
-                title={label}
-                aria-label={label}
-                className="mx-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-900/[0.08] transition-[color,transform] hover:scale-110 hover:text-sky-700 motion-safe:active:scale-95"
-            >
-                <Plus className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-            <div className="h-px flex-1 bg-transparent transition-colors group-hover/insert:bg-sky-200" />
         </div>
     );
 }
@@ -324,21 +312,21 @@ export function QuestionCard({
                 drag?.isDragging && 'opacity-60 ring-2 ring-dashed ring-sky-400',
             )}
         >
-            {/* Header */}
-            <header className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3.5 pt-3.5 sm:px-5">
+            {/* Header: which question, its type and marks · language and delete on the right */}
+            <header className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 px-3 pt-2.5 sm:gap-x-2 sm:px-4">
                 {drag && (
-                    <span className="drag-handle -ml-1 flex h-8 w-6 cursor-grab items-center justify-center rounded-md text-slate-300 hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing" title="Drag to move">
+                    <span className="drag-handle -ml-1 flex h-7 w-5 cursor-grab items-center justify-center rounded-md text-slate-300 hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing" title="Drag to move">
                         <GripVertical className="h-4 w-4" />
                     </span>
                 )}
-                <h3 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900">{label}</h3>
+                <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">{label}</h3>
                 {isInGroup && (
-                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-violet-700">Passage</span>
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-violet-700">Passage</span>
                 )}
                 <Select value={type} onValueChange={changeType}>
                     <SelectTrigger
                         aria-label="Question type"
-                        className="h-8 w-auto gap-1.5 rounded-full border-0 bg-slate-100 px-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-sky-500/40 focus:ring-offset-0"
+                        className="h-7 w-auto gap-1 rounded-full border-0 bg-slate-100 px-2.5 text-[12.5px] font-semibold text-slate-700 focus:ring-2 focus:ring-sky-500/40 focus:ring-offset-0"
                     >
                         <SelectValue />
                     </SelectTrigger>
@@ -349,6 +337,10 @@ export function QuestionCard({
                         {!isInGroup && <SelectItem value="comprehension">{QUESTION_TYPE_LABELS.comprehension}</SelectItem>}
                     </SelectContent>
                 </Select>
+                <div className="flex items-center gap-1">
+                    <MarkField label="Marks" tone="plus" value={String(q.marks ?? '')} onChange={v => set('marks', sanitizeNumericalMark(v))} />
+                    <MarkField label="Wrong" tone="minus" value={String(q.negativeMarks ?? '')} onChange={v => set('negativeMarks', sanitizeNumericalMark(v))} />
+                </div>
                 <div className="ml-auto flex items-center gap-1">
                     <LanguageToggle value={q.typingMode} onChange={m => { set('typingMode', m); onTypingModeUsed(m); }} />
                     <button
@@ -364,11 +356,11 @@ export function QuestionCard({
                 </div>
             </header>
 
-            <div className="space-y-3 px-3.5 pb-4 pt-3 sm:px-5 sm:pb-5">
+            <div className="space-y-2 px-3 pb-3 pt-2 sm:px-4">
                 {/* Filled-from-photo result */}
                 {photoBanner && (
                     <div className={cn(
-                        'flex items-start gap-3 rounded-xl px-3.5 py-3 text-[14px] leading-snug ring-1 ring-inset animate-in fade-in slide-in-from-top-1 duration-300',
+                        'flex items-start gap-3 rounded-xl px-3 py-2.5 text-[13.5px] leading-snug ring-1 ring-inset animate-in fade-in slide-in-from-top-1 duration-300',
                         photoBanner.answerSource === 'none' ? 'bg-amber-50 text-amber-900 ring-amber-600/20' : 'bg-emerald-50 text-emerald-900 ring-emerald-600/20',
                     )}>
                         {photoBanner.answerSource === 'none'
@@ -402,7 +394,7 @@ export function QuestionCard({
                     </div>
                 )}
 
-                {/* Question text */}
+                {/* Question text, with its tools in a quiet strip along the bottom of the box */}
                 <div className={FIELD}>
                     <IMEInput
                         as="textarea"
@@ -415,8 +407,38 @@ export function QuestionCard({
                         livePreview
                         data-sypad-target={refKey}
                         aria-label={`${label} text`}
-                        className={cn(BARE_TEXTAREA, 'min-h-[76px] p-3 text-[17px] leading-relaxed sm:px-4')}
+                        className={cn(BARE_TEXTAREA, 'min-h-[52px] px-3 pb-1 pt-2.5 text-[16px] leading-relaxed sm:px-3.5')}
                     />
+                    <div className="flex flex-wrap items-center gap-0.5 px-1.5 pb-1.5">
+                        <button
+                            type="button"
+                            onClick={onFillFromPhoto}
+                            className={cn(STRIP_BTN, isEmpty
+                                ? 'bg-sky-600 text-white shadow-[0_4px_12px_-6px_rgba(2,132,199,0.9)] hover:bg-sky-700'
+                                : 'text-sky-700 hover:bg-sky-100/70')}
+                            title="Photo of a printed or handwritten question — we type it for you"
+                        >
+                            <Camera className="h-3.5 w-3.5" /> Fill from photo
+                        </button>
+                        {!q.image && (
+                            <button
+                                type="button"
+                                onClick={() => setShowImagePicker(v => !v)}
+                                aria-pressed={showImagePicker}
+                                className={cn(STRIP_BTN, showImagePicker ? 'bg-slate-900/[0.07] text-slate-800' : 'text-slate-500 hover:bg-slate-900/[0.05] hover:text-slate-800')}
+                            >
+                                <ImageIcon className="h-3.5 w-3.5" /> Picture
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => onOpenSyPad(refKey)}
+                            className={cn(STRIP_BTN, 'sy-pad-trigger text-slate-500 hover:bg-slate-900/[0.05] hover:text-slate-800')}
+                            title="Fractions, powers, chemical formulas, tables"
+                        >
+                            <Sigma className="h-3.5 w-3.5" /> Maths &amp; symbols
+                        </button>
+                    </div>
                 </div>
 
                 {/* Question picture */}
@@ -441,45 +463,12 @@ export function QuestionCard({
                     />
                 )}
 
-                {/* Tools */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={onFillFromPhoto}
-                        className={cn(TOOL_BTN, isEmpty
-                            ? 'bg-sky-600 text-white shadow-[0_6px_16px_-8px_rgba(2,132,199,0.9)] hover:bg-sky-700'
-                            : 'bg-sky-50 text-sky-800 hover:bg-sky-100')}
-                        title="Photo of a printed or handwritten question — we type it for you"
-                    >
-                        <Camera className="h-4 w-4" /> Fill from photo
-                    </button>
-                    {!q.image && (
-                        <button type="button" onClick={() => setShowImagePicker(v => !v)} aria-pressed={showImagePicker} className={cn(TOOL_BTN, 'bg-slate-100 text-slate-700 hover:bg-slate-200/80')}>
-                            <ImageIcon className="h-4 w-4" /> Picture
-                        </button>
-                    )}
-                    <button
-                        type="button"
-                        onClick={() => onOpenSyPad(refKey)}
-                        className={cn(TOOL_BTN, 'sy-pad-trigger bg-slate-100 text-slate-700 hover:bg-slate-200/80')}
-                        title="Fractions, powers, chemical formulas, tables"
-                    >
-                        <Sigma className="h-4 w-4" /> Maths &amp; symbols
-                    </button>
-                    <div className="flex w-full items-center gap-1.5 sm:ml-auto sm:w-auto">
-                        <MarkField label="Marks" tone="plus" value={String(q.marks ?? '')} onChange={v => set('marks', sanitizeNumericalMark(v))} />
-                        <MarkField label="Wrong" tone="minus" value={String(q.negativeMarks ?? '')} onChange={v => set('negativeMarks', sanitizeNumericalMark(v))} />
-                    </div>
-                </div>
-
-                <div className="h-px bg-slate-100" />
-
                 {/* Answer */}
                 {type === 'numerical' ? (
-                    <div>
-                        <p className="mb-2 text-[13px] font-semibold text-slate-500">Correct answer</p>
-                        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-900/[0.06]">
-                            <div role="radiogroup" className="mx-auto mb-3 flex w-fit rounded-full bg-slate-200/70 p-0.5 text-[13px] font-semibold">
+                    <div className="rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-900/[0.06]">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-[12.5px] font-semibold text-slate-500">Correct answer</p>
+                            <div role="radiogroup" className="flex w-fit rounded-full bg-slate-200/70 p-0.5 text-[12px] font-semibold">
                                 {([[false, 'A range of values'], [true, 'Exact value(s)']] as const).map(([exact, text]) => (
                                     <button
                                         key={String(exact)}
@@ -487,62 +476,50 @@ export function QuestionCard({
                                         role="radio"
                                         aria-checked={!!numeric.exactMatch === exact}
                                         onClick={() => setNumerical({ exactMatch: exact })}
-                                        className={cn('h-8 rounded-full px-3.5 transition-all', !!numeric.exactMatch === exact ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
+                                        className={cn('h-6 rounded-full px-3 transition-all', !!numeric.exactMatch === exact ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
                                     >
                                         {text}
                                     </button>
                                 ))}
                             </div>
-                            {numeric.exactMatch ? (
-                                <div className="mx-auto max-w-sm text-center">
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        placeholder="e.g. 100, 150, 200"
-                                        value={numeric.exactAnswers || ''}
-                                        onChange={e => setNumerical({ exactAnswers: e.target.value })}
-                                        className="h-11 w-full rounded-xl bg-white px-3 text-center font-mono text-[16px] font-bold text-slate-900 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-500/45"
-                                    />
-                                    <p className="mt-2 text-[13px] text-slate-500">Separate with commas. Any of these is marked correct.</p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-wrap items-end justify-center gap-3">
-                                    {(['min', 'max'] as const).map(end => (
-                                        <label key={end} className="text-left">
-                                            <span className="mb-1 block pl-1 text-[13px] text-slate-500">{end === 'min' ? 'Lowest correct' : 'Highest correct'}</span>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                value={numeric[end] ?? ''}
-                                                onChange={e => {
-                                                    const v = parseFloat(e.target.value);
-                                                    setNumerical({ [end]: isNaN(v) ? 0 : v });
-                                                }}
-                                                className="h-11 w-32 rounded-xl bg-white px-3 text-center font-mono text-[16px] font-bold text-slate-900 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-500/45"
-                                            />
-                                        </label>
-                                    ))}
-                                    <p className="w-full text-center text-[13px] text-slate-500">For one exact answer, put the same number in both boxes.</p>
-                                </div>
-                            )}
                         </div>
+                        {numeric.exactMatch ? (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="e.g. 100, 150, 200"
+                                    aria-label="Correct number(s)"
+                                    value={numeric.exactAnswers || ''}
+                                    onChange={e => setNumerical({ exactAnswers: e.target.value })}
+                                    className="h-9 w-full max-w-xs rounded-lg bg-white px-3 font-mono text-[16px] font-bold text-slate-900 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-500/45 sm:text-[15px]"
+                                />
+                                <p className="text-[12px] text-slate-500">Separate with commas. Any of these is marked correct.</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                                {(['min', 'max'] as const).map(end => (
+                                    <label key={end} className="text-left">
+                                        <span className="mb-0.5 block pl-0.5 text-[12px] text-slate-500">{end === 'min' ? 'Lowest correct' : 'Highest correct'}</span>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={numeric[end] ?? ''}
+                                            onChange={e => {
+                                                const v = parseFloat(e.target.value);
+                                                setNumerical({ [end]: isNaN(v) ? 0 : v });
+                                            }}
+                                            className="h-9 w-28 rounded-lg bg-white px-3 text-center font-mono text-[16px] font-bold text-slate-900 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-500/45 sm:text-[15px]"
+                                        />
+                                    </label>
+                                ))}
+                                <p className="pb-2 text-[12px] text-slate-500">For one exact answer, put the same number in both boxes.</p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div>
-                        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                            <p className="text-[13px] font-semibold text-slate-500">Answer options</p>
-                            {needsAnswer ? (
-                                <p className="flex items-center gap-1 text-[13px] font-medium text-amber-700">
-                                    <AlertTriangle className="h-3.5 w-3.5" />
-                                    {type === 'multiple' ? 'Tick every correct answer' : 'Tap the letter of the correct answer'}
-                                </p>
-                            ) : (
-                                <p className="text-[13px] text-slate-400">
-                                    {type === 'multiple' ? 'Tick every correct answer' : 'Tap a letter to mark it correct'}
-                                </p>
-                            )}
-                        </div>
-                        <ul className="space-y-2">
+                        <ul className="space-y-1.5">
                             {optionKeys.map(key => {
                                 const selected = type === 'multiple'
                                     ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(key)
@@ -552,7 +529,7 @@ export function QuestionCard({
                                     <li
                                         key={key}
                                         className={cn(
-                                            'group/option flex items-start gap-2.5 rounded-xl p-1.5 pr-1 ring-1 ring-inset transition-[background-color,box-shadow] sm:gap-3',
+                                            'group/option flex items-start gap-2 rounded-xl p-1 pr-1 ring-1 ring-inset transition-[background-color,box-shadow] sm:gap-2.5',
                                             selected ? 'bg-emerald-50/80 ring-emerald-500/45' : 'bg-white ring-slate-900/[0.09] hover:ring-slate-900/15',
                                             'focus-within:ring-2 focus-within:ring-sky-500/40',
                                         )}
@@ -564,7 +541,7 @@ export function QuestionCard({
                                             aria-label={selected ? `Option ${key} is correct` : `Mark option ${key} as correct`}
                                             title={selected ? 'Correct answer' : 'Mark as correct'}
                                             className={cn(
-                                                'flex h-9 w-9 shrink-0 items-center justify-center text-[15px] font-bold transition-all motion-safe:active:scale-95',
+                                                'flex h-8 w-8 shrink-0 items-center justify-center text-[14px] font-bold transition-all motion-safe:active:scale-95',
                                                 type === 'multiple' ? 'rounded-[10px]' : 'rounded-full',
                                                 selected
                                                     ? 'bg-emerald-500 text-white shadow-[0_4px_10px_-4px_rgba(16,185,129,0.8)]'
@@ -586,7 +563,7 @@ export function QuestionCard({
                                                 data-sypad-target={optRef}
                                                 aria-label={`${label} option ${key}`}
                                                 rows={1}
-                                                className={cn(BARE_TEXTAREA, 'min-h-[36px] px-1 py-1.5 text-[16px] leading-normal')}
+                                                className={cn(BARE_TEXTAREA, 'min-h-[32px] px-1 py-1 text-[16px] leading-normal sm:text-[15px]')}
                                             />
                                             {q.optionImages?.[key] ? (
                                                 <div className="group/optimg relative mb-1 mt-1 w-fit">
@@ -611,7 +588,7 @@ export function QuestionCard({
                                             )}
                                         </div>
                                         {selected && (
-                                            <span className="mt-2 hidden shrink-0 text-[12px] font-semibold text-emerald-700 sm:inline">Correct</span>
+                                            <span className="mt-1.5 hidden shrink-0 text-[12px] font-semibold text-emerald-700 sm:inline">Correct</span>
                                         )}
                                         <div className="flex shrink-0 items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover/option:opacity-100 sm:group-focus-within/option:opacity-100">
                                             {!q.optionImages?.[key] && (
@@ -627,17 +604,29 @@ export function QuestionCard({
                                 );
                             })}
                         </ul>
-                        <button
-                            type="button"
-                            onClick={addOption}
-                            className={cn(TOOL_BTN, 'mt-2 text-sky-700 hover:bg-sky-50')}
-                        >
-                            <Plus className="h-4 w-4" /> Add option
-                        </button>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3">
+                            <button
+                                type="button"
+                                onClick={addOption}
+                                className={cn(TOOL_BTN, '-ml-1 px-2.5 text-sky-700 hover:bg-sky-50')}
+                            >
+                                <Plus className="h-4 w-4" /> Add option
+                            </button>
+                            {needsAnswer ? (
+                                <p className="flex items-center gap-1 text-[12.5px] font-medium text-amber-700">
+                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                    {type === 'multiple' ? 'Tick every correct answer' : 'Tap the letter of the correct answer'}
+                                </p>
+                            ) : (
+                                <p className="text-[12.5px] text-slate-400">
+                                    {type === 'multiple' ? 'Tick every correct answer' : 'Tap a letter to mark it correct'}
+                                </p>
+                            )}
+                        </div>
                         {type === 'multiple' && (
-                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-900/[0.06]">
-                                <p className="text-[13px] font-semibold text-slate-500">Partial marks</p>
-                                <div role="radiogroup" aria-label="Partial marks" className="flex w-fit rounded-full bg-slate-200/70 p-0.5 text-[13px] font-semibold">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-inset ring-slate-900/[0.06]">
+                                <p className="text-[12.5px] font-semibold text-slate-500">Partial marks</p>
+                                <div role="radiogroup" aria-label="Partial marks" className="flex w-fit rounded-full bg-slate-200/70 p-0.5 text-[12px] font-semibold">
                                     {([['proportional', 'Proportional'], ['per_option', 'JEE Advanced']] as const).map(([mode, text]) => {
                                         const on = (q.partialMarking ?? 'proportional') === mode;
                                         return (
@@ -647,7 +636,7 @@ export function QuestionCard({
                                                 role="radio"
                                                 aria-checked={on}
                                                 onClick={() => set('partialMarking', mode)}
-                                                className={cn('h-8 rounded-full px-3.5 transition-all', on ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
+                                                className={cn('h-6 rounded-full px-3 transition-all', on ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}
                                             >
                                                 {text}
                                             </button>

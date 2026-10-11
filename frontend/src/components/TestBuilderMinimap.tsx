@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TestSection, Question } from '@/lib/testsApi';
 import {
     Layers,
@@ -50,7 +50,132 @@ function cleanSnippet(text: unknown, maxLen = 50): string {
         .slice(0, maxLen);
 }
 
-export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
+/**
+ * One question in the map. Memoised: typing in one question re-renders only its own
+ * entry (and the active one when scrolling), not all of them with their text clean-ups.
+ */
+const MinimapItem = React.memo(function MinimapItem({ q, number, isCurrentActive, hasIssue, onSelect }: {
+    q: Question;
+    number: number;
+    isCurrentActive: boolean;
+    hasIssue: boolean;
+    onSelect: (id: string | number) => void;
+}) {
+    const isPassage = !!q.groupId;
+    const optionsKeys = q.options && q.type !== 'numerical' ? Object.keys(q.options) : [];
+    const qSnippet = cleanSnippet(q.question, 50);
+
+    return (
+        <div
+            data-minimap-item-id={q.id}
+            onClick={() => onSelect(q.id)}
+            className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden antialiased ${
+                isCurrentActive
+                    ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-1 ring-indigo-400/40'
+                    : isPassage
+                        ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
+                        : 'bg-white border-slate-200/90 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
+            }`}
+            title={`Q${number}: ${qSnippet || 'Question'}`}
+        >
+            {/* Passage Indicator vertical accent */}
+            {isPassage && (
+                <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-md ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
+            )}
+
+            {/* Header row: question number, passage pill, issue indicator, marking scheme */}
+            <div className="flex items-center justify-between gap-0.5 mb-0.5 min-w-0 w-full">
+                <div className="flex items-center gap-0.5 min-w-0">
+                    <span className={`text-[9px] font-bold leading-none tracking-tight ${isCurrentActive ? 'text-white' : 'text-slate-800 group-hover/qitem:text-indigo-600'}`}>
+                        #{number}
+                    </span>
+                    {isPassage && (
+                        <span className={`text-[7px] font-semibold px-0.5 rounded uppercase leading-none shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
+                            PAS
+                        </span>
+                    )}
+                    {hasIssue && (
+                        <span
+                            className={`w-1 h-1 rounded-full shrink-0 ${isCurrentActive ? 'bg-amber-300' : 'bg-amber-500'}`}
+                            title="Needs attention"
+                        />
+                    )}
+                </div>
+                <div className="inline-flex items-center gap-0.5 text-[8px] font-semibold font-mono slashed-zero shrink-0 tracking-tighter leading-none">
+                    <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-500'}>
+                        {q.marks || 1}M
+                    </span>
+                    <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
+                        {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
+                    </span>
+                </div>
+            </div>
+
+            {/* Actual Question Text with readable crisp typography */}
+            <p
+                className={`text-[8px] leading-[1.25] font-medium line-clamp-2 break-words tracking-tight ${
+                    isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-slate-900'
+                }`}
+            >
+                {qSnippet || <span className="opacity-40 italic">Empty question</span>}
+            </p>
+
+            {/* Image Indicator if question has an image */}
+            {q.image && (
+                <div className={`mt-0.5 flex items-center gap-0.5 text-[7px] leading-none font-semibold ${
+                    isCurrentActive ? 'text-indigo-200' : 'text-sky-600'
+                }`}>
+                    <ImageIcon className="w-2 h-2 shrink-0" />
+                    <span>Image</span>
+                </div>
+            )}
+
+            {/* Numerical answer indicator */}
+            {q.type === 'numerical' && (
+                <div className={`mt-0.5 pt-0.5 border-t text-[7px] font-mono font-medium truncate leading-none ${
+                    isCurrentActive ? 'border-indigo-500/50 text-emerald-200' : 'border-slate-100 text-emerald-600'
+                }`}>
+                    = {q.correctAnswer !== undefined && q.correctAnswer !== '' ? String(q.correctAnswer) : 'Numerical'}
+                </div>
+            )}
+
+            {/* Options Text with crisp readable font size & line spacing */}
+            {optionsKeys.length > 0 && q.type !== 'numerical' && (
+                <div className={`mt-0.5 pt-0.5 border-t space-y-[1.5px] ${
+                    isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100'
+                }`}>
+                    {optionsKeys.map((key) => {
+                        const optSnippet = cleanSnippet(q.options?.[key], 22);
+                        const isCorrect = Array.isArray(q.correctAnswer)
+                            ? q.correctAnswer.includes(key)
+                            : q.correctAnswer === key;
+
+                        return (
+                            <div
+                                key={key}
+                                className={`flex items-baseline gap-0.5 text-[7.5px] leading-[1.2] truncate ${
+                                    isCorrect
+                                        ? isCurrentActive
+                                            ? 'text-emerald-200 font-bold'
+                                            : 'text-emerald-600 font-semibold'
+                                        : isCurrentActive
+                                            ? 'text-indigo-100/90 font-normal'
+                                            : 'text-slate-500 font-normal'
+                                }`}
+                                title={`${key}: ${optSnippet}`}
+                            >
+                                <span className="font-semibold shrink-0">{key}.</span>
+                                <span className="truncate">{optSnippet || '—'}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+});
+
+export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = React.memo(({
     sections = [],
     questions = [],
     mode = 'standard',
@@ -129,18 +254,26 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
             }
         };
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', handleScroll, { passive: true });
+        // At most once per frame: the check measures every question on the page.
+        let frame = 0;
+        const onScroll = () => {
+            if (!frame) frame = requestAnimationFrame(() => { frame = 0; handleScroll(); });
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
         handleScroll();
 
         return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleScroll);
+            cancelAnimationFrame(frame);
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
         };
     }, []);
 
-    // Scroll to target question when clicked in minimap
-    const scrollToTarget = (id: string | number) => {
+    // Scroll to target question when clicked in minimap. Stable, so map entries stay memoised.
+    const onSelectRef = useRef(onSelectQuestion);
+    onSelectRef.current = onSelectQuestion;
+    const scrollToTarget = useCallback((id: string | number) => {
         try {
             const allNodes = Array.from(document.querySelectorAll('[data-minimap-id]'));
             const el = allNodes.find(node => node.getAttribute('data-minimap-id') === String(id));
@@ -149,131 +282,26 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                 const y = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) + yOffset;
                 window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
                 setActiveId(id);
-                if (onSelectQuestion) onSelectQuestion(id);
+                onSelectRef.current?.(id);
             }
         } catch (err) {
             console.error("Minimap scroll error:", err);
         }
-    };
+    }, []);
 
     if (totalQuestions === 0) return null;
 
     const renderQuestionCard = (q: Question, number: number) => {
         if (!q || q.id === undefined || q.id === null) return null;
-        const isCurrentActive = String(activeId) === String(q.id) || (activeQuestionId !== undefined && String(activeQuestionId) === String(q.id));
-        const isPassage = !!q.groupId;
-        const hasIssue = issueIds?.has(String(q.id));
-        const optionsKeys = q.options && q.type !== 'numerical' ? Object.keys(q.options) : [];
-        const qSnippet = cleanSnippet(q.question, 50);
-
         return (
-            <div
+            <MinimapItem
                 key={q.id}
-                data-minimap-item-id={q.id}
-                onClick={() => scrollToTarget(q.id)}
-                className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden antialiased ${
-                    isCurrentActive
-                        ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-1 ring-indigo-400/40'
-                        : isPassage
-                            ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
-                            : 'bg-white border-slate-200/90 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
-                }`}
-                title={`Q${number}: ${qSnippet || 'Question'}`}
-            >
-                {/* Passage Indicator vertical accent */}
-                {isPassage && (
-                    <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-md ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
-                )}
-
-                {/* Header row: question number, passage pill, issue indicator, marking scheme */}
-                <div className="flex items-center justify-between gap-0.5 mb-0.5 min-w-0 w-full">
-                    <div className="flex items-center gap-0.5 min-w-0">
-                        <span className={`text-[9px] font-bold leading-none tracking-tight ${isCurrentActive ? 'text-white' : 'text-slate-800 group-hover/qitem:text-indigo-600'}`}>
-                            #{number}
-                        </span>
-                        {isPassage && (
-                            <span className={`text-[7px] font-semibold px-0.5 rounded uppercase leading-none shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
-                                PAS
-                            </span>
-                        )}
-                        {hasIssue && (
-                            <span
-                                className={`w-1 h-1 rounded-full shrink-0 ${isCurrentActive ? 'bg-amber-300' : 'bg-amber-500'}`}
-                                title="Needs attention"
-                            />
-                        )}
-                    </div>
-                    <div className="inline-flex items-center gap-0.5 text-[8px] font-semibold font-mono slashed-zero shrink-0 tracking-tighter leading-none">
-                        <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-500'}>
-                            {q.marks || 1}M
-                        </span>
-                        <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
-                            {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
-                        </span>
-                    </div>
-                </div>
-
-                {/* Actual Question Text with readable crisp typography */}
-                <p
-                    className={`text-[8px] leading-[1.25] font-medium line-clamp-2 break-words tracking-tight ${
-                        isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-slate-900'
-                    }`}
-                >
-                    {qSnippet || <span className="opacity-40 italic">Empty question</span>}
-                </p>
-
-                {/* Image Indicator if question has an image */}
-                {q.image && (
-                    <div className={`mt-0.5 flex items-center gap-0.5 text-[7px] leading-none font-semibold ${
-                        isCurrentActive ? 'text-indigo-200' : 'text-sky-600'
-                    }`}>
-                        <ImageIcon className="w-2 h-2 shrink-0" />
-                        <span>Image</span>
-                    </div>
-                )}
-
-                {/* Numerical answer indicator */}
-                {q.type === 'numerical' && (
-                    <div className={`mt-0.5 pt-0.5 border-t text-[7px] font-mono font-medium truncate leading-none ${
-                        isCurrentActive ? 'border-indigo-500/50 text-emerald-200' : 'border-slate-100 text-emerald-600'
-                    }`}>
-                        = {q.correctAnswer !== undefined && q.correctAnswer !== '' ? String(q.correctAnswer) : 'Numerical'}
-                    </div>
-                )}
-
-                {/* Options Text with crisp readable font size & line spacing */}
-                {optionsKeys.length > 0 && q.type !== 'numerical' && (
-                    <div className={`mt-0.5 pt-0.5 border-t space-y-[1.5px] ${
-                        isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100'
-                    }`}>
-                        {optionsKeys.map((key) => {
-                            const optSnippet = cleanSnippet(q.options?.[key], 22);
-                            const isCorrect = Array.isArray(q.correctAnswer)
-                                ? q.correctAnswer.includes(key)
-                                : q.correctAnswer === key;
-
-                            return (
-                                <div
-                                    key={key}
-                                    className={`flex items-baseline gap-0.5 text-[7.5px] leading-[1.2] truncate ${
-                                        isCorrect
-                                            ? isCurrentActive
-                                                ? 'text-emerald-200 font-bold'
-                                                : 'text-emerald-600 font-semibold'
-                                            : isCurrentActive
-                                                ? 'text-indigo-100/90 font-normal'
-                                                : 'text-slate-500 font-normal'
-                                    }`}
-                                    title={`${key}: ${optSnippet}`}
-                                >
-                                    <span className="font-semibold shrink-0">{key}.</span>
-                                    <span className="truncate">{optSnippet || '—'}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+                q={q}
+                number={number}
+                isCurrentActive={String(activeId) === String(q.id) || (activeQuestionId !== undefined && String(activeQuestionId) === String(q.id))}
+                hasIssue={!!issueIds?.has(String(q.id))}
+                onSelect={scrollToTarget}
+            />
         );
     };
 
@@ -328,7 +356,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
             {!collapsed && (
                 <div
                     ref={minimapRef}
-                    className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
+                    className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl flex flex-col overflow-hidden relative transition-all duration-300"
                 >
                     {/* Header Bar */}
                     <div className="px-2 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
@@ -364,4 +392,5 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
             )}
         </div>
     );
-};
+});
+TestBuilderMinimap.displayName = 'TestBuilderMinimap';

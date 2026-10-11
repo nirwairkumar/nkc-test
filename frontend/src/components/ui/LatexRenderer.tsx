@@ -317,6 +317,9 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             return children;
         }
     }, [children]);
+    // DOMPurify parses the whole string into a DOM; doing it on every parent render was
+    // a large share of each keystroke in the test builder (one per formula on the page).
+    const safeHtml = useMemo(() => sanitizeHtml(rendered), [rendered]);
 
     const handleContainerClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
@@ -335,7 +338,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
                 onClick={handleContainerClick}
             >
-                <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(rendered) }} />
+                <span dangerouslySetInnerHTML={{ __html: safeHtml }} />
             </div>
 
             <Dialog open={!!maximizedTable} onOpenChange={(open) => !open && setMaximizedTable(null)}>
@@ -356,4 +359,5 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
     );
 };
 
-export default LatexRenderer;
+// Output depends only on the text and class, so unchanged formulas skip re-rendering.
+export default React.memo(LatexRenderer);

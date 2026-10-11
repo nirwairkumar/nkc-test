@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useDeferredValue } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,14 @@ export interface IMEInputHandle {
     /** Switches to editing (if previewing) and puts the caret at the end. */
     focus: () => void;
 }
+
+/**
+ * Browsers that grow a textarea to its text on their own (Chrome/Edge 123+). There the
+ * box needs no measuring, which otherwise forces a layout of the whole page per keystroke
+ * and once per box when a long paper opens.
+ */
+const NATIVE_AUTOGROW = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('field-sizing', 'content');
+const AUTOGROW_STYLE = { fieldSizing: 'content' } as React.CSSProperties;
 
 /** Hindi suggestions (Google Input Tools) for a word typed in English letters. */
 async function fetchHindi(word: string): Promise<string[] | null> {
@@ -140,7 +148,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
 
     // Auto-resize textarea to fit content height dynamically
     useLayoutEffect(() => {
-        if (as === 'textarea' && inputRef.current) {
+        if (as === 'textarea' && !NATIVE_AUTOGROW && inputRef.current) {
             const el = inputRef.current;
             const scrollPos = window.scrollY;
             el.style.height = 'auto';
@@ -161,6 +169,8 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     // If not enabled or no Formatting, we always stay in "Edit" mode effectively (render input usually)
     // But for consistency, we can just use the toggle logic if enablePreview is true.
     const showPreview = enablePreview && !isEditing && hasFormatting;
+    // The rendered maths under the box can lag a keystroke behind; the typing itself never waits for it.
+    const previewValue = useDeferredValue(value);
 
     // Hindi typing. A word goes to the transliteration service when space follows it,
     // and the answer can arrive after more keys have been typed. So the space goes in at
@@ -315,12 +325,13 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         className={cn(className, typingMode === 'hi' ? "border-orange-200 focus-visible:ring-orange-200" : "")}
                         autoComplete="off"
                         {...props}
+                        style={as === 'textarea' && NATIVE_AUTOGROW ? { ...AUTOGROW_STYLE, ...props.style } : props.style}
                     />
                     {livePreview && value && (value.includes('$') || value.includes('![')) && (
                         <div className="flex items-start gap-2 border-t border-dashed border-slate-200 px-3 pb-2 pt-1.5 text-left">
                             <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-slate-500">Preview</span>
                             <div className="min-w-0 flex-1 overflow-x-auto text-[15px] text-slate-800 [&_.katex-display]:!my-1 [&_.katex-display]:!text-left">
-                                <LatexRenderer>{value}</LatexRenderer>
+                                <LatexRenderer>{previewValue}</LatexRenderer>
                             </div>
                         </div>
                     )}

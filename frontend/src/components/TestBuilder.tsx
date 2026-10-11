@@ -1,5 +1,5 @@
 import { TestBuilderMinimap } from './TestBuilderMinimap';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -10,7 +10,7 @@ import {
     Plus, Trash2, Save, ArrowLeft, Loader2, Upload, X, Check, ChevronsUpDown, Cloud, CloudOff, Info, PenLine,
     MoreHorizontal, Monitor, ChevronDown, ChevronUp, Grip, Type, Smartphone, ExternalLink, Sparkles, Calculator,
     WifiOff, Layers, Building2, Sigma, BookOpen, Eraser, FileQuestion, AlertTriangle, Lock, Globe, Clock,
-    SlidersHorizontal, Copy, Combine, Timer,
+    SlidersHorizontal, Copy, Combine, Timer, Scissors, FoldVertical,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -42,7 +42,8 @@ import slugify from 'slugify';
 
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import { SYPAD_INSERT_EVENT } from './math-keyboard/mathSyntax';
-import { QuestionCard, PassageHeader, PassageFooter, InsertBetween, type PhotoBanner } from './test-builder/QuestionCard';
+import { QuestionCard, PassageHeader, PassageFooter, type PhotoBanner } from './test-builder/QuestionCard';
+import { GapMenu } from './test-builder/GapMenu';
 import {
     type QuestionState, DEFAULT_QUESTION, applyPhotoResult, questionIssue,
 } from './test-builder/builderUtils';
@@ -171,6 +172,153 @@ function Segmented<T extends string>({ value, onChange, options, label }: {
 type PhotoTarget = { id: number; label: string; expectedType?: 'single' | 'multiple' | 'numerical' };
 type PhotoFill = { previous: QuestionState; banner: PhotoBanner };
 
+const MemoRichTextEditor = React.memo(RichTextEditor);
+
+/* ── Speed: typing in one question re-renders that question only ─────────────
+   Rows and gaps are memoised and get one stable `actions` object, whose methods
+   always run the builder's latest handlers. Before this, every keystroke redrew
+   every card on the page (60 questions: seconds per key on a slow laptop). */
+
+type RowActions = {
+    update: (id: number, fn: (q: QuestionState) => QuestionState) => void;
+    remove: (sectionId: string | null, id: number) => void;
+    setPassage: (sectionId: string | null, groupId: string, content: string) => void;
+    addToPassage: (sectionId: string | null, id: number) => void;
+    insertQuestion: (sectionId: string | null, at: number) => void;
+    splitSection: (sectionId: string, at: number) => void;
+    fillFromPhoto: (target: PhotoTarget) => void;
+    undoPhoto: (id: number) => void;
+    dismissPhoto: (id: number) => void;
+    openSyPad: (key?: string) => void;
+    cloudUpload: (e: React.MouseEvent, key: string) => void;
+    snip: (apply: (base64: string) => void) => void;
+    typingModeUsed: (mode: 'en' | 'hi') => void;
+    registerRef: (key: string, el: IMEInputHandle | null) => void;
+    dragStart: (index: number, e: React.DragEvent) => void;
+    drop: (index: number, e: React.DragEvent) => void;
+};
+
+type AnyAction = (...args: never[]) => unknown;
+
+/** One object for the component's lifetime; each call goes to the newest `impl`. */
+function useStableActions<T extends Record<keyof T, AnyAction>>(impl: T): T {
+    const ref = useRef(impl);
+    ref.current = impl;
+    return useMemo(() => {
+        const stable = {} as T;
+        (Object.keys(impl) as (keyof T)[]).forEach(key => {
+            const call = (...args: unknown[]) => (ref.current[key] as unknown as (...a: unknown[]) => unknown)(...args);
+            stable[key] = call as unknown as T[keyof T];
+        });
+        return stable;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+}
+
+/** One question with its passage framing (both modes). */
+const QuestionRow = React.memo(function QuestionRow({
+    q, number, index, sectionId, isStartOfGroup, isEndOfGroup, canRemove, deleting, isNew, flashing, banner, draggable, isDragging, actions,
+}: {
+    q: QuestionState;
+    number: number;
+    index: number;
+    /** null in a test without sections. */
+    sectionId: string | null;
+    isStartOfGroup: boolean;
+    isEndOfGroup: boolean;
+    canRemove: boolean;
+    deleting: boolean;
+    isNew: boolean;
+    flashing: boolean;
+    banner?: PhotoBanner;
+    draggable: boolean;
+    isDragging: boolean;
+    actions: RowActions;
+}) {
+    const refKey = `${sectionId === null ? 'q' : 'sq'}-${q.id}`;
+    return (
+        <div
+            data-minimap-id={q.id}
+            className={cn(
+                'scroll-mt-24 transition-shadow duration-500',
+                deleting && 'animate-ios-delete',
+                isNew && 'animate-ios-insert',
+                flashing && 'rounded-2xl ring-2 ring-amber-400 ring-offset-4 ring-offset-slate-50',
+            )}
+        >
+            {isStartOfGroup && (
+                <PassageHeader
+                    value={q.passageContent || ''}
+                    typingMode={q.typingMode}
+                    onChange={content => actions.setPassage(sectionId, q.groupId!, content)}
+                    registerRef={actions.registerRef}
+                    refKey={`${refKey}-passage`}
+                />
+            )}
+            <QuestionCard
+                q={q}
+                number={number}
+                refKey={refKey}
+                update={fn => actions.update(q.id, fn)}
+                onRemove={() => actions.remove(sectionId, q.id)}
+                canRemove={canRemove}
+                isInGroup={!!q.groupId}
+                isEndOfGroup={isEndOfGroup}
+                registerRef={actions.registerRef}
+                onOpenSyPad={actions.openSyPad}
+                onCloudUpload={actions.cloudUpload}
+                onSnip={actions.snip}
+                onFillFromPhoto={() => actions.fillFromPhoto({
+                    id: q.id,
+                    label: `Question ${number}`,
+                    expectedType: q.type === 'multiple' || q.type === 'numerical' ? q.type : undefined,
+                })}
+                onTypingModeUsed={actions.typingModeUsed}
+                photoBanner={banner}
+                onUndoPhoto={banner ? () => actions.undoPhoto(q.id) : undefined}
+                onDismissPhotoBanner={banner ? () => actions.dismissPhoto(q.id) : undefined}
+                drag={draggable ? {
+                    onDragStart: e => actions.dragStart(index, e),
+                    onDragOver: e => e.preventDefault(),
+                    onDrop: e => actions.drop(index, e),
+                    isDragging,
+                } : undefined}
+            />
+            {isEndOfGroup && <PassageFooter onAdd={() => actions.addToPassage(sectionId, q.id)} />}
+        </div>
+    );
+});
+
+/** The "+" between question `at` and `at + 1` (1-based). In a section it can also split the section there. */
+const QuestionGap = React.memo(function QuestionGap({ sectionId, at, total, insidePassage, actions }: {
+    sectionId: string | null;
+    at: number;
+    total: number;
+    insidePassage: boolean;
+    actions: RowActions;
+}) {
+    const insert = { key: 'insert', title: 'New question here', icon: Plus, onSelect: () => actions.insertQuestion(sectionId, at) };
+    if (sectionId === null) return <GapMenu label="Add a question here" options={[insert]} />;
+    const moving = total - at === 1 ? `Question ${total} moves` : `Questions ${at + 1}–${total} move`;
+    return (
+        <GapMenu
+            label="Add a question or split the section here"
+            caption={`Between question ${at} and ${at + 1}`}
+            options={[
+                insert,
+                {
+                    key: 'split',
+                    title: 'Split section here',
+                    icon: Scissors,
+                    detail: insidePassage ? 'Not inside a passage — its questions stay together' : `${moving} to a new section below`,
+                    disabled: insidePassage,
+                    onSelect: () => actions.splitSection(sectionId, at),
+                },
+            ]}
+        />
+    );
+});
+
 export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImport }: TestBuilderProps) {
     const { user, profile, isAdmin } = useAuth();
     const { openAuthModal } = useAuthModal();
@@ -250,6 +398,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (timedTotal) setTime(timedTotal);
     }, [timedTotal]);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    // A section just added (slides in) / just merged or split (rings briefly).
+    const [freshSectionId, setFreshSectionId] = useState<string | null>(null);
+    const [flashSectionId, setFlashSectionId] = useState<string | null>(null);
     const [swappedSections, setSwappedSections] = useState<Set<string>>(new Set());
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
     const [deletingSections, setDeletingSections] = useState<Set<string>>(new Set());
@@ -531,26 +682,35 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
         // For new tests (guest or user creating new), save to localStorage
         if (!isEditMode) {
+            // Writing a long paper (pictures included) takes a moment, so it waits for an
+            // idle moment instead of landing in the middle of typing.
+            const hasIdle = typeof window.requestIdleCallback === 'function';
+            let idleHandle = 0;
             const timer = setTimeout(() => {
                 // Prevent saving empty draft immediately on mount which could clobber loaded JSON
                 if (!title && questions.length === 1 && questions[0].question === '') return;
 
-                const draftData = {
-                    title,
-                    description,
-                    revision_notes: revisionNotes,
-                    institution_name: institutionName,
-                    institution_logo: institutionLogo,
-                    duration: time,
-                    is_public: isPublic,
-                    questions,
-                    selectedCategories,
-                    enable_section_mode: enableSectionMode,
-                    sections
+                const write = () => {
+                    const draftData = {
+                        title,
+                        description,
+                        revision_notes: revisionNotes,
+                        institution_name: institutionName,
+                        institution_logo: institutionLogo,
+                        duration: time,
+                        is_public: isPublic,
+                        questions,
+                        selectedCategories,
+                        enable_section_mode: enableSectionMode,
+                        sections
+                    };
+                    localStorage.setItem('create_test_draft', JSON.stringify(draftData));
                 };
-                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+                if (hasIdle) idleHandle = window.requestIdleCallback(write, { timeout: 1500 });
+                else write();
             }, 1000);
-            return () => clearTimeout(timer);
+            // Cancel a pending idle write too: after a save it would bring the draft back.
+            return () => { clearTimeout(timer); if (idleHandle) window.cancelIdleCallback(idleHandle); };
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [questions, sections, enableSectionMode, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo, mergedSections]);
@@ -790,10 +950,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             });
         }, 400);
     };
-
-    /** Functional update of one question, so late async edits (Hindi typing, uploads) never overwrite newer ones. */
-    const updateQuestionAt = (index: number, fn: (q: QuestionState) => QuestionState) =>
-        setQuestions(prev => prev.map((q, i) => (i === index ? fn(q) : q)));
 
     const updatePassageContent = (groupId: string, content: string) => {
         setQuestions(prev => prev.map(q =>
@@ -1187,7 +1343,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }));
     };
 
-    const handleAddSection = (insertAtIndex?: number) => {
+    /** Name and colour for a new section: the first unused "Section A…Z" and the first unused colour. */
+    const nextSectionLook = () => {
         // Find the first unused letter from A to Z for the section name
         let nextLetter = 'A';
         for (let i = 0; i < 26; i++) {
@@ -1205,15 +1362,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         while (usedColors.has(nextColorIndex)) {
             nextColorIndex++;
         }
+        return { name: `Section ${nextLetter}`, colorIndex: nextColorIndex };
+    };
 
+    const ringSection = (id: string) => {
+        setFlashSectionId(id);
+        setTimeout(() => setFlashSectionId(current => (current === id ? null : current)), 1400);
+    };
+
+    const handleAddSection = (insertAtIndex?: number) => {
+        const { name, colorIndex } = nextSectionLook();
         const newSection: SectionState = {
             id: `section-${Date.now()}`,
-            name: `Section ${nextLetter}`,
+            name,
             questions: [{ ...DEFAULT_QUESTION, id: Math.random() }],
             marks_per_question: 1,
             negative_marks: 0,
             question_type: 'single',
-            colorIndex: nextColorIndex,
+            colorIndex,
             // Timed sections: a new section starts with the previous one's minutes.
             ...(sectionTiming ? { duration_minutes: Number(sections[(typeof insertAtIndex === 'number' ? insertAtIndex : sections.length) - 1]?.duration_minutes) || 15 } : {})
         };
@@ -1225,6 +1391,154 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         } else {
             setSections([...sections, newSection]);
         }
+        setFreshSectionId(newSection.id);
+        setTimeout(() => setFreshSectionId(current => (current === newSection.id ? null : current)), 1500);
+    };
+
+    /**
+     * Merges section `upperIndex + 1` into the one above it: its questions go after the upper
+     * section's last question, in order, none lost. The upper section keeps its name and rules;
+     * timed sections keep the total by adding the minutes. Undo puts the lower section back.
+     */
+    const handleMergeSections = (upperIndex: number) => {
+        const upper = sections[upperIndex];
+        const lower = sections[upperIndex + 1];
+        if (!upper || !lower) return;
+        const movedIds = new Set(lower.questions.map(q => q.id));
+        const groupsBefore = mergedSections;
+        const upperName = upper.name?.trim() || `Section ${upperIndex + 1}`;
+        const lowerName = lower.name?.trim() || `Section ${upperIndex + 2}`;
+
+        setSections(prev => {
+            const ui = prev.findIndex(s => s.id === upper.id);
+            if (ui < 0 || prev[ui + 1]?.id !== lower.id) return prev;
+            const a = prev[ui];
+            const b = prev[ui + 1];
+            const merged: SectionState = {
+                ...a,
+                questions: [...a.questions, ...b.questions],
+                ...(sectionTiming ? { duration_minutes: (Number(a.duration_minutes) || 0) + (Number(b.duration_minutes) || 0) } : {}),
+            };
+            return [...prev.slice(0, ui), merged, ...prev.slice(ui + 2)];
+        });
+        // "Combine section marks" groups can't point at a section that no longer exists.
+        setMergedSections(prev => prev.map(g => (g.section_ids.includes(lower.id) ? { ...g, section_ids: g.section_ids.filter(id => id !== lower.id) } : g)));
+        setCollapsedSections(prev => {
+            if (!prev.has(upper.id) && !prev.has(lower.id)) return prev;
+            const next = new Set(prev);
+            next.delete(upper.id);
+            next.delete(lower.id);
+            return next;
+        });
+        ringSection(upper.id);
+
+        const undo = () => {
+            setSections(prev => {
+                const ui = prev.findIndex(s => s.id === upper.id);
+                if (ui < 0) return prev;
+                const a = prev[ui];
+                const back = a.questions.filter(q => movedIds.has(q.id));
+                const keep = a.questions.filter(q => !movedIds.has(q.id));
+                if (!back.length || !keep.length) return prev;
+                const restoredUpper: SectionState = {
+                    ...a,
+                    questions: keep,
+                    ...(sectionTiming ? { duration_minutes: Math.max(1, (Number(a.duration_minutes) || 0) - (Number(lower.duration_minutes) || 0)) } : {}),
+                };
+                return [...prev.slice(0, ui), restoredUpper, { ...lower, questions: back }, ...prev.slice(ui + 1)];
+            });
+            setMergedSections(groupsBefore);
+            toast.success(`${lowerName} is back`);
+        };
+
+        const n = lower.questions.length;
+        toast.success(`${lowerName} merged into ${upperName}`, {
+            description: `${n} question${n === 1 ? '' : 's'} now follow question ${upper.questions.length}.`,
+            duration: 6000,
+            action: { label: 'Undo', onClick: undo },
+        });
+    };
+
+    /**
+     * Splits a section before question `at + 1`: those questions and everything after them
+     * become a new section right below, with the same marks and question type. Timed sections
+     * share the minutes by question count. Never splits a passage. Undo joins them again.
+     */
+    const handleSplitSection = (sectionId: string, at: number) => {
+        const source = sections.find(s => s.id === sectionId);
+        if (!source || at <= 0 || at >= source.questions.length) return;
+        const before = source.questions[at - 1];
+        const after = source.questions[at];
+        if (before.groupId && before.groupId === after.groupId) {
+            toast.error('A passage’s questions stay together — split before or after the passage.');
+            return;
+        }
+
+        const total = source.questions.length;
+        const keep = source.questions.slice(0, at);
+        const moved = source.questions.slice(at);
+        const { name, colorIndex } = nextSectionLook();
+        let keptMinutes: number | undefined;
+        let newMinutes: number | undefined;
+        if (sectionTiming) {
+            const minutes = Number(source.duration_minutes) || 0;
+            newMinutes = Math.max(1, Math.round((minutes * moved.length) / total));
+            keptMinutes = Math.max(1, minutes - newMinutes);
+        }
+
+        const newSection: SectionState = {
+            id: `section-${Date.now()}`,
+            name,
+            colorIndex,
+            marks_per_question: source.marks_per_question,
+            negative_marks: source.negative_marks,
+            question_type: source.question_type,
+            questions: moved,
+            ...(sectionTiming ? { duration_minutes: newMinutes } : {}),
+        };
+        // "Answer any 5" can't stay above the number of questions left.
+        const limit = source.attempt_control;
+        const keptLimit = limit && Number(limit.max_attempts) > keep.length ? { ...limit, max_attempts: keep.length } : limit;
+        const movedIds = new Set(moved.map(q => q.id));
+
+        setSections(prev => {
+            const si = prev.findIndex(s => s.id === sectionId);
+            if (si < 0) return prev;
+            const s = prev[si];
+            const updated: SectionState = {
+                ...s,
+                questions: s.questions.filter(q => !movedIds.has(q.id)),
+                ...(sectionTiming ? { duration_minutes: keptMinutes } : {}),
+                ...(limit ? { attempt_control: keptLimit } : {}),
+            };
+            return [...prev.slice(0, si), updated, { ...newSection, questions: s.questions.filter(q => movedIds.has(q.id)) }, ...prev.slice(si + 1)];
+        });
+        ringSection(newSection.id);
+
+        const undo = () => {
+            setSections(prev => {
+                const si = prev.findIndex(s => s.id === sectionId);
+                const ni = prev.findIndex(s => s.id === newSection.id);
+                if (si < 0 || ni < 0) return prev;
+                const s = prev[si];
+                const n = prev[ni];
+                const rejoined: SectionState = {
+                    ...s,
+                    questions: [...s.questions, ...n.questions],
+                    ...(sectionTiming ? { duration_minutes: (Number(s.duration_minutes) || 0) + (Number(n.duration_minutes) || 0) } : {}),
+                    ...(limit ? { attempt_control: limit } : {}),
+                };
+                return prev.filter(x => x.id !== newSection.id).map(x => (x.id === sectionId ? rejoined : x));
+            });
+            setMergedSections(prev => prev.map(g => (g.section_ids.includes(newSection.id) ? { ...g, section_ids: g.section_ids.filter(id => id !== newSection.id) } : g)));
+            toast.success(`${source.name?.trim() || 'Section'} is whole again`);
+        };
+
+        toast.success(moved.length === 1 ? `Question ${total} is now ${name}` : `Questions ${at + 1}–${total} are now ${name}`, {
+            description: 'Rename it in its header if you like.',
+            duration: 6000,
+            action: { label: 'Undo', onClick: undo },
+        });
     };
 
     const handleRemoveSection = (index: number) => {
@@ -1345,12 +1659,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }, 400);
     };
 
-    const updateSectionQuestionAt = (sectionIndex: number, qIndex: number, fn: (q: QuestionState) => QuestionState) =>
-        setSections(prev => prev.map((s, i) => (i !== sectionIndex ? s : {
-            ...s,
-            questions: s.questions.map((q, j) => (j === qIndex ? fn(q) : q)),
-        })));
-
     const updatePassageContentInSection = (sectionIndex: number, groupId: string, content: string) => {
         setSections(prev => prev.map((s, i) => (i !== sectionIndex ? s : {
             ...s,
@@ -1387,10 +1695,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     /* ── Fill from photo ───────────────────────────────────────────────────── */
 
-    /** Applies `fn` to the question with this id, wherever it lives (flat list or a section). */
+    /**
+     * Applies `fn` to the question with this id, wherever it lives (flat list or a section).
+     * Functional and by id, so late async edits (Hindi typing, uploads) land on the right
+     * question even after it moved; untouched sections and questions keep their identity.
+     */
     const updateQuestionById = useCallback((id: number, fn: (q: QuestionState) => QuestionState) => {
         if (enableSectionMode) {
-            setSections(prev => prev.map(s => ({ ...s, questions: s.questions.map(q => (q.id === id ? fn(q) : q)) })));
+            setSections(prev => prev.map(s => (s.questions.some(q => q.id === id)
+                ? { ...s, questions: s.questions.map(q => (q.id === id ? fn(q) : q)) }
+                : s)));
         } else {
             setQuestions(prev => prev.map(q => (q.id === id ? fn(q) : q)));
         }
@@ -1438,7 +1752,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     /* ── Readiness: what still blocks saving ───────────────────────────────── */
 
-    const allQuestions = enableSectionMode ? sections.flatMap(s => s.questions) : questions;
+    const allQuestions = useMemo(
+        () => (enableSectionMode ? sections.flatMap(s => s.questions) : questions),
+        [enableSectionMode, sections, questions],
+    );
 
     /* ── Marking: one named choice over the whole paper, and the total it adds up to ──
        Per-question overrides still win; picking a named scheme rewrites them all. */
@@ -1487,6 +1804,61 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setTimeout(() => setFlashId(null), 1800);
     }
 
+    // What question rows and gaps can do. Ids, not positions: a row's position can change
+    // without the row re-rendering, its question's id can't.
+    const sectionIndexOf = (sectionId: string) => sections.findIndex(s => s.id === sectionId);
+    const rowActions = useStableActions<RowActions>({
+        update: updateQuestionById,
+        remove: (sectionId, id) => {
+            if (sectionId === null) {
+                const index = questions.findIndex(q => q.id === id);
+                if (index >= 0) handleRemoveQuestion(index);
+                return;
+            }
+            const sIdx = sectionIndexOf(sectionId);
+            const qIdx = sIdx < 0 ? -1 : sections[sIdx].questions.findIndex(q => q.id === id);
+            if (qIdx >= 0) handleRemoveQuestionFromSection(sIdx, qIdx);
+        },
+        setPassage: (sectionId, groupId, content) => {
+            if (sectionId === null) updatePassageContent(groupId, content);
+            else {
+                const sIdx = sectionIndexOf(sectionId);
+                if (sIdx >= 0) updatePassageContentInSection(sIdx, groupId, content);
+            }
+        },
+        addToPassage: (sectionId, id) => {
+            if (sectionId === null) {
+                const index = questions.findIndex(q => q.id === id);
+                if (index >= 0) handleAddSubQuestion(index);
+                return;
+            }
+            const sIdx = sectionIndexOf(sectionId);
+            const qIdx = sIdx < 0 ? -1 : sections[sIdx].questions.findIndex(q => q.id === id);
+            if (qIdx >= 0) handleAddSubQuestionToSection(sIdx, qIdx);
+        },
+        insertQuestion: (sectionId, at) => {
+            if (sectionId === null) handleAddQuestion(at);
+            else {
+                const sIdx = sectionIndexOf(sectionId);
+                if (sIdx >= 0) handleAddQuestionToSection(sIdx, at);
+            }
+        },
+        splitSection: handleSplitSection,
+        fillFromPhoto: setPhotoTarget,
+        undoPhoto: undoPhotoFill,
+        dismissPhoto: dismissPhotoFill,
+        openSyPad,
+        cloudUpload: openCloudUploadModal,
+        snip: openSnip,
+        typingModeUsed: setLastTypingMode,
+        registerRef,
+        dragStart: (index, e) => {
+            e.dataTransfer.setData('questionIndex', index.toString());
+            setDraggingIndex(index);
+        },
+        drop: (index, e) => handleDropQuestion(e, index),
+    });
+
     // Show loading screen while fetching test data
     if (loading && isEditMode && !title) {
         return (
@@ -1509,77 +1881,35 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const sypadTargetLabel = photoTarget?.label ?? '';
     const showInstructions = instructionsOpen ?? !!revisionNotes;
 
-    /* ── Renders one question with its passage framing (both modes) ─────────── */
-    const renderQuestion = (
-        q: QuestionState,
-        list: QuestionState[],
-        index: number,
-        opts: {
-            number: number;
-            refPrefix: string;
-            update: (fn: (q: QuestionState) => QuestionState) => void;
-            onRemove: () => void;
-            canRemove: boolean;
-            onPassageChange: (content: string) => void;
-            onAddToPassage: () => void;
-            drag?: React.ComponentProps<typeof QuestionCard>['drag'];
-        },
-    ) => {
+    /* ── One question row and the gap after it (both modes) ─────────────────── */
+    const renderQuestions = (list: QuestionState[], sectionId: string | null) => list.map((q, index) => {
         const prevGroupId = index > 0 ? list[index - 1].groupId : undefined;
         const nextGroupId = index < list.length - 1 ? list[index + 1].groupId : undefined;
         const isInGroup = !!q.groupId;
-        const isStartOfGroup = isInGroup && q.groupId !== prevGroupId;
-        const isEndOfGroup = isInGroup && q.groupId !== nextGroupId;
-        const fill = photoFills[String(q.id)];
-        const refKey = `${opts.refPrefix}-${q.id}`;
-
         return (
-            <div
-                data-minimap-id={q.id}
-                className={cn(
-                    'scroll-mt-24 transition-shadow duration-500',
-                    deletingQuestions.has(q.id) && 'animate-ios-delete',
-                    newlyAddedQuestionIds.has(q.id) && 'animate-ios-insert',
-                    flashId === String(q.id) && 'rounded-2xl ring-2 ring-amber-400 ring-offset-4 ring-offset-slate-50',
-                )}
-            >
-                {isStartOfGroup && (
-                    <PassageHeader
-                        value={q.passageContent || ''}
-                        typingMode={q.typingMode}
-                        onChange={opts.onPassageChange}
-                        registerRef={registerRef}
-                        refKey={`${refKey}-passage`}
-                    />
-                )}
-                <QuestionCard
+            <React.Fragment key={q.id}>
+                <QuestionRow
                     q={q}
-                    number={opts.number}
-                    refKey={refKey}
-                    update={opts.update}
-                    onRemove={opts.onRemove}
-                    canRemove={opts.canRemove}
-                    isInGroup={isInGroup}
-                    isEndOfGroup={isEndOfGroup}
-                    registerRef={registerRef}
-                    onOpenSyPad={openSyPad}
-                    onCloudUpload={openCloudUploadModal}
-                    onSnip={openSnip}
-                    onFillFromPhoto={() => setPhotoTarget({
-                        id: q.id,
-                        label: `Question ${opts.number}`,
-                        expectedType: q.type === 'multiple' || q.type === 'numerical' ? q.type : undefined,
-                    })}
-                    onTypingModeUsed={setLastTypingMode}
-                    photoBanner={fill?.banner}
-                    onUndoPhoto={fill ? () => undoPhotoFill(q.id) : undefined}
-                    onDismissPhotoBanner={fill ? () => dismissPhotoFill(q.id) : undefined}
-                    drag={opts.drag}
+                    number={index + 1}
+                    index={index}
+                    sectionId={sectionId}
+                    isStartOfGroup={isInGroup && q.groupId !== prevGroupId}
+                    isEndOfGroup={isInGroup && q.groupId !== nextGroupId}
+                    canRemove={list.length > 1}
+                    deleting={deletingQuestions.has(q.id)}
+                    isNew={newlyAddedQuestionIds.has(q.id)}
+                    flashing={flashId === String(q.id)}
+                    banner={photoFills[String(q.id)]?.banner}
+                    draggable={sectionId === null}
+                    isDragging={sectionId === null && draggingIndex !== null && draggingIndex !== index}
+                    actions={rowActions}
                 />
-                {isEndOfGroup && <PassageFooter onAdd={opts.onAddToPassage} />}
-            </div>
+                {index < list.length - 1
+                    ? <QuestionGap sectionId={sectionId} at={index + 1} total={list.length} insidePassage={isInGroup && q.groupId === nextGroupId} actions={rowActions} />
+                    : <div className={sectionId === null ? 'h-4' : 'h-3'} />}
+            </React.Fragment>
         );
-    };
+    });
 
     return (
         <div className="mx-auto w-full max-w-4xl px-3 pb-6 pt-5 sm:px-6 sm:pt-8 lg:pr-[132px] xl:max-w-5xl" style={{ overflowAnchor: 'none' }}>
@@ -1598,7 +1928,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     grid-template-rows: 0fr;
                     opacity: 0;
                     transition: grid-template-rows 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
-                    will-change: grid-template-rows, opacity;
                 }
                 .ios-collapse-transition.collapsed { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
                 .ios-collapse-transition.expanded { grid-template-rows: 1fr; opacity: 1; }
@@ -1945,7 +2274,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     </SettingRow>
                     {showInstructions && (
                         <div className="border-t border-slate-100 p-4 sm:p-5">
-                            <RichTextEditor
+                            <MemoRichTextEditor
                                 value={revisionNotes}
                                 onChange={setRevisionNotes}
                                 placeholder="Add detailed instructions, syllabus, or summary here..."
@@ -2240,13 +2569,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     )}
 
                     {enableSectionMode ? (
-                        <div className="space-y-8">
+                        <div>
                             {sections.map((section, sIdx) => {
                                 const colorIndex = section.colorIndex !== undefined ? section.colorIndex : sIdx;
                                 const tone = SECTION_TONES[colorIndex % SECTION_TONES.length];
-                                const timestampStr = section.id.startsWith('section-') ? section.id.split('-')[1] : null;
-                                const timestamp = timestampStr ? parseInt(timestampStr, 10) : null;
-                                const isNew = timestamp ? (Date.now() - timestamp < 1500) : false;
+                                const isNew = freshSectionId === section.id;
                                 const isCollapsed = collapsedSections.has(section.id);
                                 const sectionMarks = section.questions.reduce((sum, q) => sum + (parseFloat(String(q.marks ?? 0)) || 0), 0);
 
@@ -2262,6 +2589,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 tone.ring,
                                                 swappedSections.has(section.id) && 'scale-[1.01] shadow-lg brightness-105',
                                                 swapGlowSections.has(section.id) && 'section-swap-glow',
+                                                flashSectionId === section.id && 'ring-2 ring-sky-400/70',
                                             )}
                                         >
                                             <div className={cn('flex flex-wrap items-center gap-2 px-3 py-3 sm:flex-nowrap sm:px-4', tone.head)}>
@@ -2397,26 +2725,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             <div className={`ios-collapse-transition ${isCollapsed ? 'collapsed' : 'expanded'}`}>
                                                 <div className="overflow-hidden">
                                                     <div className="space-y-0 p-2 sm:p-3">
-                                                        {section.questions.map((q, qIdx) => (
-                                                            <React.Fragment key={q.id}>
-                                                                {renderQuestion(q, section.questions, qIdx, {
-                                                                    number: qIdx + 1,
-                                                                    refPrefix: 'sq',
-                                                                    update: fn => updateSectionQuestionAt(sIdx, qIdx, fn),
-                                                                    onRemove: () => handleRemoveQuestionFromSection(sIdx, qIdx),
-                                                                    canRemove: section.questions.length > 1,
-                                                                    onPassageChange: content => updatePassageContentInSection(sIdx, q.groupId!, content),
-                                                                    onAddToPassage: () => handleAddSubQuestionToSection(sIdx, qIdx),
-                                                                })}
-                                                                {qIdx < section.questions.length - 1
-                                                                    ? <InsertBetween onInsert={() => handleAddQuestionToSection(sIdx, qIdx + 1)} />
-                                                                    : <div className="h-3" />}
-                                                            </React.Fragment>
-                                                        ))}
+                                                        {renderQuestions(section.questions, section.id)}
                                                         <button
                                                             type="button"
                                                             onClick={() => handleAddQuestionToSection(sIdx)}
-                                                            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 text-[15px] font-semibold text-sky-700 transition-colors hover:border-sky-400 hover:bg-sky-50"
+                                                            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 text-[15px] font-semibold text-sky-700 transition-colors hover:border-sky-400 hover:bg-sky-50"
                                                         >
                                                             <Plus className="h-5 w-5" /> Add question to {section.name?.trim() || `Section ${sIdx + 1}`}
                                                         </button>
@@ -2424,53 +2737,47 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 </div>
                                             </div>
                                         </div>
-                                        {sIdx < sections.length - 1 && (
-                                            <div className="absolute -bottom-7 right-4 z-10">
-                                                <button type="button" onClick={() => handleAddSection(sIdx + 1)} title="Insert a section here" aria-label="Insert a section here"
-                                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-900/[0.08] transition-[color,transform] hover:scale-110 hover:text-sky-700">
-                                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        {sIdx < sections.length - 1 && (() => {
+                                            const upperName = section.name?.trim() || `Section ${sIdx + 1}`;
+                                            const lower = sections[sIdx + 1];
+                                            const lowerName = lower.name?.trim() || `Section ${sIdx + 2}`;
+                                            const n = lower.questions.length;
+                                            return (
+                                                <GapMenu
+                                                    size="section"
+                                                    label="Add a section here or merge these two"
+                                                    caption={`Between ${upperName} and ${lowerName}`}
+                                                    options={[
+                                                        { key: 'new', title: 'New section here', icon: Layers, onSelect: () => handleAddSection(sIdx + 1) },
+                                                        {
+                                                            key: 'merge',
+                                                            title: 'Merge these two sections',
+                                                            icon: FoldVertical,
+                                                            detail: `${lowerName}’s ${n} question${n === 1 ? '' : 's'} go after the last question of ${upperName}`,
+                                                            onSelect: () => handleMergeSections(sIdx),
+                                                        },
+                                                    ]}
+                                                />
+                                            );
+                                        })()}
                                     </div>
                                 );
                             })}
                             <button
                                 type="button"
                                 onClick={() => handleAddSection()}
-                                className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 text-[15px] font-semibold text-slate-700 transition-colors hover:border-amber-400 hover:bg-amber-50"
+                                className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 text-[15px] font-semibold text-slate-700 transition-colors hover:border-amber-400 hover:bg-amber-50"
                             >
                                 <Layers className="h-5 w-5 text-amber-600" /> Add a new section
                             </button>
                         </div>
                     ) : (
                         <div>
-                            {questions.map((q, index) => (
-                                <React.Fragment key={q.id}>
-                                    {renderQuestion(q, questions, index, {
-                                        number: index + 1,
-                                        refPrefix: 'q',
-                                        update: fn => updateQuestionAt(index, fn),
-                                        onRemove: () => handleRemoveQuestion(index),
-                                        canRemove: questions.length > 1,
-                                        onPassageChange: content => updatePassageContent(q.groupId!, content),
-                                        onAddToPassage: () => handleAddSubQuestion(index),
-                                        drag: {
-                                            onDragStart: e => { e.dataTransfer.setData('questionIndex', index.toString()); setDraggingIndex(index); },
-                                            onDragOver: e => e.preventDefault(),
-                                            onDrop: e => handleDropQuestion(e, index),
-                                            isDragging: draggingIndex !== null && draggingIndex !== index,
-                                        },
-                                    })}
-                                    {index < questions.length - 1
-                                        ? <InsertBetween onInsert={() => handleAddQuestion(index + 1)} />
-                                        : <div className="h-4" />}
-                                </React.Fragment>
-                            ))}
+                            {renderQuestions(questions, null)}
                             <button
                                 type="button"
                                 onClick={handleAddQuestion}
-                                className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white/40 text-[16px] font-semibold text-sky-700 transition-colors hover:border-sky-400 hover:bg-sky-50"
+                                className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white/40 text-[16px] font-semibold text-sky-700 transition-colors hover:border-sky-400 hover:bg-sky-50"
                             >
                                 <Plus className="h-5 w-5" /> Add question
                             </button>
