@@ -664,7 +664,13 @@ export default function StudentDetailedResultModal({
                                                                     <div className="font-semibold text-indigo-600 dark:text-indigo-300 text-xs flex flex-col gap-1">
                                                                         <span>
                                                                             {q.type === 'numerical' ? (
-                                                                                `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
+                                                                                (() => {
+                                                                                    const ca = q.correctAnswer as any;
+                                                                                    if (ca == null) return '—';
+                                                                                    if (typeof ca !== 'object') return String(ca);
+                                                                                    if (ca.exactMatch) return String(ca.exactAnswers ?? '—');
+                                                                                    return `Between ${ca.min ?? '—'} and ${ca.max ?? '—'}`;
+                                                                                })()
                                                                             ) : Array.isArray(q.correctAnswer) ? (
                                                                                 (q.correctAnswer as string[]).join(', ')
                                                                             ) : (

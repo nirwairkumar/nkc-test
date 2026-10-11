@@ -1133,7 +1133,13 @@ const ResultsPage = () => {
                                   </span>
                                 </div>
 
-                                <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
+                                {(q as any).passageContent && (
+                                  <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed break-words p-3 rounded-md border bg-slate-50 dark:bg-slate-800/40 overflow-x-auto max-w-full custom-scrollbar">
+                                    <LatexRenderer>{(q as any).passageContent}</LatexRenderer>
+                                  </div>
+                                )}
+
+                                <div className="text-base font-medium text-slate-900 dark:text-slate-100 leading-relaxed break-words tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal] border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
                                   <LatexRenderer>{q.question || ""}</LatexRenderer>
                                 </div>
 
@@ -1197,7 +1203,13 @@ const ResultsPage = () => {
                                     <div className="font-semibold text-blue-900 flex flex-col gap-1 min-w-max">
                                       <span>
                                         {q.type === 'numerical' ? (
-                                          `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
+                                          (() => {
+                                            const ca = q.correctAnswer as any;
+                                            if (ca == null) return '—';
+                                            if (typeof ca !== 'object') return String(ca);
+                                            if (ca.exactMatch) return String(ca.exactAnswers ?? '—');
+                                            return `Between ${ca.min ?? '—'} and ${ca.max ?? '—'}`;
+                                          })()
                                         ) : Array.isArray(q.correctAnswer) ? (
                                           (q.correctAnswer as string[]).join(', ')
                                         ) : (
