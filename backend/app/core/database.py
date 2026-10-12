@@ -1,6 +1,7 @@
 import httpx
-from supabase import create_client, Client
+from supabase import Client
 from supabase.client import ClientOptions
+from supabase_auth import SyncGoTrueClient
 from app.core.config import settings
 from fastapi import Request
 
@@ -11,13 +12,52 @@ from fastapi import Request
 key_to_use = settings.SUPABASE_SERVICE_KEY if settings.SUPABASE_SERVICE_KEY else settings.SUPABASE_KEY
 
 # Set higher timeout values (e.g. 60 seconds) to prevent read timeouts on auth/SMTP calls and long queries.
+_http = httpx.Client(timeout=60.0)
+
 options = ClientOptions(
-    httpx_client=httpx.Client(timeout=60.0),
+    httpx_client=_http,
     postgrest_client_timeout=60,
-    storage_client_timeout=60
+    storage_client_timeout=60,
+    # The shared client never holds a user session, so it has nothing to refresh.
+    auto_refresh_token=False,
+    persist_session=False,
 )
 
-supabase: Client = create_client(settings.SUPABASE_URL, key_to_use, options=options)
+
+class _ServiceRoleClient(Client):
+    """
+    A supabase-py Client that stays on the service-role key for the life of the process.
+
+    The stock Client rewrites its own Authorization header to the user's access token
+    whenever its auth client signs someone in or refreshes a token. That is right in a
+    browser and wrong on a server where every request shares one client: one call to
+    /api/auth/login used to switch every later query in the process to that user under
+    RLS. Analytics, guest-candidate creation and result saves then returned 403 until
+    the server was redeployed. This hook is where the swap happens, so here it does
+    nothing. Sign people in with auth_client(), never with this client.
+    """
+
+    def _listen_to_auth_events(self, event, session) -> None:
+        return None
+
+
+supabase: Client = _ServiceRoleClient.create(settings.SUPABASE_URL, key_to_use, options=options)
+
+
+def auth_client() -> SyncGoTrueClient:
+    """
+    A fresh auth client for one request that creates a user session: login, sign-up,
+    token refresh, OAuth code exchange. The session stays on this throwaway object,
+    so the shared client above keeps its service-role key.
+    """
+    return SyncGoTrueClient(
+        url=str(supabase.auth_url),
+        headers=dict(supabase.options.headers),
+        auto_refresh_token=False,
+        persist_session=False,
+        http_client=_http,
+        flow_type=options.flow_type,
+    )
 
 
 def get_db(request: Request = None) -> Client:

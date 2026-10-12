@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.encoders import jsonable_encoder
-from app.core.database import supabase, get_db
+from app.core.database import supabase, get_db, auth_client
 from supabase import Client
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
@@ -44,7 +44,8 @@ class RefreshRequest(BaseModel):
 @router.post("/login", dependencies=[Depends(check_login_rate_limit)])
 async def login(payload: LoginRequest):
     try:
-        response = supabase.auth.sign_in_with_password({
+        # A fresh client per sign-in: the session must never land on the shared one.
+        response = auth_client().sign_in_with_password({
             "email": payload.email,
             "password": payload.password
         })
@@ -76,7 +77,7 @@ async def register(payload: RegisterRequest):
         }
         if payload.metadata:
             signup_data["options"] = {"data": payload.metadata}
-        response = supabase.auth.sign_up(signup_data)
+        response = auth_client().sign_up(signup_data)
         # Wrap and handle potential AuthResponse object
         if hasattr(response, "user"):
             user_data = jsonable_encoder(response.user)
@@ -99,7 +100,7 @@ async def logout():
 @router.post("/refresh")
 async def refresh_token(payload: RefreshRequest):
     try:
-        response = supabase.auth.refresh_session(payload.refresh_token)
+        response = auth_client().refresh_session(payload.refresh_token)
         if hasattr(response, "session") and response.session:
             session_data = jsonable_encoder(response.session)
             return {
@@ -295,7 +296,7 @@ async def exchange_code_for_session(payload: Dict[str, Any]):
             raise HTTPException(status_code=400, detail="Missing authorization code")
         
 
-        response = supabase.auth.exchange_code_for_session({"auth_code": code})
+        response = auth_client().exchange_code_for_session({"auth_code": code})
         
         if hasattr(response, "session") and response.session:
             session_data = jsonable_encoder(response.session)
