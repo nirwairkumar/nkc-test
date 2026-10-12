@@ -5,8 +5,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { getApiUrl } from '@/lib/getApiUrl';
+import { tokenStorage } from '@/utils/tokenStorage';
+
+// /api/ai/* requires a login (these calls burn Gemini budget). Thrown when there is no
+// token or the server rejects it, so the page asks the teacher to log in instead of
+// showing "Missing Authorization header".
+class SignInRequired extends Error {
+    expired: boolean;
+    constructor(expired: boolean) {
+        super(expired
+            ? 'Please log in again to use AI import — your session has expired.'
+            : 'Please log in to use AI import.');
+        this.name = 'SignInRequired';
+        this.expired = expired;
+    }
+}
+
+// Read the token the same way the rest of the app does (localStorage, then the shared
+// .testoza.com cookie) so a valid session isn't sent bare.
+const aiAuthHeaders = (): Record<string, string> => {
+    const { token } = tokenStorage.getTokens();
+    if (!token) throw new SignInRequired(true);
+    return { Authorization: `Bearer ${token}` };
+};
+
+// The reading-mode picker at the bottom-right of the file composer (backend `algorithm`).
+const READING_MODES = [
+    {
+        id: 'stateful',
+        name: 'High accuracy',
+        note: 'Recommended',
+        description: 'Reads one page at a time, in order. Best when a question or diagram runs onto the next page. Takes a little longer.',
+    },
+    {
+        id: 'parallel',
+        name: 'Fast',
+        note: null,
+        description: 'Reads all pages at once and is ready much sooner. A question split across two pages may come out incomplete.',
+    },
+] as const;
+
+const formatFileSize = (bytes: number) =>
+    bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 import { Input } from "@/components/ui/input";
-import { AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, Plus, Camera, X, Key, Zap, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight } from "lucide-react";
+import { AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, Plus, Camera, X, Key, Zap, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight, ChevronDown, LogIn } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -116,6 +158,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [loading, setLoading] = useState(false);
     const [generatingMore, setGeneratingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Set while we're waiting for the teacher to log in; the run they asked for starts after.
+    const [signInPrompt, setSignInPrompt] = useState<{ mode: ProcessMode; isContinue: boolean; expired: boolean } | null>(null);
+    const signInCardRef = useRef<HTMLDivElement>(null);
+    // The run is started from the mode cards at the bottom; bring the card into view so it's
+    // there if the teacher closes the login modal.
+    useEffect(() => {
+        if (signInPrompt) signInCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [signInPrompt]);
     const [parsedData, setParsedData] = useState<ParseResponse | null>(null);
     const [progress, setProgress] = useState('');
     const [showCamera, setShowCamera] = useState(false);
@@ -512,11 +562,26 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setMode(null);
     };
 
+    // Step 2 adds to the selection (Step 1's picker and drop replace it).
+    const appendFiles = async (raw: File[]) => {
+        const picked = keepReadableFiles(raw);
+        if (!picked.length) return;
+        const added: SelectedFile[] = [];
+        for (const rawFile of picked) {
+            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
+            const preview = await createPreview(file);
+            added.push({ file, id: generateId(), type: getFileType(file.name), preview });
+        }
+        setFiles(prev => [...prev, ...added]);
+        setError(null);
+    };
+
     const clearAllFiles = () => {
         setFiles([]);
         setAnswerKeyFile(null);
         setUploadType(null);
         setError(null);
+        setSignInPrompt(null);
         setParsedData(null);
         setMode(null);
         // Reset streaming state
@@ -779,6 +844,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             return;
         }
 
+        // Ask for a login before uploading anything. A teacher who was signed in (user set)
+        // but has no token left has an expired session.
+        if (!tokenStorage.getTokens().token) {
+            askToSignIn(selectedMode, isContinue, !!user);
+            return;
+        }
+
+        setSignInPrompt(null);
         setMode(selectedMode);
         if (isContinue) {
             setGeneratingMore(true);
@@ -795,6 +868,26 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             // Fall back to old method for "generate more" mode
             await handleLegacyProcess(selectedMode, isContinue);
         }
+    };
+
+    // The login modal's callback outlives this render, so it calls whatever handleProcess
+    // is current when the teacher finishes logging in.
+    const processRef = useRef(handleProcess);
+    processRef.current = handleProcess;
+
+    // AI import runs on the teacher's account. Open the login modal in place (the files
+    // and settings on screen stay put) and start the run they asked for once they're in.
+    const askToSignIn = (selectedMode: ProcessMode, isContinue: boolean, expired: boolean) => {
+        setError(null);
+        setSignInPrompt({ mode: selectedMode, isContinue, expired });
+        openAuthModal({
+            view: 'login',
+            onSuccess: () => {
+                setSignInPrompt(null);
+                toast.success("You're logged in — starting now.");
+                processRef.current(selectedMode, isContinue);
+            },
+        });
     };
 
     // ULTRA-FAST SSE Streaming Process
@@ -930,15 +1023,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const response = await fetch(`${baseUrl}/ai/parse-stream?${queryParams}`, {
                 method: 'POST',
                 // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
-                headers: {
-                    ...(localStorage.getItem('testoza_token')
-                        ? { Authorization: `Bearer ${localStorage.getItem('testoza_token')}` }
-                        : {})
-                },
+                headers: aiAuthHeaders(),
                 body: formData,
                 signal: abortCtrl.signal,
             });
 
+            if (response.status === 401) throw new SignInRequired(true);
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
                 throw new Error(errData?.detail || `Server error (${response.status})`);
@@ -1004,6 +1094,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         } catch (err: any) {
             if (err.name === 'AbortError') {
                 console.log('Processing cancelled by user');
+            } else if (err instanceof SignInRequired) {
+                askToSignIn(selectedMode, false, err.expired);
             } else {
                 console.error('Stream Error:', err);
                 setError(err.message || 'An error occurred during processing');
@@ -1064,14 +1156,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const response = await fetch(`${baseUrl}/ai/parse?${queryParams}`, {
                 method: 'POST',
                 // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
-                headers: {
-                    ...(localStorage.getItem('testoza_token')
-                        ? { Authorization: `Bearer ${localStorage.getItem('testoza_token')}` }
-                        : {})
-                },
+                headers: aiAuthHeaders(),
                 body: formData,
             });
 
+            if (response.status === 401) throw new SignInRequired(true);
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
                 throw new Error(errData?.detail || `Server error (${response.status})`);
@@ -1109,8 +1198,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 saveToHistory(data);
             }
         } catch (err: any) {
-            console.error('Process Error:', err);
-            setError(err.message || 'An unknown error occurred');
+            if (err instanceof SignInRequired) {
+                askToSignIn(selectedMode, isContinue, err.expired);
+            } else {
+                console.error('Process Error:', err);
+                setError(err.message || 'An unknown error occurred');
+            }
             setProgress('');
         } finally {
             setLoading(false);
@@ -1633,183 +1726,195 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     accept=".pdf,.png,.jpg,.jpeg,.webp,image/*"
                     multiple
                     onChange={async (e) => {
-                        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
-                        if (!selectedFiles.length) return;
-                        const newFiles: SelectedFile[] = [];
-                        for (const rawFile of selectedFiles) {
-                            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
-                            const preview = await createPreview(file);
-                            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                        }
-                        setFiles(prev => [...prev, ...newFiles]);
-                        setError(null);
+                        const picked = Array.from(e.target.files || []);
+                        e.target.value = '';
+                        await appendFiles(picked);
                     }}
                     className="hidden"
                 />
 
                 <div className="space-y-4">
-                    {/* Files Preview - Clean List View */}
-                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-slate-100 dark:border-slate-800/80 flex flex-col xs:flex-row gap-2 items-stretch xs:items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-slate-700"
-                                    onClick={() => {
-                                        if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
-                                            clearAllFiles();
-                                        }
-                                    }}
+                    {/* Header: back, title, clear */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Back"
+                                className="h-8 w-8 -ml-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-100"
+                                onClick={() => {
+                                    if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
+                                        clearAllFiles();
+                                    }
+                                }}
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                            <h1 className="text-[15px] font-semibold text-slate-800 dark:text-slate-100 truncate">Selected files</h1>
+                            <span className="ml-1 text-[11px] font-medium tabular-nums text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-px">
+                                {files.length}
+                            </span>
+                        </div>
+                        {files.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={clearAllFiles}
+                                className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors px-2 py-1 rounded-md"
+                            >
+                                Clear all
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Composer: attached files on top, actions along the bottom edge */}
+                    <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                            appendFiles(Array.from(e.dataTransfer.files || []));
+                        }}
+                        className={`relative rounded-2xl border bg-white dark:bg-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)] transition-[border-color,box-shadow] duration-200 ${
+                            isDragging
+                                ? 'border-indigo-400 ring-4 ring-indigo-100 dark:ring-indigo-900/40'
+                                : 'border-slate-200 dark:border-slate-800'
+                        }`}
+                    >
+                        <div className={`p-3 grid grid-cols-1 gap-2 ${files.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+                            {files.map((fileObj) => (
+                                <div
+                                    key={fileObj.id}
+                                    className="relative flex items-center gap-3 min-w-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-2 pr-10"
                                 >
-                                    <ArrowLeft className="w-4 h-4" />
-                                </Button>
-                                <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-                                    Selected {uploadType === 'document' ? 'Document' : 'Images'} ({files.length})
+                                    {fileObj.preview ? (
+                                        <img
+                                            src={fileObj.preview}
+                                            alt=""
+                                            className="w-10 h-10 rounded-lg object-cover border border-slate-200/80 dark:border-slate-800 shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0">
+                                            <FileText className="w-5 h-5" />
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-100 truncate" title={fileObj.file.name}>
+                                            {fileObj.file.name}
+                                        </p>
+                                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                            {fileObj.type === 'pdf' ? 'PDF' : 'Image'} · {formatFileSize(fileObj.file.size)}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeFile(fileObj.id)}
+                                        aria-label={`Remove ${fileObj.file.name}`}
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => documentInputRef.current?.click()}
+                                    aria-label="Add files"
+                                    title="Add files"
+                                    className="w-9 h-9 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                    <Plus className="w-[18px] h-[18px]" />
+                                </button>
+                                <span className="hidden sm:inline text-xs text-slate-400 dark:text-slate-500 truncate">
+                                    {isDragging ? 'Drop to add' : 'Add more pages, or drop files here'}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 text-xs gap-1.5 font-semibold text-slate-650 dark:text-slate-305 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            {algorithm === 'parallel' ? (
-                                                <>
-                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                                    <span>Fast Mode</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                    <span>High Accuracy</span>
-                                                </>
-                                            )}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-64 p-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                                        <DropdownMenuItem
-                                            onClick={() => setAlgorithm('parallel')}
-                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
-                                                algorithm === 'parallel' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between w-full font-bold text-xs">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                                    <span>Fast Mode (Parallel)</span>
-                                                </div>
-                                                {algorithm === 'parallel' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
-                                                Splits pages into parallel chunks. Extremely fast (~15s) and streams questions instantly.
-                                            </p>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => setAlgorithm('stateful')}
-                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
-                                                algorithm === 'stateful' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between w-full font-bold text-xs">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                    <span>High Accuracy (Stateful)</span>
-                                                </div>
-                                                {algorithm === 'stateful' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
-                                                Page-by-page stateful chat. Slower, but preserves sequence and extracts multi-page questions seamlessly.
-                                            </p>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => documentInputRef.current?.click()}
-                                    className="h-8 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 font-semibold"
-                                >
-                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add File
-                                </Button>
-                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={clearAllFiles} 
-                                    className="h-8 text-xs text-slate-400 hover:text-red-500 transition-colors"
-                                >
-                                    <X className="w-3.5 h-3.5 mr-1" /> Clear All
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="p-3">
-                            <div className="space-y-1.5">
-                                {files.map((fileObj) => (
-                                    <div 
-                                        key={fileObj.id} 
-                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-2 rounded-lg text-[13px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-slate-800 transition-colors shrink-0"
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {fileObj.preview ? (
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
-                                                    <img
-                                                        src={fileObj.preview}
-                                                        alt={fileObj.file.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 shrink-0">
-                                                    <FileText className="w-5 h-5" />
-                                                </div>
-                                            )}
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[180px] sm:max-w-xs">
-                                                    {fileObj.file.name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400">
-                                                    {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeFile(fileObj.id)}
-                                            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                        {algorithm === 'parallel'
+                                            ? <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                            : <Sparkles className="w-3.5 h-3.5 text-indigo-500" />}
+                                        <span>{READING_MODES.find(m => m.id === algorithm)?.name}</span>
+                                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    side="top"
+                                    align="end"
+                                    sideOffset={6}
+                                    className="w-[19rem] max-w-[calc(100vw-2rem)] p-1.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-lg"
+                                >
+                                    <p className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                        How should AI read your paper?
+                                    </p>
+                                    {READING_MODES.map((m) => (
+                                        <DropdownMenuItem
+                                            key={m.id}
+                                            onClick={() => setAlgorithm(m.id)}
+                                            className={`flex items-start gap-2.5 p-2 rounded-lg cursor-pointer ${
+                                                algorithm === m.id ? 'bg-slate-50 dark:bg-slate-900' : ''
+                                            }`}
                                         >
-                                            <X className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                                            {m.id === 'parallel'
+                                                ? <Zap className="w-4 h-4 mt-0.5 text-amber-500 fill-amber-500 shrink-0" />
+                                                : <Sparkles className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{m.name}</span>
+                                                    {m.note && (
+                                                        <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 rounded-full px-1.5 py-px">
+                                                            {m.note}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400 mt-0.5">{m.description}</p>
+                                            </div>
+                                            {algorithm === m.id && <Check className="w-4 h-4 mt-0.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
-                    {/* Answer Key Upload - Reduced Inline Style */}
-                    <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
+                    {/* Answer key: only for papers whose answers are printed separately */}
+                    <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 p-3.5 flex items-center justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
-                                <Key className="w-4.5 h-4.5" />
+                                <Key className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Answer Key (Optional)</p>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[180px] sm:max-w-xs">
-                                    {answerKeyFile ? answerKeyFile.name : "Upload key to auto-match correct answers"}
+                                <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                                    Answer key <span className="font-normal text-slate-400">· Optional</span>
                                 </p>
+                                {answerKeyFile ? (
+                                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 min-w-0">
+                                        <Check className="w-3 h-3 shrink-0" />
+                                        <span className="truncate" title={answerKeyFile.name}>{answerKeyFile.name}</span>
+                                    </p>
+                                ) : (
+                                    <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                        Are the answers not next to each question, like an answer key on the last pages? Upload them here. We read your paper in parts, so answers kept at the end never reach the earlier questions, and those questions get no correct answer marked.
+                                    </p>
+                                )}
                             </div>
                         </div>
                         {answerKeyFile ? (
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => setAnswerKeyFile(null)} 
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove answer key"
+                                onClick={() => setAnswerKeyFile(null)}
+                                className="h-8 w-8 shrink-0 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                             >
                                 <X className="w-4 h-4" />
                             </Button>
@@ -1818,9 +1923,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 variant="outline"
                                 size="sm"
                                 onClick={() => answerKeyInputRef.current?.click()}
-                                className="text-[11px] h-8 px-3 shrink-0 border-dashed hover:border-solid"
+                                className="text-xs h-8 px-3 shrink-0 rounded-lg"
                             >
-                                Upload Key
+                                Upload key
                             </Button>
                         )}
                         <Input
@@ -1831,6 +1936,34 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             className="hidden"
                         />
                     </div>
+
+                    {/* Login needed: the run starts by itself once they're in */}
+                    {signInPrompt && (
+                        <div ref={signInCardRef} role="status" className="scroll-mt-24 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                                    <LogIn className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                                        {signInPrompt.expired ? 'Your session has expired' : 'Log in to continue'}
+                                    </p>
+                                    <p className="text-[11px] leading-snug text-slate-600 dark:text-slate-400 mt-0.5">
+                                        {signInPrompt.expired
+                                            ? 'Please log in again to use AI import. Your file and settings are still here, and we’ll start as soon as you’re in.'
+                                            : 'Please log in to use AI import. Your file and settings will stay right here, and we’ll start as soon as you’re in.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => askToSignIn(signInPrompt.mode, signInPrompt.isContinue, signInPrompt.expired)}
+                                className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shrink-0 sm:self-center self-stretch"
+                            >
+                                Log in
+                            </Button>
+                        </div>
+                    )}
 
                     {error && (
                         <Alert variant="destructive">
