@@ -6,8 +6,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronRight, Database, History, RefreshCw } from 'lucide-react';
 import React, { Suspense, lazy, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { insightsApi, NotInstalledError, type Period, type Site } from './api';
+import { insightsApi, NotInstalledError, type ContentKind, type Period, type Site } from './api';
 import { MiniBars } from './charts';
+import ContentTab from './ContentTab';
 import { countryName, num } from './format';
 import GrowthTab from './GrowthTab';
 import OverviewTab from './OverviewTab';
@@ -19,10 +20,11 @@ import { CARD, CountryCode, IosSheet, PILL_BTN, Segmented } from './ui';
 
 const LegacyAnalyticsPanel = lazy(() => import('../AdminAnalyticsPanel'));
 
-const TABS = ['overview', 'traffic', 'growth', 'tests', 'people'] as const;
+const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'people'] as const;
 type Tab = (typeof TABS)[number];
 const PERIODS: readonly Period[] = ['today', 'yesterday', '7d', '30d', '90d', '12m'];
 const SITES: readonly Site[] = ['all', 'main', 'pdf', 'blog'];
+const CONTENT_KINDS: readonly ContentKind[] = ['all', 'test', 'material', 'ai_upload'];
 
 export interface Nav {
     openSession: (visit: SessionMeta) => void;
@@ -34,6 +36,7 @@ export default function AnalyticsPanel() {
     const [tab, setTab] = usePersisted<Tab>('tz_admin_analytics_tab', 'overview', TABS);
     const [period, setPeriod] = usePersisted<Period>('tz_admin_analytics_period', '7d', PERIODS);
     const [site, setSite] = usePersisted<Site>('tz_admin_analytics_site', 'all', SITES);
+    const [contentKind, setContentKind] = usePersisted<ContentKind>('tz_admin_analytics_content_kind', 'all', CONTENT_KINDS);
     const [legacy, setLegacy] = useState(false);
     const [liveOpen, setLiveOpen] = useState(false);
     const [session, setSession] = useState<SessionMeta | null>(null);
@@ -155,6 +158,7 @@ export default function AnalyticsPanel() {
                                 { value: 'traffic', label: 'Traffic' },
                                 { value: 'growth', label: 'Growth' },
                                 { value: 'tests', label: 'Tests' },
+                                { value: 'content', label: 'Content', title: 'Tests created and materials uploaded — who and when' },
                                 { value: 'people', label: 'People' },
                             ]}
                         />
@@ -163,7 +167,8 @@ export default function AnalyticsPanel() {
                     {tab === 'overview' && <OverviewTab period={period} site={site} nav={nav} onLegacy={() => setLegacy(true)} />}
                     {tab === 'traffic' && <TrafficTab period={period} site={site} />}
                     {tab === 'growth' && <GrowthTab period={period} />}
-                    {tab === 'tests' && <TestsTab period={period} />}
+                    {tab === 'tests' && <TestsTab period={period} onSeeCreated={() => { setContentKind('test'); setTab('content'); }} />}
+                    {tab === 'content' && <ContentTab period={period} kind={contentKind} onKind={setContentKind} nav={nav} />}
                     {tab === 'people' && <PeopleTab period={period} site={site} nav={nav} />}
                 </>
             )}

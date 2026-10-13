@@ -158,7 +158,7 @@ export function Delta({ value, invert = false, className, unit = '%' }: { value:
 
 // ── Stat tile ─────────────────────────────────────────────────────────────────
 export function StatTile({
-    label, value, sub, delta, invert, selected, onClick, info, deltaTitle, deltaUnit,
+    label, value, sub, delta, invert, selected, onClick, info, deltaTitle, deltaUnit, actionLabel,
 }: {
     label: string;
     value: React.ReactNode;
@@ -170,6 +170,8 @@ export function StatTile({
     info?: string;
     deltaTitle?: string;
     deltaUnit?: string;
+    /** What tapping the tile does, for screen readers. Defaults to selecting the chart metric. */
+    actionLabel?: string;
 }) {
     return (
         <div
@@ -186,7 +188,7 @@ export function StatTile({
                     type="button"
                     onClick={onClick}
                     aria-pressed={!!selected}
-                    aria-label={`Show ${label} on the chart`}
+                    aria-label={actionLabel ?? `Show ${label} on the chart`}
                     className="absolute inset-0 cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
                 />
             )}

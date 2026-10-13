@@ -17,7 +17,7 @@ const TOOL_LABEL: Record<string, string> = {
 };
 const MODE_LABEL: Record<string, string> = { extract: 'From a file (extract)', generate: 'From a topic (generate)' };
 
-export default function TestsTab({ period }: { period: Period }) {
+export default function TestsTab({ period, onSeeCreated }: { period: Period; onSeeCreated?: () => void }) {
     const q = useQuery({
         queryKey: ['analytics', 'tests', period],
         queryFn: () => insightsApi.tests(period),
@@ -48,7 +48,8 @@ export default function TestsTab({ period }: { period: Period }) {
                 {s && p && d ? (
                     <>
                         <StatTile label="Tests created" value={num(s.tests_created)} delta={change(s.tests_created, p.tests_created)} deltaTitle={vs}
-                            sub={`by ${num(d.created.creators)} educators · ${num(d.created.team)} by team`} />
+                            sub={`by ${num(d.created.creators)} educators · ${num(d.created.team)} by team`}
+                            onClick={onSeeCreated} actionLabel="See which tests were created, by whom and when" />
                         <StatTile label="Test starts" value={num(s.test_starts)} delta={change(s.test_starts, p.test_starts)} deltaTitle={vs}
                             info="Registered starts plus guest (not signed-in) starts." />
                         <StatTile label="Tests taken" value={num(s.submissions)} delta={change(s.submissions, p.submissions)} deltaTitle={vs}

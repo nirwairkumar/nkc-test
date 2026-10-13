@@ -265,6 +265,38 @@ def tests(period: str = "30d", limit: int = Query(25, ge=1, le=200),
     return {"range": r, **data["report"], "summary": data["summary"], "previous": data["previous"]}
 
 
+CONTENT_KINDS = ("all", "test", "material", "ai_upload")
+
+
+@router.get("/content")
+def content(period: str = "30d", kind: str = "all", q: Optional[str] = None,
+            before_at: Optional[str] = None, before_id: Optional[UUID] = None,
+            limit: int = Query(30, ge=1, le=100), start: Optional[str] = None, end: Optional[str] = None):
+    """
+    Tests created, study materials uploaded and files uploaded to AI import — what, who, when.
+    One page of small rows per call (no question or file content leaves the database);
+    period totals come with the first page only.
+    """
+    if kind not in CONTENT_KINDS:
+        raise HTTPException(status_code=400, detail=f"kind must be one of {', '.join(CONTENT_KINDS)}")
+    if before_at:
+        try:
+            datetime.fromisoformat(before_at.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="before_at must be an ISO timestamp")
+    r = resolve_period(period, start, end)
+    data = _rpc("analytics_report_content", {
+        "p_from": r["from"],
+        "p_to": r["to"],
+        "p_kind": kind,
+        "p_q": (q or "").strip()[:100] or None,
+        "p_before_at": before_at or None,
+        "p_before_id": str(before_id) if before_id else None,
+        "p_limit": limit,
+    })
+    return {"range": r, **data}
+
+
 @router.get("/health")
 def health():
     return _rpc("analytics_report_health", {})

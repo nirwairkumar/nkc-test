@@ -322,6 +322,68 @@ export interface PeopleReport {
     rows: PeopleRow[];
 }
 
+export type ContentKind = 'all' | 'test' | 'material' | 'ai_upload';
+
+/** One thing someone made. Absent keys mean "not set" (the server strips nulls to save bytes). */
+export interface ContentRow {
+    kind: Exclude<ContentKind, 'all'>;
+    id: string;
+    at: string;
+    /** Test title, material title, or the uploaded file name(s) for AI uploads. */
+    title?: string;
+    user_id?: string;
+    user_name?: string;
+    user_email?: string;
+    user_role?: string;
+    is_team?: boolean;
+    questions?: number;
+    // tests
+    minutes?: number;
+    marks?: number;
+    visibility?: 'public' | 'unlisted' | 'private';
+    live?: boolean;
+    cloned?: boolean;
+    class_name?: string;
+    /** Papers submitted by anyone but the creator. */
+    results?: number;
+    // materials
+    material_type?: string;
+    url?: string;
+    size?: number;
+    mime?: string;
+    // AI uploads
+    mode?: string;
+    made_title?: string;
+}
+
+export interface ContentTotals {
+    tests: number;
+    test_creators: number;
+    materials: number;
+    material_files: number;
+    material_uploaders: number;
+    ai_uploads: number;
+    ai_questions: number;
+    ai_uploaders: number;
+    people: number;
+    team_items: number;
+    /** Items matching the current kind + search. */
+    matched: number;
+}
+
+export interface ContentCursor {
+    at: string;
+    id: string;
+}
+
+export interface ContentPage {
+    range: Range;
+    rows: ContentRow[];
+    next: ContentCursor | null;
+    /** First page only. */
+    totals: ContentTotals | null;
+}
+
 /** Thrown when the analytics v2 SQL migration has not been applied yet. */
 export class NotInstalledError extends Error {
     constructor() {
@@ -352,6 +414,11 @@ export const insightsApi = {
         get<Person>('person', { visitor: p.visitor || undefined, user: p.user || undefined }),
     growth: (period: Period) => get<GrowthReport>('growth', { period }),
     tests: (period: Period) => get<TestsReport>('tests', { period, limit: 50 }),
+    content: (p: { period: Period; kind: ContentKind; q?: string; before?: ContentCursor | null; limit?: number }) =>
+        get<ContentPage>('content', {
+            period: p.period, kind: p.kind, q: p.q || undefined,
+            before_at: p.before?.at, before_id: p.before?.id, limit: p.limit ?? 30,
+        }),
     health: () => get<Health>('health'),
     people: (p: { segment: PeopleSegment; q?: string; sort: PeopleSort; limit?: number; offset?: number }) =>
         get<PeopleReport>('people', { ...p, q: p.q || undefined, limit: p.limit ?? 40, offset: p.offset ?? 0 }),
