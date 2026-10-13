@@ -18,8 +18,7 @@ export function isSampleUser(email?: string | null): boolean {
     return (
         lower === 'student@testoza.com' ||
         lower === 'teacher@testoza.com' ||
-        lower === 'institution@testoza.com' ||
-        (lower.endsWith('@testoza.com') && lower !== 'support@testoza.com')
+        lower === 'institution@testoza.com'
     );
 }
 

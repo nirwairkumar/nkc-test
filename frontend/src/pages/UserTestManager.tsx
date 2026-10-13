@@ -73,6 +73,8 @@ const SEGMENT =
     'data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.12),0_1px_1px_rgba(15,23,42,0.04)]';
 
 const GUIDE_DISMISSED_KEY = 'testoza_mytests_guide_dismissed';
+// sessionStorage, not localStorage: the rewards card stays hidden for this visit only.
+const REWARDS_HIDDEN_KEY = 'testoza_mytests_rewards_hidden';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -140,6 +142,8 @@ export default function UserTestManager() {
     // unloaded grid page still shows in "Live exams". Stays [] if the call fails, which
     // falls back to deriving the lists from the loaded grid, as before.
     const [conductedTests, setConductedTests] = useState<any[]>([]);
+    // Until this list answers we can't tell whether an exam is live, so the rewards card waits.
+    const [conductedLoaded, setConductedLoaded] = useState(false);
 
     // The same test can be in both lists; every optimistic update goes to both.
     const mapAllTests = (fn: (t: any) => any) => {
@@ -425,6 +429,7 @@ export default function UserTestManager() {
     const loadConductedTests = React.useCallback(async () => {
         if (!targetUserId) return;
         const { data, error } = await fetchConductedTestsByCreator(targetUserId);
+        setConductedLoaded(true);
         if (error) {
             console.error('Error loading conducted tests:', error);
             return;
@@ -786,6 +791,24 @@ export default function UserTestManager() {
         }
     };
 
+    // Rewards card "×" — hidden for the rest of this visit (other pages and back included),
+    // shown again on the next visit.
+    const [rewardsHidden, setRewardsHidden] = useState(() => {
+        try {
+            return sessionStorage.getItem(REWARDS_HIDDEN_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    });
+    const hideRewards = () => {
+        setRewardsHidden(true);
+        try {
+            sessionStorage.setItem(REWARDS_HIDDEN_KEY, 'true');
+        } catch {
+            // Storage blocked — hiding until the page is left is the best we can do.
+        }
+    };
+
     const [showEnded, setShowEnded] = useState(false);
 
     if (authLoading || checkingCreator) return <SplashLoader text="Checking permissions..." />;
@@ -846,6 +869,12 @@ export default function UserTestManager() {
         !hasEnded(t) &&
         !isUpcoming(t)
     );
+    // Any live exam at all — from the full list, so a search can't bring the rewards card back.
+    const hasLiveExam = conductedPool.some(t =>
+        t.settings?.conduct_exam?.enabled === true && !hasEnded(t) && !isUpcoming(t)
+    );
+    // While an exam is live the Live exams card is the page; rewards would only push it down.
+    const showRewards = conductedLoaded && !hasLiveExam && !rewardsHidden;
     // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
     const inactiveExams = examSource.filter(t =>
         hasConductSettings(t) &&
@@ -972,7 +1001,7 @@ export default function UserTestManager() {
     };
 
     return (
-        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-5 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-3 sm:px-6 sm:pt-4 lg:px-8">
             {isAdmin && impersonateUserId && targetUserProfile && (
                 <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500 motion-safe:animate-pulse" />
@@ -1043,10 +1072,14 @@ export default function UserTestManager() {
                 </div>
 
                 <TabsContent value="tests" className="m-0 space-y-8 border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                    <div className="space-y-4">
-                        <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} />
-                        {!guideDismissed && <HowItWorks onDismiss={dismissGuide} />}
-                    </div>
+                    {(showRewards || !guideDismissed) && (
+                        <div className="space-y-4">
+                            {showRewards && (
+                                <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} onDismiss={hideRewards} />
+                            )}
+                            {!guideDismissed && <HowItWorks onDismiss={dismissGuide} />}
+                        </div>
+                    )}
 
                     {/* ═══════════════════════════════════════════════
                         LIVE EXAMS
