@@ -88,6 +88,7 @@ import {
 } from '@/components/ai-import/progressModel';
 import ProcessingView from '@/components/ai-import/ProcessingView';
 import PreviewView from '@/components/ai-import/PreviewView';
+import WhatToUpload from '@/components/ai-import/WhatToUpload';
 
 type FileType = 'pdf' | 'image';
 type UploadType = 'document' | 'image' | null;
@@ -1610,7 +1611,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         {/* Card body */}
                         <div className="p-4 space-y-3.5">
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Select a PDF or photos of your exam paper. We'll automatically extract questions and convert it into an online test. Word or PowerPoint? Save it as PDF first.
+                                Select a PDF or photos of a question paper, class notes or study material. We'll turn it into an online test. Word or PowerPoint? Save it as PDF first.
                             </p>
 
                             {/* Primary CTA */}
@@ -1658,6 +1659,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         </button>
                     </div>
                 </div>
+
+                {/* What to upload — animated explainer, plays once scrolled into view */}
+                <WhatToUpload />
 
                     {/* HELP TUTORIAL DIALOG */}
                     <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
