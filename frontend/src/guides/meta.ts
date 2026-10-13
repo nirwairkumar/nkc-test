@@ -662,8 +662,154 @@ export const TESTPORTAL_META: GuideMeta = {
     cta: { label: 'Build an exam-pattern paper, free', href: '/create-test' },
 };
 
+/*
+ * Four "how to" guides share a page shell, six widgets and a data file
+ * (pages/guides/howto, guides/howtoData.ts). Each one answers a different job, so they
+ * don't compete with each other in search: running an exam on phones, putting a test
+ * on a website, building a full-length mock, and sending a test on WhatsApp.
+ */
+export const MOBILE_EXAM_META: GuideMeta = {
+    slug: 'mobile-friendly-online-exam',
+    path: '/mobile-friendly-online-exam',
+    title: 'Mobile-friendly online exam: a test your students can take on any phone',
+    seoTitle: 'Mobile-Friendly Online Exam Software for Phones (2026)',
+    description:
+        'Run an online exam on students’ phones: no app or account, answers saved every 20 seconds, rejoin on another phone, and rules that work on Android and iPhone.',
+    dek:
+        'Most of your candidates will write on their own phone: an Android a few years old, on mobile data, with calls and WhatsApp arriving mid-paper. This guide sets out what a mobile-friendly online exam has to do, shows what the candidate sees on a six-inch screen, and walks through what happens when the signal drops or the battery dies.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-13T12:00:00+05:30',
+    dateModified: '2026-10-13T12:00:00+05:30',
+    readMinutes: 18,
+    cover: {
+        src: '/guides/mobile-friendly-online-exam/cover.png',
+        alt: 'Mobile-friendly online exam: a call, no signal and a low battery beside answers saved every 20 seconds, rejoining on another phone and automatic submission',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'mobile friendly online exam',
+        'online exam on mobile phone',
+        'mobile online test platform',
+        'conduct exam on mobile',
+        'online exam without app',
+        'take online test on phone',
+        'online exam software for android',
+        'online exam on iPhone',
+        'what happens if internet disconnects during online exam',
+        'mobile exam app alternative',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a phone-ready test, free', href: '/create-test' },
+};
+
+export const EMBED_META: GuideMeta = {
+    slug: 'embed-test-on-website',
+    path: '/embed-test-on-website',
+    title: 'How to embed a test on your website: WordPress, Google Sites, Wix and Blogger',
+    seoTitle: 'Embed an Online Test on Your Website: Free Code (2026)',
+    description:
+        'Add an online test to WordPress, Google Sites, Wix or Blogger: copy free button or card code that opens the exam full screen in its own tab. No plugin needed.',
+    dek:
+        'You have a website and you have a test, and you want students who visit one to take the other. This guide explains the two things “embed” can mean, why an exam should open in its own tab rather than inside your page, gives you the code for your own test, and shows where to paste it on eight website builders.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-13T12:00:00+05:30',
+    dateModified: '2026-10-13T12:00:00+05:30',
+    readMinutes: 15,
+    cover: {
+        src: '/guides/embed-test-on-website/cover.png',
+        alt: 'Embed a test on your website: a Start the test button, a card or code box and a QR code on your page, and the exam opening in its own tab',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'embed test on website',
+        'embed quiz in website',
+        'add online test to wordpress',
+        'embed test in google sites',
+        'add quiz to wix website',
+        'embed exam in blogger',
+        'online test embed code',
+        'test button html code',
+        'iframe online test',
+        'put a test on my website',
+        'TestoZa',
+    ],
+    cta: { label: 'Make a test to put on your site', href: '/create-test' },
+};
+
+export const FULL_LENGTH_META: GuideMeta = {
+    slug: 'full-length-online-test-maker',
+    path: '/full-length-online-test-maker',
+    title: 'Full-length online test maker: a 3-hour mock that behaves like the real paper',
+    seoTitle: 'Full-Length Online Test Maker for Mock Exams (2026)',
+    description:
+        'Make full-length mock tests online: 180 questions, sectional clocks, +4/−1 marking, answers saved for three hours and section-wise results. Free to build.',
+    dek:
+        'A full-length mock is the test that teaches the exam rather than the syllabus: the clock, the order, the stamina, the decision to leave a question blank. It is also the test online tools handle worst. This guide covers what full-length has to mean, the patterns of JEE, NEET, SSC and bank papers, and how to build, run and read one.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-13T12:00:00+05:30',
+    dateModified: '2026-10-13T12:00:00+05:30',
+    readMinutes: 16,
+    cover: {
+        src: '/guides/full-length-online-test-maker/cover.png',
+        alt: 'Full-length online test maker: every question, the full duration, the exam’s sections and marking, and three hours without losing an answer',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'full length online test maker',
+        'full length mock test maker',
+        'create full length mock test online',
+        'full length test series software',
+        'online mock test with negative marking',
+        '180 question NEET mock online',
+        'JEE Main full length mock online',
+        'sectional timing mock test',
+        'Google Forms for mock tests',
+        'three hour online exam',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a full-length mock, free', href: '/create-test' },
+};
+
+export const WHATSAPP_META: GuideMeta = {
+    slug: 'share-test-on-whatsapp',
+    path: '/share-test-on-whatsapp',
+    title: 'How to share a test on WhatsApp so the whole batch opens it',
+    seoTitle: 'How to Share an Online Test on WhatsApp (2026 Guide)',
+    description:
+        'Share an online test on WhatsApp the right way: one link or a six-digit code, a message students act on, the right preview card, and results back to the group.',
+    dek:
+        'For most Indian batches the test goes out in a WhatsApp group, and that is where many tests quietly fail: a bare link, two links, no word on signing up, sent at the wrong hour. This guide shows the messages that work, word for word, how to send them from a phone or a computer, and how to send the rank list and parent notes back the same evening.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-13T12:00:00+05:30',
+    dateModified: '2026-10-13T12:00:00+05:30',
+    readMinutes: 15,
+    cover: {
+        src: '/guides/share-test-on-whatsapp/cover.png',
+        alt: 'Share a test on WhatsApp: the test’s name in bold, one link and no account in the group, then the rank list and a note to each parent afterwards',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'share test on whatsapp',
+        'share online test link on whatsapp',
+        'send quiz on whatsapp',
+        'whatsapp online exam for students',
+        'how to send test link to students',
+        'share mock test in whatsapp group',
+        'send result to parents on whatsapp',
+        'rank list on whatsapp',
+        'online test join code',
+        'whatsapp test link preview',
+        'TestoZa',
+    ],
+    cta: { label: 'Make a test to share, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

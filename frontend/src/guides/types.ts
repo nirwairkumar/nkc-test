@@ -98,7 +98,14 @@ export type GuideWidget =
     | 'alt-fit'
     | 'alt-compare'
     | 'alt-marking'
-    | 'alt-move';
+    | 'alt-move'
+    // the four "how to" guides (mobile exam, embed, full-length, WhatsApp) share these
+    | 'hw-compare'
+    | 'hw-scenarios'
+    | 'hw-steps'
+    | 'hw-embed'
+    | 'hw-patterns'
+    | 'hw-whatsapp';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };

@@ -1,0 +1,528 @@
+/*
+ * The four "how to" guides (pages/guides/howto) use the alternative guides' stylesheet
+ * (../alt/altGuide.css) for everything — shell, type scale, hero card, compare and
+ * checklist widgets — and add only what their four new widgets need. Every rule is scoped
+ * to .hw (the page root is "al hw") and uses the .al colour tokens, so dark mode and the
+ * type scale come with it.
+ *
+ * Type sizes stay on the shared scale: 16px body, 14–15px in widgets, 12–13px labels.
+ * Nothing here is taller than a laptop window; the only inner scroller is the code block,
+ * capped at 220px.
+ */
+
+/* ── hw-scenarios: one situation, three short lines ─────────────────────── */
+.hw .hw-scn-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin: 2px 2px 12px;
+    font-family: var(--al-fd);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.hw .hw-scn {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+@media (min-width: 760px) {
+    .hw .hw-scn {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+.hw .hw-scn li {
+    padding: 13px 15px 14px;
+    border-radius: 16px;
+    background: var(--al-bg);
+}
+.dark .hw .hw-scn li {
+    background: var(--al-card-2);
+}
+.hw .hw-scn li[data-tone='blue'] {
+    background: var(--al-blue-soft);
+}
+.hw .hw-scn li[data-tone='green'] {
+    background: rgba(52, 199, 89, 0.11);
+}
+.hw .hw-scn b {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--al-ink-3);
+}
+.hw .hw-scn li[data-tone='blue'] b {
+    color: var(--al-link);
+}
+.hw .hw-scn li[data-tone='green'] b {
+    color: var(--al-green-ink);
+}
+.hw .hw-scn span {
+    display: block;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.hw.is-js .hw-scn li {
+    animation: al-rise 0.4s var(--al-ease) both;
+}
+.hw.is-js .hw-scn li + li {
+    animation-delay: 50ms;
+}
+.hw.is-js .hw-scn li + li + li {
+    animation-delay: 100ms;
+}
+
+/* ── hw-embed: form on the left, preview and code on the right ──────────── */
+.hw .hw-embed {
+    display: grid;
+    gap: 16px;
+}
+@media (min-width: 860px) {
+    .hw .hw-embed {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        align-items: start;
+        gap: 20px;
+    }
+}
+/* On a phone the preview comes first, straight under the chips, so a tap on "Card" shows
+   the card without scrolling past the form; the code follows the form. */
+@media (max-width: 859px) {
+    .hw .hw-embed .hw-out {
+        display: contents;
+    }
+    .hw .hw-embed .hw-preview {
+        order: -1;
+    }
+}
+.hw .hw-form {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+.hw .hw-field {
+    display: grid;
+    gap: 5px;
+}
+.hw .hw-field > span {
+    margin: 0 2px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--al-ink-3);
+}
+.hw .hw-field input {
+    width: 100%;
+    height: 42px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--al-bg);
+    box-shadow: inset 0 0 0 0.5px var(--al-sep-strong);
+    color: var(--al-ink);
+    font: inherit;
+    /* 16px keeps iPhone Safari from zooming the page when the field is tapped. */
+    font-size: 16px;
+    outline: none;
+    transition: box-shadow 0.2s ease;
+}
+.dark .hw .hw-field input {
+    background: var(--al-card-2);
+}
+.hw .hw-field input:focus {
+    box-shadow:
+        inset 0 0 0 1.5px var(--al-blue),
+        0 0 0 3px var(--al-blue-soft);
+}
+.hw .hw-field input::placeholder {
+    color: var(--al-ink-4);
+}
+.hw .hw-field-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: -3px 2px 2px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.hw .hw-field-note svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+    color: var(--al-green-ink);
+}
+.hw .hw-field-note[data-ok='no'] {
+    color: var(--al-orange-ink);
+}
+.hw .hw-field-note[data-ok='no'] svg {
+    color: var(--al-orange-ink);
+}
+.hw .hw-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 2px;
+}
+.hw .hw-swatches button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--sw);
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.25s var(--al-spring);
+}
+.hw .hw-swatches button[aria-pressed='true'] {
+    box-shadow:
+        0 0 0 2px var(--al-card),
+        0 0 0 4px var(--sw);
+}
+.hw .hw-swatches button:active {
+    transform: scale(0.9);
+}
+.hw .hw-swatches button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.hw .hw-swatches span {
+    flex: 1 1 160px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--al-ink-3);
+}
+.hw .hw-out {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+/* The preview sits on a plain "website" background, light in both themes, like a real page. */
+.hw .hw-preview {
+    display: grid;
+    place-items: center;
+    min-height: 150px;
+    padding: 22px 16px;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.07) 1px, transparent 0) 0 0 / 14px 14px,
+        #f5f5f7;
+    overflow: hidden;
+}
+.hw .hw-preview > * {
+    max-width: 100%;
+}
+.hw .hw-preview p {
+    text-align: left;
+}
+.hw .hw-qr svg {
+    display: block;
+    width: 180px;
+    height: 180px;
+}
+.hw .hw-code {
+    position: relative;
+    border-radius: 14px;
+    background: #1d1d1f;
+}
+.hw .hw-code pre {
+    max-height: 220px;
+    margin: 0;
+    padding: 13px 14px 50px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: var(--al-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    color: #e5e5ea;
+}
+.hw .hw-code pre code {
+    font: inherit;
+    color: inherit;
+}
+.hw .hw-code .hw-copy {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+}
+
+/* A pill button that says "Copied" for two seconds. */
+.hw .hw-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--al-blue);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.25s var(--al-spring);
+}
+.hw .hw-copy:active {
+    transform: scale(0.96);
+}
+.hw .hw-copy[data-state='done'] {
+    background: var(--al-green-ink);
+}
+.hw .hw-copy svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ── hw-patterns: an exam's facts, sections and settings ────────────────── */
+.hw .hw-pt-name {
+    margin: 0 2px 10px;
+    font-family: var(--al-fd);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    color: var(--al-ink);
+}
+.hw .hw-pt-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 14px;
+}
+@media (min-width: 640px) {
+    .hw .hw-pt-facts {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+.hw .hw-pt-facts div {
+    padding: 10px 12px;
+    border-radius: 13px;
+    background: var(--al-bg);
+}
+.dark .hw .hw-pt-facts div {
+    background: var(--al-card-2);
+}
+.hw .hw-pt-facts dt {
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--al-ink-3);
+}
+.hw .hw-pt-facts dd {
+    margin: 3px 0 0;
+    font-family: var(--al-fd);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--al-ink);
+}
+.hw .hw-pt-facts dd small {
+    margin-left: 3px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--al-ink-3);
+}
+.hw .hw-pt {
+    display: grid;
+    gap: 14px;
+}
+@media (min-width: 760px) {
+    .hw .hw-pt {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 16px;
+    }
+}
+.hw .hw-pt-list {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 13px;
+    background: var(--al-bg);
+    list-style: none;
+}
+.dark .hw .hw-pt-list {
+    background: var(--al-card-2);
+}
+.hw .hw-pt-list--set {
+    background: var(--al-blue-soft);
+}
+.dark .hw .hw-pt-list--set {
+    background: var(--al-blue-soft);
+}
+.hw .hw-pt-list li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 13px;
+}
+.hw .hw-pt-list li + li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 13px;
+    right: 0;
+    height: 0.5px;
+    background: var(--al-sep);
+}
+.hw .hw-pt-list span {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--al-ink);
+}
+.hw .hw-pt-list small {
+    display: block;
+    margin-top: 1px;
+    font-size: 12px;
+    color: var(--al-ink-3);
+}
+.hw .hw-pt-list b {
+    flex: none;
+    max-width: 55%;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--al-ink-2);
+}
+.hw .hw-pt-list--set span {
+    color: var(--al-ink-2);
+}
+.hw .hw-pt-list--set b {
+    color: var(--al-link);
+}
+
+/* ── hw-whatsapp: a message as it lands in a group ──────────────────────── */
+.hw .hw-wa {
+    display: grid;
+    gap: 14px;
+}
+@media (min-width: 760px) {
+    .hw .hw-wa {
+        grid-template-columns: minmax(0, 1fr) 240px;
+        align-items: start;
+        gap: 18px;
+    }
+}
+/* WhatsApp's own chat colours, in both themes, so the bubble reads as WhatsApp at a glance. */
+.hw .hw-wa-chat {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 14px;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0) 0 0 / 12px 12px,
+        #efeae2;
+}
+.dark .hw .hw-wa-chat {
+    background:
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0) 0 0 / 12px 12px,
+        #0b141a;
+}
+.hw .hw-wa-bubble {
+    position: relative;
+    width: min(100%, 360px);
+    padding: 5px 7px 6px 9px;
+    border-radius: 9px 2px 9px 9px;
+    background: #d9fdd3;
+    box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+    color: #111b21;
+}
+.dark .hw .hw-wa-bubble {
+    background: #005c4b;
+    color: #e9edef;
+}
+.hw.is-js .hw-wa-bubble {
+    animation: al-rise 0.35s var(--al-ease) both;
+}
+.hw .hw-wa-card {
+    display: grid;
+    gap: 2px;
+    margin: 0 -3px 6px -5px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #25d366;
+}
+.dark .hw .hw-wa-card {
+    background: rgba(0, 0, 0, 0.18);
+}
+.hw .hw-wa-card b {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.hw .hw-wa-card span {
+    font-size: 12.5px;
+    line-height: 1.4;
+    opacity: 0.8;
+}
+.hw .hw-wa-card small {
+    font-size: 11.5px;
+    opacity: 0.6;
+}
+.hw .hw-wa-bubble > p {
+    margin: 0;
+    font-size: 14.2px;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+}
+.hw .hw-wa-line {
+    display: block;
+}
+.hw .hw-wa-line b {
+    font-weight: 700;
+}
+.hw .hw-wa-link {
+    color: #027eb5;
+}
+.dark .hw .hw-wa-link {
+    color: #53bdeb;
+}
+.hw .hw-wa-time {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0;
+    margin-top: 2px;
+    font-size: 11px;
+    opacity: 0.6;
+}
+.hw .hw-wa-time svg {
+    width: 13px;
+    height: 13px;
+    color: #53bdeb;
+}
+.hw .hw-wa-time svg + svg {
+    margin-left: -8px;
+}
+.hw .hw-wa-time svg:first-of-type {
+    margin-left: 4px;
+}
+.hw .hw-wa-side {
+    display: grid;
+    align-content: start;
+    gap: 0;
+}
+.hw .hw-wa-note {
+    margin: 0 2px 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--al-ink-2);
+}
+.hw .hw-wa-side .hw-copy {
+    justify-self: start;
+}

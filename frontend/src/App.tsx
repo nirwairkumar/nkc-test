@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -155,6 +155,11 @@ const ClassplusAlternative = safeLazy(() => import("./pages/guides/alt/Classplus
 const TeachmintAlternative = safeLazy(() => import("./pages/guides/alt/TeachmintAlternative"));
 const KahootAlternative = safeLazy(() => import("./pages/guides/alt/KahootAlternative"));
 const TestportalAlternative = safeLazy(() => import("./pages/guides/alt/TestportalAlternative"));
+// The four "how to" guides share one shell (pages/guides/howto/HowToPage.tsx).
+const MobileFriendlyOnlineExam = safeLazy(() => import("./pages/guides/howto/MobileFriendlyOnlineExam"));
+const EmbedTestOnWebsite = safeLazy(() => import("./pages/guides/howto/EmbedTestOnWebsite"));
+const FullLengthOnlineTestMaker = safeLazy(() => import("./pages/guides/howto/FullLengthOnlineTestMaker"));
+const ShareTestOnWhatsapp = safeLazy(() => import("./pages/guides/howto/ShareTestOnWhatsapp"));
 const GuidesIndex = safeLazy(() => import("./pages/GuidesIndex"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
@@ -322,6 +327,10 @@ const App = () => (
                     <Route path={TEACHMINT_META.path} element={<TeachmintAlternative />} />
                     <Route path={KAHOOT_META.path} element={<KahootAlternative />} />
                     <Route path={TESTPORTAL_META.path} element={<TestportalAlternative />} />
+                    <Route path={MOBILE_EXAM_META.path} element={<MobileFriendlyOnlineExam />} />
+                    <Route path={EMBED_META.path} element={<EmbedTestOnWebsite />} />
+                    <Route path={FULL_LENGTH_META.path} element={<FullLengthOnlineTestMaker />} />
+                    <Route path={WHATSAPP_META.path} element={<ShareTestOnWhatsapp />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

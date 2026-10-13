@@ -131,6 +131,10 @@ async function generateSitemap() {
             { url: '/teachmint-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
             { url: '/kahoot-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
             { url: '/testportal-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/mobile-friendly-online-exam', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/embed-test-on-website', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/full-length-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/share-test-on-whatsapp', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

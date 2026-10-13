@@ -366,6 +366,56 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: Mobile-friendly online exam (https://testoza.com/mobile-friendly-online-exam)
+
+A long-form guide for teachers and coaching institutes whose candidates write on their own phones, with TestoZa as the worked example. Product behaviour checked against the exam screen's code on 13 October 2026.
+
+- **What mobile-friendly has to mean for an exam:** nothing to install; no account to remember (a code and a name or roll number); one question at a time at a readable size; navigation within thumb reach; answers that survive a dropped connection; a paper that survives a dead phone; a clock that belongs to the exam; rules that work in a phone's browser.
+- **The screen on a phone:** join at testoza.com/join with a six-digit code (or a QR code) and check in by name, roll number, or roll number and PIN; a lobby until the start; a top bar with the countdown, a connection dot ("No internet — answers saved locally" when offline), warnings and a text-size control; question text at 18px; options as whole tappable rows; typeset equations; an on-screen keypad for numericals; Back, Clear, Mark for review and Save & Next along the bottom; the palette in a Questions panel that slides in from the screen's edge.
+- **When things go wrong:** answers are kept on the phone and, on a live exam, sent to the server every 20 seconds and when the page comes back into view; each candidate's deadline is kept on the server (own start + duration + extra time, capped by the exam's closing time); a dead phone means rejoining on any device with the same details, the first device signed out and "Changed device" shown; papers submit themselves at time-up; the page asks the browser to keep the screen awake on live exams.
+- **Rules on phones:** leaving the exam screen is counted against a limit that can submit the paper; full screen where the browser allows it (Android), skipped on iPhone where Safari cannot do it; copy, paste and right-click can be switched off; one device per seat; batch lists and PINs. Nothing in a browser can see a second device or stop screenshots, and TestoZa never uses the camera or microphone.
+- **Limits:** no offline exams, no native app, no full screen on iPhone, very old browsers may struggle, and long data sets are better in a lab.
+
+---
+
+## Guide: Embed a test on your website (https://testoza.com/embed-test-on-website)
+
+A long-form guide for teachers, institutes and bloggers on putting a test on their own site. Framing headers checked live on testoza.com and app.testoza.com on 13 October 2026.
+
+- **No iframe:** every TestoZa page sends X-Frame-Options: SAMEORIGIN and Content-Security-Policy frame-ancestors 'self', so browsers refuse to show a test inside another website's frame. The page explains why that also suits exams: the whole screen on a phone, full-screen and tab-switch rules that work, storage that browsers don't partition, and a light host page.
+- **The launcher pattern:** a generator writes HTML (inline styles only, no script or plugin) for a button, a card with the title and facts, a code box for live exams that always opens testoza.com/join, or a QR code; every one opens the test in a new tab.
+- **Where to paste:** WordPress Custom HTML block or Buttons block (Elementor: HTML widget); Google Sites Insert → Button, or Insert → Embed → Embed code; Wix Add Elements → Embed Code → Embed HTML; Blogger Layout → Add a Gadget → HTML/JavaScript, or HTML view in a post; Squarespace Code block (plans with custom code) or Button block; Webflow Code Embed; Shopify Custom Liquid; plain HTML. Notion, Google Classroom and Moodle take the link.
+- **Which link:** a Public test's link (created once, unchanged when the test is edited) for practice; a code box for live exams, whose codes change every sitting. Private tests have no share link.
+- **Results and limits:** results go to the TestoZa dashboard (rank list, per-question numbers, Excel, report cards), never to the host website; no API, webhooks or single sign-on; the address is app.testoza.com.
+
+---
+
+## Guide: Full-length online test maker (https://testoza.com/full-length-online-test-maker)
+
+A long-form guide for coaching institutes running test series. Exam figures from NTA, JEE Advanced, SSC and IBPS notices as used in TestoZa's exam-specific guides; product facts checked on 13 October 2026.
+
+- **Full-length means:** every question, the full duration on the same kind of clock (one clock, or sections that close on their own), the exam's sections, its marking (negative and partial marks), its question types and its screen (palette, Mark for review), ideally at its time of day.
+- **Patterns:** JEE Main — 75 questions (25 each in Physics, Chemistry, Mathematics; 20 multiple-choice and 5 numerical), 180 minutes, 300 marks, +4/−1 on multiple-choice. NEET UG — 180 questions (45 each in Physics, Chemistry, Botany, Zoology), 180 minutes, 720 marks, +4/−1. JEE Advanced — announced in each paper; the 2024 Paper 1 had 17 questions a subject and 180 marks. SSC CGL 2026 Tier 1 — 4 sections of 25 questions, 15 minutes each, 200 marks, +2/−0.5. IBPS PO 2026 Prelims — 30/35/35 questions in three 20-minute sections, five options, a quarter of the marks off.
+- **Building it in TestoZa:** upload the paper as a PDF or photos (AI reads questions, options, key, diagrams, equations) or as JSON; Split into sections; Marks and Wrong set once and copied to each new question, overridable per section or question; Partial marks (proportional or JEE Advanced); numerical ranges; Time each section; Combine two papers with a 0–180 minute break (30 by default) and one combined score.
+- **Google Forms for a three-hour paper:** no built-in timer, no negative marking, all-or-nothing checkbox grading, no palette or Mark for review, drafts saved only for signed-in respondents.
+- **Running and reading it:** live exam with a code, lobby, late entry (15 minutes by default), answers every 20 seconds, rejoin on another device, extra time per candidate or for all, automatic submission; then section scores, attempts against accuracy, time per question, the wrong option chosen, and accuracy in the last hour.
+- **Limits:** no ready-made paper bank, no normalisation across batches, section locks enforced in the browser, the break between papers not enforced and no merged faculty rank list across two papers, no descriptive answers, no offline mode.
+
+---
+
+## Guide: Share a test on WhatsApp (https://testoza.com/share-test-on-whatsapp)
+
+A long-form guide for teachers whose batches live in WhatsApp groups. Every message quoted is the product's own text, checked on 13 October 2026.
+
+- **Link or code:** a test link for practice anyone can take any time (Public tests only); a live exam with a six-digit code for a paper the batch sits together, with a lobby and, with a batch list, only listed names or roll numbers admitted.
+- **The invitation:** the test's name in bold, the facts on one line, one link on one address (never a backup link), and "No app and no account needed — just type your name" (or a sign-in line when sign-in is on). Live exams: open testoza.com/join, enter the code in bold with a space in the middle, check in, plus a direct link.
+- **Sending:** Share link opens the phone's share sheet or, on a computer, copies the whole message; live exams have WhatsApp, Copy and projector buttons. Send the evening before and 15 minutes before the start.
+- **Preview cards:** a test link's card is the test's name and description with the question count; a join link's card names the test and institute and says to enter the code. Join links are not indexed.
+- **Afterwards:** Send rank list on WhatsApp (medals for the top three, average, absentees); a Parent button per student whose parent's number is on the batch list, and Tell parent for the absent (shown on tablet and computer screens); candidates look up their own result with the code once results are released.
+- **Limits:** nothing is sent automatically; no WhatsApp Business API or bot; messages are in English and editable before sending.
+
+---
+
 ## Guide: Classplus alternative (https://testoza.com/classplus-alternative)
 
 A long-form guide for coaching institute owners weighing an app platform against a dedicated exam platform, with TestoZa as the worked example. Classplus facts are from its own website and public listings, checked 10 October 2026.

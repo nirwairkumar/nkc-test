@@ -56,6 +56,10 @@ interface FooterLink {
 
 /** Short labels: a footer column is ~180px wide, and long names wrap to three lines. */
 const GUIDE_LABELS: Record<string, string> = {
+    'mobile-friendly-online-exam': 'Exams on phones',
+    'embed-test-on-website': 'Test on your website',
+    'full-length-online-test-maker': 'Full-length mocks',
+    'share-test-on-whatsapp': 'Share on WhatsApp',
     'classplus-alternative': 'Classplus alternative',
     'teachmint-alternative': 'Teachmint alternative',
     'kahoot-alternative': 'Kahoot alternative',
