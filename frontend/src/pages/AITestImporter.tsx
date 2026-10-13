@@ -1903,7 +1903,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </p>
                                 ) : (
                                     <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-                                        Are the answers not next to each question, like an answer key on the last pages? Upload them here. We read your paper in parts, so answers kept at the end never reach the earlier questions, and those questions get no correct answer marked.
+                                        Are the answers not next to each question, like an answer key on the last pages? Upload them here.
                                     </p>
                                 )}
                             </div>
