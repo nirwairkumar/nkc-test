@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { tokenStorage } from '@/utils/tokenStorage';
-import { takeSignInPopupMark } from '@/hooks/useAuthActions';
+import { takeSignInPopupMark } from '@/utils/signInPopup';
 import SplashLoader from '@/components/ui/SplashLoader';
 
 /**

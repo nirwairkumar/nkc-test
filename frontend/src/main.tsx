@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { cleanupStorageQuota } from '@/utils/safeStorage'
+import { finishSignInPopup } from '@/utils/signInPopup'
 
 // Run storage cleanup to purge legacy transient items from localStorage
 cleanupStorageQuota();
@@ -83,4 +84,7 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+const renderApp = () => createRoot(document.getElementById("root")!).render(<App />);
+
+// In the Google sign-in popup: hand the login back and close, without loading the app.
+if (!finishSignInPopup(renderApp)) renderApp();

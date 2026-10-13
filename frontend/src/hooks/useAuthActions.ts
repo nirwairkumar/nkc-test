@@ -58,26 +58,7 @@ export async function resetPasswordForEmail(email: string) {
 }
 
 import { getAppUrl } from '@/utils/subdomain';
-
-// Set while the Google popup is open, so AuthCallback knows it is running in that
-// popup even when window.opener is gone. Supabase returns every sign-in through
-// https://testoza.com (the project's Site URL), and the Cross-Origin-Opener-Policy
-// header there cuts the popup off from the page that opened it. A cookie on
-// .testoza.com, not localStorage: the popup can start on testoza.com and finish on app.testoza.com.
-const SIGN_IN_POPUP_COOKIE = 'testoza_signin_popup';
-
-const markSignInPopup = (open: boolean) => {
-    const domain = window.location.hostname.endsWith('testoza.com') ? '; domain=.testoza.com' : '';
-    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `${SIGN_IN_POPUP_COOKIE}=${open ? '1' : ''}; path=/${domain}; max-age=${open ? 600 : 0}; SameSite=Lax${secure}`;
-};
-
-/** True (once) when this window is the Google sign-in popup. */
-export function takeSignInPopupMark(): boolean {
-    const marked = document.cookie.split(';').some(c => c.trim() === `${SIGN_IN_POPUP_COOKIE}=1`);
-    if (marked) markSignInPopup(false);
-    return marked;
-}
+import { markSignInPopup } from '@/utils/signInPopup';
 
 export async function signInWithGoogle(): Promise<{ error: any; data?: any }> {
     try {
