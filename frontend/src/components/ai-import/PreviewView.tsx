@@ -532,7 +532,8 @@ export default function PreviewView({
                             )}
                         </div>
 
-                        {canGenerateMore && filter === 'all' && !query && (
+                        {/* Only for AI-written questions: an extracted paper already has every question it contains. */}
+                        {generated && canGenerateMore && filter === 'all' && !query && (
                             <div className="aix-card aix-morecard" style={{ marginTop: 14 }}>
                                 <span className="aix-widget-icon aix-widget-icon--purple" aria-hidden="true"><Sparkles /></span>
                                 <div>
