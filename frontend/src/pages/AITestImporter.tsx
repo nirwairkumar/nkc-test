@@ -1575,7 +1575,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     <div className="max-w-2xl mx-auto">
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">AI-Powered</p>
                         <p className="text-xl sm:text-2xl font-bold text-white">Create Your Online Test</p>
-                        <p className="text-sm text-slate-400 mt-1">Turn your exam paper into an interactive online test in seconds.</p>
+                        <p className="text-sm text-slate-400 mt-1">Turn your question paper or notes into an online test in minutes.</p>
                     </div>
                 </div>
 
@@ -1595,17 +1595,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         }`}
                     >
                         {/* Card header row */}
-                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
+                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center shrink-0">
                                     <FileUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                                 </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper, Notes or Chapter</p>
                                     <p className="text-[11px] text-slate-400">PDF or photos</p>
                                 </div>
                             </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
+                            <span className="shrink-0 whitespace-nowrap text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
                         </div>
 
                         {/* Card body */}
