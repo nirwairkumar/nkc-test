@@ -3,13 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { takeSignInPopupMark } from '@/hooks/useAuthActions';
 import SplashLoader from '@/components/ui/SplashLoader';
 
 /**
  * AuthCallback — handles the redirect from Supabase after Google OAuth.
  *
  * Supports both:
- * 1. Popup mode (window.opener exists) -> sends token via postMessage and immediately closes itself without refreshing parent window.
+ * 1. Popup mode (window.opener exists, or signInWithGoogle marked this window as its popup) -> sends token via postMessage when it can and immediately closes itself without refreshing parent window.
  * 2. Full-page redirect mode (fallback) -> restores tokens, refreshes session, and redirects to origin route.
  */
 export default function AuthCallback() {
@@ -18,21 +19,29 @@ export default function AuthCallback() {
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState('Processing your login...');
 
+    // In the Google popup, but window.opener can be gone: Supabase returns sign-ins
+    // through https://testoza.com, whose Cross-Origin-Opener-Policy header cuts the
+    // popup off. Then the tokens already stored are the hand-off — the page that
+    // opened the popup picks them up once it closes — and the app must not load in here.
     const notifyOpenerAndClose = (accessToken: string, refreshToken?: string): boolean => {
-        if (window.opener && !window.opener.closed) {
+        const hasOpener = !!window.opener && !window.opener.closed;
+        const isSignInPopup = takeSignInPopupMark();
+        if (!hasOpener && !isSignInPopup) return false;
+
+        if (hasOpener) {
             try {
                 window.opener.postMessage({
                     type: 'OAUTH_AUTH_SUCCESS',
                     accessToken,
                     refreshToken
                 }, window.location.origin);
-                window.close();
-                return true;
             } catch (e) {
                 console.error('[AuthCallback] Failed to notify opener:', e);
             }
         }
-        return false;
+        setStatus('Signed in. You can close this window.');
+        window.close();
+        return true;
     };
 
     const notifyOpenerErrorAndClose = (errorMsg: string): boolean => {
