@@ -1,0 +1,163 @@
+<template>
+<link rel="stylesheet" href="assets/app.css" />
+<link rel="stylesheet" href="assets/film.css" />
+<style>
+@font-face{font-family:'Outfit';font-weight:500;font-display:block;src:url("assets/fonts/Outfit-500.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:600;font-display:block;src:url("assets/fonts/Outfit-600.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:700;font-display:block;src:url("assets/fonts/Outfit-700.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:800;font-display:block;src:url("assets/fonts/Outfit-800.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:900;font-display:block;src:url("assets/fonts/Outfit-900.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:400;font-display:block;src:url("assets/fonts/Mukta-400.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:500;font-display:block;src:url("assets/fonts/Mukta-500.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:600;font-display:block;src:url("assets/fonts/Mukta-600.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:700;font-display:block;src:url("assets/fonts/Mukta-700.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:800;font-display:block;src:url("assets/fonts/Mukta-800.woff2") format("woff2");}
+@font-face{font-family:'Apple Color Emoji';src:local('Apple Color Emoji');}
+@font-face{font-family:'Segoe UI Emoji';src:local('Segoe UI Emoji');}
+@font-face{font-family:'Segoe UI Symbol';src:local('Segoe UI Symbol');}
+@font-face{font-family:'Noto Color Emoji';src:local('Noto Color Emoji');}
+@font-face{font-family:'SFMono-Regular';src:local('SFMono-Regular');}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #f01-bg { position: absolute; inset: 0; background: #000; }
+  #f01-glow {
+    position: absolute; left: 50%; top: 50%; width: 1400px; height: 700px; margin: -350px 0 0 -700px;
+    background: radial-gradient(closest-side, rgba(56, 189, 248, 0.22), rgba(79, 70, 229, 0.10) 55%, transparent);
+  }
+  .f01-line { top: 470px; font-size: 92px; }
+  #f01-rule {
+    position: absolute; left: 50%; top: 620px; width: 520px; height: 2px; margin-left: -260px;
+    background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+  }
+</style>
+<div id="root" data-composition-id="f01-open" data-width="1920" data-height="1080">
+  <div class="tz-film">
+    <div id="f01-bg" class="clip" data-start="0" data-duration="4" data-track-index="0"></div>
+    <div id="f01-glow"></div>
+    <div id="f01-a" class="tz-super f01-line">It starts with a <em>question paper.</em></div>
+    <div id="f01-b" class="tz-super f01-line">It ends with <em>results.</em></div>
+    <div id="f01-c" class="tz-super f01-line">Here's everything <em>in between.</em></div>
+    <div id="f01-rule"></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f01-open';
+  /* ── shared film helpers (inlined by tools/build-frames.mjs; needs const ID) ── */
+const R = document.querySelector('[data-composition-id="' + ID + '"]');
+const q = (s) => R.querySelector(s);
+const qa = (s) => Array.from(R.querySelectorAll(s));
+const tl = gsap.timeline({ paused: true });
+
+/* Camera. The window sits at (240,126) in rig space; the rig scales about (960,548). */
+const REST = { scale: 0.82, x: 0, y: 0 };
+const O = { x: 960, y: 548 };
+/** Rig transform that puts window point p at screen point T with zoom s. */
+function focus(p, s, T) {
+  T = T || { x: 960, y: 560 };
+  const px = 240 + p.x, py = 126 + p.y;
+  return { scale: s, x: T.x - O.x - s * (px - O.x), y: T.y - O.y - s * (py - O.y) };
+}
+function cam(t, to, d, ease) {
+  tl.to(q('.tz-rig'), Object.assign({ duration: d || 1.2, ease: ease || 'power3.inOut' }, to), t);
+}
+
+/* Cursor: points are window coordinates (chrome included), as measured. */
+const CUR = q('.tz-cursor');
+const LAYER = q('.tz-curlayer');
+function cursorAt(t, p) { tl.set(CUR, { x: p.x - 4, y: p.y - 3, autoAlpha: 1 }, t); }
+function move(t, p, d, ease) {
+  tl.to(CUR, { x: p.x - 4, y: p.y - 3, duration: d || 0.75, ease: ease || 'power2.inOut' }, t);
+}
+function press(t, el, k) {
+  if (!el) return;
+  tl.to(el, { scale: k || 0.95, duration: 0.09, ease: 'power2.out' }, t);
+  tl.to(el, { scale: 1, duration: 0.32, ease: 'back.out(3)' }, t + 0.09);
+}
+function click(t, p, el) {
+  tl.to(CUR, { scale: 0.84, duration: 0.08, ease: 'power2.out', transformOrigin: '4px 3px' }, t);
+  tl.to(CUR, { scale: 1, duration: 0.25, ease: 'back.out(3)' }, t + 0.08);
+  const r = document.createElement('div');
+  r.className = 'tz-ripple';
+  (LAYER || R).appendChild(r);
+  tl.fromTo(r, { x: p.x, y: p.y, scale: 0.25, opacity: 0.95 }, { scale: 1.6, opacity: 0, duration: 0.6, ease: 'power2.out' }, t);
+  press(t, el);
+}
+
+/* States stacked in one place; swap is a hard cut, like a page update. */
+function only(t, show, all) {
+  all.forEach((el) => tl.set(el, { autoAlpha: el === show ? 1 : 0 }, t));
+}
+
+/* Keynote supers: words rise out of a blur, one after another. */
+function split(el) {
+  if (el.dataset.split) return Array.from(el.querySelectorAll('.tz-word'));
+  const out = [];
+  Array.from(el.childNodes).forEach((n) => {
+    if (n.nodeType === 3) {
+      n.textContent.split(/(\s+)/).forEach((w) => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { el.insertBefore(document.createTextNode(w), n); return; }
+        const s = document.createElement('span');
+        s.className = 'tz-word';
+        s.textContent = w;
+        el.insertBefore(s, n);
+        out.push(s);
+      });
+      el.removeChild(n);
+    } else {
+      n.classList.add('tz-word');
+      out.push(n);
+    }
+  });
+  el.dataset.split = '1';
+  return out;
+}
+function superIn(t, el, stagger) {
+  const w = split(el);
+  tl.set(el, { autoAlpha: 1 }, t);
+  tl.fromTo(w, { y: 44, opacity: 0, filter: 'blur(14px)' },
+    { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.75, ease: 'expo.out', stagger: stagger || 0.075 }, t);
+}
+function superOut(t, el) { tl.set(el, { autoAlpha: 0 }, t); }
+
+/* Typing: characters appear one by one (spaces included, so wrapping never jumps). */
+function typeIn(t, el, d) {
+  const text = el.textContent;
+  el.textContent = '';
+  const chars = Array.from(text).map((c) => {
+    const s = document.createElement('span');
+    s.textContent = c;
+    el.appendChild(s);
+    return s;
+  });
+  tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.001, stagger: d / chars.length, ease: 'none' }, t);
+  return chars;
+}
+
+/* Counter text driven by a tween (seek-safe: the value is a pure function of time). */
+function countUp(t, el, from, to, d, fmt) {
+  const o = { v: from };
+  const f = fmt || ((v) => String(Math.round(v)));
+  el.textContent = f(from);
+  tl.fromTo(o, { v: from }, { v: to, duration: d, ease: 'power1.inOut', onUpdate: () => { el.textContent = f(o.v); } }, t);
+}
+/* ── end helpers ── */
+
+  const A = q('#f01-a'), B = q('#f01-b'), C = q('#f01-c');
+  tl.set([A, B, C], { autoAlpha: 0 }, 0);
+  tl.fromTo('#f01-glow', { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1.08, duration: 4, ease: 'sine.inOut' }, 0);
+  superIn(0.25, A, 0.09);
+  superOut(1.75, A);
+  superIn(1.75, B, 0.09);
+  superOut(2.85, B);
+  superIn(2.85, C, 0.08);
+  tl.fromTo('#f01-rule', { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.9, ease: 'expo.out' }, 3.0);
+  // the line holds still under the words until the cut
+  tl.fromTo(C, { scale: 1 }, { scale: 1.04, duration: 1.15, ease: 'none' }, 2.85);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

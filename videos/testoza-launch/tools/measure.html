@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>measure</title>
+<link rel="stylesheet" href="../assets/app.css" />
+<link rel="stylesheet" href="../assets/film.css" />
+<style>html, body { margin: 0; width: 1920px; } #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+/* Mounts each built frame (scripts stripped, no transforms) and records where its
+   named targets sit: centre and edges, relative to .tz-win or to a given anchor.
+   Paths inside frames are project-root relative, so mount with a <base>. */
+window.measureAll = async function () {
+  const base = document.createElement('base');
+  base.href = '/';
+  document.head.prepend(base);
+  const { frames } = await (await fetch('/ui/frames-src/' + (window.MANIFEST || 'manifest.json'))).json();
+  const out = {};
+  for (const f of frames) {
+    const srcText = await (await fetch('/ui/frames-src/' + f.id + '.tpl')).text();
+    const m = srcText.match(/<!--@measure\s+([\s\S]*?)-->/);
+    if (!m) continue;
+    const spec = JSON.parse(m[1]);
+    const built = await (await fetch('/compositions/frames/' + f.id + '.html')).text();
+    const tpl = document.createElement('template');
+    tpl.innerHTML = built.replace(/^\s*<template>/, '').replace(/<\/template>\s*$/, '');
+    tpl.content.querySelectorAll('script').forEach((s) => s.remove());
+    const stage = document.getElementById('stage');
+    stage.innerHTML = '';
+    stage.appendChild(tpl.content.cloneNode(true));
+    await document.fonts.ready;
+    await Promise.all(Array.from(stage.querySelectorAll('img')).map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; })));
+    const res = {};
+    const rect = (r, a) => ({
+      x: Math.round(r.left - a.left + r.width / 2), y: Math.round(r.top - a.top + r.height / 2),
+      l: Math.round(r.left - a.left), t: Math.round(r.top - a.top), r: Math.round(r.right - a.left), b: Math.round(r.bottom - a.top),
+    });
+    for (const [name, v] of Object.entries(spec)) {
+      if (v && v.all) {
+        const a = stage.querySelector('.tz-win').getBoundingClientRect();
+        res[name] = Array.from(stage.querySelectorAll(v.all)).map((e) => rect(e.getBoundingClientRect(), a));
+        continue;
+      }
+      const [sel, anchorSel] = Array.isArray(v) ? v : [v, '.tz-win'];
+      const el = stage.querySelector(sel), an = stage.querySelector(anchorSel);
+      if (!el || !an) { res[name] = null; continue; }
+      const a = an.getBoundingClientRect(), r = el.getBoundingClientRect();
+      res[name] = {
+        x: Math.round(r.left - a.left + r.width / 2), y: Math.round(r.top - a.top + r.height / 2),
+        l: Math.round(r.left - a.left), t: Math.round(r.top - a.top), r: Math.round(r.right - a.left), b: Math.round(r.bottom - a.top),
+      };
+    }
+    out[f.id] = res;
+  }
+  return out;
+};
+</script>
+</body>
+</html>

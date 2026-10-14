@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube",
+      "confirmed_in": [
+        "testoza-launch"
+      ],
+      "updated_at": "2026-10-13T21:00:02.098Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "testoza-launch"
+      ],
+      "updated_at": "2026-10-13T21:00:03.001Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "testoza-launch"
+      ],
+      "updated_at": "2026-10-13T21:00:03.588Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "testoza-launch"
+      ],
+      "updated_at": "2026-10-13T21:00:04.272Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "testoza-launch"
+      ],
+      "updated_at": "2026-10-13T21:00:05.295Z"
+    }
+  },
+  "sightings": {}
+}
