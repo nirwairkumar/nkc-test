@@ -2098,7 +2098,7 @@ export default {
       }
 
       // Static assets - pass through directly to let Cloudflare Pages handle native caching & compression
-      const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
+      const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|mp4|webm)$/i.test(url.pathname);
       if (hasStaticExtension) {
         return fetch(request);
       }

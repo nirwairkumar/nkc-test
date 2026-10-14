@@ -32,6 +32,9 @@ export interface AdsLandingCopy {
     /** Label of the main button (it always opens the AI test creator, ADS_CTA.href). */
     ctaLabel: string;
     /** Section headings, kept to a few words each. */
+    videoTitle: string;
+    /** One line under the video heading: what the film shows. */
+    videoSub: string;
     waysTitle: string;
     stepsTitle: string;
     gridTitle: string;
@@ -120,6 +123,8 @@ export const ADS_LANDING: Record<'quiz' | 'assessment', AdsLandingCopy> = {
         h1Rest: 'From any PDF, photo or notes.',
         sub: 'Upload your material. Get an auto-graded quiz. Share one link.',
         ctaLabel: 'Create a quiz free',
+        videoTitle: 'See it in under two minutes.',
+        videoSub: 'Turn a question paper into a test, run it in class, and see every result.',
         waysTitle: 'Start from anything.',
         stepsTitle: 'Three steps. That’s it.',
         gridTitle: 'Everything a quiz needs.',
@@ -140,6 +145,8 @@ export const ADS_LANDING: Record<'quiz' | 'assessment', AdsLandingCopy> = {
         h1Rest: 'ready in minutes.',
         sub: 'A real exam screen, instant grading and clear reports.',
         ctaLabel: 'Create a test free',
+        videoTitle: 'Watch a test, start to finish.',
+        videoSub: 'From a question paper to a live exam in class to every candidate’s result.',
         waysTitle: 'Bring your papers.',
         stepsTitle: 'Create. Share. Grade.',
         gridTitle: 'Built for real exams.',
@@ -177,6 +184,8 @@ export function adsCrawlerHtml(copy: AdsLandingCopy): string {
 <h1>${esc(`${copy.h1Lead} ${copy.h1Rest}`)}</h1>
 <p>${esc(copy.sub)}</p>
 <p><a href="${ADS_CTA.href}">${esc(copy.ctaLabel)}</a></p>
+<h2>${esc(copy.videoTitle)}</h2>
+<p>${esc(copy.videoSub)}</p>
 <h2>${esc(copy.waysTitle)}</h2>
 <ul>${ADS_SOURCES.map((s) => `<li><a href="${s.href}">${esc(s.label)}</a>: ${esc(s.caption)}</li>`).join('')}</ul>
 <h2>${esc(copy.stepsTitle)}</h2>

@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import { SEO } from '@/components/SEO';
+import LaunchVideo, { type LaunchVideoHandle } from '@/components/LaunchVideo';
 import { analytics } from '@/lib/analytics/tracker';
 import { ADS_CTA, ADS_SOURCES, ADS_STEPS, adsFaqSchema, adsLandingFor } from '@/landing/adsLanding';
 import {
@@ -42,6 +43,7 @@ export default function GoogleAdsLanding() {
     const rootRef = useRef<HTMLDivElement>(null);
     const heroCtaRef = useRef<HTMLDivElement>(null);
     const closingRef = useRef<HTMLElement>(null);
+    const videoRef = useRef<LaunchVideoHandle>(null);
     const [openFaq, setOpenFaq] = useState<number | null>(0);
     const [floatOn, setFloatOn] = useState(false);
     const [floatPeek, setFloatPeek] = useState(true);
@@ -157,7 +159,9 @@ export default function GoogleAdsLanding() {
                         <p className="qcl-sub">{copy.sub}</p>
                         <div className="qcl-actions" ref={heroCtaRef}>
                             {cta('hero')}
-                            <a className="qcl-btn qcl-btn--glass" href="#how">See how it works</a>
+                            <a className="qcl-btn qcl-btn--glass" href="#watch" onClick={() => videoRef.current?.play()}>
+                                See how it works
+                            </a>
                         </div>
                         <ul className="qcl-proof" aria-label="At a glance">
                             <li>Free to start</li>
@@ -169,6 +173,15 @@ export default function GoogleAdsLanding() {
                     <QuizPhone />
                 </div>
             </header>
+
+            {/* The walkthrough film: nothing downloads until play */}
+            <section className="qcl-sec qcl-sec--video" id="watch" aria-labelledby="qcl-watch">
+                <h2 id="qcl-watch" className="qcl-h2" data-reveal>{copy.videoTitle}</h2>
+                <p className="qcl-video-sub" data-reveal>{copy.videoSub}</p>
+                <div className="qcl-video" data-reveal>
+                    <LaunchVideo ref={videoRef} where="ads_landing" />
+                </div>
+            </section>
 
             {/* Four ways in */}
             <section className="qcl-sec" aria-labelledby="qcl-ways">

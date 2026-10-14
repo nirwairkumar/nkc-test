@@ -3,6 +3,7 @@ import { Check, Upload, PenLine, Radio, Copy, X } from 'lucide-react';
 import type { Checklist, LiveExam } from '@/lib/teacherDashboardApi';
 import { examWhatsAppUrl, getExamUrl } from '@/lib/conductExam';
 import { toast } from 'sonner';
+import LaunchVideo from '@/components/LaunchVideo';
 import { CARD, PILL_BTN, PRIMARY_BTN, WhatsAppIcon } from './dashboardUi';
 import { copyText } from './format';
 
@@ -58,73 +59,84 @@ export default function FirstExamChecklist({
                 </button>
             </div>
 
-            <ol className="divide-y divide-slate-100">
-                {steps.map((step, i) => {
-                    const isCurrent = i === current;
-                    return (
-                        <li key={step.title} className={`flex gap-3.5 px-4 py-4 sm:px-5 ${isCurrent ? 'bg-sky-50/40' : ''}`}>
-                            <span
-                                className={[
-                                    'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold tabular-nums',
-                                    step.done
-                                        ? 'bg-emerald-500 text-white'
-                                        : isCurrent
-                                            ? 'bg-primary text-white shadow-[0_6px_14px_-6px_rgba(2,132,199,0.9)]'
-                                            : 'bg-slate-100 text-slate-500',
-                                ].join(' ')}
-                            >
-                                {step.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className={`text-[15px] font-semibold ${step.done ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'}`}>
-                                    {step.title}
-                                </p>
-                                {!step.done && <p className="mt-0.5 text-[13px] leading-snug text-slate-600">{step.body}</p>}
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
+                <ol className="divide-y divide-slate-100">
+                    {steps.map((step, i) => {
+                        const isCurrent = i === current;
+                        return (
+                            <li key={step.title} className={`flex gap-3.5 px-4 py-4 sm:px-5 ${isCurrent ? 'bg-sky-50/40' : ''}`}>
+                                <span
+                                    className={[
+                                        'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold tabular-nums',
+                                        step.done
+                                            ? 'bg-emerald-500 text-white'
+                                            : isCurrent
+                                                ? 'bg-primary text-white shadow-[0_6px_14px_-6px_rgba(2,132,199,0.9)]'
+                                                : 'bg-slate-100 text-slate-500',
+                                    ].join(' ')}
+                                >
+                                    {step.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <p className={`text-[15px] font-semibold ${step.done ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'}`}>
+                                        {step.title}
+                                    </p>
+                                    {!step.done && <p className="mt-0.5 text-[13px] leading-snug text-slate-600">{step.body}</p>}
 
-                                {isCurrent && i === 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        <button type="button" onClick={onUploadPaper} className={`${PRIMARY_BTN} h-10 px-4 text-sm`}>
-                                            <Upload className="h-4 w-4" /> Upload a paper
-                                        </button>
-                                        <button type="button" onClick={onTypeQuestions} className={PILL_BTN}>
-                                            <PenLine className="h-4 w-4 text-sky-600" /> Type questions
-                                        </button>
-                                    </div>
-                                )}
-
-                                {isCurrent && i === 1 && checklist.nextToConduct && (
-                                    <div className="mt-3">
-                                        <button type="button" onClick={() => onConduct(checklist.nextToConduct)} className={`${PRIMARY_BTN} h-10 max-w-full px-4 text-sm`}>
-                                            <Radio className="h-4 w-4 shrink-0" />
-                                            <span className="truncate">Start "{checklist.nextToConduct.title}"</span>
-                                        </button>
-                                    </div>
-                                )}
-
-                                {isCurrent && i === 2 && (
-                                    liveExam ? (
+                                    {isCurrent && i === 0 && (
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <a
-                                                href={examWhatsAppUrl(liveExam.test)}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97]"
-                                            >
-                                                <WhatsAppIcon /> Send on WhatsApp
-                                            </a>
-                                            <button type="button" onClick={copyLink} className={PILL_BTN}>
-                                                <Copy className="h-4 w-4 text-sky-600" /> Copy link
+                                            <button type="button" onClick={onUploadPaper} className={`${PRIMARY_BTN} h-10 px-4 text-sm`}>
+                                                <Upload className="h-4 w-4" /> Upload a paper
+                                            </button>
+                                            <button type="button" onClick={onTypeQuestions} className={PILL_BTN}>
+                                                <PenLine className="h-4 w-4 text-sky-600" /> Type questions
                                             </button>
                                         </div>
-                                    ) : (
-                                        <p className="mt-2 text-[13px] text-slate-500">Start an exam first. Its link will show here.</p>
-                                    )
-                                )}
-                            </div>
-                        </li>
-                    );
-                })}
-            </ol>
+                                    )}
+
+                                    {isCurrent && i === 1 && checklist.nextToConduct && (
+                                        <div className="mt-3">
+                                            <button type="button" onClick={() => onConduct(checklist.nextToConduct)} className={`${PRIMARY_BTN} h-10 max-w-full px-4 text-sm`}>
+                                                <Radio className="h-4 w-4 shrink-0" />
+                                                <span className="truncate">Start "{checklist.nextToConduct.title}"</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {isCurrent && i === 2 && (
+                                        liveExam ? (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                <a
+                                                    href={examWhatsAppUrl(liveExam.test)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97]"
+                                                >
+                                                    <WhatsAppIcon /> Send on WhatsApp
+                                                </a>
+                                                <button type="button" onClick={copyLink} className={PILL_BTN}>
+                                                    <Copy className="h-4 w-4 text-sky-600" /> Copy link
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <p className="mt-2 text-[13px] text-slate-500">Start an exam first. Its link will show here.</p>
+                                        )
+                                    )}
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ol>
+
+                {/* The walkthrough film, for teachers who'd rather watch it done once */}
+                <div className="border-t border-slate-100 px-4 py-4 sm:px-5 lg:border-l lg:border-t-0">
+                    <p className="text-[15px] font-semibold text-slate-900">Prefer to watch first?</p>
+                    <p className="mb-3 mt-0.5 text-[13px] leading-snug text-slate-600">
+                        A 2-minute walkthrough: a test made from a question paper, run in class, results in.
+                    </p>
+                    <LaunchVideo where="dashboard" label="How TestoZa works" className="rounded-xl ring-1 ring-slate-900/[0.06]" />
+                </div>
+            </div>
         </section>
     );
 }

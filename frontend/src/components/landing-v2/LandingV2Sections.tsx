@@ -15,6 +15,7 @@ import {
     CAPABILITY_PROOF, FEATURES, PROOF_MODE, REAL_METRICS, STEPS, VALUE_PROPS,
 } from './content';
 import { Divider, IconTile, Pill, Reveal, Section, SectionHeading, Surface } from './ui';
+import LaunchVideo from '@/components/LaunchVideo';
 import ManualEditorShowcase from './showcase/ManualEditorShowcase';
 import SettingsShowcase from './showcase/SettingsShowcase';
 import './showcase/showcase-frame.css';
@@ -151,6 +152,16 @@ export function HowItWorks() {
                         </Reveal>
                     ))}
                 </ol>
+
+                {/* The same three steps on film. Only the poster loads until play. */}
+                <Reveal className="mx-auto mt-16 max-w-4xl">
+                    <Surface as="figure" className="p-1.5 sm:p-2">
+                        <LaunchVideo where="homepage" className="rounded-xl" />
+                    </Surface>
+                    <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                        Watch it done in under two minutes: a question paper becomes a test, the class takes it, results come in.
+                    </p>
+                </Reveal>
             </div>
         </Section>
     );
