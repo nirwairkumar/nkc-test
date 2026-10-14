@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from "@/components/SEO";
+import { announceAiImportStep } from '@/lib/aiImportStep';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
@@ -232,6 +233,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     // Apple HIG UI & Drag State
     const [isDragging, setIsDragging] = useState(false);
     const [showHelpDialog, setShowHelpDialog] = useState(false);
+
+    // Tell Layout when we leave the upload step (same test as the Step 1 render below) so the menu collapses
+    const isPastUpload = !!parsedData || files.length > 0 || !!uploadType;
+    useEffect(() => {
+        announceAiImportStep(isPastUpload);
+    }, [isPastUpload]);
+    useEffect(() => () => announceAiImportStep(false), []);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();

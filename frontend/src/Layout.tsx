@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics/tracker';
 import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
 import { GUIDE_METAS } from '@/guides/meta';
+import { AI_IMPORT_STEP_EVENT } from '@/lib/aiImportStep';
 
 /** Guides and their index (pages/GuidesIndex.tsx) are reading pages: no app sidebar. */
 const GUIDE_PATHS = new Set(['/guides', ...GUIDE_METAS.map((g) => g.path)]);
@@ -36,10 +37,20 @@ export default function Layout() {
         location.pathname.startsWith('/create-test') ||
         location.pathname.startsWith('/edit-test');
 
-    // Expand sidebar on AI page; collapse it in the builder, restore the saved choice on leaving
+    // /generate-with-ai: upload step keeps the menu open; mode choice and preview start on the rail.
+    // AITestImporter announces its step via AI_IMPORT_STEP_EVENT.
+    const isAiPage = location.pathname === '/generate-with-ai';
+    const [aiPastUpload, setAiPastUpload] = useState(false);
     useEffect(() => {
-        if (location.pathname === '/generate-with-ai') {
-            setIsCollapsed(false);
+        const onStep = (e: Event) => setAiPastUpload(!!(e as CustomEvent<boolean>).detail);
+        window.addEventListener(AI_IMPORT_STEP_EVENT, onStep);
+        return () => window.removeEventListener(AI_IMPORT_STEP_EVENT, onStep);
+    }, []);
+
+    // Collapse in the builder and past the AI upload step; restore the saved choice on leaving
+    useEffect(() => {
+        if (isAiPage) {
+            setIsCollapsed(aiPastUpload);
         } else if (isBuilderPage) {
             setIsCollapsed(true);
         } else {
@@ -47,14 +58,14 @@ export default function Layout() {
                 setIsCollapsed(localStorage.getItem('app_sidebar_collapsed') === 'true');
             } catch { }
         }
-    }, [location.pathname, isBuilderPage]);
+    }, [location.pathname, isBuilderPage, isAiPage, aiPastUpload]);
 
     useEffect(() => {
-        if (isBuilderPage) return;
+        if (isBuilderPage || isAiPage) return;
         try {
             localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
         } catch { }
-    }, [isCollapsed, isBuilderPage]);
+    }, [isCollapsed, isBuilderPage, isAiPage]);
 
     // One page view per path (our analytics + GA4). Query changes (filters, search
     // boxes) and sign-in state are not new pages — counting them inflated views ~20%.
