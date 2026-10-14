@@ -337,6 +337,8 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             <div
                 className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
                 onClick={handleContainerClick}
+                // Urdu/Arabic/Persian questions read right to left; English ones are unaffected.
+                dir="auto"
             >
                 <span dangerouslySetInnerHTML={{ __html: safeHtml }} />
             </div>

@@ -129,7 +129,7 @@ export interface Question {
     marks?: number | string;
     negativeMarks?: number | string;
     partialMarking?: 'proportional' | 'per_option'; // Multiple correct only; default proportional
-    typingMode?: 'en' | 'hi';
+    typingMode?: string; // builder only ('en' | 'second'); stripped before saving
     originalIndex?: number; // Added to strictly track index when shuffling
     topic?: string; // AI generated or manual topic
 }

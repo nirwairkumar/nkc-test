@@ -43,6 +43,8 @@ import slugify from 'slugify';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import { SYPAD_INSERT_EVENT } from './math-keyboard/mathSyntax';
 import { QuestionCard, PassageHeader, PassageFooter, type PhotoBanner } from './test-builder/QuestionCard';
+import { LanguageSwitch } from './test-builder/LanguageSwitch';
+import { type FieldMode, resolveTyping, setSecondLanguage, useSecondLanguage } from '@/lib/typingLanguages';
 import { GapMenu } from './test-builder/GapMenu';
 import {
     type QuestionState, DEFAULT_QUESTION, applyPhotoResult, questionIssue,
@@ -192,7 +194,7 @@ type RowActions = {
     openSyPad: (key?: string) => void;
     cloudUpload: (e: React.MouseEvent, key: string) => void;
     snip: (apply: (base64: string) => void) => void;
-    typingModeUsed: (mode: 'en' | 'hi') => void;
+    typingModeUsed: (mode: FieldMode) => void;
     registerRef: (key: string, el: IMEInputHandle | null) => void;
     dragStart: (index: number, e: React.DragEvent) => void;
     drop: (index: number, e: React.DragEvent) => void;
@@ -362,13 +364,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     // Questions State
     const [questions, setQuestions] = useState<QuestionState[]>([DEFAULT_QUESTION]);
-    const [lastTypingMode, setLastTypingMode] = useState<'en' | 'hi'>('en');
+    const [lastTypingMode, setLastTypingMode] = useState<FieldMode>('en');
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const [logoDragOver, setLogoDragOver] = useState(false);
 
-    // Description and test name typing modes
-    const [descriptionLanguage, setDescriptionLanguage] = useState<'en' | 'hi'>('en');
-    const [titleLanguage, setTitleLanguage] = useState<'en' | 'hi'>('en');
+    // Description and test name typing modes; the second language itself is one for the whole page.
+    const [descriptionLanguage, setDescriptionLanguage] = useState<FieldMode>('en');
+    const [titleLanguage, setTitleLanguage] = useState<FieldMode>('en');
+    const secondLanguage = useSecondLanguage();
 
     // Online/Offline State
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -1732,7 +1735,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             ...prev,
             [String(target.id)]: { previous, banner: { answerSource: result.answerSource, answerLabel, others: result.otherQuestionsInPhoto } },
         }));
-        if (result.language === 'hi') setLastTypingMode('hi');
+        // A question in Bengali (or Urdu, or Hindi…) means the teacher is typing in it.
+        if (result.language !== 'en') {
+            setSecondLanguage(result.language);
+            setLastTypingMode('second');
+        }
     };
 
     const undoPhotoFill = (id: number) => {
@@ -2021,7 +2028,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             {!isOnline && (
                 <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-red-50 px-4 py-3 text-[14px] text-red-800 ring-1 ring-inset ring-red-600/15">
                     <WifiOff className="h-4 w-4 shrink-0" />
-                    <span>You are offline. Your work is kept on this device; Hindi typing needs the internet.</span>
+                    <span>You are offline. Your work is kept on this device{secondLanguage?.itc ? `; ${secondLanguage.name} typing needs the internet` : ''}.</span>
                 </div>
             )}
 
@@ -2033,18 +2040,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                         <div>
                             <div className="mb-1.5 flex items-center justify-between gap-2">
                                 <label htmlFor="test-title" className={cn(FIELD_LABEL, 'mb-0')}>Test name</label>
-                                <div className="flex h-7 items-center rounded-full bg-slate-100 p-0.5 text-[12px] font-semibold">
-                                    {([['en', 'English'], ['hi', 'हिंदी']] as const).map(([v, l]) => (
-                                        <button key={v} type="button" onClick={() => setTitleLanguage(v)} aria-pressed={titleLanguage === v}
-                                            className={cn('h-6 rounded-full px-2.5', titleLanguage === v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500')}>
-                                            {l}
-                                        </button>
-                                    ))}
-                                </div>
+                                <LanguageSwitch value={titleLanguage} onChange={setTitleLanguage} />
                             </div>
                             <IMEInput
                                 id="test-title"
-                                typingMode={titleLanguage}
+                                typingMode={resolveTyping(titleLanguage, secondLanguage)}
                                 value={title}
                                 onChange={setTitle}
                                 enablePreview={false}
@@ -2056,18 +2056,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                         <div>
                             <div className="mb-1.5 flex items-center justify-between gap-2">
                                 <span className={cn(FIELD_LABEL, 'mb-0')}>Short description <span className="font-normal text-slate-400">(optional)</span></span>
-                                <div className="flex h-7 items-center rounded-full bg-slate-100 p-0.5 text-[12px] font-semibold">
-                                    {([['en', 'English'], ['hi', 'हिंदी']] as const).map(([v, l]) => (
-                                        <button key={v} type="button" onClick={() => setDescriptionLanguage(v)} aria-pressed={descriptionLanguage === v}
-                                            className={cn('h-6 rounded-full px-2.5', descriptionLanguage === v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500')}>
-                                            {l}
-                                        </button>
-                                    ))}
-                                </div>
+                                <LanguageSwitch value={descriptionLanguage} onChange={setDescriptionLanguage} />
                             </div>
                             <IMEInput
                                 ref={(el: IMEInputHandle | null) => registerRef('test-desc', el)}
-                                typingMode={descriptionLanguage}
+                                typingMode={resolveTyping(descriptionLanguage, secondLanguage)}
                                 value={description}
                                 onChange={setDescription}
                                 placeholder="One line students see before they start"

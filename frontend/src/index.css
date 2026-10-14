@@ -226,6 +226,9 @@
 
 .latex-renderer-container .katex {
   text-align: left;
+  /* Maths stays left-to-right inside an Urdu/Arabic sentence */
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 /* Enhanced Mobile Table Styles - Ultra-compact for question view */

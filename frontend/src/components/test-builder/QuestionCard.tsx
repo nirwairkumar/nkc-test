@@ -7,9 +7,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { type FieldMode, resolveTyping, useSecondLanguage } from '@/lib/typingLanguages';
 import {
     type QuestionState, QUESTION_TYPE_LABELS, hasAnswer, imageFileToSrc, processImageUrl, sanitizeNumericalMark,
 } from './builderUtils';
+import { LanguageSwitch } from './LanguageSwitch';
 
 /* ── shared bits ──────────────────────────────────────────────────────────── */
 
@@ -124,37 +126,18 @@ function MarkField({ label, value, onChange, tone }: { label: string; value: str
     );
 }
 
-function LanguageToggle({ value, onChange }: { value: 'en' | 'hi'; onChange: (v: 'en' | 'hi') => void }) {
-    return (
-        <div role="radiogroup" aria-label="Typing language" className="flex h-7 items-center rounded-full bg-slate-100 p-0.5 text-[12px] font-semibold">
-            {([['en', 'English'], ['hi', 'हिंदी']] as const).map(([v, label]) => (
-                <button
-                    key={v}
-                    type="button"
-                    role="radio"
-                    aria-checked={value === v}
-                    onClick={() => onChange(v)}
-                    title={v === 'hi' ? 'Type in English letters, get Hindi (e.g. "namaste" → नमस्ते)' : 'Type in English'}
-                    className={cn('h-6 rounded-full px-2.5 transition-all', value === v ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)]' : 'text-slate-500 hover:text-slate-800')}
-                >
-                    {label}
-                </button>
-            ))}
-        </div>
-    );
-}
-
 /* ── passage (comprehension) pieces ───────────────────────────────────────── */
 
 export function PassageHeader({
     value, typingMode, onChange, registerRef, refKey,
 }: {
     value: string;
-    typingMode: 'en' | 'hi';
+    typingMode: FieldMode;
     onChange: (v: string) => void;
     registerRef: (key: string, el: IMEInputHandle | null) => void;
     refKey: string;
 }) {
+    const typing = resolveTyping(typingMode, useSecondLanguage());
     return (
         <div className="mt-1 rounded-t-2xl border border-b-0 border-violet-200 bg-violet-50/70 p-3 sm:p-4">
             <p className="mb-1.5 flex items-center gap-2 text-[12.5px] font-semibold text-violet-800">
@@ -164,7 +147,7 @@ export function PassageHeader({
                 <IMEInput
                     as="textarea"
                     ref={(el: IMEInputHandle | null) => registerRef(refKey, el)}
-                    typingMode={typingMode}
+                    typingMode={typing}
                     value={value}
                     onChange={onChange}
                     data-sypad-label="Passage"
@@ -209,7 +192,7 @@ interface QuestionCardProps {
     onCloudUpload: (e: React.MouseEvent, key: string) => void;
     onSnip: (apply: (dataUrl: string) => void) => void;
     onFillFromPhoto: () => void;
-    onTypingModeUsed: (mode: 'en' | 'hi') => void;
+    onTypingModeUsed: (mode: FieldMode) => void;
     photoBanner?: PhotoBanner | null;
     onUndoPhoto?: () => void;
     onDismissPhotoBanner?: () => void;
@@ -227,6 +210,7 @@ export function QuestionCard({
 }: QuestionCardProps) {
     const [showImagePicker, setShowImagePicker] = useState(false);
     const [optionPicker, setOptionPicker] = useState<string | null>(null);
+    const typing = resolveTyping(q.typingMode, useSecondLanguage());
 
     const type = q.type || 'single';
     const optionKeys = Object.keys(q.options || {}).sort();
@@ -342,7 +326,7 @@ export function QuestionCard({
                     <MarkField label="Wrong" tone="minus" value={String(q.negativeMarks ?? '')} onChange={v => set('negativeMarks', sanitizeNumericalMark(v))} />
                 </div>
                 <div className="ml-auto flex items-center gap-1">
-                    <LanguageToggle value={q.typingMode} onChange={m => { set('typingMode', m); onTypingModeUsed(m); }} />
+                    <LanguageSwitch value={q.typingMode} onChange={m => { set('typingMode', m); onTypingModeUsed(m); }} />
                     <button
                         type="button"
                         onClick={onRemove}
@@ -399,7 +383,7 @@ export function QuestionCard({
                     <IMEInput
                         as="textarea"
                         ref={(el: IMEInputHandle | null) => registerRef(refKey, el)}
-                        typingMode={q.typingMode}
+                        typingMode={typing}
                         placeholder="Type your question here…"
                         value={q.question}
                         onChange={(val: string) => set('question', val)}
@@ -554,7 +538,7 @@ export function QuestionCard({
                                             <IMEInput
                                                 ref={(el: IMEInputHandle | null) => registerRef(optRef, el)}
                                                 as="textarea"
-                                                typingMode={q.typingMode}
+                                                typingMode={typing}
                                                 placeholder={`Option ${key}`}
                                                 value={q.options[key]}
                                                 onChange={(val: string) => setOption(key, val)}

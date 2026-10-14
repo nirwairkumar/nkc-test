@@ -3,11 +3,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import LatexRenderer from '@/components/ui/LatexRenderer';
+import { getLanguage } from '@/lib/typingLanguages';
 
 interface IMEInputProps {
     value: string;
     onChange: (value: string) => void;
-    typingMode: 'en' | 'hi';
+    /** 'en', or a language code from lib/typingLanguages ('hi', 'mr', 'ar', …). */
+    typingMode: string;
     as?: 'input' | 'textarea';
     className?: string;
     placeholder?: string;
@@ -31,28 +33,38 @@ export interface IMEInputHandle {
 const NATIVE_AUTOGROW = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('field-sizing', 'content');
 const AUTOGROW_STYLE = { fieldSizing: 'content' } as React.CSSProperties;
 
-/** Hindi suggestions (Google Input Tools) for a word typed in English letters. */
-async function fetchHindi(word: string): Promise<string[] | null> {
+/** Suggestions (Google Input Tools) for a word typed in English letters, in the script of `itc`. */
+async function fetchTransliteration(word: string, itc: string): Promise<string[] | null> {
     try {
-        const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=hi-t-i0-und&num=5`);
+        const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=${itc}&num=5`);
         const data = await res.json();
-        const list = data?.[0] === 'SUCCESS' ? data?.[1]?.[0]?.[1] : null;
-        return Array.isArray(list) && list.length ? list : null;
+        const entry = data?.[0] === 'SUCCESS' ? data?.[1]?.[0] : null;
+        const list: unknown = entry?.[1];
+        if (!Array.isArray(list) || !list.length) return null;
+        // Chinese and Japanese also offer words for just the start of what was typed ("ni" of
+        // "nihao"); taking one would drop the rest of the letters.
+        const matched: unknown = entry?.[3]?.matched_length;
+        const whole = Array.isArray(matched) ? list.filter((_, i) => matched[i] === undefined || matched[i] === word.length) : list;
+        return whole.length ? whole : null;
     } catch {
         return null;
     }
 }
 
+const LETTER = /[a-zA-Z]/;
+
 /**
  * Where `word` now stands as a whole word, nearest to where it was typed. Words
  * converted in the meantime change length, so the original position can be off.
+ * In Chinese and Japanese (`joined`) words touch, so any non-letter bounds a word.
  */
-function findWord(text: string, word: string, near: number): number {
+function findWord(text: string, word: string, near: number, joined = false): number {
+    const bounds = (ch: string) => (joined ? !LETTER.test(ch) : /\s/.test(ch));
     let best = -1;
     let dist = Infinity;
     for (let i = text.indexOf(word); i !== -1; i = text.indexOf(word, i + 1)) {
-        const startsWord = i === 0 || /\s/.test(text[i - 1]);
-        const endsWord = i + word.length === text.length || /\s/.test(text[i + word.length]);
+        const startsWord = i === 0 || bounds(text[i - 1]);
+        const endsWord = i + word.length === text.length || bounds(text[i + word.length]);
         if (startsWord && endsWord && Math.abs(i - near) < dist) {
             dist = Math.abs(i - near);
             best = i;
@@ -172,12 +184,18 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     // The rendered maths under the box can lag a keystroke behind; the typing itself never waits for it.
     const previewValue = useDeferredValue(value);
 
-    // Hindi typing. A word goes to the transliteration service when space follows it,
-    // and the answer can arrive after more keys have been typed. So the space goes in at
-    // once, every change is written to the box itself before the parent's state (the
-    // next key always lands in the current text), and the word is found again in the
-    // text as it is when the answer arrives. Earlier, the answer replaced the whole text
-    // captured at the key press, losing letters typed while it was on its way.
+    // Typing in another script (Hindi, Marathi, Arabic, Chinese…). A word goes to the
+    // transliteration service when space follows it, and the answer can arrive after more
+    // keys have been typed. So the space goes in at once, every change is written to the
+    // box itself before the parent's state (the next key always lands in the current
+    // text), and the word is found again in the text as it is when the answer arrives.
+    // Earlier, the answer replaced the whole text captured at the key press, losing
+    // letters typed while it was on its way.
+    // Languages without a transliteration engine (Korean, Thai, French…) are typed with
+    // the teacher's own keyboard; the box only takes their `lang` and direction.
+    const language = getLanguage(typingMode);
+    const engine = language?.itc;
+    const joined = !!language?.joined;
     const valueRef = useRef(value);
     valueRef.current = value;
     const onChangeRef = useRef(onChange);
@@ -193,30 +211,38 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
         onChangeRef.current(next);
     };
 
-    const convertWord = (word: string, typedAt: number) => {
-        fetchHindi(word).then(list => {
+    const convertWord = (word: string, typedAt: number, itc: string, isJoined: boolean) => {
+        fetchTransliteration(word, itc).then(list => {
             if (!list) return; // offline or no answer: the word stays in English letters
             const best = list[0];
             const el = inputRef.current;
             const text = el ? el.value : valueRef.current;
-            const start = findWord(text, word, typedAt);
+            const start = findWord(text, word, typedAt, isJoined);
             if (start < 0) return; // the word was changed or deleted meanwhile
+            // Chinese/Japanese: the space only said "convert"; it is not part of the text.
+            const eat = isJoined && text[start + word.length] === ' ' ? 1 : 0;
             const caret = el && document.activeElement === el ? el.selectionStart : null;
-            const shift = best.length - word.length;
-            emit(text.slice(0, start) + best + text.slice(start + word.length), caret === null ? null : caret > start ? caret + shift : caret);
+            const shift = best.length - word.length - eat;
+            emit(text.slice(0, start) + best + text.slice(start + word.length + eat), caret === null ? null : caret > start ? caret + shift : caret);
             setSuggestions(list);
             setLastWordPos({ start, end: start + best.length });
         });
     };
 
-    /** The last space-separated piece before `cursor`, if it is a plain word. */
+    /**
+     * The word just typed before `cursor`, if it is plain English letters: the last
+     * space-separated piece, or for Chinese/Japanese the letters right before the cursor
+     * (they follow characters with no space between).
+     */
     const plainWordBefore = (text: string, cursor: number) => {
-        const lastWord = text.substring(0, cursor).split(/[\s\n]/).pop() || '';
+        const before = text.substring(0, cursor);
+        if (joined) return before.match(/[a-zA-Z]+$/)?.[0] ?? null;
+        const lastWord = before.split(/[\s\n]/).pop() || '';
         return /^[a-zA-Z]+$/.test(lastWord) ? lastWord : null;
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        if (typingMode === 'hi' && e.key === ' ') {
+        if (engine && e.key === ' ' && !e.nativeEvent.isComposing) {
             const el = e.currentTarget;
             const cursor = el.selectionStart ?? el.value.length;
             const lastWord = plainWordBefore(el.value, cursor);
@@ -224,7 +250,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 e.preventDefault();
                 el.setRangeText(' ', cursor, el.selectionEnd ?? cursor, 'end');
                 emit(el.value, null);
-                convertWord(lastWord, cursor - lastWord.length);
+                convertWord(lastWord, cursor - lastWord.length, engine, joined);
             }
             return;
         }
@@ -250,9 +276,9 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
         const newValue = e.target.value;
         const newCursor = e.target.selectionStart || 0;
 
-        if (typingMode === 'hi' && newValue.length > valueRef.current.length && newValue.charAt(newCursor - 1) === ' ') {
+        if (engine && newValue.length > valueRef.current.length && newValue.charAt(newCursor - 1) === ' ') {
             const lastWord = plainWordBefore(newValue, newCursor - 1);
-            if (lastWord) convertWord(lastWord, newCursor - 1 - lastWord.length);
+            if (lastWord) convertWord(lastWord, newCursor - 1 - lastWord.length, engine, joined);
         }
         valueRef.current = newValue;
         onChange(newValue);
@@ -322,8 +348,10 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         onBlur={handleBlur}
-                        className={cn(className, typingMode === 'hi' ? "border-orange-200 focus-visible:ring-orange-200" : "")}
+                        className={cn(className, engine ? "border-orange-200 focus-visible:ring-orange-200" : "")}
                         autoComplete="off"
+                        lang={language?.code}
+                        dir={language?.rtl ? 'auto' : undefined}
                         {...props}
                         style={as === 'textarea' && NATIVE_AUTOGROW ? { ...AUTOGROW_STYLE, ...props.style } : props.style}
                     />

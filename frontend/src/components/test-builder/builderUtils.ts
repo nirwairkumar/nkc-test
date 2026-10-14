@@ -1,10 +1,12 @@
 import type { Question } from '@/lib/testsApi';
 import type { PhotoQuestion } from '@/lib/photoQuestionApi';
+import type { FieldMode } from '@/lib/typingLanguages';
 
-export interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
+export interface QuestionState extends Omit<Question, 'correctAnswer' | 'options' | 'typingMode'> {
     options: { [key: string]: string };
     correctAnswer: any;
-    typingMode: 'en' | 'hi';
+    /** English, or the page's second language (lib/typingLanguages). Never saved. */
+    typingMode: FieldMode;
 }
 
 export const DEFAULT_QUESTION: QuestionState = {
@@ -115,7 +117,7 @@ export function applyPhotoResult(q: QuestionState, r: PhotoQuestion): QuestionSt
         ...q,
         question: r.question,
         type: r.type,
-        typingMode: r.language === 'hi' ? 'hi' : q.typingMode,
+        typingMode: r.language !== 'en' ? 'second' : q.typingMode,
         optionImages: undefined,
         image: r.image || q.image,
     };

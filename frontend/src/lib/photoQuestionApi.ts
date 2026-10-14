@@ -1,5 +1,6 @@
 import { getApiUrl } from '@/lib/getApiUrl';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { getSecondLanguage, languageOfText } from '@/lib/typingLanguages';
 
 export type PhotoQuestionType = 'single' | 'multiple' | 'numerical';
 
@@ -10,7 +11,8 @@ export interface PhotoQuestion {
     correctAnswer: string | string[] | { min: number; max: number } | null;
     /** Where the answer came from: a tick/circle on an option, a written "Ans:" line, or nowhere. */
     answerSource: 'marked' | 'answer_key' | 'none';
-    language: 'en' | 'hi';
+    /** 'en', or the language the question is written in, judged by its script ('hi', 'bn', 'ur'…). */
+    language: string;
     otherQuestionsInPhoto: number;
     /** Cropped diagram from the photo, when there is one. */
     image?: string;
@@ -87,7 +89,7 @@ async function readViaPaperImporter(base: string, photo: File, signal?: AbortSig
         options: type === 'numerical' ? {} : options,
         correctAnswer: answer,
         answerSource: answer ? 'marked' : 'none',
-        language: /[ऀ-ॿ]/.test(String(q.question || '')) ? 'hi' : 'en',
+        language: languageOfText(String(q.question || ''), [getSecondLanguage()]),
         otherQuestionsInPhoto: Math.max(0, all.length - 1),
         image: q.image || undefined,
     };
@@ -114,5 +116,7 @@ export async function readQuestionFromPhoto(
         return readViaPaperImporter(base, photo, opts.signal);
     }
     if (!res.ok) throw new Error(await readError(res));
-    return res.json();
+    const data: PhotoQuestion = await res.json();
+    // The server only tells Hindi from English; the script itself says Marathi, Bengali, Urdu…
+    return { ...data, language: languageOfText(String(data.question || ''), [getSecondLanguage()]) };
 }

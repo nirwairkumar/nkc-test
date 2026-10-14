@@ -263,6 +263,10 @@ app.include_router(exam_sessions.router, prefix="/api/exam-sessions", tags=["Exa
 app.include_router(join.router, prefix="/api/join", tags=["Join"])
 app.include_router(batches.router, prefix="/api/batches", tags=["Batches"])
 
+# Visitor's country/state for the test builder's typing-language menu
+from app.routers import locale
+app.include_router(locale.router, prefix="/api/locale", tags=["Locale"])
+
 from app.routers import sitemap
 app.include_router(sitemap.router, prefix="/api", tags=["Sitemap"])
 app.include_router(sitemap.router, prefix="", tags=["Sitemap"])
