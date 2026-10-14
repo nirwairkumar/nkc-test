@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowRight, ChevronDown, Copy, Loader2, MonitorPlay } from 'lucide-react';
+import { ArrowRight, ChevronDown, Copy, Loader2, MonitorPlay, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { fetchTestsByUserId } from '@/lib/testsApi';
 import {
@@ -201,7 +201,21 @@ export default function NewExamSheet({ open, onOpenChange, ownerId, asUser, pres
                 </>
             )}
         >
-            <Group header="Question paper" footer={test ? `${test.total_questions} questions · ${duration} min` : 'Only tests with questions are listed.'}>
+            <Group
+                header="Question paper"
+                footer={(
+                    <span className="flex items-baseline justify-between gap-3">
+                        <span>{test ? `${test.total_questions} questions · ${duration} min` : 'Only tests with questions are listed.'}</span>
+                        <button
+                            type="button"
+                            onClick={() => { onOpenChange(false); navigate('/generate-with-ai'); }}
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full text-sky-700 hover:underline cursor-pointer"
+                        >
+                            <Sparkles className="h-3.5 w-3.5 self-center" /> Generate a paper with AI
+                        </button>
+                    </span>
+                )}
+            >
                 <div className="px-4 py-2.5">
                     {tests === null ? (
                         <div className="flex h-10 items-center gap-2 text-[15px] text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading your tests…</div>
