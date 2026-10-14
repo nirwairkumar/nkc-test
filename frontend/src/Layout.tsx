@@ -30,18 +30,31 @@ export default function Layout() {
 
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
-    // Expand sidebar on AI page
+    // The test builder needs the width: start it on the rail (hover still opens it).
+    // This is per-visit, so the saved preference for other pages is left alone.
+    const isBuilderPage =
+        location.pathname.startsWith('/create-test') ||
+        location.pathname.startsWith('/edit-test');
+
+    // Expand sidebar on AI page; collapse it in the builder, restore the saved choice on leaving
     useEffect(() => {
         if (location.pathname === '/generate-with-ai') {
             setIsCollapsed(false);
+        } else if (isBuilderPage) {
+            setIsCollapsed(true);
+        } else {
+            try {
+                setIsCollapsed(localStorage.getItem('app_sidebar_collapsed') === 'true');
+            } catch { }
         }
-    }, [location.pathname]);
+    }, [location.pathname, isBuilderPage]);
 
     useEffect(() => {
+        if (isBuilderPage) return;
         try {
             localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
         } catch { }
-    }, [isCollapsed]);
+    }, [isCollapsed, isBuilderPage]);
 
     // One page view per path (our analytics + GA4). Query changes (filters, search
     // boxes) and sign-in state are not new pages — counting them inflated views ~20%.
