@@ -1,27 +1,39 @@
 /**
  * The TestoZa walkthrough film (1:42): make a test, run it in class, see results.
  *
- * Nothing downloads until the viewer presses play — the page only loads a 26 KB poster.
- * Phones and slow or data-saver connections get the 480p file (3.9 MB, ~0.3 Mbps),
- * larger screens the 720p one (8.5 MB, ~0.7 Mbps). Both are faststart MP4s in
- * public/videos, so playback begins before the file finishes downloading.
+ * Nothing downloads until the viewer presses play — the page only loads a 22 KB poster.
+ * Slow or data-saver connections get the 480p file (3.9 MB, ~0.3 Mbps), everyone else
+ * the 720p one (8.5 MB, ~0.7 Mbps). Both are faststart MP4s in public/videos, so
+ * playback begins before the file finishes downloading.
+ *
+ * The "trim" files are cut from the 1080p master (videos/testoza-launch/renders/
+ * video-v4.mp4) with 8% of empty background taken off each side, so the frame is
+ * 1612x1080, not 16:9, and the picture fills more of the width. More than 8% clips
+ * the "testoza.com/join" line. The 16:9 originals beside them are kept unchanged.
  */
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Play } from 'lucide-react';
 import { analytics } from '@/lib/analytics/tracker';
 
 export const LAUNCH_VIDEO = {
-    poster: '/videos/testoza-launch-poster.webp',
-    hd: '/videos/testoza-launch-720p.mp4',
-    sd: '/videos/testoza-launch-480p.mp4',
+    poster: '/videos/testoza-launch-trim-poster.webp',
+    hd: '/videos/testoza-launch-trim-720p.mp4', // 1074x720
+    sd: '/videos/testoza-launch-trim-480p.mp4', // 716x480
     duration: '1:42',
 };
 
-function pickQuality(): 'sd' | 'hd' {
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    const slow = !!conn?.saveData || /(^|-)(2g|3g)$/.test(conn?.effectiveType ?? '');
-    const phone = window.matchMedia?.('(max-width: 767px)').matches ?? false;
-    return slow || phone ? 'sd' : 'hd';
+const isPhone = () => window.matchMedia?.('(max-width: 767px)').matches ?? false;
+
+/**
+ * 720p unless the connection says it's slow. Phones also drop to 480p below 1.5 Mbps.
+ * iPhones don't report their connection, so they get 720p; Android Chrome does.
+ */
+function pickQuality(phone: boolean): 'sd' | 'hd' {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string; downlink?: number } }).connection;
+    const slow = !!conn?.saveData
+        || /(^|-)(2g|3g)$/.test(conn?.effectiveType ?? '')
+        || (phone && typeof conn?.downlink === 'number' && conn.downlink > 0 && conn.downlink < 1.5); // Mbps
+    return slow ? 'sd' : 'hd';
 }
 
 export interface LaunchVideoHandle {
@@ -41,7 +53,7 @@ const LaunchVideo = forwardRef<LaunchVideoHandle, LaunchVideoProps>(function Lau
     ref,
 ) {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [quality] = useState(pickQuality);
+    const [quality] = useState(() => pickQuality(isPhone()));
     const [started, setStarted] = useState(false);
 
     // play() must run inside the tap itself, or iPhones refuse to start with sound.
@@ -58,7 +70,7 @@ const LaunchVideo = forwardRef<LaunchVideoHandle, LaunchVideoProps>(function Lau
     useImperativeHandle(ref, () => ({ play: start }));
 
     return (
-        <div className={`relative aspect-video w-full overflow-hidden bg-[#060913] ${className}`}>
+        <div className={`relative aspect-[1074/720] w-full overflow-hidden bg-[#060913] ${className}`}>
             <video
                 ref={videoRef}
                 className="absolute inset-0 h-full w-full"
