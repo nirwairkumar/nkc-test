@@ -164,7 +164,7 @@ export default function Layout() {
         // Google Ads landing pages: a visitor from an ad should not see the app's menu.
         location.pathname === '/quiz-creator' ||
         location.pathname === '/assessment-platform' ||
-        ((location.pathname === '/dashboard' || location.pathname === '/explore') && !user);
+        (location.pathname === '/dashboard' && !user);
 
     const handleToggleSidebar = () => {
         if (window.innerWidth < 768) {

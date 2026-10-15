@@ -38,6 +38,7 @@ import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
 import { multiPartialScore } from '@/utils/multiCorrect';
 import { formatSectionMinutes, openSection, sectionMinutes, sectionMinutesTotal, sectionRanges } from '@/utils/sectionTiming';
+import { isCandidateVisit } from '@/lib/candidateExit';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -88,7 +89,8 @@ export default function TestPage() {
   const examSeat = useMemo(() => (joinCode ? seatStore.get(joinCode) : null), [joinCode]);
   const id = examSeat ? `join-${joinCode}` : routeId;
   const user = useMemo(() => (examSeat ? ({ id: examSeat.participantId } as any) : authUser), [examSeat, authUser]);
-  const exitPath = examSeat ? `/join/${joinCode}` : '/';
+  // Candidates from a test link leave to /join, never into the rest of the site.
+  const exitPath = examSeat ? `/join/${joinCode}` : isCandidateVisit() ? '/join' : '/';
   const sessionClockRef = useRef<{ skewMs: number; deadline: number | null }>({ skewMs: 0, deadline: null });
   const sessionAutoSubmitRef = useRef(false);
   const confirmSubmitRef = useRef<() => void>(() => { });
@@ -207,9 +209,9 @@ export default function TestPage() {
   const isResizingRef = useRef(false);
 
   // 1. Browser Back Button Prevention
-  // 1. Browser Back Button Prevention
+  // (Candidates from a test link or join code get CandidateBackGuard's "Leave?" instead.)
   useEffect(() => {
-    if (!test?.settings?.block_back_button) return;
+    if (!test?.settings?.block_back_button || isCandidateVisit()) return;
 
     // Push current state to history stack
     window.history.pushState(null, "", window.location.href);

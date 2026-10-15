@@ -173,11 +173,11 @@ export default function MoreTestsPage() {
                 <div className="relative mx-auto max-w-4xl">
                     {/* Back navigation */}
                     <button
-                        onClick={() => navigate('/explore')}
+                        onClick={() => navigate('/')}
                         className="mb-6 flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors group"
                     >
                         <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-                        Back to Explore
+                        Back to Home
                     </button>
 
                     {/* Title */}

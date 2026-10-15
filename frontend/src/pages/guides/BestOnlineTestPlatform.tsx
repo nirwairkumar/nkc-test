@@ -16,7 +16,7 @@ export default function BestOnlineTestPlatform() {
             guide={BEST_ONLINE_TEST_PLATFORM}
             keyPhrase="best online test platform"
             hero={<PhotoToTestPhone />}
-            secondaryCta={{ label: 'Browse practice tests', href: '/explore' }}
+            secondaryCta={{ label: 'Browse practice tests', href: '/more-tests' }}
             renderWidget={(name) => <GuideWidget name={name} />}
         />
     );

@@ -10,6 +10,7 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
+import CandidateBackGuard from "@/components/CandidateBackGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
 import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
@@ -52,7 +53,6 @@ const GoogleAdsLanding = safeLazy(() => import("./pages/GoogleAdsLanding"));
 const AITestImporter = safeLazy(() => import("./pages/AITestImporter"));
 
 const CategoryPage = safeLazy(() => import("./pages/CategoryPage"));
-const TestList = safeLazy(() => import("./pages/TestList"));
 const TestPage = safeLazy(() => import("./pages/TestPage"));
 // Exam sessions: join codes, live monitor, batches
 const JoinPage = safeLazy(() => import("./pages/join/JoinPage"));
@@ -167,7 +167,7 @@ const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDa
 import { useAuth } from "@/contexts/AuthContext";
 
 // /dashboard is the educator workspace only (rendered inside PrivateRoute, so user is set).
-// Everyone else goes to their own results; the public test library lives at /explore.
+// Everyone else goes to their own results.
 const DashboardRoute = () => {
   const { user, profile, isAdmin } = useAuth();
 
@@ -227,6 +227,7 @@ const App = () => (
               <ErrorBoundary>
                 <BrowserRouter>
                 <SubdomainGuard />
+                <CandidateBackGuard />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route element={<Layout />}>
@@ -234,7 +235,8 @@ const App = () => (
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
                     <Route path="/dashboard" element={<PrivateRoute><DashboardRoute /></PrivateRoute>} />
-                    <Route path="/explore" element={<TestList />} />
+                    {/* The old public test library; removed 2026-10-15. */}
+                    <Route path="/explore" element={<Navigate to="/" replace />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
                     {/* News & Blog Routes */}

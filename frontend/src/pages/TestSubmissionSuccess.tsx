@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Home, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { isCandidateVisit } from '@/lib/candidateExit';
 
 export default function TestSubmissionSuccess() {
     const navigate = useNavigate();
+    // Came through a test link: finish on /join, not the homepage.
+    const candidate = isCandidateVisit();
 
     useEffect(() => {
         // Trigger confetti animation on mount
@@ -99,12 +102,12 @@ export default function TestSubmissionSuccess() {
                     {/* Action Button */}
                     <div className="pt-4">
                         <Button
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate(candidate ? '/join' : '/')}
                             size="lg"
                             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                         >
                             <Home className="w-5 h-5 mr-2" />
-                            Return to Home
+                            {candidate ? 'Done' : 'Return to Home'}
                         </Button>
                     </div>
 

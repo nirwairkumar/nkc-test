@@ -147,7 +147,7 @@ export const BEST_ONLINE_TEST_PLATFORM: Guide = {
 <li><strong>Take it in one sitting.</strong> No notes, phone on silent. It's the closest thing to an exam hall you can set up at home.</li>
 </ol>
 <p>Then comes the useful bit. The results page shows your score, your accuracy and the time you spent on every question, with your topics sorted into strong, moderate and weak. An AI mentor on the same page can go through your mistakes with you, because it knows which questions you got wrong. For tests tagged with exams like JEE, NEET, SSC, RRB or GATE, you can also ask for a rough rank estimate for your score; treat it as a guess, not a promise.</p>
-<p>The next day, photograph the pages behind your weakest topic and do it again. Three or four rounds of that beat reading the chapter a fifth time. And if you don't feel like making a test at all, the <a href="/explore">test library</a> has public papers shared by teachers, with subject pages like <a href="/create-test/physics">physics</a> and <a href="/create-test/chemistry">chemistry</a> to start from.</p>
+<p>The next day, photograph the pages behind your weakest topic and do it again. Three or four rounds of that beat reading the chapter a fifth time. And if you don't feel like making a test at all, the <a href="/more-tests">test library</a> has public papers shared by teachers, with subject pages like <a href="/create-test/physics">physics</a> and <a href="/create-test/chemistry">chemistry</a> to start from.</p>
 <p>Two honest limits. A blurry photo makes a messy paper, so retake anything you can't read yourself. And AI-written answer keys can be wrong now and then, so if a result looks off, check it against the book before you lose sleep over it.</p>
 `),
                 ],

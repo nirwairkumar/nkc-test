@@ -369,7 +369,7 @@ function generateMetaTags(url, testData = null, joinData = null) {
   } else if (path === '/premium') {
     title = 'TestoZa Premium - Advanced CBT Assessment Features';
     description = 'Upgrade to TestoZa Premium for white-label branding, custom certificates, and deep analytics.';
-  } else if (path === '/more-tests' || path === '/dashboard' || path === '/explore') {
+  } else if (path === '/more-tests' || path === '/dashboard') {
     title = 'Explore Free Mock Tests & Online Exams | TestoZa';
     description = 'Find and take free mock tests across various competitive exams, subjects, and topics. Access timed practice papers with real-time analytics.';
   } else if (path === '/create-test') {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { mainDomainRedirect } from '@/utils/subdomain';
+import { getMarketingUrl, mainDomainRedirect } from '@/utils/subdomain';
 import { analytics } from '@/lib/analytics/tracker';
 
 export default function SubdomainGuard() {
@@ -30,11 +30,10 @@ export default function SubdomainGuard() {
       }
     } else if (isAppDomain) {
       // App subdomain root: signed-in users go to dashboard (it routes by role);
-      // logged-out visitors (e.g. guests leaving an exam) go to the public test library
-      if (location.pathname === '/') {
-        if (!loading) {
-          navigate(user ? '/dashboard' : '/explore', { replace: true });
-        }
+      // logged-out visitors go to the homepage on testoza.com.
+      if (location.pathname === '/' && !loading) {
+        if (user) navigate('/dashboard', { replace: true });
+        else window.location.replace(getMarketingUrl('/'));
       }
     }
   }, [location.pathname, location.search, navigate, user, loading]);

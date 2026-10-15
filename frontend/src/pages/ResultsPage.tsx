@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/lib/getApiUrl';
+import { isCandidateVisit } from '@/lib/candidateExit';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -413,6 +414,8 @@ const ResultsPage = () => {
   // We do this by replacing the current history entry (so the test page URL is gone)
   // and intercepting popstate to redirect to home.
   useEffect(() => {
+    // Candidates from a test link or join code get CandidateBackGuard's "Leave?" instead.
+    if (isCandidateVisit()) return;
     // Push a sentinel entry so back-button goes to THIS page first before home
     window.history.pushState(null, '', window.location.href);
     const handlePopState = () => {
