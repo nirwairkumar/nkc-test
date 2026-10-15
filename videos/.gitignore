@@ -1,6 +1,5 @@
 renders/
 .hyperframes/
 .venv*/
-**/renders/
-**/capture/rec/
-node_modules/
+# over GitHub 100 MiB limit
+testoza-builder-tutorial/renders/builder-tutorial-hi-v3.mp4
