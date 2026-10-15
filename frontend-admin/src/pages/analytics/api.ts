@@ -384,6 +384,39 @@ export interface ContentPage {
     totals: ContentTotals | null;
 }
 
+/** One place the walkthrough film sits (LaunchVideo `where` on the main site). */
+export interface VideoPlace {
+    key: string;
+    /** Pages that player is on; null for an unknown `where`. */
+    paths: string[] | null;
+    plays: number;
+    viewers: number;
+    finished: number;
+    finished_viewers: number;
+    /** Plays of the 480p file (phones, slow or data-saver connections). */
+    sd_plays: number;
+    /** Different people who opened one of `paths` in the period. */
+    page_visitors: number;
+}
+
+export interface VideoPlay {
+    id: number;
+    ts: string;
+    place: string;
+    path: string | null;
+    quality: 'sd' | 'hd' | null;
+    finished: boolean;
+    user_name: string | null;
+    session: PersonSession & { visitor_id: string; user_id: string | null };
+}
+
+export interface VideoReport {
+    range: Range;
+    totals: { plays: number; viewers: number; finished: number; finished_viewers: number; page_visitors: number; first_play_at: string | null };
+    places: VideoPlace[];
+    recent: VideoPlay[];
+}
+
 /** Thrown when the analytics v2 SQL migration has not been applied yet. */
 export class NotInstalledError extends Error {
     constructor() {
@@ -419,6 +452,7 @@ export const insightsApi = {
             period: p.period, kind: p.kind, q: p.q || undefined,
             before_at: p.before?.at, before_id: p.before?.id, limit: p.limit ?? 30,
         }),
+    video: (period: Period) => get<VideoReport>('video', { period, limit: 30 }),
     health: () => get<Health>('health'),
     people: (p: { segment: PeopleSegment; q?: string; sort: PeopleSort; limit?: number; offset?: number }) =>
         get<PeopleReport>('people', { ...p, q: p.q || undefined, limit: p.limit ?? 40, offset: p.offset ?? 0 }),

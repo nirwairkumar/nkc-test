@@ -16,11 +16,12 @@ import PeopleTab, { PersonSheet, SessionSheet, type SessionMeta } from './People
 import { ChannelIcon, PathLabel, usePersisted } from './shared';
 import TestsTab from './TestsTab';
 import TrafficTab from './TrafficTab';
+import VideoTab from './VideoTab';
 import { CARD, CountryCode, IosSheet, PILL_BTN, Segmented } from './ui';
 
 const LegacyAnalyticsPanel = lazy(() => import('../AdminAnalyticsPanel'));
 
-const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'people'] as const;
+const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'video', 'people'] as const;
 type Tab = (typeof TABS)[number];
 const PERIODS: readonly Period[] = ['today', 'yesterday', '7d', '30d', '90d', '12m'];
 const SITES: readonly Site[] = ['all', 'main', 'pdf', 'blog'];
@@ -159,6 +160,7 @@ export default function AnalyticsPanel() {
                                 { value: 'growth', label: 'Growth' },
                                 { value: 'tests', label: 'Tests' },
                                 { value: 'content', label: 'Content', title: 'Tests created and materials uploaded — who and when' },
+                                { value: 'video', label: 'Video', title: 'Plays of the walkthrough video at each place it sits' },
                                 { value: 'people', label: 'People' },
                             ]}
                         />
@@ -169,6 +171,7 @@ export default function AnalyticsPanel() {
                     {tab === 'growth' && <GrowthTab period={period} />}
                     {tab === 'tests' && <TestsTab period={period} onSeeCreated={() => { setContentKind('test'); setTab('content'); }} />}
                     {tab === 'content' && <ContentTab period={period} kind={contentKind} onKind={setContentKind} nav={nav} />}
+                    {tab === 'video' && <VideoTab period={period} nav={nav} />}
                     {tab === 'people' && <PeopleTab period={period} site={site} nav={nav} />}
                 </>
             )}

@@ -297,6 +297,15 @@ def content(period: str = "30d", kind: str = "all", q: Optional[str] = None,
     return {"range": r, **data}
 
 
+@router.get("/video")
+def video(period: str = "30d", limit: int = Query(30, ge=1, le=100),
+          start: Optional[str] = None, end: Optional[str] = None):
+    """Plays of the walkthrough film at each place it sits (LaunchVideo `where`), plus recent plays."""
+    r = resolve_period(period, start, end)
+    data = _rpc("analytics_report_video", {"p_from": r["from"], "p_to": r["to"], "p_limit": limit})
+    return {"range": r, **data}
+
+
 @router.get("/health")
 def health():
     return _rpc("analytics_report_health", {})
