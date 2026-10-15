@@ -366,6 +366,70 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: Mercer Mettl alternative (https://testoza.com/mercer-mettl-alternative)
+
+A long-form guide for coaching institutes, school exam cells and college departments on when an enterprise proctoring suite is the right tool and when everyday tests need something smaller, with TestoZa as the worked example. Mettl facts are from mettl.com and Mettl’s help centre, checked 15 October 2026.
+
+- **Two jobs called “online exam”:** a high-stakes sitting (a hire, a degree, a licence; strangers with a reason to cheat; camera, ID checks and a locked computer are worth their cost) and everyday testing (your own students every week; volume, low friction and exam-pattern marking matter; a camera adds little and a laptop requirement removes half the batch).
+- **The device:** Mettl’s system requirements say its proctored assessments are not supported on mobile devices, phones or tablets, and need a laptop or desktop with a webcam, Chrome, Firefox or Safari (not Edge) and 512 kbps; locked-down tests can need the Mettl Secure Browser on Windows or macOS. TestoZa is phone-first: testoza.com/join in the existing browser, answers saved every 20 seconds, rejoin on another device.
+- **Proctoring:** Mettl has AI proctoring, live proctors, record and review, dual-camera monitoring, three-point identity checks and a Credibility Index. TestoZa uses no camera or microphone: forced full screen, a tab-switch limit that can submit the paper, copy, paste and right-click off, back button blocked, shuffled questions and a live list. A deterrent, not a guarantee; a supervised room for exams that decide something.
+- **Marking:** both set negative marks and timed sections (Mettl: Correct Marks and Incorrect Marks fields, 26+ formats, 20+ languages). TestoZa adds JEE Advanced or proportional partial marks, numerical ranges, sections that lock, Hindi and bilingual papers, an NTA-style screen, and papers read by AI from a PDF or photo.
+- **Cost:** Mettl publishes no price (demo and quote); listing sites show a start around $2,990 a year, a third-party figure. A mid-sized institute runs about 1,800 sittings a month. TestoZa: building and running tests free for any number of candidates; ₹49 for 7 days, ₹149 for 30 days or ₹799 a year for exam rules and extras.
+- **Where Mettl wins:** camera and live proctoring, identity checks, a lockdown browser, hiring, psychometric and coding tests, 200,000+ exams a day and enterprise compliance, 26+ question formats. TestoZa is not a recruitment platform, a proctoring service or an LMS.
+
+---
+
+## Guide: ProProfs alternative (https://testoza.com/proprofs-alternative)
+
+A long-form guide for coaching institutes and teachers comparing a global quiz maker priced per quiz taker with an exam platform that has no per-student fee. ProProfs prices and features are from proprofs.com, checked 15 October 2026.
+
+- **What ProProfs already does well:** negative marking, regular, partial and custom grading, multi-section quizzes timed per section, 20+ question types, 70+ languages, certificates, screenshot and webcam proctoring, a million-plus ready questions.
+- **The price meter:** Essentials $19.99 per 100 active quiz takers a month up to 300; Business $39.99 per 100 up to 500; Business Complete Elite $0.83 per taker a month, billed yearly; Certifications & Exams $1 per candidate a month, minimum 100, billed yearly; K-12 Teacher $4 a month up to 150 students for teachers at recognised schools; School & District $0.25 per student a month. At 400 students Elite is about $332 a month. A scholarship test for 2,000 outside students is counted too. TestoZa has no head count.
+- **The free plan:** 12 questions per quiz (8 quiz + 4 lead fields) and 90 days of reports, so a full chapter test or mock can’t be trialled. TestoZa’s free plan runs full-length papers live for a whole batch with rank lists and report cards.
+- **The screen and question types:** the NTA-style screen (palette, Mark for review, Save & Next), numerical answers within a range, JEE Advanced partial marks, sections that lock, Hindi typed with English letters and bilingual questions.
+- **Exam day and parents:** a six-digit join code, lobby, live list, extra time, answers saved every 20 seconds; rank list, per-question analysis, report cards, a WhatsApp message for parents, Excel.
+- **Where ProProfs wins:** staff training and compliance, certificates, lead-capture quizzes, essays, uploads and video answers, 70+ languages, a huge question library, screenshot and webcam proctoring.
+
+---
+
+## Guide: Socrative alternative (https://testoza.com/socrative-alternative)
+
+A long-form guide for teachers and coaching faculty on where a lesson check-in stops and a marked test starts. Socrative facts are from socrative.com and its help centre, checked 15 October 2026.
+
+- **Two jobs:** a check-in is for the teacher (change tomorrow’s lesson; a percentage is right); a test is for the record (measure fairly, marked like the real exam, sat alone, ranked).
+- **Scoring:** Socrative scores a quiz as a percentage with ticks and crosses; a short answer is correct only on an exact match, with manual regrading a paid feature; a wrong answer counts the same as a blank, and no negative marking is described. Under +4/−1 four wrong guesses cancel a right answer. TestoZa has Marks and Wrong on every question.
+- **Question types:** Socrative has three (multiple choice, true/false, short answer). Entrance papers add negative-marked MCQs, multiple-correct with partial marks, numerical answers within a range, comprehension passages, equations and diagrams, Hindi and bilingual questions.
+- **Rooms and plans:** Free: 1 room of up to 50 students, 5 quizzes, 30 days of reports; Essentials $120 a year per seat, 5 rooms of 50; Pro $200.04 a year per seat (minimum 2), 30 rooms of 300; Organization through sales. A TestoZa live exam takes a whole batch with one code on the free plan, no student accounts.
+- **Using both:** Socrative during lessons; a short marked test on Friday; a full mock monthly; then Monday’s quick questions built from the mock’s worst five questions.
+- **Where Socrative wins:** speed in a lesson, instant feedback with explanations, Space Race and team play, exit tickets and polls, younger classes, rostered rooms and Google Drive exports.
+
+---
+
+## Guide: SpeedExam alternative (https://testoza.com/speedexam-alternative)
+
+A long-form guide for coaching institutes and exam coordinators comparing an exam service metered by attempts with an exam platform that has no attempt meter and no logins. SpeedExam facts are from speedexam.net, checked 15 October 2026.
+
+- **The attempt meter:** Free 25 exam attempts a month; Professional $20 a month or $240 a year for 500; Ultimate $125 a month or $1,500 a year for 3,500; attempts include incomplete attempts and retakes. One batch of 120 with a weekly test uses about 480 before retakes; six batches with a monthly mock pass 3,500. TestoZa has no meter on attempts, candidates or tests.
+- **Logins or a join code:** SpeedExam student accounts are managed by the test administrator (self-registration is available). TestoZa: a six-digit code at testoza.com/join, name or roll number, optional PIN, a lobby, a live list, extra time, rejoin on another device.
+- **Indian papers:** both set negative marks and sections; TestoZa adds an NTA-style screen, JEE Advanced partial marks, numerical ranges, locking sections, Hindi and bilingual papers, and papers read by AI from a PDF or photo.
+- **Proctoring:** SpeedExam has ProctorLite image capture, audio and video proctoring, and AI proctoring that can stop an exam. TestoZa uses browser rules without a camera, and recommends a supervised room for exams that decide something.
+- **Where SpeedExam wins:** camera and AI proctoring, certificates, GDPR, ISO 27001, ISO 9001 and SOC 2, essays, scenario, matching and audio or video questions, per-candidate history, SMS integration and self-registration.
+
+---
+
+## Guide: Canvas quizzes alternative (https://testoza.com/canvas-quizzes-alternative)
+
+A long-form guide for teachers who used Canvas mainly to run quizzes, tutors and coaching faculty. Canvas facts are from Instructure’s announcements and guides and from university Canvas teams, checked 15 October 2026.
+
+- **After Free-for-Teacher:** Canvas Free-for-Teacher was shut down in May 2026 and closed after a final export window ending 6 October 2026. Canvas Lite opened 30 September 2026: free, five courses, 50 learners per course, 500 MB per course, an identity check for every teacher with a government ID and a selfie through Veriff, no analytics, attendance or API access, New Quizzes only.
+- **Marking:** Instructure’s New Quizzes guides describe partial credit with a penalty on multiple-answer questions, with zero as the lowest possible score, and “vary points by answer” on multiple choice. A −1 for a wrong single-answer question, as JEE Main and NEET mark, is not a setting the guides describe. TestoZa has Marks and Wrong on every question, partial marks, numerical ranges.
+- **Classic and New Quizzes:** Classic Quizzes is being retired; universities set cut-over dates between 2025 and 2027; converted quizzes need checking question by question.
+- **Getting students in:** Canvas quizzes are taken by enrolled students with logins; a one-off mock for an outside batch means building a course. TestoZa: a six-digit code, name or roll number, no account or app.
+- **Using both:** teach in Canvas, post the join code in the course, run the exam in TestoZa, and bring marks back to the gradebook by Excel; there is no LTI integration.
+- **Where Canvas wins:** whole courses, assignments with rubrics and SpeedGrader, discussions, a gradebook, integrations, mobile apps, and richer quiz types inside a course.
+
+---
+
 ## Guide: Mobile-friendly online exam (https://testoza.com/mobile-friendly-online-exam)
 
 A long-form guide for teachers and coaching institutes whose candidates write on their own phones, with TestoZa as the worked example. Product behaviour checked against the exam screen's code on 13 October 2026.

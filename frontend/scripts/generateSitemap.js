@@ -135,6 +135,11 @@ async function generateSitemap() {
             { url: '/embed-test-on-website', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
             { url: '/full-length-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
             { url: '/share-test-on-whatsapp', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/mercer-mettl-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/proprofs-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/socrative-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/speedexam-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/canvas-quizzes-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

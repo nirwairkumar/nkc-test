@@ -175,7 +175,7 @@ function CompareWidget({ rival }: { rival: AltRival }) {
                 </div>
             </div>
             <figcaption>
-                {rival.name} facts are from its own pages, checked on 10 October 2026. Prices and plan limits change; where a figure is only published by listing
+                {rival.name} facts are from its own pages, checked on {rival.checkedOn ?? '10 October 2026'}. Prices and plan limits change; where a figure is only published by listing
                 sites, it is described as that rather than quoted as fact.
             </figcaption>
         </figure>

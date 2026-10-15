@@ -390,4 +390,34 @@
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
+    <url>
+        <loc>https://testoza.com/mercer-mettl-alternative</loc>
+        <lastmod>2026-10-15T00:00:00.000Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/proprofs-alternative</loc>
+        <lastmod>2026-10-15T00:00:00.000Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/socrative-alternative</loc>
+        <lastmod>2026-10-15T00:00:00.000Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/speedexam-alternative</loc>
+        <lastmod>2026-10-15T00:00:00.000Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/canvas-quizzes-alternative</loc>
+        <lastmod>2026-10-15T00:00:00.000Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
 </urlset>

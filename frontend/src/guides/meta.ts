@@ -663,6 +663,187 @@ export const TESTPORTAL_META: GuideMeta = {
 };
 
 /*
+ * Five more "alternative" guides on the same shell (15 October 2026). Each answers its
+ * own question: Mettl is enterprise proctoring for laptops, ProProfs charges per quiz
+ * taker, Socrative is a lesson check-in, SpeedExam meters exam attempts, and Canvas
+ * quizzes live inside a course system that lost its free teacher accounts in 2026.
+ */
+export const METTL_META: GuideMeta = {
+    slug: 'mercer-mettl-alternative',
+    path: '/mercer-mettl-alternative',
+    title: 'Mercer Mettl alternative for everyday tests on students’ phones',
+    seoTitle: 'Mercer Mettl Alternative for Coaching Tests (2026)',
+    description:
+        'Mettl is built for hiring and high-stakes proctoring on laptops, priced by quote. For weekly tests and mocks on students’ phones, here is what to use instead.',
+    dek:
+        'Mercer Mettl is a serious enterprise product: webcam, AI and live proctoring, identity checks, a secure browser, psychometric and coding tests, sold through a demo. Its own help centre says proctored tests don’t run on phones. If what you need is a weekly test and a monthly mock for a batch whose only device is a phone, you need something much smaller. This guide shows where the line falls.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-15T12:00:00+05:30',
+    dateModified: '2026-10-15T12:00:00+05:30',
+    readMinutes: 16,
+    cover: {
+        src: '/guides/mercer-mettl-alternative/cover.png',
+        alt: 'Two lists: what an enterprise proctoring suite is for, and the everyday tests a batch takes on phones',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Mercer Mettl alternative',
+        'Mettl alternative',
+        'Mettl alternatives for coaching institutes',
+        'Mettl competitors',
+        'Mettl pricing alternative',
+        'online exam software for coaching institutes',
+        'online test platform that works on mobile',
+        'mock test platform with negative marking',
+        'exam software without webcam proctoring',
+        'Mettl vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+export const PROPROFS_META: GuideMeta = {
+    slug: 'proprofs-alternative',
+    path: '/proprofs-alternative',
+    title: 'ProProfs alternative: an exam platform that doesn’t charge per student',
+    seoTitle: 'ProProfs Quiz Maker Alternative for Indian Exams (2026)',
+    description:
+        'ProProfs prices per quiz taker in dollars and caps free quizzes at 8 questions. For big mocks with +4/−1 and Hindi, try a platform with no per-student fee.',
+    dek:
+        'ProProfs Quiz Maker is a capable, well-made tool: negative marking, sections, 20+ question types, 70+ languages. Its price, though, counts people: $19.99 per 100 active quiz takers a month on its entry business plan, and a free plan capped at 8 quiz questions. For an institute whose whole business is putting more students through more papers, that meter is the problem. This guide works out what it costs and what to use instead.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-15T12:00:00+05:30',
+    dateModified: '2026-10-15T12:00:00+05:30',
+    readMinutes: 16,
+    cover: {
+        src: '/guides/proprofs-alternative/cover.png',
+        alt: 'A price that grows with every quiz taker beside a flat yearly price for an exam platform',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'ProProfs alternative',
+        'ProProfs Quiz Maker alternative',
+        'ProProfs alternatives for teachers',
+        'ProProfs competitors',
+        'ProProfs pricing alternative',
+        'quiz maker without per user pricing',
+        'online test platform for coaching institutes',
+        'mock test platform with negative marking',
+        'Hindi online test maker',
+        'ProProfs vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+export const SOCRATIVE_META: GuideMeta = {
+    slug: 'socrative-alternative',
+    path: '/socrative-alternative',
+    title: 'Socrative alternative: when a classroom check becomes a real test',
+    seoTitle: 'Socrative Alternative for Real Tests & Mock Exams (2026)',
+    description:
+        'Socrative is a fast lesson check: 3 question types, a percentage score, 50 students in a free room. For marked tests and mocks, keep it and add an exam platform.',
+    dek:
+        'Socrative is one of the best tools for finding out, in two minutes, whether a lesson landed. Exit tickets, quick questions and Space Race all do that job well. A weekly test that goes on a record, or a mock for an entrance exam, is a different job: it needs negative marking, numerical answers, an exam screen and a rank list. This guide shows where that line falls, and how to keep both.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-15T12:00:00+05:30',
+    dateModified: '2026-10-15T12:00:00+05:30',
+    readMinutes: 15,
+    cover: {
+        src: '/guides/socrative-alternative/cover.png',
+        alt: 'A quick classroom check scored as a percentage beside an exam paper marked +4 and −1',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Socrative alternative',
+        'Socrative alternatives for teachers',
+        'Socrative alternative for tests',
+        'Socrative competitors',
+        'free Socrative alternative',
+        'exit ticket vs online test',
+        'online test platform with negative marking',
+        'mock test platform for teachers',
+        'Socrative student limit',
+        'Socrative vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a test that counts, free', href: '/create-test' },
+};
+
+export const SPEEDEXAM_META: GuideMeta = {
+    slug: 'speedexam-alternative',
+    path: '/speedexam-alternative',
+    title: 'SpeedExam alternative: no attempt meter, no logins to hand out',
+    seoTitle: 'SpeedExam Alternative for Coaching Institutes (2026)',
+    description:
+        'SpeedExam meters exam attempts a month, retakes included, and issues logins. Compare a platform with no attempt cap, a six-digit join code and NTA-style mocks.',
+    dek:
+        'SpeedExam is a solid online exam service, with webcam and AI proctoring, certificates and ten question types, used by companies and institutions in 128 countries. Its plans are metered by exam attempts a month, counting incomplete attempts and retakes, and candidates sign in with accounts the administrator manages. For a coaching institute running a weekly test and a monthly mock for every batch, both of those add up fast. This guide does the sums and shows the alternative.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-15T12:00:00+05:30',
+    dateModified: '2026-10-15T12:00:00+05:30',
+    readMinutes: 15,
+    cover: {
+        src: '/guides/speedexam-alternative/cover.png',
+        alt: 'A monthly allowance of exam attempts running out beside a batch joining one exam with a six-digit code',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'SpeedExam alternative',
+        'SpeedExam alternatives',
+        'SpeedExam competitors',
+        'SpeedExam pricing alternative',
+        'online exam software without attempt limits',
+        'online exam software for coaching institutes India',
+        'mock test platform with join code',
+        'NTA style mock test software',
+        'online exam software with negative marking',
+        'SpeedExam vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+export const CANVAS_QUIZZES_META: GuideMeta = {
+    slug: 'canvas-quizzes-alternative',
+    path: '/canvas-quizzes-alternative',
+    title: 'Canvas quizzes alternative after Free-for-Teacher',
+    seoTitle: 'Canvas Quizzes Alternative for Teachers (2026)',
+    description:
+        'Canvas Free-for-Teacher closed in 2026; Canvas Lite caps courses at 50 learners and needs an ID check. For tests and mocks, a free alternative with a join code.',
+    dek:
+        'Canvas is a learning management system, and its quizzes live inside courses. In 2026 Instructure closed Canvas Free-for-Teacher after a security incident and replaced it with Canvas Lite: free, but with 50 learners per course and an identity check with your ID and a selfie. If you mostly used Canvas to run quizzes, this is a good moment to ask whether your tests need a course system at all. This guide answers that honestly.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-15T12:00:00+05:30',
+    dateModified: '2026-10-15T12:00:00+05:30',
+    readMinutes: 15,
+    cover: {
+        src: '/guides/canvas-quizzes-alternative/cover.png',
+        alt: 'A quiz inside a course with an enrolment list beside an exam a whole batch joins with one code',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Canvas quizzes alternative',
+        'Canvas alternative for quizzes',
+        'Canvas Free for Teacher alternative',
+        'Canvas Lite alternative',
+        'Canvas New Quizzes alternative',
+        'Canvas LMS alternatives for teachers',
+        'online quiz tool without LMS',
+        'online test platform with negative marking',
+        'free online exam platform for teachers',
+        'Canvas vs TestoZa',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
+/*
  * Four "how to" guides share a page shell, six widgets and a data file
  * (pages/guides/howto, guides/howtoData.ts). Each one answers a different job, so they
  * don't compete with each other in search: running an exam on phones, putting a test
@@ -809,7 +990,7 @@ export const WHATSAPP_META: GuideMeta = {
 };
 
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

@@ -129,9 +129,14 @@ export interface AlternativePageProps {
     keyPhrase: string;
     /** Label and target of the hero's secondary link. */
     jumpTo?: { label: string; id: string };
+    /**
+     * Phones: every widget fits one screen, with its answer always in view (.al--fit in
+     * altGuide.css). On for the guides added 15 October 2026; the first four predate it.
+     */
+    fit?: boolean;
 }
 
-export default function AlternativePage({ guide, rival, keyPhrase, jumpTo }: AlternativePageProps) {
+export default function AlternativePage({ guide, rival, keyPhrase, jumpTo, fit = false }: AlternativePageProps) {
     const { meta, body } = guide;
     const canonical = guideUrl(meta.path);
     const cta = guideCta(guide);
@@ -257,7 +262,7 @@ export default function AlternativePage({ guide, rival, keyPhrase, jumpTo }: Alt
     const published = formatGuideDate(meta.dateModified);
 
     return (
-        <div className="al" ref={rootRef} onClick={onClick}>
+        <div className={fit ? 'al al--fit' : 'al'} ref={rootRef} onClick={onClick}>
             <SEO
                 title={meta.seoTitle}
                 description={meta.description}

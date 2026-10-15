@@ -3133,3 +3133,188 @@
         animation: none;
     }
 }
+
+/* .al-score-tile > p (the tile's label) also matches the score and the line under it,
+ * and outranks .al-score-value, so the score drew at 12px in small caps. The guides with
+ * `fit` get the score at its intended size; the first four keep what they shipped with. */
+.al--fit .al-score-tile > .al-score-value {
+    margin: 0;
+    font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--al-ink);
+}
+.al--fit .al-score-tile > .al-score-value[data-sign='minus'] {
+    color: var(--al-red-ink);
+}
+.al--fit .al-score-tile > .al-score-why {
+    display: block;
+    margin: 5px 0 0;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--al-ink-3);
+}
+
+/* ══ .al--fit: every widget fits one phone screen ═══════════════════════════
+ * The guides added on 15 October 2026 pass `fit` to AlternativePage. On a phone each
+ * widget, controls and answer together, fits the screen left under the site bar and the
+ * chapter bar (about 730px on a 390 × 844 phone), so what you tap and what it changes are
+ * always in view at once. Long lists scroll inside the card instead of pushing the answer
+ * off screen. Nothing here applies above 699px, where the widgets already fit, or to the
+ * four earlier alternative guides.
+ */
+@media (max-width: 699px) {
+    .al--fit {
+        /* What one widget may take: the screen minus the two bars and a little air. */
+        --al-fit-card: max(500px, calc(100vh - 128px));
+    }
+    @supports (height: 100svh) {
+        .al--fit {
+            --al-fit-card: max(500px, calc(100svh - 128px));
+        }
+    }
+
+    /* alt-fit: tighter rows, and the count line goes (the verdict says it). */
+    .al--fit .al-split {
+        gap: 10px;
+    }
+    .al--fit .al-rows li {
+        min-height: 41px;
+        padding: 5px 10px 5px 12px;
+        gap: 10px;
+    }
+    .al--fit .al-rows label {
+        font-size: 14px;
+    }
+    .al--fit .al-rows-label {
+        margin-bottom: 5px;
+    }
+    .al--fit .al-verdict {
+        margin-top: 12px;
+        padding: 12px 14px;
+    }
+    .al--fit .al-verdict h4 {
+        font-size: 15px;
+    }
+    .al--fit .al-verdict p {
+        font-size: 13.5px;
+        line-height: 1.45;
+    }
+    .al--fit .al-verdict-count {
+        display: none;
+    }
+
+    /* alt-compare: the two answers scroll inside the card; the chips, the question and the
+       takeaway stay put. */
+    .al--fit .al-vs {
+        max-height: calc(var(--al-fit-card) - 360px);
+        min-height: 200px;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        border-radius: 14px;
+    }
+    .al--fit .al-vs-list li {
+        font-size: 14px;
+    }
+    .al--fit .al-vs-takeaway {
+        font-size: 13.5px;
+    }
+
+    /* alt-marking: options in a 2 × 2 grid, both scores side by side, and the footnote
+       goes (the text above the widget makes the same point). */
+    .al--fit .al-qcard {
+        padding: 12px 13px 13px;
+    }
+    .al--fit .al-qcard-q {
+        margin-bottom: 10px;
+        font-size: 14.5px;
+    }
+    .al--fit .al-opts {
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+    }
+    .al--fit .al-opts button {
+        padding: 9px 10px;
+    }
+    .al--fit .al-score {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .al--fit .al-score-tile {
+        padding: 10px 11px;
+    }
+    .al--fit .al-score-tile > p {
+        font-size: 11px;
+    }
+    .al--fit .al-score-why {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    .al--fit .al-wfoot {
+        display: none;
+    }
+
+    /* alt-move: smaller steps, and the progress ring becomes a single row. */
+    .al--fit .al-todo button {
+        padding: 9px 12px 10px;
+        gap: 10px;
+    }
+    .al--fit .al-todo-text b {
+        font-size: 14px;
+    }
+    .al--fit .al-todo-text span {
+        font-size: 12.5px;
+        line-height: 1.4;
+    }
+    .al--fit .al-done {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        justify-items: start;
+        gap: 12px;
+        padding: 10px 14px;
+        text-align: left;
+    }
+    .al--fit .al-done-ring,
+    .al--fit .al-done-ring svg {
+        width: 52px;
+        height: 52px;
+    }
+    .al--fit .al-done-ring b {
+        font-size: 14px;
+    }
+    .al--fit .al-done > p {
+        margin: 0;
+    }
+
+    /* Short phones (a 360 × 640 Android leaves ~530px): the long lists scroll inside the
+       card. On a normal phone these caps are taller than the lists, so nothing scrolls. */
+    .al--fit .al-split {
+        max-height: calc(var(--al-fit-card) - 272px);
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+    }
+    .al--fit .al-vs {
+        min-height: 160px;
+    }
+    .al--fit .al-todo {
+        max-height: calc(var(--al-fit-card) - 190px);
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+    }
+}
+@media (max-width: 699px) and (max-height: 700px) {
+    .al--fit .al-panel-sub,
+    .al--fit .al-vs-q {
+        display: none;
+    }
+    .al--fit {
+        --al-fit-card: calc(100vh - 118px);
+    }
+    @supports (height: 100svh) {
+        .al--fit {
+            --al-fit-card: calc(100svh - 118px);
+        }
+    }
+}

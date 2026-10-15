@@ -18,7 +18,17 @@
  * Sources are listed in each guide's `sources`.
  */
 
-export type RivalKey = 'classplus' | 'teachmint' | 'kahoot' | 'testportal';
+export type RivalKey =
+    | 'classplus'
+    | 'teachmint'
+    | 'kahoot'
+    | 'testportal'
+    // added 15 October 2026
+    | 'mettl'
+    | 'proprofs'
+    | 'socrative'
+    | 'speedexam'
+    | 'canvas';
 
 /** One row of the hero's transfer card. */
 export interface AltSwapRow {
@@ -93,6 +103,8 @@ export interface AltRival {
     stats: { dt: string; dd: string; small?: string }[];
     /** Line under the byline: what the facts were checked against. */
     checked: string;
+    /** The day the facts were checked, as the compare widget prints it. Defaults to 10 October 2026. */
+    checkedOn?: string;
     uses: AltUse[];
     verdicts: Record<Verdict, { title: string; text: string }>;
     themes: AltTheme[];
@@ -721,9 +733,765 @@ const TESTPORTAL: AltRival = {
     ],
 };
 
+/*
+ * Five more pages, added 15 October 2026. Same rules: every claim about the other
+ * product is from its own site or help centre as it stood that day, and where a figure
+ * only exists on listing sites, the text says so. Each page answers a different question,
+ * so they don't compete in search: Mettl is enterprise proctoring, ProProfs prices per
+ * quiz taker, Socrative is a classroom check-in, SpeedExam meters exam attempts, and
+ * Canvas quizzes live inside a course system.
+ */
+
+// ── /mercer-mettl-alternative ───────────────────────────────────────────────
+
+const METTL: AltRival = {
+    key: 'mettl',
+    name: 'Mercer Mettl',
+    is: 'an enterprise assessment and proctoring suite for hiring, universities and certification',
+    swap: {
+        keepLabel: 'Mettl’s home ground',
+        keep: [
+            { icon: 'camera', label: 'Webcam, AI and live human proctoring' },
+            { icon: 'briefcase', label: 'Hiring, psychometric and coding tests' },
+            { icon: 'laptop', label: 'Locked-down tests in a secure browser' },
+            { icon: 'id-card', label: 'Identity checks for high-stakes exams' },
+        ],
+        moveLabel: 'Only needs an exam platform',
+        move: [
+            { icon: 'timer', label: 'Weekly tests and full mocks with +4/−1' },
+            { icon: 'smartphone', label: 'A batch writing on their own phones' },
+            { icon: 'sparkles', label: 'Papers made from a PDF or a photo' },
+            { icon: 'list-ordered', label: 'Rank lists and report cards' },
+        ],
+        foot: 'If your candidates are students with phones, most of the top half is cost you never use.',
+    },
+    stats: [
+        { dt: 'Exam on a student’s phone', dd: 'Yes' },
+        { dt: 'Demo calls before a price', dd: '0' },
+        { dt: 'Software to install', dd: '0' },
+        { dt: 'Price, published', dd: '₹799', small: '/year' },
+    ],
+    checked: 'Mettl facts checked against mettl.com and Mettl’s own help centre',
+    checkedOn: '15 October 2026',
+    uses: [
+        { id: 'proctor', label: 'Webcam, AI or live proctoring', icon: 'camera', tone: 'indigo', kind: 'core' },
+        { id: 'hiring', label: 'Hiring and campus recruitment tests', icon: 'briefcase', tone: 'blue', kind: 'core' },
+        { id: 'psych', label: 'Psychometric, aptitude or coding tests', icon: 'brain', tone: 'purple', kind: 'core' },
+        { id: 'uni', label: 'University exams with identity checks', icon: 'graduation-cap', tone: 'teal', kind: 'core' },
+        { id: 'weekly', label: 'Weekly and chapter tests for a batch', icon: 'clipboard-list', tone: 'blue', kind: 'exam' },
+        { id: 'mocks', label: 'JEE, NEET, SSC or bank pattern mocks', icon: 'timer', tone: 'red', kind: 'exam' },
+        { id: 'phones', label: 'Students writing on their own phones', icon: 'smartphone', tone: 'green', kind: 'exam' },
+        { id: 'ranks', label: 'Rank lists and report cards for parents', icon: 'list-ordered', tone: 'pink', kind: 'exam' },
+    ],
+    verdicts: {
+        none: { title: 'Switch on what you use', text: 'Tick what you actually run on Mettl, or were about to buy it for. The answer appears here.' },
+        keep: {
+            title: 'Keep Mettl',
+            text: 'Camera proctoring, identity checks, hiring and psychometric tests are what Mettl is built for, and a lighter exam platform replaces none of them. If the contract feels heavy, compare it with other enterprise proctoring suites.',
+        },
+        split: {
+            title: 'Keep Mettl for high stakes. Run the practice elsewhere.',
+            text: 'Use Mettl for the sittings that need a camera and a secure browser, such as recruitment or a semester exam. Run the weekly tests and the mock series, which need volume, phones and Indian marking, on an exam platform built for that.',
+        },
+        switch: {
+            title: 'You are paying for proctoring you don’t use',
+            text: 'Everything you ticked is everyday testing for a batch of students. An enterprise proctoring suite is priced and designed for high-stakes sittings on laptops, not for a weekly test on a student’s phone.',
+        },
+    },
+    themes: [
+        {
+            id: 'who',
+            label: 'Who it is for',
+            question: 'Who is Mettl built for?',
+            them: [
+                'Its homepage leads with talent: hiring, campus recruitment, psychometric and coding assessments and 360-degree feedback, with an AI-assisted examination platform for universities alongside.',
+                'It reports 6,000+ organisations, 700+ educational institutions and 25 million assessments a year across 100+ countries.',
+                'Every page ends in “Request a demo”. There is no price list.',
+            ],
+            us: [
+                'Built for teachers, coaching institutes and schools in India running weekly tests and mock series for JEE, NEET, CUET, SSC, bank and school exams.',
+                'Prices are on a public page: ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year. Building and running tests is free.',
+                'You sign up and build a paper the same afternoon. No demo, no sales call.',
+            ],
+            takeaway: 'An enterprise suite is bought by an HR head or a university’s controller of examinations. A teacher with a batch is not the customer it was designed around, and the buying process shows it.',
+        },
+        {
+            id: 'device',
+            label: 'The device',
+            question: 'What does a candidate need?',
+            them: [
+                'Mettl’s help centre says its proctored assessments are not supported on mobile devices: no phones, no tablets.',
+                'A laptop or desktop with a webcam, Chrome, Firefox or Safari (not Edge), and at least 512 kbps for a webcam-proctored test.',
+                'High-stakes tests can require the Mettl Secure Browser, an install for Windows or macOS.',
+            ],
+            us: [
+                'The phone in the student’s pocket. A four-year-old Android on mobile data is the device we design for.',
+                'Nothing to install: the candidate opens testoza.com/join in the browser they already have.',
+                'Answers save to the server every 20 seconds. If a phone dies, the candidate rejoins on another one and carries on.',
+            ],
+            takeaway: 'In most Indian coaching batches, a phone is the only device every candidate has. A test that needs a laptop and a webcam is one that half the batch can’t take from home.',
+        },
+        {
+            id: 'security',
+            label: 'Cheating',
+            question: 'How is cheating handled?',
+            them: [
+                'AI proctoring through the webcam and microphone, live human proctors, and record-and-review, with a “Credibility Index” report for each candidate.',
+                'Three-point identity checks, dual-camera 360-degree monitoring, and a secure browser that locks the computer.',
+                'Serious and heavy, and priced for exams where cheating costs someone a job or a degree.',
+            ],
+            us: [
+                'Browser rules without a camera: forced full screen, tab switches counted against a limit that can submit the paper, copy, paste and right-click off, back button blocked.',
+                'A live list during the exam: who is writing, who left the exam screen, who changed device.',
+                'For an exam that decides something, a supervised room. Our own guide to preventing cheating says the same.',
+            ],
+            takeaway: 'Camera proctoring is the right tool when one sitting decides a hire or a degree. For a weekly practice test, its costs fall on students (a camera, a private room, a fast connection) for little gain.',
+        },
+        {
+            id: 'marking',
+            label: 'Marking',
+            question: 'Can it mark an Indian entrance paper?',
+            them: [
+                'Broadly, yes. Mettl’s help centre shows a Correct Marks and an Incorrect Marks field, so −0.25 or −1 per wrong answer can be set, and sections can have their own time.',
+                '26+ question formats, an equation editor for maths and chemistry, and 20+ languages.',
+            ],
+            us: [
+                'The same basics, Marks and Wrong on every question and sections with their own clock, plus the details Indian papers add.',
+                'Partial marks on multiple-correct questions, proportional or the JEE Advanced rule; numerical answers accepted within a range; papers in Hindi, English or both.',
+                'An exam screen laid out like the NTA one candidates will meet: question palette, Mark for review, Save & Next.',
+            ],
+            takeaway: 'Marking is where the two are closest. The difference is in the Indian-exam details and in the screen students practise on.',
+        },
+        {
+            id: 'price',
+            label: 'What it costs',
+            question: 'What will you pay, and when do you find out?',
+            them: [
+                'There is no price on mettl.com. You request a demo and get a quote.',
+                'Software listing sites have shown a starting figure around $2,990 a year as a flat rate. That is a third-party number, not a quote, and enterprise prices vary with volume and proctoring.',
+                'Proctoring, live human proctoring above all, is usually what drives the bill.',
+            ],
+            us: [
+                'Building tests, running live exams, marking, rank lists and report cards: free.',
+                'Paid plans for the exam rules and extras: ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year.',
+                'No per-candidate charge, no cap on how many sit a paper, billed in rupees.',
+            ],
+            takeaway: 'Work out what one weekly test for one batch costs on each. For practice tests, that number matters more than any feature list.',
+        },
+    ],
+    scoring: {
+        label: 'Mettl marking',
+        kind: 'plain',
+        best: 1,
+        rightWhy: 'Mettl can set negative marks, so this page doesn’t use the marking lab.',
+        wrongWhy: 'Mettl can set negative marks, so this page doesn’t use the marking lab.',
+    },
+    steps: [
+        { id: 'pick', title: 'Pick one practice paper, not your exam calendar', detail: 'Last Sunday’s mock, with its key. High-stakes sittings stay where they are while you try this.', minutes: 2 },
+        { id: 'import', title: 'Upload the PDF or photograph it', detail: 'The AI reads questions, options, the key, diagrams and equations, in Hindi, English or both.', minutes: 5 },
+        { id: 'marks', title: 'Set marks, sections and the clock', detail: 'Marks and Wrong on each question (+4 and −1 if that is your pattern), sections with their own time if the real paper has them.', minutes: 7 },
+        { id: 'roll', title: 'Paste the batch list', detail: 'Roll number and name from Excel or WhatsApp, a parent’s phone if report cards should go home.', minutes: 3 },
+        { id: 'run', title: 'Give the batch a six-digit code', detail: 'They join at testoza.com/join on their phones. Press Start when the lobby is full and read the rank list at the end.', minutes: 3 },
+    ],
+};
+
+// ── /proprofs-alternative ───────────────────────────────────────────────────
+
+const PROPROFS: AltRival = {
+    key: 'proprofs',
+    name: 'ProProfs',
+    is: 'a global quiz maker for business, training and education, priced per quiz taker',
+    swap: {
+        keepLabel: 'ProProfs’s home ground',
+        keep: [
+            { icon: 'briefcase', label: 'Staff training and compliance quizzes' },
+            { icon: 'award', label: 'Certification exams with certificates' },
+            { icon: 'megaphone', label: 'Lead-capture and marketing quizzes' },
+            { icon: 'pen-line', label: 'Essays, file uploads, 20+ question types' },
+        ],
+        moveLabel: 'An Indian exam platform’s home ground',
+        move: [
+            { icon: 'timer', label: 'JEE, NEET, SSC and bank pattern mocks' },
+            { icon: 'users', label: 'A 400-student batch with no per-head bill' },
+            { icon: 'languages', label: 'Hindi typed with English letters' },
+            { icon: 'list-ordered', label: 'Batch rank lists and report cards' },
+        ],
+        foot: 'Both mark tests well. They count your students differently.',
+    },
+    stats: [
+        { dt: 'Charge per student', dd: '₹0' },
+        { dt: 'Join code', dd: '6', small: 'digits' },
+        { dt: 'Billed in', dd: 'Rupees' },
+        { dt: 'Price for a year', dd: '₹799' },
+    ],
+    checked: 'ProProfs prices and plan limits checked against proprofs.com',
+    checkedOn: '15 October 2026',
+    uses: [
+        { id: 'training', label: 'Staff training and compliance quizzes', icon: 'briefcase', tone: 'indigo', kind: 'core' },
+        { id: 'certs', label: 'Certification exams with certificates', icon: 'award', tone: 'orange', kind: 'core' },
+        { id: 'leads', label: 'Lead-capture or marketing quizzes', icon: 'megaphone', tone: 'pink', kind: 'core' },
+        { id: 'open', label: 'Essays, file uploads and video answers', icon: 'pen-line', tone: 'purple', kind: 'core' },
+        { id: 'mocks', label: 'Entrance-pattern mocks for a big batch', icon: 'timer', tone: 'red', kind: 'exam' },
+        { id: 'weekly', label: 'A weekly test for every batch', icon: 'clipboard-list', tone: 'blue', kind: 'exam' },
+        { id: 'hindi', label: 'Hindi or bilingual papers', icon: 'languages', tone: 'green', kind: 'exam' },
+        { id: 'ranks', label: 'Rank lists and report cards for parents', icon: 'list-ordered', tone: 'teal', kind: 'exam' },
+    ],
+    verdicts: {
+        none: { title: 'Switch on what you use', text: 'Tick what you make quizzes for. The answer appears here.' },
+        keep: {
+            title: 'Keep ProProfs',
+            text: 'Training, certification, lead quizzes and open-ended answers are where ProProfs is strong, and it marks well. If the people taking your quizzes are employees or customers, a per-taker price fits how you work.',
+        },
+        split: {
+            title: 'Keep it for training. Move the student exams.',
+            text: 'Staff quizzes and certificates stay where they are. Student exams, where the head count is large and grows every month, move to a platform that doesn’t charge per student and marks like an Indian entrance paper.',
+        },
+        switch: {
+            title: 'You are paying per head for a batch',
+            text: 'Everything you ticked is exam prep for students. A meter that counts quiz takers grows exactly as your institute does, in dollars, for features built around training and lead capture.',
+        },
+    },
+    themes: [
+        {
+            id: 'meter',
+            label: 'How it is priced',
+            question: 'What does the price count?',
+            them: [
+                'People. Business plans are priced per 100 active quiz takers a month: $19.99 on Essentials (up to 300 takers) and $39.99 on Business (up to 500), in US dollars.',
+                'Business Complete Elite is $0.83 per active quiz taker a month, billed yearly. Certifications & Exams is $1 per candidate a month, billed yearly, with a 100-candidate minimum.',
+                'A K-12 Teacher plan costs $4 a month for up to 150 students, for teachers employed by a recognised school; School & District is $0.25 per student a month.',
+            ],
+            us: [
+                'Nothing per student. One mock for 400 candidates costs the same as one for 40.',
+                '₹49 for 7 days, ₹149 for 30 days or ₹799 for a year buys the exam rules and extras. Building and running tests is free.',
+                'Billed in rupees, with UPI at checkout.',
+            ],
+            takeaway: 'A per-taker meter is fair for a company quizzing its staff. For an institute whose business is putting more students through more papers, the bill grows exactly as you do.',
+        },
+        {
+            id: 'free',
+            label: 'The free plan',
+            question: 'What can you do without paying?',
+            them: [
+                'Unlimited quizzes and attempts, but 12 questions per quiz (8 quiz questions plus 4 lead fields) and 90 days of report history.',
+                'Enough for a quick check or a lead-capture quiz. Not enough for a chapter test, let alone a 180-question mock.',
+            ],
+            us: [
+                'Full-length papers, live exams with a join code, marking, rank lists, per-question analysis and report cards, all free.',
+                'Paid plans add the exam rules, such as forced full screen and tab-switch limits, and other extras.',
+            ],
+            takeaway: 'Judge a free plan by whether it can run your real paper once. With an 8-question cap, the trial can’t show you the thing you would be buying it for.',
+        },
+        {
+            id: 'marking',
+            label: 'Marking',
+            question: 'Can it mark the way your exam marks?',
+            them: [
+                'For most of it, yes. ProProfs supports negative marking, partial and custom grading, and multi-section quizzes with each section scored and timed on its own.',
+                '20+ question types, including essays, hotspots, matching and file uploads.',
+            ],
+            us: [
+                'Marks and Wrong on each question, sections with their own clock, partial marks proportional or JEE Advanced style.',
+                'Numerical answers accepted within a range, two-decimal answers and multiple-correct questions: the types Indian papers use.',
+                'An NTA-style exam screen: question palette, Mark for review, Save & Next.',
+            ],
+            takeaway: 'ProProfs can mark a negative-marked paper. What differs is whether the screen and the question types match the exam your students will actually sit.',
+        },
+        {
+            id: 'examday',
+            label: 'Exam day',
+            question: 'How does a batch of 120 sit one paper together?',
+            them: [
+                'Through a quiz link, with taker details collected on a form, or through logins for a group.',
+                'Anti-cheating includes screenshots captured at intervals, tab-switch blocking, copy and paste off, webcam and screen sharing, IP restrictions and time limits.',
+            ],
+            us: [
+                'A six-digit code at testoza.com/join. Candidates check in by roll number into a lobby you can see.',
+                'Press Start, then watch who is writing, who has submitted and who left the screen. Give one candidate +5 or +10 minutes, or give everyone more time.',
+                'Answers save every 20 seconds, and a candidate can rejoin on another phone.',
+            ],
+            takeaway: 'Exam day is about the batch, not the quiz: who has arrived, who is stuck, who needs five more minutes.',
+        },
+        {
+            id: 'india',
+            label: 'Hindi and parents',
+            question: 'What about Hindi, phones and parents?',
+            them: [
+                'Quizzes in English, Spanish and 70+ languages, built for a global market.',
+                'Reports and certificates designed around an individual taker or an employee.',
+            ],
+            us: [
+                'Hindi throughout, including typing Hindi with English letters, and bilingual questions that carry both languages.',
+                'Built phone-first, for a budget Android on mobile data.',
+                'Report cards to print, a WhatsApp message to a parent that you send yourself, and Excel for your records.',
+            ],
+            takeaway: 'Indian exam prep has its own habits: bilingual papers, rank lists on a notice board, parents on WhatsApp. Small things, but they fill the week.',
+        },
+    ],
+    scoring: {
+        label: 'ProProfs marking',
+        kind: 'plain',
+        best: 1,
+        rightWhy: 'ProProfs supports negative marking, so this page doesn’t use the marking lab.',
+        wrongWhy: 'ProProfs supports negative marking, so this page doesn’t use the marking lab.',
+    },
+    steps: [
+        { id: 'pick', title: 'Pick the paper your biggest batch takes', detail: 'The test where the per-taker count hurts most. Training quizzes stay where they are.', minutes: 2 },
+        { id: 'import', title: 'Export it, or upload the original PDF', detail: 'Print the quiz to PDF, or use the paper it came from. The AI reads questions, options, key and diagrams.', minutes: 5 },
+        { id: 'marks', title: 'Set the marking and the clock', detail: 'Marks and Wrong per question, sections, the duration, and Hindi alongside the English if your batch needs it.', minutes: 7 },
+        { id: 'roll', title: 'Paste the batch', detail: 'Roll numbers and names from Excel or WhatsApp. No per-student seat to buy.', minutes: 3 },
+        { id: 'run', title: 'Run it with a join code', detail: 'Six digits on the board or in the group. Press Start and read the rank list afterwards.', minutes: 3 },
+    ],
+};
+
+// ── /socrative-alternative ──────────────────────────────────────────────────
+
+const SOCRATIVE: AltRival = {
+    key: 'socrative',
+    name: 'Socrative',
+    is: 'a quick classroom check-in tool for quizzes, exit tickets and Space Race',
+    swap: {
+        keepLabel: 'Socrative is better at this',
+        keep: [
+            { icon: 'zap', label: 'A two-minute check during a lesson' },
+            { icon: 'log-out', label: 'Exit tickets at the end of class' },
+            { icon: 'rocket', label: 'Space Race team games' },
+            { icon: 'message-circle', label: 'Quick questions and polls' },
+        ],
+        moveLabel: 'An exam platform is better at this',
+        move: [
+            { icon: 'timer', label: 'A 180-question mock with one clock' },
+            { icon: 'minus-circle', label: 'Negative marks and partial credit' },
+            { icon: 'hash', label: 'Numerical answers within a range' },
+            { icon: 'list-ordered', label: 'Rank lists and report cards' },
+        ],
+        foot: 'Keep the check-ins. Move the papers that count.',
+    },
+    stats: [
+        { dt: 'Question types', dd: '3', small: 'on Socrative' },
+        { dt: 'Students in a free room', dd: '50', small: 'on Socrative' },
+        { dt: 'Candidates in one exam here', dd: 'A batch' },
+        { dt: 'Negative marking here', dd: 'Yes' },
+    ],
+    checked: 'Socrative plans and features checked against socrative.com and its help centre',
+    checkedOn: '15 October 2026',
+    uses: [
+        { id: 'check', label: 'Quick checks in the middle of a lesson', icon: 'zap', tone: 'orange', kind: 'core' },
+        { id: 'exit', label: 'Exit tickets at the end of class', icon: 'log-out', tone: 'teal', kind: 'core' },
+        { id: 'race', label: 'Space Race team competitions', icon: 'rocket', tone: 'purple', kind: 'core' },
+        { id: 'poll', label: 'Quick questions and polls', icon: 'message-circle', tone: 'pink', kind: 'core' },
+        { id: 'weekly', label: 'Weekly tests that go on a record', icon: 'clipboard-list', tone: 'blue', kind: 'exam' },
+        { id: 'mocks', label: 'Full mocks with negative marking', icon: 'timer', tone: 'red', kind: 'exam' },
+        { id: 'numerical', label: 'Numerical and multiple-correct questions', icon: 'hash', tone: 'indigo', kind: 'exam' },
+        { id: 'ranks', label: 'Rank lists, report cards and analysis', icon: 'list-ordered', tone: 'green', kind: 'exam' },
+    ],
+    verdicts: {
+        none: { title: 'Switch on what you use', text: 'Tick what you open Socrative for. The answer appears here, and it is often “keep it”.' },
+        keep: {
+            title: 'Keep Socrative',
+            text: 'Everything you ticked is checking understanding while you teach, and Socrative is quick and good at it. An exam platform would make those two minutes slower, not better.',
+        },
+        split: {
+            title: 'Keep Socrative for lessons. Test somewhere else.',
+            text: 'The honest answer for most teachers. Socrative for the check-in that shapes tomorrow’s lesson, an exam platform for the paper whose marks go on a record.',
+        },
+        switch: {
+            title: 'You are running exams on a check-in tool',
+            text: 'Everything you ticked is assessment: marks that count, negative marking, ranks, analysis. A percentage of right answers can’t produce that, and three question types can’t mirror an entrance paper.',
+        },
+    },
+    themes: [
+        {
+            id: 'questions',
+            label: 'Question types',
+            question: 'What kinds of questions can you ask?',
+            them: [
+                'Three: multiple choice, true/false and short answer.',
+                'A short answer is marked correct only if it matches what you typed, spelling included. Changing that mark by hand is a paid feature.',
+                'An equation editor for maths symbols in questions.',
+            ],
+            us: [
+                'Single-correct and multiple-correct MCQs, numerical answers with a tolerance range, two-decimal answers and comprehension passages.',
+                'Diagrams, equations and chemical formulae read by the AI from a PDF or a photo.',
+                'Hindi, English or both on the same question.',
+            ],
+            takeaway: 'Three types are plenty for a check-in. A JEE or NEET mock needs the types the real paper uses, or the practice is for a different exam.',
+        },
+        {
+            id: 'scoring',
+            label: 'How answers score',
+            question: 'What is the score?',
+            them: [
+                'A percentage: the share of questions answered correctly, with ticks and crosses in the report.',
+                'A wrong answer counts the same as a blank. Socrative’s quiz settings and help pages describe no negative marking.',
+            ],
+            us: [
+                'Marks and Wrong on every question: +4/−1, +2/−0.5, +1/−0.25, or +1/0 for a school test.',
+                'Partial marks on multiple-correct questions, proportional or JEE Advanced style.',
+                'Totals, section totals and ranks, not just a percentage.',
+            ],
+            takeaway: 'A percentage tells you how much of today’s lesson landed. A marked score tells a student what this paper would have cost them in the exam.',
+        },
+        {
+            id: 'size',
+            label: 'Size and limits',
+            question: 'How big can it go?',
+            them: [
+                'Free: 1 room, up to 50 students, 5 quizzes and 30 days of reports.',
+                'Essentials ($120 a year per seat): 5 rooms of 50. Pro ($200.04 a year per seat, at least 2 seats): 30 rooms of up to 300.',
+                'Priced per teacher seat, in US dollars.',
+            ],
+            us: [
+                'A live exam takes the whole batch with one join code, on the free plan.',
+                'No teacher seat to buy for running exams. Paid plans (₹49 a week, ₹149 a month, ₹799 a year) add the exam rules.',
+            ],
+            takeaway: 'Check the room size against your biggest batch, not your average class.',
+        },
+        {
+            id: 'paper',
+            label: 'The exam screen',
+            question: 'Does it feel like the real exam?',
+            them: [
+                'A clean quiz view with a question bar, instant feedback if you turn it on, and an optional timer for the whole activity.',
+                'Teacher-paced or student-paced, designed for a lesson in progress.',
+            ],
+            us: [
+                'An NTA-style screen: the four-colour question palette, Mark for review, Save & Next, sections, one clock for the paper.',
+                'Exam rules on paid plans: forced full screen, tab switches counted against a limit, copy and right-click off.',
+            ],
+            takeaway: 'Students who only practise on a friendly quiz view meet the real exam screen for the first time on exam day.',
+        },
+        {
+            id: 'after',
+            label: 'After the test',
+            question: 'What do you have afterwards?',
+            them: [
+                'Live results during the activity, then reports for the whole class, by question, and a PDF for each student with their percentage.',
+                'Exports to Google Drive and as spreadsheets.',
+            ],
+            us: [
+                'A rank list with the average, highest, lowest and section averages.',
+                'For every question: attempted, correct, average time, and which wrong option the batch chose.',
+                'Report cards, Excel, and a WhatsApp message for parents.',
+            ],
+            takeaway: 'Socrative’s reports are made for adjusting tomorrow’s lesson. A mock’s report is made for ranking, for parents and for next month’s plan.',
+        },
+    ],
+    scoring: {
+        label: 'Socrative score',
+        kind: 'plain',
+        best: 1,
+        rightWhy: 'Counted as correct: one more question towards the percentage.',
+        wrongWhy: 'Counted as incorrect, which scores the same as a blank. Nothing comes off.',
+    },
+    steps: [
+        { id: 'keep', title: 'Keep Socrative for lessons', detail: 'Exit tickets and Space Race stay exactly as they are. This is about one paper.', minutes: 1 },
+        { id: 'pick', title: 'Pick the test whose marks count', detail: 'A weekly or chapter test that goes on a record, with its answer key.', minutes: 2 },
+        { id: 'import', title: 'Upload it or photograph it', detail: 'PDF, printed sheet or handwriting. The AI reads questions, options, key, diagrams and equations.', minutes: 5 },
+        { id: 'marks', title: 'Type the marking scheme', detail: 'Marks and Wrong on each question, numerical answers as a range, and the duration.', minutes: 7 },
+        { id: 'run', title: 'Run it as a live exam', detail: 'A six-digit code instead of a room name. Press Start, and read ranks and per-question numbers at the end.', minutes: 4 },
+    ],
+};
+
+// ── /speedexam-alternative ──────────────────────────────────────────────────
+
+const SPEEDEXAM: AltRival = {
+    key: 'speedexam',
+    name: 'SpeedExam',
+    is: 'an online exam service for institutions and companies, metered by exam attempts',
+    swap: {
+        keepLabel: 'SpeedExam’s home ground',
+        keep: [
+            { icon: 'camera', label: 'Webcam and AI proctoring with auto-stop' },
+            { icon: 'award', label: 'Certificates and a certificate maker' },
+            { icon: 'briefcase', label: 'Recruitment and corporate exams' },
+            { icon: 'pen-line', label: 'Essays, matching, audio and video questions' },
+        ],
+        moveLabel: 'An Indian exam platform’s home ground',
+        move: [
+            { icon: 'users', label: 'A batch joining with a code, no logins' },
+            { icon: 'timer', label: 'NTA-style mocks with partial marks' },
+            { icon: 'sparkles', label: 'Papers from a PDF or a photo' },
+            { icon: 'languages', label: 'Hindi and bilingual papers' },
+        ],
+        foot: 'Both run serious exams. They count and start them differently.',
+    },
+    stats: [
+        { dt: 'Attempts cap a month', dd: 'None' },
+        { dt: 'Logins to issue', dd: '0' },
+        { dt: 'Join code', dd: '6', small: 'digits' },
+        { dt: 'Price for a year', dd: '₹799' },
+    ],
+    checked: 'SpeedExam prices and features checked against speedexam.net',
+    checkedOn: '15 October 2026',
+    uses: [
+        { id: 'proctor', label: 'Webcam or AI proctoring', icon: 'camera', tone: 'indigo', kind: 'core' },
+        { id: 'certs', label: 'Certificates after an exam', icon: 'award', tone: 'orange', kind: 'core' },
+        { id: 'corp', label: 'Recruitment or employee exams', icon: 'briefcase', tone: 'blue', kind: 'core' },
+        { id: 'open', label: 'Essays, audio and video answers', icon: 'pen-line', tone: 'purple', kind: 'core' },
+        { id: 'mocks', label: 'JEE, NEET, SSC or bank pattern mocks', icon: 'timer', tone: 'red', kind: 'exam' },
+        { id: 'batch', label: 'A whole batch sitting one paper live', icon: 'users', tone: 'green', kind: 'exam' },
+        { id: 'import', label: 'Papers made from PDFs and photos', icon: 'sparkles', tone: 'teal', kind: 'exam' },
+        { id: 'ranks', label: 'Rank lists and report cards', icon: 'list-ordered', tone: 'pink', kind: 'exam' },
+    ],
+    verdicts: {
+        none: { title: 'Switch on what you use', text: 'Tick what you run exams for. The answer appears here.' },
+        keep: {
+            title: 'Keep SpeedExam',
+            text: 'Camera proctoring, certificates, corporate exams and open-ended questions are SpeedExam’s strengths. If those are your week, it is a sound choice and you should stay.',
+        },
+        split: {
+            title: 'Keep it for certified exams. Move the practice.',
+            text: 'Sittings that need a camera or a certificate stay on SpeedExam. The weekly tests and mock series, which eat attempts fastest, move to a platform with no attempt meter and an Indian exam screen.',
+        },
+        switch: {
+            title: 'Your exams are practice, and the meter counts them',
+            text: 'Everything you ticked is exam prep for a batch. A plan metered by attempts a month, in dollars, with logins to issue, is built for a different rhythm from a weekly test and a monthly mock.',
+        },
+    },
+    themes: [
+        {
+            id: 'meter',
+            label: 'How it is priced',
+            question: 'What does the price count?',
+            them: [
+                'Exam attempts a month, and the count includes incomplete attempts and retakes.',
+                'Free: 25 attempts a month and 2,000 questions. Professional: $20 a month or $240 a year for 500 attempts, 10 instructors and 50 proctoring credits. Ultimate: $125 a month or $1,500 a year for 3,500 attempts.',
+                'Billed in US dollars.',
+            ],
+            us: [
+                'No meter on attempts. One mock for 400 candidates is one mock, and a retake costs nothing.',
+                '₹49 for 7 days, ₹149 for 30 days or ₹799 for a year buys the exam rules and extras. Building and running tests is free.',
+            ],
+            takeaway: 'Do the sum for a normal month: batch size × tests a month, plus retakes. A 120-student batch with one weekly test uses about 480 attempts before anyone retakes, nearly the whole Professional allowance.',
+        },
+        {
+            id: 'access',
+            label: 'Getting candidates in',
+            question: 'How does a candidate get into the exam?',
+            them: [
+                'Through a candidate account. SpeedExam’s site says student accounts are managed by the test administrator, who issues the logins; self-registration is also available.',
+                'A forgotten password on exam morning becomes a support call.',
+            ],
+            us: [
+                'A six-digit code at testoza.com/join, then a name or roll number, optionally a four-digit PIN. No account, no install.',
+                'A lobby shows who has arrived, and you press Start.',
+            ],
+            takeaway: 'Accounts make sense when a candidate takes many exams with a history to keep. For a Sunday mock, a code and a roll number remove the most common exam-day failure.',
+        },
+        {
+            id: 'marking',
+            label: 'Marking',
+            question: 'Can it mark an Indian entrance paper?',
+            them: [
+                'Negative marking is an exam setting, and tests can have sections.',
+                '10 question types, including multiple-correct, fill in the blank, matching, essay, scenario-based and audio or video questions.',
+            ],
+            us: [
+                'Marks and Wrong on each question, partial marks proportional or JEE Advanced style, numerical answers accepted within a range, sections with their own clock.',
+                'An NTA-style screen: question palette, Mark for review, Save & Next.',
+            ],
+            takeaway: 'Both can take a mark off for a wrong answer. Check the details your exam adds: JEE Advanced’s partial rule, numerical ranges, a section that locks when its time ends.',
+        },
+        {
+            id: 'questions',
+            label: 'Getting questions in',
+            question: 'You have last year’s paper as a PDF. How long until it is a test?',
+            them: [
+                'Questions are typed into the question bank or imported, with 2,000 questions on the free plan and 15,000 on Professional.',
+                'How equations and diagrams come through is worth testing in a trial with your own material.',
+            ],
+            us: [
+                'Upload the PDF or photograph the page. The AI reads questions, options, the key, diagrams and equations.',
+                'Hindi, English or both, kept as written, and an on-screen keyboard for integrals, vectors and chemical equations when you type.',
+            ],
+            takeaway: 'The real cost of a platform is teacher-hours per paper, not the subscription.',
+        },
+        {
+            id: 'security',
+            label: 'Cheating',
+            question: 'How is cheating handled?',
+            them: [
+                'Three levels: ProctorLite image capture at intervals, audio and video proctoring live or recorded, and AI audio-video proctoring that can stop an exam.',
+                'GDPR, ISO 27001, ISO 9001 and SOC 2 compliance, which matter to corporate buyers.',
+            ],
+            us: [
+                'Browser rules without a camera: forced full screen, tab switches counted against a limit that can submit the paper, copy and right-click off, back button blocked.',
+                'A live list showing who left the exam screen or changed device.',
+            ],
+            takeaway: 'If a sitting decides a hire or a licence, camera proctoring earns its cost. For practice papers, browser rules and a live list are usually enough.',
+        },
+    ],
+    scoring: {
+        label: 'SpeedExam marking',
+        kind: 'plain',
+        best: 1,
+        rightWhy: 'SpeedExam supports negative marking, so this page doesn’t use the marking lab.',
+        wrongWhy: 'SpeedExam supports negative marking, so this page doesn’t use the marking lab.',
+    },
+    steps: [
+        { id: 'pick', title: 'Pick the test that uses most attempts', detail: 'Usually the weekly test of your largest batch. Certified exams stay where they are.', minutes: 2 },
+        { id: 'import', title: 'Upload the paper', detail: 'The original PDF, a print-out, or a photo of the printed sheet. The AI reads questions, options, key and diagrams.', minutes: 5 },
+        { id: 'marks', title: 'Set the marking and sections', detail: 'Marks and Wrong per question, partial marks where your pattern uses them, sections with their own clock.', minutes: 7 },
+        { id: 'roll', title: 'Paste the batch instead of making logins', detail: 'Roll number and name from Excel or WhatsApp. A PIN each if you want one.', minutes: 3 },
+        { id: 'run', title: 'Run it with a join code', detail: 'Six digits on the board. Candidates join at testoza.com/join, you press Start, and the rank list builds as papers come in.', minutes: 3 },
+    ],
+};
+
+// ── /canvas-quizzes-alternative ─────────────────────────────────────────────
+
+const CANVAS: AltRival = {
+    key: 'canvas',
+    name: 'Canvas',
+    is: 'a learning management system whose quizzes live inside courses',
+    swap: {
+        keepLabel: 'Canvas is built for this',
+        keep: [
+            { icon: 'book-open', label: 'Whole courses: modules, pages, files' },
+            { icon: 'pen-line', label: 'Assignments, rubrics and SpeedGrader' },
+            { icon: 'messages-square', label: 'Discussions and announcements' },
+            { icon: 'graduation-cap', label: 'A term gradebook for a college' },
+        ],
+        moveLabel: 'An exam platform is built for this',
+        move: [
+            { icon: 'timer', label: 'Timed mocks with +4/−1 marking' },
+            { icon: 'users', label: 'A batch joining with one code' },
+            { icon: 'smartphone', label: 'Students writing on their phones' },
+            { icon: 'list-ordered', label: 'Rank lists and per-question analysis' },
+        ],
+        foot: 'Canvas quizzes are one tool inside a course. Some papers need a room of their own.',
+    },
+    stats: [
+        { dt: 'Course to set up first', dd: '0' },
+        { dt: 'Learners per course', dd: '50', small: 'Canvas Lite' },
+        { dt: 'ID check to sign up', dd: 'None' },
+        { dt: 'Negative marking', dd: 'Per question' },
+    ],
+    checked: 'Canvas facts checked against Instructure’s own announcements and guides',
+    checkedOn: '15 October 2026',
+    uses: [
+        { id: 'course', label: 'Courses with modules, pages and files', icon: 'book-open', tone: 'blue', kind: 'core' },
+        { id: 'assign', label: 'Assignments graded with rubrics', icon: 'pen-line', tone: 'purple', kind: 'core' },
+        { id: 'discuss', label: 'Discussions and announcements', icon: 'messages-square', tone: 'teal', kind: 'core' },
+        { id: 'grades', label: 'A term gradebook across courses', icon: 'graduation-cap', tone: 'orange', kind: 'core' },
+        { id: 'mocks', label: 'Timed mocks with negative marking', icon: 'timer', tone: 'red', kind: 'exam' },
+        { id: 'batch', label: 'Tests for a batch not enrolled in a course', icon: 'users', tone: 'green', kind: 'exam' },
+        { id: 'phones', label: 'Students writing on their phones', icon: 'smartphone', tone: 'indigo', kind: 'exam' },
+        { id: 'ranks', label: 'Rank lists, report cards and analysis', icon: 'list-ordered', tone: 'pink', kind: 'exam' },
+    ],
+    verdicts: {
+        none: { title: 'Switch on what you use', text: 'Tick what you use Canvas for. The answer appears here.' },
+        keep: {
+            title: 'Keep Canvas',
+            text: 'Courses, assignments, discussions and a gradebook are a learning management system, and an exam platform replaces none of it. If quizzes are a small part of your Canvas, keep them there too.',
+        },
+        split: {
+            title: 'Keep the course. Move the exams.',
+            text: 'Teaching stays in Canvas. Mock tests and test series, which need exam marking, a batch on phones and a rank list, move to an exam platform, and you post the link or the join code in the course.',
+        },
+        switch: {
+            title: 'You are using a course system for its quiz tool',
+            text: 'Everything you ticked is testing. A course, enrolment and a gradebook are overhead for that, and since Free-for-Teacher closed, the free route comes with an ID check and a 50-learner cap.',
+        },
+    },
+    themes: [
+        {
+            id: 'free',
+            label: 'After Free-for-Teacher',
+            question: 'What happened to the free Canvas?',
+            them: [
+                'Instructure discontinued Canvas Free-for-Teacher after a security incident in May 2026, with windows for teachers to export their courses.',
+                'Its replacement, Canvas Lite, opened on 30 September 2026. It is free, with five active courses, 50 learners per course and 500 MB of storage per course.',
+                'Every teacher who signs up completes an identity check with a government ID and a selfie, through Veriff. Course analytics, attendance and API access are not included.',
+            ],
+            us: [
+                'A free account with an email address. Building tests, running live exams, marking and rank lists are free.',
+                'No course to create and no 50-learner cap: a batch joins with one code.',
+            ],
+            takeaway: 'If you used Free-for-Teacher mostly for quizzes, moving to Canvas Lite means proving who you are to run the same quiz for fewer students.',
+        },
+        {
+            id: 'quizzes',
+            label: 'Classic and New Quizzes',
+            question: 'Which quiz engine will you be using?',
+            them: [
+                'Instructure is retiring Classic Quizzes in favour of New Quizzes. Universities have set their own cut-over dates between 2025 and 2027, and Canvas Lite runs New Quizzes only.',
+                'New Quizzes adds stimulus, ordering, categorisation and hot-spot questions, and partial credit on several types.',
+                'Quizzes moved from one engine to the other need checking question by question.',
+            ],
+            us: [
+                'One test builder and one exam screen, with nothing being migrated under you.',
+                'Single and multiple-correct MCQs, numerical answers within a range, two-decimal answers, comprehension passages, and sections with their own clock.',
+            ],
+            takeaway: 'An engine change is a good moment to ask whether your tests belong inside a course system at all.',
+        },
+        {
+            id: 'marking',
+            label: 'Marking',
+            question: 'Can it mark like JEE or NEET?',
+            them: [
+                'Canvas’s documented penalty applies to multiple-answer questions: points come off for each wrong option ticked, and zero is the lowest a question can score.',
+                'A −1 for a wrong answer on a single-answer question, the way JEE Main and NEET mark, is not a setting Instructure’s guides describe. Check your own Canvas before you plan a negative-marked mock.',
+            ],
+            us: [
+                'Marks and Wrong on every question: +4 and −1, +2 and −0.5, +1 and −0.25.',
+                'Partial marks on multiple-correct questions, proportional or by the JEE Advanced rule.',
+            ],
+            takeaway: 'A question that can never go below zero can’t teach a student what a blind guess costs.',
+        },
+        {
+            id: 'access',
+            label: 'Getting students in',
+            question: 'Who can sit the quiz?',
+            them: [
+                'Students enrolled in the course, each with a Canvas login. On Canvas Lite, learners join through the teacher’s invitation.',
+                'Quizzes are assignments inside a course, so a one-off mock for an outside batch means building a course around it.',
+            ],
+            us: [
+                'Anyone with the six-digit code. They check in by name or roll number, optionally with a PIN.',
+                'Batches are lists you paste from Excel or WhatsApp, and a batch can sit any number of papers.',
+            ],
+            takeaway: 'Course enrolment is the right gate for a semester. For a test series open to a coaching batch, it is overhead.',
+        },
+        {
+            id: 'after',
+            label: 'Results',
+            question: 'What does the result look like?',
+            them: [
+                'Grades flow into the course gradebook, with quiz and item analysis for the teacher.',
+                'Built for a term grade, a transcript and an LMS record.',
+            ],
+            us: [
+                'A rank list for the batch, section averages, and per-question numbers including the wrong option most students chose.',
+                'Report cards, Excel export, and a WhatsApp message for parents.',
+            ],
+            takeaway: 'A gradebook answers “how is this student doing this term”. A rank list answers “where does this student stand in the batch, on the exam’s pattern”.',
+        },
+    ],
+    scoring: {
+        label: 'Canvas, single answer',
+        kind: 'plain',
+        best: 1,
+        rightWhy: 'Full points for the correct option.',
+        wrongWhy: 'Zero for a wrong option by default, the same as leaving it blank.',
+    },
+    steps: [
+        { id: 'keep', title: 'Leave the course where it is', detail: 'Modules, assignments and discussions stay in Canvas. This is about the tests.', minutes: 1 },
+        { id: 'export', title: 'Take one quiz out as a PDF', detail: 'Print the quiz with its answers to PDF, or use the paper you wrote it from.', minutes: 3 },
+        { id: 'import', title: 'Upload it', detail: 'The AI reads questions, options, the key, diagrams and equations.', minutes: 4 },
+        { id: 'marks', title: 'Set the marking scheme', detail: 'Marks and Wrong per question, partial marks on multiple-correct ones, numerical ranges, the duration.', minutes: 7 },
+        { id: 'run', title: 'Post the join code in your course', detail: 'Students open testoza.com/join and type it in. Press Start and read the rank list at the end.', minutes: 3 },
+    ],
+};
+
 export const ALT_RIVALS: Record<RivalKey, AltRival> = {
     classplus: CLASSPLUS,
     teachmint: TEACHMINT,
     kahoot: KAHOOT,
     testportal: TESTPORTAL,
+    mettl: METTL,
+    proprofs: PROPROFS,
+    socrative: SOCRATIVE,
+    speedexam: SPEEDEXAM,
+    canvas: CANVAS,
 };

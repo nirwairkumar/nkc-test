@@ -12,7 +12,7 @@ import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import CandidateBackGuard from "@/components/CandidateBackGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -155,6 +155,11 @@ const ClassplusAlternative = safeLazy(() => import("./pages/guides/alt/Classplus
 const TeachmintAlternative = safeLazy(() => import("./pages/guides/alt/TeachmintAlternative"));
 const KahootAlternative = safeLazy(() => import("./pages/guides/alt/KahootAlternative"));
 const TestportalAlternative = safeLazy(() => import("./pages/guides/alt/TestportalAlternative"));
+const MettlAlternative = safeLazy(() => import("./pages/guides/alt/MettlAlternative"));
+const ProprofsAlternative = safeLazy(() => import("./pages/guides/alt/ProprofsAlternative"));
+const SocrativeAlternative = safeLazy(() => import("./pages/guides/alt/SocrativeAlternative"));
+const SpeedexamAlternative = safeLazy(() => import("./pages/guides/alt/SpeedexamAlternative"));
+const CanvasQuizzesAlternative = safeLazy(() => import("./pages/guides/alt/CanvasQuizzesAlternative"));
 // The four "how to" guides share one shell (pages/guides/howto/HowToPage.tsx).
 const MobileFriendlyOnlineExam = safeLazy(() => import("./pages/guides/howto/MobileFriendlyOnlineExam"));
 const EmbedTestOnWebsite = safeLazy(() => import("./pages/guides/howto/EmbedTestOnWebsite"));
@@ -329,6 +334,11 @@ const App = () => (
                     <Route path={TEACHMINT_META.path} element={<TeachmintAlternative />} />
                     <Route path={KAHOOT_META.path} element={<KahootAlternative />} />
                     <Route path={TESTPORTAL_META.path} element={<TestportalAlternative />} />
+                    <Route path={METTL_META.path} element={<MettlAlternative />} />
+                    <Route path={PROPROFS_META.path} element={<ProprofsAlternative />} />
+                    <Route path={SOCRATIVE_META.path} element={<SocrativeAlternative />} />
+                    <Route path={SPEEDEXAM_META.path} element={<SpeedexamAlternative />} />
+                    <Route path={CANVAS_QUIZZES_META.path} element={<CanvasQuizzesAlternative />} />
                     <Route path={MOBILE_EXAM_META.path} element={<MobileFriendlyOnlineExam />} />
                     <Route path={EMBED_META.path} element={<EmbedTestOnWebsite />} />
                     <Route path={FULL_LENGTH_META.path} element={<FullLengthOnlineTestMaker />} />
