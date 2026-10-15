@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:'Outfit';font-weight:600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:700;src:url('assets/fonts/Outfit-700.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:800;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:900;src:url('assets/fonts/Outfit-900.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+.foot{position:absolute;inset:0;width:1920px;height:1080px;object-fit:cover}
+.card{position:absolute;inset:0;overflow:hidden}
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 700px at 50% 62%,rgba(14,116,144,.30),rgba(2,6,23,0) 70%),radial-gradient(900px 600px at 82% 18%,rgba(79,70,229,.22),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);background-size:64px 64px}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.15),rgba(2,6,23,.55))}
+.logo{position:absolute;left:0;right:0;top:330px;text-align:center;font-weight:700;font-size:210px;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.logo .c{color:#38bdf8}.logo .z{font-size:1.26em;font-weight:900;background:linear-gradient(180deg,#ffe885,#f4b838 55%,#9e6400);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo.small{top:300px;font-size:170px}
+.tag{position:absolute;left:0;right:0;top:650px;text-align:center;font:600 46px/1.3 'Outfit';color:#cbd5e1}
+.t2{top:560px}.t3{top:560px}
+.kicker{font:700 30px 'Outfit';letter-spacing:.22em;color:#38bdf8;margin-bottom:22px}
+.k2{position:absolute;left:0;right:0;top:330px;text-align:center}
+.h1{position:absolute;left:0;right:0;top:385px;text-align:center;font:800 120px/1.05 'Outfit';color:#f8fafc;letter-spacing:-.02em}
+.paper{position:absolute;left:192px;top:150px;height:760px;border-radius:12px;box-shadow:0 30px 80px -20px #000;transform:rotate(-3deg)}
+.map{position:absolute;left:930px;top:170px;width:820px;color:#f8fafc;font:600 38px/1.75 'Outfit'}
+.endbg{position:absolute;inset:0;width:1920px;height:1080px;filter:blur(14px);transform:scale(1.06)}
+.shade2{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,rgba(2,6,23,.55),rgba(2,6,23,.93) 70%)}
+.url{position:absolute;left:790px;top:660px;width:340px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 32px 'Outfit';color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 1.5px rgba(56,189,248,.55)}
+.chip{position:absolute;left:192px;top:108px;height:54px;display:flex;align-items:center;gap:12px;padding:0 22px 0 7px;border-radius:999px;background:rgba(2,6,23,.86);box-shadow:0 0 0 1.5px rgba(56,189,248,.55),0 12px 30px -12px rgba(0,0,0,.6);color:#f8fafc;font:600 23px 'Outfit';white-space:nowrap}
+.chip b{width:40px;height:40px;border-radius:50%;background:#38bdf8;color:#020617;font:800 22px/40px 'Outfit';text-align:center}
+.cap{position:absolute;left:0;right:0;bottom:110px;text-align:center}
+.cap span{display:inline-block;max-width:1500px;padding:10px 28px;border-radius:14px;background:rgba(2,6,23,.82);color:#fff;font:600 36px/1.3 'Outfit'}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="365.42" data-width="1920" data-height="1080">
+<img class="clip foot hold" id="v1" src="assets/holds/candidate.png" alt="" data-start="0" data-duration="13.15" data-track-index="0"/>
+<div class="clip card" id="c2" data-start="0" data-duration="13.15" data-track-index="1"><div class="shade"></div></div>
+<div class="clip card" id="c3" data-start="13.15" data-duration="5" data-track-index="1"><div class="stage "><div class="grid"></div><div class="logo" id="logo1"><span class="c">Testo</span><span class="z">Z</span><span class="c">a</span></div><div class="tag">Create Test — the complete tutorial</div></div></div>
+<div class="clip card" id="c4" data-start="18.15" data-duration="14.09" data-track-index="1"><div class="stage "><div class="grid"></div><img class="paper" src="assets/p08.png" alt=""/><div class="map"><div class="kicker">TODAY WE BUILD</div><div>1&nbsp; Test details</div><div>2&nbsp; One question, two languages</div><div>3&nbsp; A diagram from the paper</div><div>4&nbsp; Chemistry structures</div><div>5&nbsp; Maths with Sy Pad</div><div>6&nbsp; The big reaction</div><div>7&nbsp; Match the list</div><div>8&nbsp; Sections</div></div></div></div>
+<video class="clip foot" id="v5" src="assets/recording.mp4" muted data-start="32.23" data-duration="17.71" data-media-start="14.56" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h6" src="assets/holds/hold-3.png" alt="" data-start="49.94" data-duration="19.61" data-track-index="0"/>
+<div class="clip chip" id="k7" data-start="32.23" data-duration="37.32" data-track-index="2"><b>1</b>Test details</div>
+<video class="clip foot" id="v8" src="assets/recording.mp4" muted data-start="69.55" data-duration="11.66" data-media-start="32.27" data-playback-rate="1" data-track-index="0"></video>
+<div class="clip chip" id="k9" data-start="69.55" data-duration="11.66" data-track-index="2"><b>2</b>One question, two languages</div>
+<video class="clip foot" id="v10" src="assets/recording.mp4" muted data-start="81.21" data-duration="36.19" data-media-start="43.96" data-playback-rate="1.16" data-track-index="0"></video>
+<div class="clip chip" id="k11" data-start="81.21" data-duration="36.19" data-track-index="2"><b>2</b>One question, two languages</div>
+<video class="clip foot" id="v12" src="assets/recording.mp4" muted data-start="117.39" data-duration="28.39" data-media-start="85.91" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h13" src="assets/holds/hold-6.png" alt="" data-start="145.78" data-duration="8.24" data-track-index="0"/>
+<div class="clip chip" id="k14" data-start="117.39" data-duration="36.63" data-track-index="2"><b>3</b>A diagram from the paper</div>
+<video class="clip foot" id="v15" src="assets/recording.mp4" muted data-start="154.03" data-duration="19.47" data-media-start="114.3" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h16" src="assets/holds/hold-7.png" alt="" data-start="173.5" data-duration="12.53" data-track-index="0"/>
+<div class="clip chip" id="k17" data-start="154.03" data-duration="32" data-track-index="2"><b>4</b>Chemistry structures</div>
+<video class="clip foot" id="v18" src="assets/recording.mp4" muted data-start="186.03" data-duration="22.5" data-media-start="133.77" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h19" src="assets/holds/hold-8.png" alt="" data-start="208.53" data-duration="15.14" data-track-index="0"/>
+<div class="clip chip" id="k20" data-start="186.03" data-duration="37.64" data-track-index="2"><b>5</b>Maths with Sy Pad</div>
+<video class="clip foot" id="v21" src="assets/recording.mp4" muted data-start="223.67" data-duration="31.48" data-media-start="156.27" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h22" src="assets/holds/hold-9.png" alt="" data-start="255.15" data-duration="9.97" data-track-index="0"/>
+<div class="clip chip" id="k23" data-start="223.67" data-duration="41.45" data-track-index="2"><b>6</b>The big reaction</div>
+<video class="clip foot" id="v24" src="assets/recording.mp4" muted data-start="265.12" data-duration="14.88" data-media-start="187.75" data-playback-rate="1.48" data-track-index="0"></video>
+<div class="clip chip" id="k25" data-start="265.12" data-duration="14.88" data-track-index="2"><b>7</b>Match the list</div>
+<div class="clip card" id="c26" data-start="280" data-duration="3.5" data-track-index="1"><div class="stage "><div class="grid"></div><div class="kicker k2">PART 2</div><div class="h1">Sections</div><div class="tag t2">Physics · Chemistry · Mathematics, just like JEE</div></div></div>
+<video class="clip foot" id="v27" src="assets/recording.mp4" muted data-start="283.5" data-duration="3.25" data-media-start="209.81" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h28" src="assets/holds/hold-11.png" alt="" data-start="286.75" data-duration="6.44" data-track-index="0"/>
+<div class="clip chip" id="k29" data-start="283.5" data-duration="9.69" data-track-index="2"><b>8</b>Sections</div>
+<video class="clip foot" id="v30" src="assets/recording.mp4" muted data-start="293.2" data-duration="16.14" data-media-start="213.06" data-playback-rate="1.75" data-track-index="0"></video>
+<div class="clip chip" id="k31" data-start="293.2" data-duration="16.14" data-track-index="2"><b>8</b>Sections</div>
+<video class="clip foot" id="v32" src="assets/recording.mp4" muted data-start="309.34" data-duration="9.42" data-media-start="241.25" data-playback-rate="3" data-track-index="0"></video>
+<div class="clip chip" id="k33" data-start="309.34" data-duration="9.42" data-track-index="2"><b>8</b>Sections</div>
+<video class="clip foot" id="v34" src="assets/recording.mp4" muted data-start="318.75" data-duration="13.35" data-media-start="269.5" data-playback-rate="1" data-track-index="0"></video>
+<img class="clip foot hold" id="h35" src="assets/holds/hold-14.png" alt="" data-start="332.1" data-duration="9.32" data-track-index="0"/>
+<div class="clip chip" id="k36" data-start="318.75" data-duration="22.67" data-track-index="2"><b>8</b>Sections</div>
+<video class="clip foot" id="v37" src="assets/recording.mp4" muted data-start="341.42" data-duration="11.74" data-media-start="282.85" data-playback-rate="2.95" data-track-index="0"></video>
+<div class="clip chip" id="k38" data-start="341.42" data-duration="11.74" data-track-index="2"><b>✓</b>Save</div>
+<div class="clip card" id="c39" data-start="353.16" data-duration="12.26" data-track-index="1"><img class="endbg" src="assets/holds/candidate.png" alt=""/><div class="shade2"></div><div class="logo small" id="logo2"><span class="c">Testo</span><span class="z">Z</span><span class="c">a</span></div><div class="tag t3">Make your first test today</div><div class="url">testoza.com</div></div>
+<div class="clip cap" id="cap0" data-start="0.75" data-duration="2.49" data-track-index="3"><span>Questions in Hindi and English together…</span></div>
+<div class="clip cap" id="cap1" data-start="3.24" data-duration="3.49" data-track-index="3"><span>a diagram straight from the paper… chemistry structures…</span></div>
+<div class="clip cap" id="cap2" data-start="6.73" data-duration="1.56" data-track-index="3"><span>and full JEE-level maths.</span></div>
+<div class="clip cap" id="cap3" data-start="8.29" data-duration="4.11" data-track-index="3"><span>In the next few minutes, you will build this whole paper yourself.</span></div>
+<div class="clip cap" id="cap4" data-start="18.8" data-duration="3.56" data-track-index="3"><span>Hello! Today we take this JEE Main sample paper</span></div>
+<div class="clip cap" id="cap5" data-start="22.36" data-duration="4.63" data-track-index="3"><span>and build a complete test on TestoZa from selected questions.</span></div>
+<div class="clip cap" id="cap6" data-start="26.99" data-duration="4.1" data-track-index="3"><span>Every question teaches you something new. Let's begin.</span></div>
+<div class="clip cap" id="cap7" data-start="32.78" data-duration="3.81" data-track-index="3"><span>Click Create Test in the menu on the left.</span></div>
+<div class="clip cap" id="cap8" data-start="36.6" data-duration="4.72" data-track-index="3"><span>At the top, type the test name — JEE Main Mini Mock.</span></div>
+<div class="clip cap" id="cap9" data-start="41.32" data-duration="5.99" data-track-index="3"><span>Below it, a one-line description candidates see before they start.</span></div>
+<div class="clip cap" id="cap10" data-start="47.31" data-duration="4.54" data-track-index="3"><span>Now pick the time. The 3h button sets 180 minutes.</span></div>
+<div class="clip cap" id="cap11" data-start="51.84" data-duration="6.26" data-track-index="3"><span>"Only my students" means only people you send the link to can see it.</span></div>
+<div class="clip cap" id="cap12" data-start="58.11" data-duration="5.26" data-track-index="3"><span>In Marking, choose JEE / NEET: +4 for right, −1 for wrong.</span></div>
+<div class="clip cap" id="cap13" data-start="63.37" data-duration="5.63" data-track-index="3"><span>Open Institution branding to add your institute name and logo.</span></div>
+<div class="clip cap" id="cap14" data-start="70.1" data-duration="6.57" data-track-index="3"><span>Now go down to Questions. The first one is physics.</span></div>
+<div class="clip cap" id="cap15" data-start="76.67" data-duration="3.99" data-track-index="3"><span>Let's type it in English first.</span></div>
+<div class="clip cap" id="cap16" data-start="81.76" data-duration="2.66" data-track-index="3"><span>Now the same question in Hindi.</span></div>
+<div class="clip cap" id="cap17" data-start="84.42" data-duration="5.32" data-track-index="3"><span>Click the button next to English and pick Hindi from the menu.</span></div>
+<div class="clip cap" id="cap18" data-start="89.74" data-duration="6.35" data-track-index="3"><span>Type in English letters — each word turns into Hindi when you press space.</span></div>
+<div class="clip cap" id="cap19" data-start="96.08" data-duration="4.37" data-track-index="3"><span>The Hindi version goes right below the English one.</span></div>
+<div class="clip cap" id="cap20" data-start="100.46" data-duration="5.58" data-track-index="3"><span>Options need a square root: open Maths & symbols. This is Sy Pad.</span></div>
+<div class="clip cap" id="cap21" data-start="106.03" data-duration="3.86" data-track-index="3"><span>Click option A, write the root, press Insert.</span></div>
+<div class="clip cap" id="cap22" data-start="109.89" data-duration="6.95" data-track-index="3"><span>All four options done. Click the correct letter — D. One question, two languages.</span></div>
+<div class="clip cap" id="cap23" data-start="117.94" data-duration="8.76" data-track-index="3"><span>Press Add question. Tip: a new question opens in the last language, so tap English first.</span></div>
+<div class="clip cap" id="cap24" data-start="126.7" data-duration="5.02" data-track-index="3"><span>This question has a diagram — no need to redraw it.</span></div>
+<div class="clip cap" id="cap25" data-start="131.72" data-duration="9.25" data-track-index="3"><span>Picture → the screen button. In the PDF press Win + Shift + S, box the diagram, then Ctrl + V.</span></div>
+<div class="clip cap" id="cap26" data-start="140.98" data-duration="7.78" data-track-index="3"><span>The diagram sits under the question and above the options, just like the paper.</span></div>
+<div class="clip cap" id="cap27" data-start="148.75" data-duration="4.72" data-track-index="3"><span>Fraction options from Sy Pad. Correct answer: B.</span></div>
+<div class="clip cap" id="cap28" data-start="154.58" data-duration="6.2" data-track-index="3"><span>Question 3 is chemistry, and the structure sits inside the sentence.</span></div>
+<div class="clip cap" id="cap29" data-start="160.78" data-duration="6.11" data-track-index="3"><span>TestoZa has no structure-drawing tool, so we cut it from the paper.</span></div>
+<div class="clip cap" id="cap30" data-start="166.88" data-duration="6.02" data-track-index="3"><span>Picture → the cloud button places it exactly where your cursor is.</span></div>
+<div class="clip cap" id="cap31" data-start="172.9" data-duration="6.47" data-track-index="3"><span>Then the reaction arrow from Sy Pad: ozone above, zinc and water below.</span></div>
+<div class="clip cap" id="cap32" data-start="179.37" data-duration="6.11" data-track-index="3"><span>It's numerical: Question type → Numerical answer → Exact value → 1.</span></div>
+<div class="clip cap" id="cap33" data-start="186.58" data-duration="7.66" data-track-index="3"><span>Now maths. Open Maths & symbols — "Goes into Question 4".</span></div>
+<div class="clip cap" id="cap34" data-start="194.24" data-duration="5.64" data-track-index="3"><span>f(x) = integral… a fraction… x² dx on top…</span></div>
+<div class="clip cap" id="cap35" data-start="199.88" data-duration="4.7" data-track-index="3"><span>…and (1 + x²)(1 + √(1 + x²)) below.</span></div>
+<div class="clip cap" id="cap36" data-start="204.58" data-duration="10.07" data-track-index="3"><span>The preview builds it exactly like the paper. Insert, then finish the line.</span></div>
+<div class="clip cap" id="cap37" data-start="214.65" data-duration="8.46" data-track-index="3"><span>Log, root and π/4 options — all from Sy Pad. Correct answer: B.</span></div>
+<div class="clip cap" id="cap38" data-start="224.22" data-duration="6.94" data-track-index="3"><span>Now the biggest question in this video: a JEE-level multistep reaction.</span></div>
+<div class="clip cap" id="cap39" data-start="231.15" data-duration="5.37" data-track-index="3"><span>First the bromobenzene structure, placed at the cursor.</span></div>
+<div class="clip cap" id="cap40" data-start="236.53" data-duration="8.31" data-track-index="3"><span>In Sy Pad → Chemistry, pick the arrow with conditions. Three rows on top, none below.</span></div>
+<div class="clip cap" id="cap41" data-start="244.83" data-duration="7.04" data-track-index="3"><span>The reagents: Mg and ether, then CO₂ and H⁺; NH₃ and heat; Br₂ and NaOH.</span></div>
+<div class="clip cap" id="cap42" data-start="251.87" data-duration="5.67" data-track-index="3"><span>The options are structures too — a picture in each option.</span></div>
+<div class="clip cap" id="cap43" data-start="257.54" data-duration="7.04" data-track-index="3"><span>Five diagrams in one question, still clean. Correct answer: B — aniline.</span></div>
+<div class="clip cap" id="cap44" data-start="265.67" data-duration="4.03" data-track-index="3"><span>Match-the-list needs no table drawing.</span></div>
+<div class="clip cap" id="cap45" data-start="269.7" data-duration="7.84" data-track-index="3"><span>Sy Pad → Tables → Match List. Reactants left, products right, then Insert.</span></div>
+<div class="clip cap" id="cap46" data-start="277.54" data-duration="1.91" data-track-index="3"><span>Correct answer: C.</span></div>
+<div class="clip cap" id="cap47" data-start="280.55" data-duration="7.1" data-track-index="3"><span>The paper is ready. Now split it into Physics, Chemistry and Mathematics, like real JEE.</span></div>
+<div class="clip cap" id="cap48" data-start="287.65" data-duration="5" data-track-index="3"><span>First, drag the integral question to the bottom by its handle.</span></div>
+<div class="clip cap" id="cap49" data-start="293.75" data-duration="5.47" data-track-index="3"><span>Switch on "Split into sections" — everything lands in Section A.</span></div>
+<div class="clip cap" id="cap50" data-start="299.22" data-duration="4.61" data-track-index="3"><span>Click the + between two questions → New question here.</span></div>
+<div class="clip cap" id="cap51" data-start="303.83" data-duration="4.96" data-track-index="3"><span>One more chemistry question, with Sy Pad's chemistry keys.</span></div>
+<div class="clip cap" id="cap52" data-start="309.89" data-duration="6.44" data-track-index="3"><span>Press "Add a new section", name it Bonus, and add a maths question.</span></div>
+<div class="clip cap" id="cap53" data-start="319.3" data-duration="5.49" data-track-index="3"><span>Now split Section A: click + where chemistry starts → Split section here.</span></div>
+<div class="clip cap" id="cap54" data-start="324.79" data-duration="4.06" data-track-index="3"><span>Name the first part Physics and the new one Chemistry.</span></div>
+<div class="clip cap" id="cap55" data-start="328.85" data-duration="5.56" data-track-index="3"><span>The integral is still in Chemistry — split it out and name it Mathematics.</span></div>
+<div class="clip cap" id="cap56" data-start="334.41" data-duration="2.86" data-track-index="3"><span>Finally, merge Bonus into Mathematics.</span></div>
+<div class="clip cap" id="cap57" data-start="337.26" data-duration="3.61" data-track-index="3"><span>Physics, Chemistry, Mathematics — just like JEE.</span></div>
+<div class="clip cap" id="cap58" data-start="341.97" data-duration="3.89" data-track-index="3"><span>Click Save test. Your test is now in My Tests.</span></div>
+<div class="clip cap" id="cap59" data-start="345.85" data-duration="6.76" data-track-index="3"><span>And this is exactly what your candidates see — sections, Hindi, diagrams, maths.</span></div>
+<div class="clip cap" id="cap60" data-start="354.31" data-duration="4" data-track-index="3"><span>Make your first test today at testoza.com.</span></div>
+<div class="clip cap" id="cap61" data-start="358.32" data-duration="4.96" data-track-index="3"><span>Liked the video? Subscribe. See you in the next one!</span></div>
+<audio id="vo1" src="assets/vo-local/line-01.wav" data-start="0.6" data-duration="11.95" data-track-index="4" data-volume="1"></audio>
+<audio id="sfx1" src=".media/audio/sfx/sfx_001.mp3" data-start="13.15" data-duration="5" data-track-index="5" data-volume="0.9"></audio>
+<audio id="vo2" src="assets/vo-local/line-02.wav" data-start="18.65" data-duration="12.59" data-track-index="4" data-volume="1"></audio>
+<audio id="vo3" src="assets/vo-local/line-03.wav" data-start="32.63" data-duration="36.52" data-track-index="4" data-volume="1"></audio>
+<audio id="vo4" src="assets/vo-local/line-04.wav" data-start="69.95" data-duration="10.86" data-track-index="4" data-volume="1"></audio>
+<audio id="vo5" src="assets/vo-local/line-05.wav" data-start="81.61" data-duration="35.39" data-track-index="4" data-volume="1"></audio>
+<audio id="vo6" src="assets/vo-local/line-06.wav" data-start="117.79" data-duration="35.83" data-track-index="4" data-volume="1"></audio>
+<audio id="vo7" src="assets/vo-local/line-07.wav" data-start="154.43" data-duration="31.2" data-track-index="4" data-volume="1"></audio>
+<audio id="vo8" src="assets/vo-local/line-08.wav" data-start="186.43" data-duration="36.84" data-track-index="4" data-volume="1"></audio>
+<audio id="vo9" src="assets/vo-local/line-09.wav" data-start="224.07" data-duration="40.65" data-track-index="4" data-volume="1"></audio>
+<audio id="vo10" src="assets/vo-local/line-10.wav" data-start="265.52" data-duration="14.08" data-track-index="4" data-volume="1"></audio>
+<audio id="vo11" src="assets/vo-local/line-11.wav" data-start="280.4" data-duration="12.39" data-track-index="4" data-volume="1"></audio>
+<audio id="vo12" src="assets/vo-local/line-12.wav" data-start="293.6" data-duration="15.34" data-track-index="4" data-volume="1"></audio>
+<audio id="vo13" src="assets/vo-local/line-13.wav" data-start="309.74" data-duration="6.74" data-track-index="4" data-volume="1"></audio>
+<audio id="vo14" src="assets/vo-local/line-14.wav" data-start="319.15" data-duration="21.87" data-track-index="4" data-volume="1"></audio>
+<audio id="vo15" src="assets/vo-local/line-15.wav" data-start="341.82" data-duration="10.94" data-track-index="4" data-volume="1"></audio>
+<audio id="sfx2" src=".media/audio/sfx/sfx_001.mp3" data-start="353.36" data-duration="5" data-track-index="5" data-volume="0.8"></audio>
+<audio id="vo16" src="assets/vo-local/line-16.wav" data-start="354.16" data-duration="9.26" data-track-index="4" data-volume="1"></audio>
+<audio id="bgm0" src="assets/bgm.mp3" data-start="0" data-duration="102.2" data-track-index="6" data-volume="0.07"></audio>
+<audio id="bgm1" src="assets/bgm.mp3" data-start="102.2" data-duration="102.2" data-track-index="6" data-volume="0.07"></audio>
+<audio id="bgm2" src="assets/bgm.mp3" data-start="204.4" data-duration="102.2" data-track-index="6" data-volume="0.07"></audio>
+<audio id="bgm3" src="assets/bgm.mp3" data-start="306.6" data-duration="58.82" data-track-index="6" data-volume="0.07"></audio>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+document.querySelectorAll('.hold').forEach((el) => {
+  const s = +el.dataset.start, d = +el.dataset.duration;
+  tl.fromTo(el, { scale: 1 }, { scale: 1.06, duration: d, ease: 'none', transformOrigin: '50% 40%' }, s);
+});
+document.querySelectorAll('.chip').forEach((el) => { tl.fromTo(el, { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: 'expo.out' }, +el.dataset.start); });
+document.querySelectorAll('.cap span').forEach((el) => { tl.fromTo(el, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, +el.parentElement.dataset.start); });
+['#logo1', '#logo2'].forEach((sel) => {
+  const el = document.querySelector(sel); if (!el) return; const s = +el.closest('.card').dataset.start;
+  tl.fromTo(el.querySelectorAll('.c'), { y: 90, opacity: 0, filter: 'blur(16px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.85, ease: 'expo.out', stagger: 0.06 }, s + 0.3);
+  tl.fromTo(el.querySelector('.z'), { y: -260, rotation: -18, scale: 1.6, opacity: 0 }, { y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.9, ease: 'back.out(1.6)' }, s + 0.75);
+});
+window.__timelines['main'] = tl;
+</script>
+</body></html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: 'Outfit'; font-weight: 600; src: url('assets/fonts/Outfit-600.woff2') format('woff2'); }
+      @font-face { font-family: 'Outfit'; font-weight: 700; src: url('assets/fonts/Outfit-700.woff2') format('woff2'); }
+      @font-face { font-family: 'Outfit'; font-weight: 800; src: url('assets/fonts/Outfit-800.woff2') format('woff2'); }
+      @font-face { font-family: 'Outfit'; font-weight: 900; src: url('assets/fonts/Outfit-900.woff2') format('woff2'); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #020617; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; }
+
+      /* SKETCH PASS v2: real app.testoza.com captures, posed one per second. The build replaces
+         this monolith with one sub-composition per frame and the live recording. */
+      .sk { position: absolute; inset: 0; overflow: hidden;
+        background: radial-gradient(1200px 700px at 50% 62%, rgba(14,116,144,.30), rgba(2,6,23,0) 70%),
+                    radial-gradient(900px 600px at 82% 18%, rgba(79,70,229,.22), rgba(2,6,23,0) 70%),
+                    linear-gradient(180deg, #050b1d, #020617); }
+      .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(148,163,184,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.05) 1px, transparent 1px); background-size: 64px 64px; }
+
+      /* the real app inside a browser window: 1920x1080 capture shown at 0.875 */
+      .win { position: absolute; left: 120px; top: 30px; width: 1680px; height: 981px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 40px 120px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(148,163,184,.25); }
+      .bar { height: 36px; background: #e8edf3; display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+      .dot { width: 11px; height: 11px; border-radius: 50%; background: #cbd5e1; }
+      .url { margin-left: 16px; height: 24px; width: 460px; border-radius: 7px; background: #fff; font: 600 14px/24px 'Outfit'; color: #475569; padding: 0 12px; }
+      .win img { display: block; width: 1680px; height: 945px; }
+
+      /* overlays */
+      .chip { position: absolute; left: 188px; top: 120px; display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 22px 0 7px; border-radius: 999px; background: rgba(2,6,23,.86); box-shadow: 0 0 0 1.5px rgba(56,189,248,.55), 0 12px 30px -12px rgba(0,0,0,.6); color: #f8fafc; font: 600 23px 'Outfit'; white-space: nowrap; }
+      .chip b { width: 40px; height: 40px; border-radius: 50%; background: #38bdf8; color: #020617; font: 800 22px/40px 'Outfit'; text-align: center; }
+      .cap { position: absolute; left: 50%; bottom: 112px; width: 1400px; margin-left: -700px; text-align: center; }
+      .cap span { display: inline-block; padding: 10px 28px; border-radius: 14px; background: rgba(2,6,23,.82); color: #fff; font: 600 38px/1.3 'Outfit'; }
+      .keys { position: absolute; left: 0; right: 0; bottom: 210px; display: flex; justify-content: center; gap: 12px; align-items: center; color: #e2e8f0; font: 700 34px 'Outfit'; }
+      .key { padding: 10px 22px; border-radius: 12px; background: #f8fafc; color: #0f172a; box-shadow: 0 6px 0 #94a3b8; font: 700 32px 'Outfit'; }
+      .note { position: absolute; right: 150px; top: 120px; padding: 8px 16px; border-radius: 10px; background: rgba(250,204,21,.95); color: #422006; font: 700 18px 'Outfit'; }
+
+      /* cards */
+      .center { position: absolute; left: 0; right: 0; text-align: center; color: #f8fafc; }
+      .logo { font-weight: 700; font-size: 210px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+      .logo .c { color: #38bdf8; }
+      .logo .z { font-size: 1.26em; font-weight: 900; background: linear-gradient(180deg, #ffe885, #f4b838 55%, #9e6400); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .kicker { font: 700 30px 'Outfit'; letter-spacing: .22em; color: #38bdf8; }
+      .h1 { font: 800 110px/1.05 'Outfit'; letter-spacing: -0.02em; }
+      .h2 { font: 600 46px/1.3 'Outfit'; color: #cbd5e1; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="17" data-width="1920" data-height="1080">
+
+      <!-- 01 Cold open: the finished paper -->
+      <div class="clip sk" id="s01" data-start="0" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win" style="transform: rotate(-3deg) scale(.78) translate(-180px, -40px)"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f10c-q5-done.png" alt="" /></div>
+        <div class="win" style="transform: rotate(2.5deg) scale(.7) translate(330px, 120px)"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f15d-final-sections.png" alt="" /></div>
+        <div class="cap"><span>In the next few minutes, you'll build this entire paper yourself.</span></div>
+      </div>
+
+      <!-- 02 Logo sting -->
+      <div class="clip sk" id="s02" data-start="1" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="center logo" style="top:330px"><span class="c">Testo</span><span class="z">Z</span><span class="c">a</span></div>
+        <div class="center h2" style="top:650px">Create Test — the complete tutorial</div>
+      </div>
+
+      <!-- 03 Promise + map -->
+      <div class="clip sk" id="s03" data-start="2" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <img src="assets/p08.png" alt="" style="position:absolute; left:192px; top:150px; height:760px; border-radius:12px; box-shadow:0 30px 80px -20px #000; transform: rotate(-3deg)" />
+        <div style="position:absolute; left:930px; top:170px; width:820px; color:#f8fafc">
+          <div class="kicker" style="margin-bottom:26px">TODAY WE BUILD</div>
+          <div style="font:600 40px/1.85 'Outfit'">
+            <div><b style="color:#38bdf8">1</b>&nbsp; Test details</div>
+            <div><b style="color:#38bdf8">2</b>&nbsp; One question, two languages</div>
+            <div><b style="color:#38bdf8">3</b>&nbsp; A diagram from the paper</div>
+            <div><b style="color:#38bdf8">4</b>&nbsp; Chemistry structures</div>
+            <div><b style="color:#38bdf8">5</b>&nbsp; Maths with Sy Pad</div>
+            <div style="opacity:.5; font-size:32px"><b>6</b>&nbsp; The big reaction · <b>7</b> Match the list · <b>8</b> Sections</div>
+          </div>
+        </div>
+        <div class="cap"><span>Six questions from a JEE Main sample paper. Each one teaches something new.</span></div>
+      </div>
+
+      <!-- 04 Test details -->
+      <div class="clip sk" id="s04" data-start="3" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f04-details.png" alt="" /></div>
+        <div class="chip"><b>1</b>Test details</div>
+        <div class="cap"><span>Name the test, set the time, who can see it, and JEE marking.</span></div>
+      </div>
+
+      <!-- 05 Q1 English -->
+      <div class="clip sk" id="s05" data-start="4" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f05-q1-english.png" alt="" /></div>
+        <div class="chip"><b>2</b>One question, two languages</div>
+        <div class="cap"><span>Type the question in English first.</span></div>
+      </div>
+
+      <!-- 06 Q1 Hindi -->
+      <div class="clip sk" id="s06" data-start="5" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f06b-q1-hindi.png" alt="" /></div>
+        <div class="chip"><b>2</b>One question, two languages</div>
+        <div class="cap"><span>Pick Hindi from the menu, then type the same question below.</span></div>
+      </div>
+
+      <!-- 07 Q2 diagram -->
+      <div class="clip sk" id="s07" data-start="6" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f07c-q2-done.png" alt="" /></div>
+        <div class="chip"><b>3</b>A diagram from the paper</div>
+        <div class="keys" style="left:780px; right:auto; top:330px; bottom:auto; padding:18px 26px; border-radius:20px; background:rgba(2,6,23,.86); box-shadow:0 0 0 1.5px rgba(56,189,248,.5)"><span class="key">Win</span>+<span class="key">Shift</span>+<span class="key">S</span>&nbsp;then&nbsp;<span class="key">Ctrl</span>+<span class="key">V</span></div>
+        <div class="cap"><span>Snip the diagram from the PDF and paste it. It sits under the question.</span></div>
+      </div>
+
+      <!-- 08 Q3 inline structure -->
+      <div class="clip sk" id="s08" data-start="7" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f08-q3-done.png" alt="" /></div>
+        <div class="chip"><b>4</b>Chemistry structures</div>
+        <div class="cap"><span>The structure goes right where your cursor is. The arrow comes from Sy Pad.</span></div>
+      </div>
+
+      <!-- 09 Q4 Sy Pad maths -->
+      <div class="clip sk" id="s09" data-start="8" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f09-sypad-integral.png" alt="" /></div>
+        <div class="chip"><b>5</b>Maths with Sy Pad</div>
+        <div class="cap"><span>Sy Pad: a keyboard for maths. Watch the question take shape.</span></div>
+      </div>
+
+      <!-- 10 Q5 big reaction -->
+      <div class="clip sk" id="s10" data-start="9" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f10c-q5-done.png" alt="" /></div>
+        <div class="chip"><b>6</b>The big reaction</div>
+        <div class="cap"><span>Three reagents on one arrow, and four structures as options.</span></div>
+      </div>
+
+      <!-- 11 Q6 match list -->
+      <div class="clip sk" id="s11" data-start="10" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f11b-q6-done.png" alt="" /></div>
+        <div class="chip"><b>7</b>Match the list</div>
+        <div class="cap"><span>Sy Pad → Tables → Match List. No table to draw.</span></div>
+      </div>
+
+      <!-- 12 Part 2 card -->
+      <div class="clip sk" id="s12" data-start="11" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="center kicker" style="top:330px">PART 2</div>
+        <div class="center h1" style="top:385px">Sections</div>
+        <div class="center h2" style="top:540px">Physics · Chemistry · Mathematics, just like JEE</div>
+      </div>
+
+      <!-- 13 Sections on + add to Section A -->
+      <div class="clip sk" id="s13" data-start="12" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f13b-gap-menu.png" alt="" /></div>
+        <div class="chip"><b>8</b>Sections</div>
+        <div class="cap"><span>Sections on: everything lands in Section A. Add one more question right here.</span></div>
+      </div>
+
+      <!-- 14 New section -->
+      <div class="clip sk" id="s14" data-start="13" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f14-maths-section.png" alt="" /></div>
+        <div class="chip"><b>8</b>Sections</div>
+        <div class="cap"><span>Add a new section, name it, and add a question to it.</span></div>
+      </div>
+
+      <!-- 15 Split, rename, merge -->
+      <div class="clip sk" id="s15" data-start="14" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/create-test</span></div><img src="assets/shots/f15d-final-sections.png" alt="" /></div>
+        <div class="chip"><b>8</b>Sections</div>
+        <div class="cap"><span>Split, rename, merge: Physics, Chemistry, Mathematics.</span></div>
+      </div>
+
+      <!-- 16 Save → candidate view -->
+      <div class="clip sk" id="s16" data-start="15" data-duration="1" data-track-index="0">
+        <div class="grid"></div>
+        <div class="win" style="filter: saturate(.5) brightness(.75)"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">app.testoza.com/test/…</span></div><img src="assets/shots/f15d-final-sections.png" alt="" /></div>
+        <div class="note">Real candidate screen is recorded after Save in the next step</div>
+        <div class="chip"><b>✓</b>Save</div>
+        <div class="cap"><span>Save, and this is exactly what your candidates see.</span></div>
+      </div>
+
+      <!-- 17 Logo + CTA -->
+      <div class="clip sk" id="s17" data-start="16" data-duration="1" data-track-index="0">
+        <div class="win" style="transform: scale(.7) translateY(80px); filter: blur(12px); opacity:.55"><div class="bar"></div><img src="assets/shots/f15d-final-sections.png" alt="" /></div>
+        <div style="position:absolute; inset:0; background: radial-gradient(ellipse at 50% 48%, rgba(2,6,23,.5), rgba(2,6,23,.92) 70%)"></div>
+        <div class="center logo" style="top:250px; width:1150px; font-size:170px"><span class="c">Testo</span><span class="z">Z</span><span class="c">a</span></div>
+        <div class="center h2" style="top:520px; width:1150px">Make your first test today</div>
+        <div style="position:absolute; left:405px; top:620px; width:340px; height:64px; border-radius:999px; display:flex; align-items:center; justify-content:center; font:600 32px 'Outfit'; color:#f8fafc; background:rgba(15,23,42,.7); box-shadow:0 0 0 1.5px rgba(56,189,248,.55)">testoza.com</div>
+        <div style="position:absolute; left:1250px; top:200px; width:500px; height:680px; border-radius:16px; border:2px dashed rgba(148,163,184,.5); display:flex; align-items:center; justify-content:center; color:#94a3b8; font:600 22px 'Outfit'">YouTube end-screen cards</div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

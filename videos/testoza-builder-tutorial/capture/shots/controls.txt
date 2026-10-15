@@ -1,0 +1,62 @@
+BUTTON |  |  |  | 
+BUTTON | Open user account menu | PR |  | 
+BUTTON |  |  |  | Lock expanded menu
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  |  |  | 
+BUTTON |  | Import paperImport from PDF or photos |  | 
+BUTTON |  | Import JSON |  | 
+BUTTON | More |  |  | 
+BUTTON |  | English |  | Type in English
+BUTTON | Choose another typing language |  |  | Type in another language — Hindi, Marathi, Bengali, Arabic…
+BUTTON |  | English |  | Type in English
+BUTTON | Choose another typing language |  |  | Type in another language — Hindi, Marathi, Bengali, Arabic…
+BUTTON |  | 15m |  | 
+BUTTON |  | 30m |  | 
+BUTTON |  | 1h |  | 
+BUTTON |  | 1h 30m |  | 
+BUTTON |  | 3h |  | 
+BUTTON |  | Only my students |  | 
+BUTTON |  | Everyone |  | 
+BUTTON |  | No negative marking |  | 
+BUTTON |  | JEE / NEET (+4, −1) |  | 
+BUTTON |  | Choose categories |  | 
+BUTTON |  | Instructions for students (optional)Syllabus, exam |  | 
+BUTTON | Scientific calculator |  |  | 
+BUTTON | Split into sections |  |  | 
+BUTTON |  | Institution branding Your logo and institute name  |  | 
+BUTTON |  | Maths & chemistry help |  | 
+BUTTON | Question type | Single correct |  | 
+BUTTON |  | English |  | Type in English
+BUTTON | Choose another typing language |  |  | Type in another language — Hindi, Marathi, Bengali, Arabic…
+BUTTON | Delete question |  |  | A test needs at least one question
+TEXTAREA | Question 1 text |  | Type your question here… | 
+BUTTON |  | Fill from photo |  | Photo of a printed or handwritten question — we type it for you
+BUTTON |  | Picture |  | 
+BUTTON |  | Maths & symbols |  | Fractions, powers, chemical formulas, tables
+BUTTON | Mark option A as correct | A |  | Mark as correct
+TEXTAREA | Question 1 option A |  | Option A | 
+BUTTON | Add picture to option A |  |  | Add a picture to this option
+BUTTON | Remove option A |  |  | Remove this option
+BUTTON | Mark option B as correct | B |  | Mark as correct
+TEXTAREA | Question 1 option B |  | Option B | 
+BUTTON | Add picture to option B |  |  | Add a picture to this option
+BUTTON | Remove option B |  |  | Remove this option
+BUTTON | Mark option C as correct | C |  | Mark as correct
+TEXTAREA | Question 1 option C |  | Option C | 
+BUTTON | Add picture to option C |  |  | Add a picture to this option
+BUTTON | Remove option C |  |  | Remove this option
+BUTTON | Mark option D as correct | D |  | Mark as correct
+TEXTAREA | Question 1 option D |  | Option D | 
+BUTTON | Add picture to option D |  |  | Add a picture to this option
+BUTTON | Remove option D |  |  | Remove this option
+BUTTON |  | Add option |  | 
+BUTTON |  | Add question |  | 
+BUTTON |  | 1 needs attention |  | Question 1: Question is empty
+BUTTON |  | Cancel |  | 
+BUTTON |  | Save test |  | 
+BUTTON |  |  |  | Collapse Minimap

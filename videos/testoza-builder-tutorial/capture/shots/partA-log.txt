@@ -1,0 +1,8 @@
+FAIL details :: locator.click: Timeout 30000ms exceeded.
+ok   f05-q1-english
+ok   f06a-language-menu
+ok   f06b-q1-hindi
+ok   f06c-sypad-sqrt
+ok   f07a-q2-text
+ok   f07b-snip-modal
+ok   f07c-q2-done

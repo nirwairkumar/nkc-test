@@ -1,2 +1,6 @@
 renders/
 .hyperframes/
+.venv*/
+**/renders/
+**/capture/rec/
+node_modules/
