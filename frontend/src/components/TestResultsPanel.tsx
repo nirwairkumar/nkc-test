@@ -28,10 +28,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from "@/components/ui/switch";
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
     Trash2, Download, Loader2, Info, Users, BarChart3, CheckCircle2, XCircle, Clock,
     ChevronDown, ChevronUp, X, PenLine, LogOut, RefreshCw, Search, ArrowRight, Copy, Send,
 } from 'lucide-react';
-import { format, isToday } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
@@ -60,6 +67,65 @@ type Person = { full_name?: string; email?: string };
 const REFRESH_MS = 30_000;
 
 const clock = (ms: number) => format(new Date(ms), isToday(ms) ? 'p' : 'MMM d, p');
+
+/** How a result came in: the live exam, or the test's public / unlisted / private link. */
+type Mode = 'conduct' | 'public' | 'unlisted' | 'private';
+const MODES: Mode[] = ['conduct', 'public', 'unlisted', 'private'];
+const MODE_LABEL: Record<Mode, string> = { conduct: 'Conduct', public: 'Public', unlisted: 'Unlisted', private: 'Private' };
+
+/** The local calendar day a result was submitted on (yyyy-MM-dd), so one sitting stays together. */
+const dayOf = (attempt: any) => format(new Date(attempt.created_at), 'yyyy-MM-dd');
+const dayLabel = (day: string) => {
+    const d = new Date(`${day}T00:00:00`);
+    if (isToday(d)) return 'Today';
+    if (isYesterday(d)) return 'Yesterday';
+    return format(d, d.getFullYear() === new Date().getFullYear() ? 'EEE, MMM d' : 'MMM d, yyyy');
+};
+
+type FilterOption = { value: string; label: string; count: number };
+
+/**
+ * A column heading that is also its filter: "Mode  All ⌄". Reads as a heading until a
+ * filter is set, then the chosen value turns indigo so a narrowed table is never mistaken
+ * for the whole one.
+ */
+function ColumnFilter({ label, value, total, options, onChange }: {
+    label: string;
+    value: string;
+    total: number;
+    options: FilterOption[];
+    onChange: (value: string) => void;
+}) {
+    const active = value !== 'all';
+    const current = options.find(o => o.value === value);
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    type="button"
+                    aria-label={`Filter by ${label.toLowerCase()}`}
+                    className="-ml-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap transition-colors hover:bg-slate-200/60 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 data-[state=open]:bg-slate-200/60 dark:data-[state=open]:bg-slate-800"
+                >
+                    {label}
+                    <span className={active ? 'font-semibold text-indigo-600 dark:text-indigo-400' : 'font-medium text-slate-400'}>
+                        {active ? current?.label : 'All'}
+                    </span>
+                    <ChevronDown className={`h-3 w-3 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[170px]">
+                <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+                    {[{ value: 'all', label: 'All', count: total }, ...options].map(o => (
+                        <DropdownMenuRadioItem key={o.value} value={o.value} className="text-xs">
+                            <span className="flex-1">{o.label}</span>
+                            <span className="ml-4 tabular-nums text-slate-400">{o.count}</span>
+                        </DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
 
 function StatTile({ label, value, icon, tone, active, pulse, onClick }: {
     label: string;
@@ -131,7 +197,10 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     };
     const [loading, setLoading] = useState(true);
     const [loadingAnalysisId, setLoadingAnalysisId] = useState<string | null>(null);
+    // Off until the creator asks for it: newest submissions first.
     const [showRank, setShowRank] = useState(false);
+    const [modeFilter, setModeFilter] = useState<Mode | 'all'>('all');
+    const [dayFilter, setDayFilter] = useState<string>('all');
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
     const [fullTest, setFullTest] = useState<any>(null);
     const [selectedAttemptForAnalysis, setSelectedAttemptForAnalysis] = useState<any | null>(null);
@@ -200,9 +269,6 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             const loadedTest = testRes?.data;
             if (loadedTest) {
                 setFullTest(loadedTest);
-                // Exam over: the merit list is what people want. Live: newest submissions on top.
-                const live = isLiveTest(loadedTest, new Date());
-                setShowRank(!live);
                 // Open where the news is: submissions, else who has started.
                 const conduct = !!loadedTest.settings?.conduct_exam;
                 const submittedCount = conduct
@@ -263,10 +329,16 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     // Use fullTest if loaded, otherwise fall back to test prop
     const currentTest = fullTest || test;
 
-    const getSubmissionModeBadge = (attempt: any) => {
+    const modeOf = (attempt: any): Mode => {
         const visibility = attempt.metadata?.visibility || attempt.metadata?.test_visibility || (attempt.metadata?.conduct_exam ? 'conduct' : (currentTest?.visibility || (currentTest?.is_public ? 'public' : 'private')));
-        
-        if (visibility === 'conduct' || attempt.metadata?.conduct_exam) {
+        if (visibility === 'conduct' || attempt.metadata?.conduct_exam) return 'conduct';
+        if (visibility === 'public' || visibility === 'unlisted') return visibility;
+        return 'private';
+    };
+
+    const getSubmissionModeBadge = (attempt: any) => {
+        const visibility = modeOf(attempt);
+        if (visibility === 'conduct') {
             return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 text-[10px] py-0.5 px-1.5 font-bold uppercase tracking-wider">Conduct</Badge>;
         }
         if (visibility === 'public') {
@@ -335,8 +407,51 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     const displayedResults = getSortedResults(filteredResults);
 
+    // ── Mode / Submitted filters ──
+    // A live exam only lists its own results, so there is nothing to filter by mode.
+    const showModeColumn = !isConductTest;
+    const countBy = (rows: any[], key: (r: any) => string) => {
+        const counts = new Map<string, number>();
+        rows.forEach(r => counts.set(key(r), (counts.get(key(r)) || 0) + 1));
+        return counts;
+    };
+    // Each list counts what the other filter leaves, so the numbers match what a click shows.
+    const modeCounts = countBy(displayedResults.filter(r => dayFilter === 'all' || dayOf(r) === dayFilter), modeOf);
+    const modeOptions: FilterOption[] = MODES
+        .filter(m => modeCounts.has(m) || m === modeFilter)
+        .map(m => ({ value: m, label: MODE_LABEL[m], count: modeCounts.get(m) || 0 }));
+    const dayCounts = countBy(displayedResults.filter(r => !showModeColumn || modeFilter === 'all' || modeOf(r) === modeFilter), dayOf);
+    const dayOptions: FilterOption[] = Array.from(new Set([...dayCounts.keys(), ...(dayFilter === 'all' ? [] : [dayFilter])]))
+        .sort((a, b) => b.localeCompare(a))
+        .map(d => ({ value: d, label: dayLabel(d), count: dayCounts.get(d) || 0 }));
+    const inCohort = (r: any) =>
+        (!showModeColumn || modeFilter === 'all' || modeOf(r) === modeFilter) &&
+        (dayFilter === 'all' || dayOf(r) === dayFilter);
+    const isFiltered = (showModeColumn && modeFilter !== 'all') || dayFilter !== 'all';
+    const clearFilters = () => { setModeFilter('all'); setDayFilter('all'); };
+    // Stats, ranks and the Excel file all follow the filters; the tiles above count everyone.
+    const cohortResults = displayedResults.filter(inCohort);
+    const modeFilterControl = (
+        <ColumnFilter
+            label="Mode"
+            value={modeFilter}
+            total={Array.from(modeCounts.values()).reduce((s, v) => s + v, 0)}
+            options={modeOptions}
+            onChange={v => setModeFilter(v as Mode | 'all')}
+        />
+    );
+    const dayFilterControl = (
+        <ColumnFilter
+            label="Submitted"
+            value={dayFilter}
+            total={Array.from(dayCounts.values()).reduce((s, v) => s + v, 0)}
+            options={dayOptions}
+            onChange={setDayFilter}
+        />
+    );
+
     // Computed stats
-    const scores = displayedResults.map(r => r.score || 0);
+    const scores = cohortResults.map(r => r.score || 0);
     const avgScore = scores.length > 0 ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
     const topScore = scores.length > 0 ? Math.max(...scores) : 0;
     const lowScore = scores.length > 0 ? Math.min(...scores) : 0;
@@ -391,8 +506,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const q = query.trim().toLowerCase();
     const matches = (formData: FormFields = {}, user?: Person) =>
         !q || [nameOf(formData, user), ...Object.values(formData)].join(' ').toLowerCase().includes(q);
-    const rankOf = new Map(displayedResults.map((r, i) => [r.id, i + 1]));
-    const shownResults = displayedResults.filter(r => matches(r.metadata?.startFormData, r.user));
+    const rankOf = new Map(cohortResults.map((r, i) => [r.id, i + 1]));
+    const shownResults = cohortResults.filter(r => matches(r.metadata?.startFormData, r.user));
     const shownWriting = writing
         .filter(c => matches(c.startFormData))
         .sort((a, b) => answeredOf(b) - answeredOf(a));
@@ -455,10 +570,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             return;
         }
 
-        let currentResults = displayedResults;
+        // The file holds what the table shows: same Mode and Submitted filters.
+        let currentResults = cohortResults;
         let activeTest = currentTest;
 
-        const needsAnswers = displayedResults.some(r => !r.answers);
+        const needsAnswers = cohortResults.some(r => !r.answers);
         const needsQuestions = !currentTest || (!currentTest.questions && (!currentTest.sections || currentTest.sections.length === 0 || !currentTest.sections[0].questions));
 
         if (needsAnswers || needsQuestions) {
@@ -489,7 +605,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                             isConductTest
                                 ? attemptsData.filter((r: any) => r.metadata?.conduct_exam === true)
                                 : attemptsData
-                        );
+                        ).filter(inCohort);
                     }
                 }
             } catch (err) {
@@ -870,7 +986,13 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Test Results");
-        XLSX.writeFile(wb, `${currentTest?.title || 'test'}_results${showRank ? '_ranked' : ''}.xlsx`);
+        // Name a filtered file after its filter so it isn't mistaken for the full list.
+        const fileTags = [
+            showModeColumn && modeFilter !== 'all' ? MODE_LABEL[modeFilter].toLowerCase() : '',
+            dayFilter !== 'all' ? dayFilter : '',
+            showRank ? 'ranked' : '',
+        ].filter(Boolean).map(t => `_${t}`).join('');
+        XLSX.writeFile(wb, `${currentTest?.title || 'test'}_results${fileTags}.xlsx`);
     };
 
     // ── View ──
@@ -1002,8 +1124,32 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             }
             return <>{empty}{footnote}</>;
         }
+        // Phones show cards, not the table, so the column filters sit in a row of their own.
+        const mobileFilters = ((showModeColumn && modeOptions.length > 1) || dayOptions.length > 1 || isFiltered) && (
+            <div className="flex md:hidden items-center gap-3 px-4 py-1.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                {dayFilterControl}
+                {showModeColumn && modeFilterControl}
+            </div>
+        );
+        if (cohortResults.length === 0) {
+            return (
+                <>
+                    {mobileFilters}
+                    {emptyState(
+                        <Search className="h-5 w-5 text-slate-400" />,
+                        'No results for this filter',
+                        'None of the submitted results match the Mode and Submitted filters.',
+                        <Button size="sm" variant="outline" onClick={clearFilters} className="h-8 text-xs gap-1.5 font-semibold">
+                            Show all results
+                        </Button>,
+                    )}
+                    {footnote}
+                </>
+            );
+        }
         return (
             <>
+                {mobileFilters}
                 {/* Score summary */}
                 <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                     {([['Average', avgScore], ['Highest', topScore], ['Lowest', lowScore]] as [string, number][]).map(([label, v]) => (
@@ -1145,8 +1291,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                             <span title="Correct · Wrong · Skipped">Answers</span>
                                         </TableHead>
                                         <TableHead className="font-bold text-xs">Time taken</TableHead>
-                                        <TableHead className="font-bold text-xs">Submitted</TableHead>
-                                        {!isConductTest && <TableHead className="font-bold text-xs">Mode</TableHead>}
+                                        <TableHead className="font-bold text-xs">{dayFilterControl}</TableHead>
+                                        {showModeColumn && <TableHead className="font-bold text-xs">{modeFilterControl}</TableHead>}
                                         <TableHead className="w-[80px]" />
                                     </TableRow>
                                 </TableHeader>
@@ -1194,7 +1340,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                                                     {clock(Date.parse(attempt.created_at))}
                                                 </TableCell>
-                                                {!isConductTest && (
+                                                {showModeColumn && (
                                                     <TableCell>
                                                         {getSubmissionModeBadge(attempt)}
                                                     </TableCell>
@@ -1523,7 +1669,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                 size="sm"
                                 variant="outline"
                                 onClick={downloadExcel}
-                                disabled={displayedResults.length === 0}
+                                disabled={cohortResults.length === 0}
                                 className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold"
                             >
                                 <Download className="w-3 h-3" />

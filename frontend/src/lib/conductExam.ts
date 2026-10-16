@@ -42,6 +42,10 @@ export function buildStartConductPayload(test: any, conductSlug: string) {
         },
     };
 
+    // A live exam starts with the timer enforced: a flexible timer lets candidates switch it
+    // off and take unlimited time. The creator can turn it back on from the live card's settings.
+    settings.allow_flexible_timer = false;
+
     // A test that never set candidate inputs gets the default (on, Name).
     if (!settings.start_form) {
         settings.start_form = DEFAULT_ENVIRONMENT_SETTINGS.start_form;
