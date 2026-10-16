@@ -8,12 +8,14 @@
  *    It used to show TestoZa's marketing banner ("Create Instantly with AI • Anti-Cheat
  *    Proctoring…"), a "| TestoZa" title and "Creator: <name>" — an advert, in a class
  *    WhatsApp group. Now it reads like a notice: the exam, the institute, how long, what
- *    to do. Square image, so WhatsApp shows the small card ordinary links get.
+ *    to do. The image is a 256px logo tile, like Zoom's: WhatsApp shows any og:image
+ *    300px or wider as a big picture card (the advert look), and anything smaller as
+ *    the small side thumbnail ordinary links get.
  *
  * Keep in step with the /test/ branch of infrastructure/cloudflare-worker/worker.js.
  */
 
-const EXAM_IMAGE = { url: 'https://app.testoza.com/exam-og.png', width: 600, height: 600 };
+const EXAM_IMAGE = { url: 'https://app.testoza.com/link-preview.png', width: 256, height: 256 };
 
 export function isInvitation(test) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
@@ -60,11 +62,11 @@ export function previewMeta(test) {
     // The institute's logo when it has one; otherwise a plain exam-paper icon. Never our banner.
     const image = test.institution_logo
         ? { url: test.institution_logo, width: null, height: null, alt: institute || title }
-        : { ...EXAM_IMAGE, alt: 'Exam paper' };
+        : { ...EXAM_IMAGE, alt: 'TestoZa' };
     return {
         title, description, image,
         robots: 'noindex, nofollow',
-        siteName: institute || 'Online exam',
+        siteName: institute || 'TestoZa',
         card: 'summary',
     };
 }

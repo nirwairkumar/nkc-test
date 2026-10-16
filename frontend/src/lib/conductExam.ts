@@ -123,7 +123,9 @@ export function getExamUrl(test: any, origin?: string): string {
 /**
  * The message an examiner sends to candidates. It should read like a notice from the
  * institute, not like a product: who, what, when, how long, one link, one instruction.
- * The old version ("📝 … Start here: … No app and no account needed") read as an advert.
+ * The old version ("📝 … Start here: … No app and no account needed") read as an advert,
+ * and so did bold titles, emoji and an "Exam link:" label under a preview card that
+ * already shows the title. Plain lines, the way a teacher would type it.
  */
 export function examInviteText(test: any, opts: { startsAt?: Date | null } = {}): string {
     const s = test?.settings || {};
@@ -131,18 +133,21 @@ export function examInviteText(test: any, opts: { startsAt?: Date | null } = {})
     const scheduled = s.schedule?.enabled && s.schedule.start_time ? new Date(s.schedule.start_time) : null;
     const startsAt = opts.startsAt || (scheduled && scheduled.getTime() > Date.now() ? scheduled : null);
 
-    const lines = [test?.institution_name ? `*${test.title}* — ${test.institution_name}` : `*${test?.title || 'Exam'}*`];
+    const lines = [test?.institution_name ? `${test.title} — ${test.institution_name}` : (test?.title || 'Exam')];
     const facts = [
-        startsAt ? `📅 ${startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : '',
-        test?.duration ? `⏱ ${test.duration} min` : '',
+        test?.duration ? `${test.duration} min` : '',
         questions ? `${questions} questions` : '',
-    ].filter(Boolean);
-    if (facts.length) lines.push(facts.join(' · '));
+    ].filter(Boolean).join(', ');
+    const when = startsAt
+        ? `Starts ${startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}.`
+        : '';
+    const detail = [facts ? `${facts}.` : '', when].filter(Boolean).join(' ');
+    if (detail) lines.push(detail);
 
-    lines.push('', 'Exam link:', getExamUrl(test));
+    lines.push('', getExamUrl(test));
     lines.push('', examInstruction(test));
     const code = s.conduct_exam?.enabled ? s.conduct_exam.join_code : null;
-    if (code) lines.push(`Or open testoza.com/join and enter code *${code.slice(0, 3)} ${code.slice(3)}*`);
+    if (code) lines.push(`Or open testoza.com/join and enter code ${code.slice(0, 3)} ${code.slice(3)}.`);
     return lines.join('\n');
 }
 

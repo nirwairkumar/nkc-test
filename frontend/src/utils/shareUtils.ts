@@ -81,11 +81,12 @@ export const whatsappShareLink = (text: string, phone?: string | null): string =
  */
 export const shareTest = async (test: any) => {
     const message = testInviteText(test);
-    const url = testLink(test);
 
     try {
         if (navigator.share) {
-            await navigator.share({ title: test?.title, text: message, url });
+            // No `url`: the message already carries the link, and Android's share sheet
+            // appends `url` to the text, so WhatsApp got the link twice.
+            await navigator.share({ title: test?.title, text: message });
             return;
         }
     } catch (err: any) {

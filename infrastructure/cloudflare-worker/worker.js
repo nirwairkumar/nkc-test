@@ -351,18 +351,19 @@ function generateMetaTags(url, testData = null, joinData = null) {
       description = `${facts ? `${facts}. ` : ''}${examInstruction(testData.settings)}`;
       type = 'article';
       robots = 'noindex, nofollow';
-      siteName = institute || 'Online exam';
+      siteName = institute || 'TestoZa';
       card = 'summary';
       if (testData.institution_logo) {
         image = testData.institution_logo;
         imageMeta = `
     <meta property="og:image:alt" content="${escapeHtml(institute || title)}">`;
       } else {
-        image = 'https://app.testoza.com/exam-og.png';
+        // A Zoom-style logo tile under 300px, so WhatsApp shows a small thumbnail, not a big picture card.
+        image = 'https://app.testoza.com/link-preview.png';
         imageMeta = `
-    <meta property="og:image:width" content="600">
-    <meta property="og:image:height" content="600">
-    <meta property="og:image:alt" content="Exam paper">`;
+    <meta property="og:image:width" content="256">
+    <meta property="og:image:height" content="256">
+    <meta property="og:image:alt" content="TestoZa">`;
       }
     } else if (testData) {
       title = `${testData.title} | TestoZa`;
