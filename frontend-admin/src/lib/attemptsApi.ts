@@ -87,6 +87,27 @@ export async function registerTestStart(user_id: string | null, test_id: string)
     }
 }
 
+/** Someone who opened a live exam and has not submitted (same shape as the creator app). */
+export interface StartedCandidate {
+    id: string;
+    status: 'in_progress' | 'abandoned' | string;
+    started_at: string | null;
+    last_active_at: string | null;
+    completion: number;
+    answered: number | null;
+    left_reason: string | null;
+    startFormData: Record<string, string>;
+}
+
+export async function fetchStartedCandidates(testId: string) {
+    try {
+        const response = await apiClient.get(`attempts/test/${testId}/started`);
+        return { data: response.data as { now: string; candidates: StartedCandidate[] }, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
 export async function fetchAttemptsForTest(testId: string, excludeAnswers: boolean = false) {
     try {
         const response = await apiClient.get(`attempts/test/${testId}`, {

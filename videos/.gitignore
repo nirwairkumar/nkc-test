@@ -1,5 +1,8 @@
 renders/
 .hyperframes/
-.venv*/
 # over GitHub 100 MiB limit
-testoza-builder-tutorial/renders/builder-tutorial-hi-v3.mp4
+projects/testoza-builder-tutorial/renders/builder-tutorial-hi-v3.mp4
+# local voice (Kokoro) Python venv, ~3,900 files
+shared/tts-venv/
+# one copy of each finished video, too big for GitHub
+exports/
