@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchAttemptsForTest, deleteAttempt, deleteRegistration, fetchAttemptById } from '@/lib/attemptsApi';
+import {
+    fetchAttemptsForTest, deleteAttempt, deleteRegistration, fetchAttemptById,
+    fetchStartedCandidates, StartedCandidate,
+} from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
+import { getExamUrl, examWhatsAppUrl } from '@/lib/conductExam';
+import { isLiveTest, WRITING_WINDOW_MS } from '@/lib/teacherDashboardApi';
 import StudentDetailedResultModal from './StudentDetailedResultModal';
 import * as XLSX from 'xlsx';
 import {
@@ -19,12 +25,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Switch } from "@/components/ui/switch";
 import {
-    Trash2, Download, Loader2, Info, Users, Trophy, BarChart3,
-    CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, X
+    Trash2, Download, Loader2, Info, Users, BarChart3, CheckCircle2, XCircle, Clock,
+    ChevronDown, ChevronUp, X, PenLine, LogOut, RefreshCw, Search, ArrowRight, Copy, Send,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
@@ -41,9 +48,70 @@ interface TestResultsPanelProps {
     onClose: () => void;
 }
 
+/** The four counts double as tabs: who opened the exam, who is in it, who finished, who quit. */
+type Tab = 'started' | 'writing' | 'submitted' | 'dropped';
+
+/** What a candidate typed on the start form (Name, Roll No…). */
+type FormFields = Record<string, unknown>;
+/** A profile; only admins get names and emails back. */
+type Person = { full_name?: string; email?: string };
+
+/** While an exam is live the panel refreshes itself this often. */
+const REFRESH_MS = 30_000;
+
+const clock = (ms: number) => format(new Date(ms), isToday(ms) ? 'p' : 'MMM d, p');
+
+function StatTile({ label, value, icon, tone, active, pulse, onClick }: {
+    label: string;
+    value: React.ReactNode;
+    icon: React.ReactNode;
+    tone: string;
+    active: boolean;
+    pulse?: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={onClick}
+            className={`rounded-lg px-1.5 py-2 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${active ? 'bg-white/20 ring-1 ring-white/40' : 'bg-white/10 hover:bg-white/15'}`}
+        >
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+                {icon}
+                {pulse && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            </div>
+            <p className={`text-lg font-black leading-none ${tone}`}>{value}</p>
+            <p className={`text-[9px] font-medium mt-0.5 uppercase tracking-wide truncate ${active ? 'text-white' : 'text-slate-400'}`}>{label}</p>
+        </button>
+    );
+}
+
+function Initial({ name, rank }: { name: string; rank?: number }) {
+    return (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 flex items-center justify-center">
+            <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-300">
+                {rank ? `#${rank}` : String(name || 'A').charAt(0).toUpperCase()}
+            </span>
+        </div>
+    );
+}
+
 export default function TestResultsPanel({ test, onClose }: TestResultsPanelProps) {
     const { isAdmin, isPremium } = useAuth();
+    const navigate = useNavigate();
     const [results, setResults] = useState<any[]>([]);
+    // Started but not submitted; null when the server could not say.
+    const [started, setStarted] = useState<StartedCandidate[] | null>([]);
+    const [clockSkew, setClockSkew] = useState(0); // server clock minus this device's
+    const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
+    const [nowTick, setNowTick] = useState(() => Date.now());
+    const [tab, setTab] = useState<Tab>('submitted');
+    const [query, setQuery] = useState('');
+    const usersRef = useRef(new Map<string, Person | undefined>());
+    const refreshingRef = useRef(false);
 
     const calculateDuration = (startedAt?: string, createdAt?: string) => {
         if (!startedAt || !createdAt) return '—';
@@ -67,45 +135,93 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
     const [fullTest, setFullTest] = useState<any>(null);
     const [selectedAttemptForAnalysis, setSelectedAttemptForAnalysis] = useState<any | null>(null);
-    const [showConductWarning, setShowConductWarning] = useState(true);
 
-    // Fetch results and full test details on load
+    // Fetch results, who started, and test details on load
     useEffect(() => {
         if (test?.id) {
             setFullTest(null);
-            setShowConductWarning(true);
-            fetchResultsAndTestDetails();
+            setResults([]);
+            setStarted([]);
+            setQuery('');
+            usersRef.current = new Map();
+            load(false);
         }
     }, [test]);
 
-    const fetchResultsAndTestDetails = async () => {
-        setLoading(true);
+    /** Attaches profiles (names for admins); each id is looked up once per panel. */
+    const withUsers = async <T extends { user_id?: string; user?: Person }>(attempts: T[]) => {
+        const missing = Array.from(new Set(attempts.map(d => d.user_id)))
+            .filter(id => id && !usersRef.current.has(id)) as string[];
+        if (missing.length > 0) {
+            const { data: users } = await fetchUsersByIds(missing);
+            missing.forEach(id => usersRef.current.set(id, undefined));
+            ((users || []) as (Person & { id: string })[]).forEach(u => usersRef.current.set(u.id, u));
+        }
+        attempts.forEach(d => { d.user = d.user_id ? usersRef.current.get(d.user_id) : undefined; });
+        return attempts;
+    };
+
+    /**
+     * `quiet` refreshes show no spinner and keep answer sheets already loaded.
+     * Only a refresh the examiner asked for reports a failure.
+     */
+    const load = async (quiet: boolean, asked = false) => {
+        if (quiet) {
+            if (refreshingRef.current) return;
+            refreshingRef.current = true;
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
         try {
-            // Fetch attempts and test details in parallel to eliminate waterfall latency
-            const [attemptsRes, testRes] = await Promise.all([
+            // Attempts, starts and test details in parallel to eliminate waterfall latency
+            const [attemptsRes, startedRes, testRes] = await Promise.all([
                 fetchAttemptsForTest(test.id, true),
-                fetchTestById(test.id, undefined, true)
+                fetchStartedCandidates(test.id),
+                quiet ? Promise.resolve(null) : fetchTestById(test.id, undefined, true),
             ]);
 
-            if (attemptsRes.error) throw attemptsRes.error;
-            if (testRes.data) {
-                setFullTest(testRes.data);
+            if (startedRes.data) {
+                const serverNow = Date.parse(startedRes.data.now);
+                if (!isNaN(serverNow)) setClockSkew(serverNow - Date.now());
+                setStarted(startedRes.data.candidates || []);
+            } else if (!quiet) {
+                setStarted(null);
             }
 
-            const attempts = attemptsRes.data || [];
-            const userIds = Array.from(new Set(attempts.map((d: any) => d.user_id))).filter(Boolean) as string[];
-            if (userIds.length > 0) {
-                const { data: users } = await fetchUsersByIds(userIds);
-                if (users) {
-                    const userMap = new Map(users.map((u: any) => [u.id, u]));
-                    attempts.forEach((d: any) => { d.user = userMap.get(d.user_id); });
-                }
+            if (attemptsRes.error) throw attemptsRes.error;
+            const attempts = await withUsers<(typeof results)[number]>(attemptsRes.data || []);
+            setResults(prev => {
+                if (!quiet) return attempts;
+                const loaded = new Map(prev.filter(r => r.answers).map(r => [r.id, r.answers]));
+                return attempts.map(a => loaded.has(a.id) ? { ...a, answers: loaded.get(a.id) } : a);
+            });
+
+            const loadedTest = testRes?.data;
+            if (loadedTest) {
+                setFullTest(loadedTest);
+                // Exam over: the merit list is what people want. Live: newest submissions on top.
+                const live = isLiveTest(loadedTest, new Date());
+                setShowRank(!live);
+                // Open where the news is: submissions, else who has started.
+                const conduct = !!loadedTest.settings?.conduct_exam;
+                const submittedCount = conduct
+                    ? attempts.filter(r => r.metadata?.conduct_exam === true).length
+                    : attempts.length;
+                const startedCount = startedRes.data?.candidates?.length || 0;
+                setTab(submittedCount === 0 && startedCount > 0 ? 'started' : 'submitted');
             }
-            setResults(attempts);
+            setUpdatedAt(Date.now());
         } catch (error) {
             console.error("Error fetching results or test details", error);
+            if (asked) toast.error("Couldn't refresh. Check your connection.");
         } finally {
-            setLoading(false);
+            if (quiet) {
+                refreshingRef.current = false;
+                setRefreshing(false);
+            } else {
+                setLoading(false);
+            }
         }
     };
 
@@ -191,13 +307,13 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         : results;
 
     const handleDelete = async (attemptId: string, userId: string) => {
-        if (!confirm('Delete this result? The student will be able to re-attempt.')) return;
+        if (!confirm('Delete this result? The candidate will be able to attempt again.')) return;
         try {
             const { error: attemptError } = await deleteAttempt(attemptId);
             if (attemptError) throw attemptError;
             await deleteRegistration(currentTest.id, userId).catch(() => { });
             setResults(prev => prev.filter(r => r.id !== attemptId));
-            toast.success('Result deleted. Student can re-attempt.');
+            toast.success('Result deleted. The candidate can attempt again.');
         } catch (error) {
             toast.error('Failed to delete result');
         }
@@ -220,43 +336,117 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const displayedResults = getSortedResults(filteredResults);
 
     // Computed stats
-    const avgScore = displayedResults.length > 0
-        ? displayedResults.reduce((s, r) => s + (r.score || 0), 0) / displayedResults.length
-        : 0;
-    const topScore = displayedResults.length > 0
-        ? Math.max(...displayedResults.map(r => r.score || 0))
-        : 0;
+    const scores = displayedResults.map(r => r.score || 0);
+    const avgScore = scores.length > 0 ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+    const topScore = scores.length > 0 ? Math.max(...scores) : 0;
+    const lowScore = scores.length > 0 ? Math.min(...scores) : 0;
     const isStartFormEnabled = !!currentTest?.settings?.start_form?.enabled;
     const fields = currentTest?.settings?.start_form?.fields && currentTest.settings.start_form.fields.length > 0
         ? currentTest.settings.start_form.fields
         : (isStartFormEnabled ? [{ label: 'Name', required: true }] : []);
     const configuredFormLabels = fields.map((f: any) => f?.label).filter(Boolean);
 
-    const getDisplayName = (attempt: any) => {
+    /** The name to show for what a candidate typed on the start form. */
+    const nameOf = (formData: FormFields = {}, user?: Person) => {
         if (isStartFormEnabled && configuredFormLabels.length > 0) {
             const firstLabel = configuredFormLabels[0];
-            if (attempt.metadata?.startFormData?.[firstLabel] !== undefined && attempt.metadata?.startFormData?.[firstLabel] !== null) {
-                return String(attempt.metadata.startFormData[firstLabel]);
+            if (formData[firstLabel] !== undefined && formData[firstLabel] !== null && formData[firstLabel] !== '') {
+                return String(formData[firstLabel]);
             }
         }
-        const formData = attempt.metadata?.startFormData || {};
         const formKeys = Object.keys(formData);
         const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
         if (pk && formData[pk]) return String(formData[pk]);
-        if (isAdmin && attempt.user?.full_name) return attempt.user.full_name;
-        if (isAdmin && attempt.user?.email) return attempt.user.email;
+        if (isAdmin && user?.full_name) return user.full_name;
+        if (isAdmin && user?.email) return user.email;
         return 'Anonymous Candidate';
     };
 
-    const getOtherDetails = (attempt: any) => {
-        if (isStartFormEnabled) {
-            const formData = attempt.metadata?.startFormData || {};
-            return Object.entries(formData).filter(([k]) => !configuredFormLabels.includes(k));
+    /** Everything else they typed (roll no, batch…) as one quiet line. */
+    const detailsOf = (formData: FormFields = {}) => {
+        const name = nameOf(formData);
+        return Object.entries(formData)
+            .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '' && String(v) !== name)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(' · ');
+    };
+
+    // ── Who is in the exam ──
+    const serverNow = nowTick + clockSkew;
+    const totalQuestions = currentTest?.total_questions || currentTest?.questions?.length || 0;
+    const lastSeen = (c: StartedCandidate) => Date.parse(c.last_active_at || c.started_at || '') || 0;
+    const isWriting = (c: StartedCandidate) => {
+        const seen = lastSeen(c);
+        // A timestamp in the future is an old row stored with the wrong offset, not activity.
+        return c.status === 'in_progress' && serverNow - seen <= WRITING_WINDOW_MS && seen <= serverNow + 2 * 60 * 1000;
+    };
+    const writing = (started || []).filter(isWriting);
+    const dropped = (started || []).filter(c => !isWriting(c));
+    const answeredOf = (c: StartedCandidate) => c.answered ?? (totalQuestions ? Math.round((c.completion || 0) * totalQuestions / 100) : 0);
+    const startedCount = started ? displayedResults.length + started.length : null;
+    const isLive = !!currentTest && isLiveTest(currentTest, new Date(nowTick));
+    const hiddenPractice = isConductTest ? results.length - filteredResults.length : 0;
+
+    // Search narrows what is on screen; ranks and the Excel file stay whole.
+    const q = query.trim().toLowerCase();
+    const matches = (formData: FormFields = {}, user?: Person) =>
+        !q || [nameOf(formData, user), ...Object.values(formData)].join(' ').toLowerCase().includes(q);
+    const rankOf = new Map(displayedResults.map((r, i) => [r.id, i + 1]));
+    const shownResults = displayedResults.filter(r => matches(r.metadata?.startFormData, r.user));
+    const shownWriting = writing
+        .filter(c => matches(c.startFormData))
+        .sort((a, b) => answeredOf(b) - answeredOf(a));
+    const shownDropped = dropped
+        .filter(c => matches(c.startFormData))
+        .sort((a, b) => lastSeen(b) - lastSeen(a));
+    // Everyone who opened the exam, newest start first.
+    const shownStarted = [
+        ...displayedResults.map(r => ({
+            key: r.id,
+            formData: r.metadata?.startFormData || {},
+            user: r.user,
+            startedMs: Date.parse(r.metadata?.startedAt || r.created_at) || 0,
+            attempt: r,
+            candidate: null as StartedCandidate | null,
+        })),
+        ...(started || []).map(c => ({
+            key: c.id,
+            formData: c.startFormData || {},
+            user: undefined,
+            startedMs: Date.parse(c.started_at || '') || 0,
+            attempt: null as (typeof displayedResults)[number] | null,
+            candidate: c,
+        })),
+    ].filter(row => matches(row.formData, row.user)).sort((a, b) => b.startedMs - a.startedMs);
+    const showSearch = (startedCount ?? displayedResults.length) > 8;
+
+    // Keep "3 min ago" and "writing now" honest between refreshes.
+    useEffect(() => {
+        const id = setInterval(() => setNowTick(Date.now()), 15_000);
+        return () => clearInterval(id);
+    }, []);
+
+    // A live exam refreshes itself while the panel is open and on screen.
+    useEffect(() => {
+        if (!isLive) return;
+        const id = setInterval(() => {
+            if (document.visibilityState === 'visible') load(true);
+        }, REFRESH_MS);
+        return () => clearInterval(id);
+    }, [isLive, test?.id]);
+
+    const copyExamLink = async () => {
+        try {
+            await navigator.clipboard.writeText(getExamUrl(currentTest));
+            toast.success('Exam link copied');
+        } catch {
+            toast.error("Couldn't copy. Copy the link from My Tests.");
         }
-        const formData = attempt.metadata?.startFormData || {};
-        const formKeys = Object.keys(formData);
-        const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
-        return Object.entries(formData).filter(([k]) => k !== pk);
+    };
+
+    const openFullReport = () => {
+        onClose();
+        navigate(`/analytics/full?testId=${currentTest.id || test.id}`);
     };
 
     const downloadExcel = async () => {
@@ -683,15 +873,535 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         XLSX.writeFile(wb, `${currentTest?.title || 'test'}_results${showRank ? '_ranked' : ''}.xlsx`);
     };
 
+    // ── View ──
+    const conduct = currentTest?.settings?.conduct_exam;
+    const schedule = currentTest?.settings?.schedule;
+    const joinCode: string | null = conduct?.enabled ? (conduct.join_code || null) : null;
+    const opensAt = conduct?.enabled && schedule?.enabled && schedule.start_time && new Date(schedule.start_time).getTime() > nowTick
+        ? new Date(schedule.start_time).getTime()
+        : null;
+    const status = isLive
+        ? { text: 'Live now', pill: 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300', dot: 'bg-emerald-400 animate-pulse' }
+        : opensAt
+            ? { text: `Opens ${clock(opensAt)}`, pill: 'bg-sky-500/20 border-sky-400/30 text-sky-300', dot: 'bg-sky-400' }
+            : conduct
+                ? { text: 'Exam ended', pill: 'bg-white/10 border-white/15 text-slate-300', dot: 'bg-slate-400' }
+                : null;
+    const facts = [
+        totalQuestions ? `${totalQuestions} questions` : '',
+        totalMaxMarks ? `${totalMaxMarks} marks` : '',
+        currentTest?.duration ? `${currentTest.duration} min` : '',
+    ].filter(Boolean).join(' · ');
+    const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+
+    const tiles: { id: Tab; label: string; value: React.ReactNode; icon: React.ReactNode; tone: string; pulse?: boolean }[] = [
+        { id: 'started', label: 'Started', value: startedCount ?? '—', icon: <Users className="h-3 w-3 text-slate-300" />, tone: 'text-white' },
+        { id: 'writing', label: 'Writing now', value: started ? writing.length : '—', icon: <PenLine className="h-3 w-3 text-emerald-400" />, tone: 'text-emerald-300', pulse: writing.length > 0 },
+        { id: 'submitted', label: 'Submitted', value: displayedResults.length, icon: <CheckCircle2 className="h-3 w-3 text-indigo-300" />, tone: 'text-indigo-200' },
+        { id: 'dropped', label: 'Dropped', value: started ? dropped.length : '—', icon: <LogOut className="h-3 w-3 text-amber-400" />, tone: dropped.length > 0 ? 'text-amber-300' : 'text-white' },
+    ];
+    const hints: Record<Exclude<Tab, 'submitted'>, string> = {
+        started: 'Everyone who opened the exam',
+        writing: 'Active in the last 3 minutes',
+        dropped: "Started but didn't submit",
+    };
+
+    const emptyState = (icon: React.ReactNode, title: string, text: string, extra?: React.ReactNode) => (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                {icon}
+            </div>
+            <div>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{title}</p>
+                <p className="text-xs text-slate-400 mt-0.5 max-w-xs">{text}</p>
+            </div>
+            {extra}
+        </div>
+    );
+    const noMatch = () => emptyState(<Search className="h-5 w-5 text-slate-400" />, 'No one matches', `Nobody here matches "${query.trim()}".`);
+    // Live and nobody in yet: the one thing to do is send the link.
+    const nobodyYet = () => emptyState(
+        <Send className="h-5 w-5 text-slate-400" />,
+        'Nobody has opened the exam yet',
+        'Send the link to your candidates. Each one appears here the moment they start.',
+        <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" variant="outline" onClick={copyExamLink} className="h-8 text-xs gap-1.5 font-semibold">
+                    <Copy className="h-3.5 w-3.5" /> Copy exam link
+                </Button>
+                <Button size="sm" asChild className="h-8 text-xs gap-1.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <a href={examWhatsAppUrl(currentTest)} target="_blank" rel="noopener noreferrer">
+                        <Send className="h-3.5 w-3.5" /> Send on WhatsApp
+                    </a>
+                </Button>
+            </div>
+            {joinCode && (
+                <p className="text-[11px] text-slate-400">
+                    Or code <span className="font-mono font-bold text-slate-600 dark:text-slate-300">{joinCode.slice(0, 3)} {joinCode.slice(3)}</span> at testoza.com/join
+                </p>
+            )}
+        </div>,
+    );
+    const startsUnknown = () => emptyState(
+        <Info className="h-5 w-5 text-slate-400" />,
+        "Couldn't load who's writing",
+        'Submitted results still show. Try again in a moment.',
+        <Button size="sm" variant="outline" onClick={() => load(true, true)} className="h-8 text-xs gap-1.5 font-semibold">
+            <RefreshCw className="h-3.5 w-3.5" /> Try again
+        </Button>,
+    );
+    const progressBar = (answered: number, tone: string) => {
+        const pct = totalQuestions > 0 ? Math.min(100, Math.round((answered / totalQuestions) * 100)) : 0;
+        return (
+            <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${tone}`} style={{ width: `${pct}%` }} />
+            </div>
+        );
+    };
+    const answeredText = (answered: number) => (
+        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 shrink-0 tabular-nums">
+            {answered}{totalQuestions ? `/${totalQuestions}` : ''}
+            <span className="font-medium text-slate-400"> answered</span>
+        </span>
+    );
+    const ago = (ms: number) => {
+        const s = Math.max(0, Math.round((serverNow - ms) / 1000));
+        if (s < 60) return 'just now';
+        const m = Math.floor(s / 60);
+        return m < 60 ? `${m} min ago` : clock(ms);
+    };
+
+    const renderSubmitted = () => {
+        const footnote = hiddenPractice > 0 && (
+            <p className="px-4 py-3 text-[11px] text-slate-400 flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                {hiddenPractice} practice {hiddenPractice === 1 ? 'attempt' : 'attempts'} from outside the live exam {hiddenPractice === 1 ? 'is' : 'are'} not counted here.
+            </p>
+        );
+        if (displayedResults.length === 0) {
+            let empty: React.ReactNode;
+            if (started && started.length > 0) {
+                empty = emptyState(
+                    <Users className="h-5 w-5 text-slate-400" />,
+                    'No one has submitted yet',
+                    writing.length > 0
+                        ? `${writing.length} ${writing.length === 1 ? 'candidate is' : 'candidates are'} writing now. Results appear here as each one submits.`
+                        : 'Results appear here as each candidate submits.',
+                    <Button size="sm" variant="outline" onClick={() => setTab(writing.length > 0 ? 'writing' : 'started')} className="h-8 text-xs gap-1.5 font-semibold">
+                        {writing.length > 0 ? "See who's writing" : 'See who started'} <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>,
+                );
+            } else if (isLive) {
+                empty = nobodyYet();
+            } else {
+                empty = emptyState(
+                    <Users className="h-5 w-5 text-slate-400" />,
+                    'No submissions yet',
+                    isConductTest ? 'Results appear here as soon as candidates submit the exam.' : "Candidates haven't attempted this test yet.",
+                );
+            }
+            return <>{empty}{footnote}</>;
+        }
+        return (
+            <>
+                {/* Score summary */}
+                <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    {([['Average', avgScore], ['Highest', topScore], ['Lowest', lowScore]] as [string, number][]).map(([label, v]) => (
+                        <div key={label} className="px-2 py-2.5 text-center">
+                            <p className="text-sm font-black text-slate-800 dark:text-slate-100 tabular-nums">
+                                {fmt(v)}
+                                {totalMaxMarks > 0 && <span className="text-[10px] font-medium text-slate-400"> / {totalMaxMarks}</span>}
+                            </p>
+                            <p className="text-[9px] uppercase tracking-wide text-slate-400 font-semibold mt-0.5">{label}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {shownResults.length === 0 ? noMatch() : (
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                            {shownResults.map((attempt) => {
+                                const formData = attempt.metadata?.startFormData || {};
+                                const name = nameOf(formData, attempt.user);
+                                const details = detailsOf(formData);
+                                const stats = attempt.metadata?.stats;
+                                const pct = totalMaxMarks > 0 ? ((attempt.score / totalMaxMarks) * 100).toFixed(0) : null;
+                                const isGood = attempt.score >= (totalMaxMarks * 0.4);
+                                const isExpanded = expandedCard === attempt.id;
+
+                                return (
+                                    <div key={attempt.id} className="px-4 py-3 bg-white dark:bg-slate-900">
+                                        <div className="flex items-start gap-3">
+                                            <Initial name={name} rank={showRank ? rankOf.get(attempt.id) : undefined} />
+
+                                            {/* Main info */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+                                                {details && <p className="text-[10px] text-slate-400 truncate mt-0.5">{details}</p>}
+                                                {isAdmin && attempt.user?.email && (
+                                                    <p className="text-[10px] text-slate-400 truncate mt-0.5">{attempt.user.email}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Score badge */}
+                                            <div className="flex-shrink-0 text-right">
+                                                <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black ${isGood ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                                    {attempt.score}
+                                                    {totalMaxMarks > 0 && <span className="opacity-60 font-normal ml-0.5">/{totalMaxMarks}</span>}
+                                                </div>
+                                                {pct && (
+                                                    <p className="text-[9px] text-slate-400 text-right mt-0.5">{pct}%</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Stats pills row */}
+                                        {stats && (
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
+                                                    <CheckCircle2 className="h-2.5 w-2.5" />{stats.correctCount ?? '-'}
+                                                </span>
+                                                <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
+                                                    <XCircle className="h-2.5 w-2.5" />{stats.wrongCount ?? '-'}
+                                                </span>
+                                                <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
+                                                    — {stats.unattemptedCount ?? '-'}
+                                                </span>
+                                                <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1.5">
+                                                    <span className="inline-flex items-center gap-0.5 font-medium text-slate-500">
+                                                        <Clock className="h-2.5 w-2.5 text-indigo-500" />
+                                                        {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                    </span>
+                                                    <span>·</span>
+                                                    {clock(Date.parse(attempt.created_at))}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Action row */}
+                                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50 dark:border-slate-800">
+                                            <button
+                                                className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+                                                onClick={() => setExpandedCard(isExpanded ? null : attempt.id)}
+                                            >
+                                                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                                {isExpanded ? 'Less' : 'Marks'}
+                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    disabled={loadingAnalysisId === attempt.id}
+                                                    className="h-6 px-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
+                                                    onClick={() => handleOpenAnalysis(attempt)}
+                                                >
+                                                    {loadingAnalysisId === attempt.id ? (
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin text-indigo-600" />
+                                                    ) : (
+                                                        <BarChart3 className="w-3 h-3 mr-1" />
+                                                    )}
+                                                    View result
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label="Delete result"
+                                                    className="h-6 w-6 text-slate-400 hover:text-red-500"
+                                                    onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded details */}
+                                        {isExpanded && stats && (
+                                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2">
+                                                <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-lg p-2 text-center">
+                                                    <p className="text-base font-black text-emerald-600">+{(stats.positiveScore || 0).toFixed(1)}</p>
+                                                    <p className="text-[9px] text-slate-500 uppercase tracking-wide">Positive</p>
+                                                </div>
+                                                <div className="bg-red-50 dark:bg-red-900/10 rounded-lg p-2 text-center">
+                                                    <p className="text-base font-black text-red-500">-{(stats.negativeScore || 0).toFixed(1)}</p>
+                                                    <p className="text-[9px] text-slate-500 uppercase tracking-wide">Negative</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <Table className="min-w-[600px]">
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50/80 dark:bg-slate-900/50">
+                                        {showRank && <TableHead className="w-[55px] font-bold text-xs">Rank</TableHead>}
+                                        <TableHead className="font-bold text-xs">Candidate</TableHead>
+                                        <TableHead className="font-bold text-xs">Score</TableHead>
+                                        <TableHead className="font-bold text-xs">
+                                            <span title="Correct · Wrong · Skipped">Answers</span>
+                                        </TableHead>
+                                        <TableHead className="font-bold text-xs">Time taken</TableHead>
+                                        <TableHead className="font-bold text-xs">Submitted</TableHead>
+                                        {!isConductTest && <TableHead className="font-bold text-xs">Mode</TableHead>}
+                                        <TableHead className="w-[80px]" />
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {shownResults.map((attempt) => {
+                                        const formData = attempt.metadata?.startFormData || {};
+                                        const name = nameOf(formData, attempt.user);
+                                        const details = detailsOf(formData);
+                                        const stats = attempt.metadata?.stats;
+                                        const isGood = attempt.score >= (totalMaxMarks * 0.4);
+                                        const pct = totalMaxMarks > 0 ? Math.round((attempt.score / totalMaxMarks) * 100) : null;
+
+                                        return (
+                                            <TableRow key={attempt.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
+                                                {showRank && (
+                                                    <TableCell className="font-bold text-sm text-muted-foreground">
+                                                        #{rankOf.get(attempt.id)}
+                                                    </TableCell>
+                                                )}
+                                                <TableCell>
+                                                    <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{name}</div>
+                                                    {details && <div className="text-xs text-slate-400 mt-0.5">{details}</div>}
+                                                    {isAdmin && attempt.user?.email && (
+                                                        <div className="text-xs text-slate-400">{attempt.user.email}</div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={isGood ? "default" : "destructive"} className="font-bold text-xs">
+                                                        {attempt.score} / {totalMaxMarks}
+                                                    </Badge>
+                                                    {pct !== null && <div className="text-[10px] text-slate-400 mt-0.5 pl-0.5">{pct}%</div>}
+                                                </TableCell>
+                                                <TableCell className="text-xs whitespace-nowrap">
+                                                    {stats ? (
+                                                        <div className="flex items-center gap-2 font-semibold" title="Correct · Wrong · Skipped">
+                                                            <span className="text-emerald-600">✓ {stats.correctCount}</span>
+                                                            <span className="text-red-500">✗ {stats.wrongCount}</span>
+                                                            <span className="text-slate-400">— {stats.unattemptedCount}</span>
+                                                        </div>
+                                                    ) : '—'}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
+                                                    {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                                    {clock(Date.parse(attempt.created_at))}
+                                                </TableCell>
+                                                {!isConductTest && (
+                                                    <TableCell>
+                                                        {getSubmissionModeBadge(attempt)}
+                                                    </TableCell>
+                                                )}
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        aria-label="View result"
+                                                                        disabled={loadingAnalysisId === attempt.id}
+                                                                        className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
+                                                                        onClick={() => handleOpenAnalysis(attempt)}
+                                                                    >
+                                                                        {loadingAnalysisId === attempt.id ? (
+                                                                            <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                                                        ) : (
+                                                                            <BarChart3 className="w-4 h-4" />
+                                                                        )}
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p className="text-xs font-semibold">View result and answers</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label="Delete result"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                            onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </>
+                )}
+                {footnote}
+            </>
+        );
+    };
+
+    const renderWriting = () => {
+        if (!started) return startsUnknown();
+        if (writing.length === 0) {
+            if (isLive && displayedResults.length === 0 && started.length === 0) return nobodyYet();
+            return emptyState(
+                <PenLine className="h-5 w-5 text-slate-400" />,
+                'No one is writing right now',
+                isLive ? 'Everyone who started has submitted or stopped.' : "This exam isn't live right now.",
+            );
+        }
+        if (shownWriting.length === 0) return noMatch();
+        return (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {shownWriting.map(c => {
+                    const name = nameOf(c.startFormData);
+                    const details = detailsOf(c.startFormData);
+                    const answered = answeredOf(c);
+                    const startedMs = Date.parse(c.started_at || '') || 0;
+                    const minutesIn = Math.max(0, Math.floor((serverNow - startedMs) / 60000));
+                    return (
+                        <div key={c.id} className="px-4 py-3 bg-white dark:bg-slate-900 flex items-start gap-3">
+                            <Initial name={name} />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+                                    {answeredText(answered)}
+                                </div>
+                                {details && <p className="text-[10px] text-slate-400 truncate">{details}</p>}
+                                <div className="mt-1.5">{progressBar(answered, 'bg-emerald-500')}</div>
+                                <p className="mt-1 text-[10px] text-slate-400 flex flex-wrap items-center gap-x-1.5">
+                                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        Active {ago(lastSeen(c))}
+                                    </span>
+                                    {startedMs > 0 && <span>· Started {clock(startedMs)} · {minutesIn} min in</span>}
+                                </p>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const renderDropped = () => {
+        if (!started) return startsUnknown();
+        if (dropped.length === 0) {
+            return emptyState(
+                <LogOut className="h-5 w-5 text-slate-400" />,
+                'No one dropped out',
+                'Everyone who started is still writing or has submitted.',
+            );
+        }
+        if (shownDropped.length === 0) return noMatch();
+        return (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {shownDropped.map(c => {
+                    const name = nameOf(c.startFormData);
+                    const details = detailsOf(c.startFormData);
+                    const answered = answeredOf(c);
+                    const seen = lastSeen(c);
+                    const startedMs = Date.parse(c.started_at || '') || 0;
+                    const why = c.status === 'abandoned' ? `Closed the exam at ${clock(seen)}` : `No activity since ${clock(seen)}`;
+                    return (
+                        <div key={c.id} className="px-4 py-3 bg-white dark:bg-slate-900 flex items-start gap-3">
+                            <Initial name={name} />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+                                    {answeredText(answered)}
+                                </div>
+                                {details && <p className="text-[10px] text-slate-400 truncate">{details}</p>}
+                                <div className="mt-1.5">{progressBar(answered, 'bg-amber-400')}</div>
+                                <p className="mt-1 text-[10px] text-slate-400">
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400">{why}</span>
+                                    {startedMs > 0 && <span> · Started {clock(startedMs)}</span>}
+                                </p>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const renderStarted = () => {
+        if (shownStarted.length === 0) {
+            if (q && (displayedResults.length > 0 || (started || []).length > 0)) return noMatch();
+            if (!started) return startsUnknown();
+            if (isLive) return nobodyYet();
+            return emptyState(<Users className="h-5 w-5 text-slate-400" />, 'No one has started', 'Candidates appear here as soon as they open the exam.');
+        }
+        return (
+            <>
+                {!started && (
+                    <p className="px-4 py-2 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-100 dark:border-amber-900/30">
+                        Showing submitted candidates only. Couldn't load who is still writing.
+                    </p>
+                )}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {shownStarted.map(row => {
+                        const name = nameOf(row.formData, row.user);
+                        const details = detailsOf(row.formData);
+                        let chip: React.ReactNode;
+                        if (row.attempt) {
+                            chip = (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 text-[10px] font-bold">
+                                    <CheckCircle2 className="h-3 w-3" /> Submitted · {row.attempt.score}{totalMaxMarks > 0 ? `/${totalMaxMarks}` : ''}
+                                </span>
+                            );
+                        } else if (row.candidate && isWriting(row.candidate)) {
+                            chip = (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Writing · {answeredOf(row.candidate)}{totalQuestions ? `/${totalQuestions}` : ''}
+                                </span>
+                            );
+                        } else if (row.candidate) {
+                            chip = (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold">
+                                    <LogOut className="h-3 w-3" /> Dropped · {answeredOf(row.candidate)}{totalQuestions ? `/${totalQuestions}` : ''}
+                                </span>
+                            );
+                        }
+                        return (
+                            <div key={row.key} className="px-4 py-3 bg-white dark:bg-slate-900 flex items-center gap-3">
+                                <Initial name={name} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+                                    <p className="text-[10px] text-slate-400 truncate">
+                                        {[details, row.startedMs ? `Started ${clock(row.startedMs)}` : ''].filter(Boolean).join(' · ')}
+                                    </p>
+                                </div>
+                                <div className="shrink-0">{chip}</div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </>
+        );
+    };
+
     return (
         <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-full md:max-w-4xl p-0 flex flex-col overflow-hidden">
+            {/* gap-0: the sheet's default gap left grey strips between header, controls and list.
+                [&>button]:hidden: the sheet's own close button sat under the header's X. */}
+            <SheetContent className="w-full sm:max-w-full md:max-w-4xl p-0 gap-0 flex flex-col overflow-hidden [&>button]:hidden">
 
-                {/* ── Compact Header ── */}
+                {/* ── Header: what this exam is, and where it stands ── */}
                 <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 px-4 pt-5 pb-4 flex-shrink-0">
                     {/* Close button */}
                     <button
                         onClick={onClose}
+                        aria-label="Close"
                         className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                     >
                         <X className="h-4 w-4" />
@@ -705,385 +1415,135 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                         </h3>
                     </div>
 
-                    {/* Conduct badge */}
-                    {isConductTest && (
-                        <div className="mt-2 inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full px-2.5 py-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wide">Conduct Exam Results</span>
-                        </div>
-                    )}
+                    {/* Status, facts, and the way to the full report */}
+                    <div className="mt-2 flex items-center gap-x-2 gap-y-1.5 flex-wrap">
+                        {status && (
+                            <span className={`inline-flex items-center gap-1.5 border rounded-full px-2.5 py-0.5 ${status.pill}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                                <span className="text-[10px] font-bold uppercase tracking-wide">{status.text}</span>
+                            </span>
+                        )}
+                        {facts && <span className="text-[11px] text-slate-400">{facts}</span>}
+                        {displayedResults.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={openFullReport}
+                                title="Question-wise analysis, toppers and weak areas"
+                                className="ml-auto inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[11px] font-bold text-white transition-colors"
+                            >
+                                Full report <ArrowRight className="h-3 w-3" />
+                            </button>
+                        )}
+                    </div>
 
-                    {/* Stats row */}
-                    {!loading && (
-                        <div className="mt-3 grid grid-cols-3 gap-2">
-                            <div className="bg-white/10 rounded-lg px-2.5 py-2 text-center">
-                                <div className="flex items-center justify-center gap-1 mb-0.5">
-                                    <Users className="h-3 w-3 text-slate-300" />
-                                </div>
-                                <p className="text-lg font-black text-white leading-none">{displayedResults.length}</p>
-                                <p className="text-[9px] text-slate-400 font-medium mt-0.5 uppercase tracking-wide">Submitted</p>
-                            </div>
-                            <div className="bg-white/10 rounded-lg px-2.5 py-2 text-center">
-                                <div className="flex items-center justify-center gap-1 mb-0.5">
-                                    <Trophy className="h-3 w-3 text-yellow-400" />
-                                </div>
-                                <p className="text-lg font-black text-yellow-300 leading-none">{topScore.toFixed(1)}</p>
-                                <p className="text-[9px] text-slate-400 font-medium mt-0.5 uppercase tracking-wide">Top Score</p>
-                            </div>
-                            <div className="bg-white/10 rounded-lg px-2.5 py-2 text-center">
-                                <div className="flex items-center justify-center gap-1 mb-0.5">
-                                    <BarChart3 className="h-3 w-3 text-emerald-400" />
-                                </div>
-                                <p className="text-lg font-black text-emerald-300 leading-none">{avgScore.toFixed(1)}</p>
-                                <p className="text-[9px] text-slate-400 font-medium mt-0.5 uppercase tracking-wide">Average</p>
-                            </div>
-                        </div>
-                    )}
+                    {/* The four counts, which are also the tabs */}
+                    <div role="tablist" aria-label="Candidates" className="mt-3 grid grid-cols-4 gap-1.5 sm:gap-2">
+                        {tiles.map(t => (
+                            <StatTile
+                                key={t.id}
+                                label={t.label}
+                                value={loading ? '…' : t.value}
+                                icon={t.icon}
+                                tone={t.tone}
+                                pulse={t.pulse}
+                                active={tab === t.id}
+                                onClick={() => setTab(t.id)}
+                            />
+                        ))}
+                    </div>
                 </div>
 
-                {/* ── Conduct Warning Banner ── */}
-                {isConductTest && showConductWarning && (
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-900/30 px-4 py-2 flex items-center justify-between gap-3 text-amber-800 dark:text-amber-300 flex-shrink-0 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="flex items-center gap-2">
-                            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                            <p className="text-[11px] font-medium leading-normal">
-                                Only results submitted in Conduct Mode are visible here.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowConductWarning(false)}
-                            className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
-                            title="Dismiss notification"
-                        >
-                            <X className="h-3.5 w-3.5" />
-                        </button>
-                    </div>
-                )}
-
                 {/* ── Controls Bar ── */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b bg-slate-50/50 dark:bg-slate-900/30 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        <Switch id="rank-mode" checked={showRank} onCheckedChange={setShowRank} className="scale-90" />
-                        <Label htmlFor="rank-mode" className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-none cursor-pointer">
-                            Rank Mode
-                        </Label>
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-slate-50/50 dark:bg-slate-900/30 flex-shrink-0">
+                    {tab === 'submitted' ? (
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Switch id="rank-mode" checked={showRank} onCheckedChange={setShowRank} className="scale-90" />
+                            <Label htmlFor="rank-mode" className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-none cursor-pointer">
+                                Rank
+                            </Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-3.5 w-3.5 text-slate-400 cursor-help hover:text-slate-600 transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="max-w-[260px] p-3">
+                                        <p className="font-bold text-[11px] mb-1.5">Rank by Merit:</p>
+                                        <ol className="list-decimal list-inside space-y-0.5 text-[10px] text-muted-foreground">
+                                            <li>Score (highest first)</li>
+                                            <li>Incorrect (fewest first)</li>
+                                            <li>Skipped (fewest first)</li>
+                                            <li>Submission time (earliest first)</li>
+                                        </ol>
+                                        <p className="text-[10px] text-muted-foreground mt-1.5">Off: newest submission first.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    ) : (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate min-w-0">{hints[tab]}</p>
+                    )}
+
+                    <div className="ml-auto flex items-center gap-1.5">
+                        {showSearch && (
+                            <div className="relative w-28 sm:w-48">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                                <Input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search name"
+                                    aria-label="Search candidates"
+                                    className="h-7 pl-7 text-[11px]"
+                                />
+                            </div>
+                        )}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Info className="h-3.5 w-3.5 text-slate-400 cursor-help hover:text-slate-600 transition-colors" />
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Refresh"
+                                        onClick={() => load(true, true)}
+                                        disabled={loading || refreshing}
+                                        className="h-7 w-7 text-slate-500"
+                                    >
+                                        <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                                    </Button>
                                 </TooltipTrigger>
-                                <TooltipContent side="bottom" className="max-w-[260px] p-3">
-                                    <p className="font-bold text-[11px] mb-1.5">Rank by Merit:</p>
-                                    <ol className="list-decimal list-inside space-y-0.5 text-[10px] text-muted-foreground">
-                                        <li>Score (highest first)</li>
-                                        <li>Incorrect (fewest first)</li>
-                                        <li>Skipped (fewest first)</li>
-                                        <li>Submission time (earliest first)</li>
-                                    </ol>
+                                <TooltipContent side="bottom">
+                                    <p className="text-xs">
+                                        {updatedAt ? `Updated ${format(updatedAt, 'pp')}` : 'Refresh'}
+                                        {isLive ? ' · refreshes every 30 s' : ''}
+                                    </p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+                        {tab === 'submitted' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={downloadExcel}
+                                disabled={displayedResults.length === 0}
+                                className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold"
+                            >
+                                <Download className="w-3 h-3" />
+                                Excel
+                            </Button>
+                        )}
                     </div>
-
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={downloadExcel}
-                        disabled={displayedResults.length === 0}
-                        className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold"
-                    >
-                        <Download className="w-3 h-3" />
-                        Excel
-                    </Button>
                 </div>
 
-                {/* ── Results List ── */}
+                {/* ── List ── */}
                 <div className="flex-1 overflow-y-auto">
-                    {loading || !fullTest ? (
+                    {loading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                             <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
                             <p className="text-xs text-slate-400 font-medium">Fetching results...</p>
                         </div>
-                    ) : displayedResults.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                <Users className="h-5 w-5 text-slate-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No submissions yet</p>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    {isConductTest ? 'No conduct-exam attempts recorded.' : 'Students haven\'t attempted this test yet.'}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Mobile Card View */}
-                            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                                {displayedResults.map((attempt, index) => {
-                                    const name = getDisplayName(attempt);
-                                    const others = getOtherDetails(attempt);
-                                    const stats = attempt.metadata?.stats;
-                                    const pct = totalMaxMarks > 0 ? ((attempt.score / totalMaxMarks) * 100).toFixed(0) : null;
-                                    const isGood = attempt.score >= (totalMaxMarks * 0.4);
-                                    const isExpanded = expandedCard === attempt.id;
-
-                                    return (
-                                        <div key={attempt.id} className="px-4 py-3 bg-white dark:bg-slate-900">
-                                            <div className="flex items-start gap-3">
-                                                {/* Rank / Avatar */}
-                                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 flex items-center justify-center">
-                                                    {showRank ? (
-                                                        <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-300">#{index + 1}</span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">
-                                                            {String(name || 'A').charAt(0).toUpperCase()}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* Main info */}
-                                                <div className="flex-1 min-w-0 space-y-0.5">
-                                                    {isStartFormEnabled ? (
-                                                        configuredFormLabels.map((label: string) => {
-                                                            const value = attempt.metadata?.startFormData?.[label] || 'N/A';
-                                                            return (
-                                                                <p key={label} className="text-xs text-slate-800 dark:text-slate-200">
-                                                                    <span className="font-bold">{label}:</span> {String(value)}
-                                                                </p>
-                                                            );
-                                                        })
-                                                    ) : (
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
-                                                    )}
-                                                    {isAdmin && attempt.user?.email && (
-                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{attempt.user.email}</p>
-                                                    )}
-                                                    {!isStartFormEnabled && others.length > 0 && (
-                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                                                            {others.map(([k, v]) => `${k}: ${v}`).join(' · ')}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                
-                                                {/* Score badge */}
-                                                <div className="flex-shrink-0 text-right">
-                                                    <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black ${isGood ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                                        {attempt.score}
-                                                        {totalMaxMarks > 0 && <span className="opacity-60 font-normal ml-0.5">/{totalMaxMarks}</span>}
-                                                    </div>
-                                                    {pct && (
-                                                        <p className="text-[9px] text-slate-400 text-right mt-0.5">{pct}%</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Stats pills row */}
-                                            {stats && (
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                                                        <CheckCircle2 className="h-2.5 w-2.5" />{stats.correctCount ?? '-'}
-                                                    </span>
-                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
-                                                        <XCircle className="h-2.5 w-2.5" />{stats.wrongCount ?? '-'}
-                                                    </span>
-                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
-                                                        <Clock className="h-2.5 w-2.5" />{stats.unattemptedCount ?? '-'}
-                                                    </span>
-                                                    <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1.5">
-                                                        <span className="inline-flex items-center gap-0.5 font-medium text-slate-500">
-                                                            <Clock className="h-2.5 w-2.5 text-indigo-500" />
-                                                            {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
-                                                        </span>
-                                                        <span>·</span>
-                                                        {format(new Date(attempt.created_at), 'MMM d, p')}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {/* Action row */}
-                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50 dark:border-slate-800">
-                                                <button
-                                                    className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
-                                                    onClick={() => setExpandedCard(isExpanded ? null : attempt.id)}
-                                                >
-                                                    {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                                                    {isExpanded ? 'Less' : 'Details'}
-                                                </button>
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        disabled={loadingAnalysisId === attempt.id}
-                                                        className="h-6 px-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
-                                                        onClick={() => handleOpenAnalysis(attempt)}
-                                                    >
-                                                        {loadingAnalysisId === attempt.id ? (
-                                                            <Loader2 className="w-3 h-3 mr-1 animate-spin text-indigo-600" />
-                                                        ) : (
-                                                            <BarChart3 className="w-3 h-3 mr-1" />
-                                                        )}
-                                                        Detailed Result
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-slate-400 hover:text-red-500"
-                                                        onClick={() => handleDelete(attempt.id, attempt.user_id)}
-                                                    >
-                                                        <Trash2 className="w-3 h-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            {/* Expanded details */}
-                                            {isExpanded && stats && (
-                                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2">
-                                                    <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-lg p-2 text-center">
-                                                        <p className="text-base font-black text-emerald-600">+{(stats.positiveScore || 0).toFixed(1)}</p>
-                                                        <p className="text-[9px] text-slate-500 uppercase tracking-wide">Positive</p>
-                                                    </div>
-                                                    <div className="bg-red-50 dark:bg-red-900/10 rounded-lg p-2 text-center">
-                                                        <p className="text-base font-black text-red-500">-{(stats.negativeScore || 0).toFixed(1)}</p>
-                                                        <p className="text-[9px] text-slate-500 uppercase tracking-wide">Negative</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Desktop Table View */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <Table className="min-w-[600px]">
-                                    <TableHeader>
-                                        <TableRow className="bg-slate-50/80 dark:bg-slate-900/50">
-                                            {showRank && <TableHead className="w-[55px] font-bold text-xs">Rank</TableHead>}
-                                            <TableHead className="font-bold text-xs">Student</TableHead>
-                                            <TableHead className="font-bold text-xs">Score</TableHead>
-                                            <TableHead className="font-bold text-xs">Stats</TableHead>
-                                            <TableHead className="font-bold text-xs">Time Taken</TableHead>
-                                            <TableHead className="font-bold text-xs">Date</TableHead>
-                                            <TableHead className="font-bold text-xs">Mode</TableHead>
-                                            <TableHead className="w-[44px]" />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {displayedResults.map((attempt, index) => {
-                                            const name = getDisplayName(attempt);
-                                            const others = getOtherDetails(attempt);
-                                            const stats = attempt.metadata?.stats;
-                                            const isGood = attempt.score >= (totalMaxMarks * 0.4);
-
-                                            return (
-                                                <TableRow key={attempt.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
-                                                    {showRank && (
-                                                        <TableCell className="font-bold text-sm text-muted-foreground">
-                                                            #{index + 1}
-                                                        </TableCell>
-                                                    )}
-                                                    <TableCell>
-                                                        {isStartFormEnabled ? (
-                                                            <div className="space-y-0.5">
-                                                                {configuredFormLabels.map((label: string) => {
-                                                                    const value = attempt.metadata?.startFormData?.[label] || 'N/A';
-                                                                    return (
-                                                                        <div key={label} className="text-sm">
-                                                                            <span className="font-bold text-slate-800 dark:text-slate-100">{label}:</span>{' '}
-                                                                            <span className="text-slate-600 dark:text-slate-300">{String(value)}</span>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                                {isAdmin && attempt.user?.email && (
-                                                                    <div className="text-xs text-slate-400 mt-1">{attempt.user.email}</div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div>
-                                                                <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">
-                                                                    {name}
-                                                                </div>
-                                                                {isAdmin && attempt.user?.email && (
-                                                                    <div className="text-xs text-slate-400">{attempt.user.email}</div>
-                                                                )}
-                                                                {others.length > 0 && (
-                                                                    <div className="text-xs text-slate-400 space-y-0.5 mt-0.5">
-                                                                        {others.map(([k, v]) => (
-                                                                            <div key={k}><span className="opacity-60">{k}:</span> {String(v)}</div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={isGood ? "default" : "destructive"} className="font-bold text-xs">
-                                                            {attempt.score} / {totalMaxMarks}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs">
-                                                        {stats ? (
-                                                            <div className="space-y-0.5">
-                                                                <div className="text-emerald-600 font-medium">✓ {stats.correctCount}</div>
-                                                                <div className="text-red-500 font-medium">✗ {stats.wrongCount}</div>
-                                                                <div className="text-slate-400">— {stats.unattemptedCount}</div>
-                                                            </div>
-                                                        ) : '—'}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                                                        {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                                                        {format(new Date(attempt.created_at), 'MMM d, p')}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {getSubmissionModeBadge(attempt)}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-1">
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            disabled={loadingAnalysisId === attempt.id}
-                                                                            className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
-                                                                            onClick={() => handleOpenAnalysis(attempt)}
-                                                                        >
-                                                                            {loadingAnalysisId === attempt.id ? (
-                                                                                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                                                                            ) : (
-                                                                                <BarChart3 className="w-4 h-4" />
-                                                                            )}
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent>
-                                                                        <p className="text-xs font-semibold">Detailed Result Analysis</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                                onClick={() => handleDelete(attempt.id, attempt.user_id)}
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </>
-                    )}
+                    ) : tab === 'submitted' ? renderSubmitted()
+                        : tab === 'writing' ? renderWriting()
+                            : tab === 'dropped' ? renderDropped()
+                                : renderStarted()}
                 </div>
             </SheetContent>
             {selectedAttemptForAnalysis && (

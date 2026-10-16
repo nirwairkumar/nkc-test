@@ -49,7 +49,8 @@ const ATTEMPT_COLUMNS =
 const ID_CHUNK = 80;
 export const HISTORY_DAYS = 180;
 /** A student counts as "writing now" if their exam pinged within this window (pings are every 60 s). */
-const WRITING_WINDOW_MS = 3 * 60 * 1000;
+/** A candidate pinged within this long is "writing now" (the exam page pings every minute). */
+export const WRITING_WINDOW_MS = 3 * 60 * 1000;
 
 function chunk<T>(items: T[], size: number): T[][] {
     const out: T[][] = [];

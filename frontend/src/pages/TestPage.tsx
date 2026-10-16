@@ -527,30 +527,37 @@ export default function TestPage() {
     }
   }, [test?.id, isExamStarted]);
 
-  // Periodic progress ping (every 60 seconds)
+  // Periodic progress ping (every 60 seconds). It reads answers through a ref: with
+  // `answers` as a dependency the timer restarted on every answer, so a candidate who
+  // answered faster than once a minute never pinged and looked gone to the examiner.
   useEffect(() => {
     if (!isExamStarted) return;
     if (!test || isSubmitting || examSeat) return;
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
-    const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
 
-    const interval = setInterval(() => {
+    const ping = () => {
       if (submittedRef.current) return;
+      const current = answersRef.current;
       const totalQ = test.questions?.length || 1;
-      const answeredQ = Object.keys(answers).length;
+      const answeredQ = Object.keys(current).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      
+      // Read at ping time: the intro page stores the guest id just before navigating here.
+      const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
+
       if (user || isConductExam) {
         if (effectiveUserId) {
-          analyticsApi.updateProgress(effectiveUserId, test.id, Math.min(pct, 99), answers);
+          analyticsApi.updateProgress(effectiveUserId, test.id, Math.min(pct, 99), current);
         }
       } else {
         // Standard anonymous user — use dedicated anon endpoint
         analyticsApi.updateAnonProgress(test.id, Math.min(pct, 99));
       }
-    }, 60000); // every 60 seconds
-    return () => clearInterval(interval);
-  }, [test, user, answers, isSubmitting, isExamStarted]);
+    };
+    // One early ping, so a page refresh (which reported "tab closed") reads as writing again.
+    const first = setTimeout(ping, 8000);
+    const interval = setInterval(ping, 60000); // every 60 seconds
+    return () => { clearTimeout(first); clearInterval(interval); };
+  }, [test, user, isSubmitting, isExamStarted]);
 
   // Abandon detection on tab close / navigation away
   useEffect(() => {

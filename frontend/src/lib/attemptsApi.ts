@@ -75,15 +75,37 @@ export async function checkUserTestAttempt(user_id: string, test_id: string) {
     }
 }
 
-export async function registerTestStart(user_id: string | null, test_id: string) {
+export async function registerTestStart(user_id: string | null, test_id: string, start_form?: Record<string, string>) {
     try {
         const response = await apiClient.post('attempts/register', {
             user_id,
-            test_id
+            test_id,
+            start_form: start_form || null
         });
         return { success: response.data?.success, error: null };
     } catch (error: any) {
         return { success: false, error };
+    }
+}
+
+/** Someone who started a test and has not submitted (writing now, or left). */
+export interface StartedCandidate {
+    id: string;
+    status: 'in_progress' | 'abandoned' | string;
+    started_at: string | null;
+    last_active_at: string | null;
+    completion: number;
+    answered: number | null;
+    left_reason: string | null;
+    startFormData: Record<string, string>;
+}
+
+export async function fetchStartedCandidates(testId: string) {
+    try {
+        const response = await apiClient.get(`attempts/test/${testId}/started`);
+        return { data: response.data as { now: string; candidates: StartedCandidate[] }, error: null };
+    } catch (error: any) {
+        return { data: null, error };
     }
 }
 

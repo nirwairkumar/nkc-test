@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
-from app.utils.rate_limiter import anon_submit_per_ip, enforce_limit, client_ip
+from app.utils.rate_limiter import anon_submit_per_ip, anon_start_per_ip, enforce_limit, client_ip
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -524,9 +524,69 @@ async def check_attempt_status(
         logger.error(f"Error checking attempt status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+def _clean_start_form(form: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    """The start form as short plain text: at most 12 fields."""
+    out: Dict[str, str] = {}
+    for key, value in list((form or {}).items())[:12]:
+        label = str(key).strip()[:60]
+        if label and value is not None:
+            out[label] = str(value).strip()[:200]
+    return out
+
+
+def _ensure_registrant(user_id: str, test_id: str, start_form: Dict[str, str], request: Request) -> bool:
+    """
+    True when `user_id` has an auth.users row, which test_registrations needs.
+
+    A candidate on a live exam link has no login until they submit, so their start was
+    dropped and the examiner saw nobody writing. On live exam links they now get the
+    guest login at start, the same one submitting would have made.
+    """
+    import uuid as _uuid
+    try:
+        _uuid.UUID(user_id)
+        _uuid.UUID(test_id)
+    except ValueError:
+        return False
+
+    def has_login() -> bool:
+        try:
+            found = supabase.auth.admin.get_user_by_id(user_id)
+            return bool(found and getattr(found, "user", None))
+        except Exception:
+            return False
+
+    if has_login():
+        return True
+    try:
+        test_res = supabase.table("tests").select("settings").eq("id", test_id).limit(1).execute()
+    except Exception:
+        return False
+    settings = ((test_res.data or [{}])[0].get("settings") or {})
+    if not (settings.get("conduct_exam") or {}).get("enabled"):
+        return False
+    allowed, _remaining, _reset = anon_start_per_ip.check(client_ip(request))
+    if not allowed:
+        return False
+    clean_id = user_id.replace("-", "")[:12]
+    try:
+        supabase.auth.admin.create_user({
+            "id": user_id,
+            "email": f"candidate_{clean_id}@guest.testoza.com",
+            "email_confirm": True,
+            "user_metadata": {"is_guest_candidate": True, "startFormData": start_form},
+        })
+    except Exception as e:
+        # A second tab starting at the same moment may have made it first.
+        logger.warning(f"Guest login at exam start for {user_id}: {e}")
+        return has_login()
+    return True
+
+
 @router.post("/register")
 async def register_start(
     payload: RegisterRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
@@ -534,15 +594,21 @@ async def register_start(
             # Anonymous users are tracked exclusively via anon_test_attempts
             return {"success": True}
 
+        start_form = _clean_start_form(payload.start_form)
+        if not _ensure_registrant(payload.user_id, payload.test_id, start_form, request):
+            return {"success": False}
+
         # Build the insert data
         insert_data: Dict[str, Any] = {
             "test_id": payload.test_id,
             "user_id": payload.user_id
         }
+        if start_form:
+            insert_data["metadata"] = {"startFormData": start_form}
 
         # Check if already registered (for non-anonymous only)
         existing = supabase.table("test_registrations")\
-            .select("id, status")\
+            .select("id, status, metadata")\
             .eq("user_id", payload.user_id)\
             .eq("test_id", payload.test_id)\
             .execute()
@@ -551,9 +617,17 @@ async def register_start(
             # Reset to in_progress if re-starting (not submitted)
             row = existing.data[0]
             if row.get("status") != "submitted":
+                from datetime import datetime, timezone
+                restart: Dict[str, Any] = {
+                    "status": "in_progress",
+                    "completion_percentage": 0,
+                    "last_active_at": datetime.now(timezone.utc).isoformat(),
+                }
+                if start_form:
+                    restart["metadata"] = {**(row.get("metadata") or {}), "startFormData": start_form}
                 try:
                     supabase.table("test_registrations")\
-                        .update({"status": "in_progress", "completion_percentage": 0})\
+                        .update(restart)\
                         .eq("id", row["id"]).execute()
                 except Exception:
                     pass  # columns may not exist yet
@@ -632,6 +706,122 @@ async def get_attempt_detail(
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
 
+def _results_access(test_id: str, request: Request, db: Client):
+    """
+    Who may read a test's results: its creator or an admin.
+    Returns (test row, is_admin, is_premium); a non-premium creator sees names hidden.
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = auth_header.replace("Bearer ", "")
+    user_response = db.auth.get_user(token)
+    if not user_response or not user_response.user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user_id = user_response.user.id
+
+    # Verify admin status
+    admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
+    is_admin = bool(admin_res.data and len(admin_res.data) > 0)
+
+    # Retrieve test details to verify existence and check conduct mode settings
+    test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
+    if not test_ownership_res.data:
+        raise HTTPException(status_code=404, detail="Test not found")
+    test_data = test_ownership_res.data
+
+    if is_admin:
+        return test_data, True, True
+
+    # Only the creator or admin can view results
+    if user_id != test_data.get("created_by"):
+        raise HTTPException(status_code=403, detail="Not authorized to view these results")
+
+    # Check global premium unlock and active plans
+    settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
+    unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
+
+    plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
+    has_active_plans = plans_res.data and len(plans_res.data) > 0
+
+    is_premium = bool(unlock_all or not has_active_plans)
+
+    if not is_premium:
+        profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
+        if profile_res.data:
+            profile = profile_res.data[0]
+            if profile.get("is_premium") and profile.get("premium_expiry"):
+                from datetime import datetime, timezone
+                try:
+                    # Safely parse UTC string from postgres
+                    expiry = datetime.fromisoformat(profile["premium_expiry"].replace('Z', '+00:00'))
+                    if expiry.tzinfo is None:
+                        expiry = expiry.replace(tzinfo=timezone.utc)
+                    is_premium = expiry > datetime.now(timezone.utc)
+                except Exception as parse_error:
+                    logger.error(f"Error parsing expiry date: {parse_error}")
+
+    return test_data, False, is_premium
+
+
+@router.get("/test/{test_id}/started")
+async def get_started_candidates(
+    test_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    """
+    Candidates who started this test and have not submitted: writing now, or left.
+    For a live exam only starts since the exam went live count, so the creator's
+    earlier practice runs stay out.
+    """
+    try:
+        test_data, is_admin, is_premium = _results_access(test_id, request, db)
+        from datetime import datetime, timezone
+
+        conduct = (test_data.get("settings") or {}).get("conduct_exam") or {}
+        query = supabase.table("test_registrations")\
+            .select("id, user_id, status, started_at, last_active_at, completion_percentage, abandoned_reason, metadata")\
+            .eq("test_id", test_id)\
+            .neq("status", "submitted")
+        if conduct.get("started_at"):
+            query = query.gte("started_at", conduct["started_at"])
+        regs = query.order("started_at", desc=True).limit(1000).execute().data or []
+
+        # A submit that could not mark its registration still counts as submitted.
+        submitted_res = supabase.table("user_tests").select("user_id").eq("test_id", test_id).execute()
+        submitted = {r.get("user_id") for r in (submitted_res.data or [])}
+        creator = test_data.get("created_by")
+
+        candidates = []
+        for r in regs:
+            uid = r.get("user_id")
+            if uid in submitted or (uid == creator and not is_admin):
+                continue
+            meta = r.get("metadata") or {}
+            form = meta.get("startFormData") or {}
+            if not is_premium and form:
+                form = {"Candidate": "Anonymous User"}
+            candidates.append({
+                "id": r.get("id"),
+                "status": r.get("status") or "in_progress",
+                "started_at": r.get("started_at"),
+                "last_active_at": r.get("last_active_at"),
+                "completion": r.get("completion_percentage") or 0,
+                "answered": meta.get("answered"),
+                "left_reason": r.get("abandoned_reason"),
+                "startFormData": form,
+            })
+
+        return {"now": datetime.now(timezone.utc).isoformat(), "candidates": candidates}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching started candidates: {e}")
+        raise HTTPException(status_code=500, detail="Could not load who started")
+
+
 @router.get("/test/{test_id}")
 async def get_test_attempts(
     test_id: str,
@@ -640,67 +830,8 @@ async def get_test_attempts(
     db: Client = Depends(get_db)
 ):
     try:
-        # Check authentication
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = auth_header.replace("Bearer ", "")
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user_id = user_response.user.id
-
-        # Verify admin status
-        from app.core.database import supabase
-        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-        is_admin = admin_res.data and len(admin_res.data) > 0
-
-        # Determine Premium Access
-        is_premium = False
-        is_conduct_exam = False
-
-        # Retrieve test details to verify existence and check conduct mode settings
-        test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
-        if not test_ownership_res.data:
-            raise HTTPException(status_code=404, detail="Test not found")
-
-        test_data = test_ownership_res.data
-        test_created_by = test_data.get("created_by")
-        test_visibility = test_data.get("visibility", "public")
+        test_data, is_admin, is_premium = _results_access(test_id, request, db)
         is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
-
-        if is_admin:
-            is_premium = True
-        else:
-            # Only the creator or admin can view results
-            if user_id != test_created_by:
-                raise HTTPException(status_code=403, detail="Not authorized to view these results")
-
-            # Check global premium unlock and active plans
-            settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
-            unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
-            
-            plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
-            has_active_plans = plans_res.data and len(plans_res.data) > 0
-            
-            is_premium = unlock_all or not has_active_plans
-
-            if not is_premium:
-                profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
-                if profile_res.data:
-                    profile = profile_res.data[0]
-                    if profile.get("is_premium") and profile.get("premium_expiry"):
-                        from datetime import datetime, timezone
-                        try:
-                            # Safely parse UTC string from postgres
-                            expiry = datetime.fromisoformat(profile["premium_expiry"].replace('Z', '+00:00'))
-                            if expiry.tzinfo is None:
-                                expiry = expiry.replace(tzinfo=timezone.utc)
-                            now = datetime.now(timezone.utc)
-                            is_premium = expiry > now
-                        except Exception as parse_error:
-                            logger.error(f"Error parsing expiry date: {parse_error}")
 
         # Fetch all attempts for specific test (including those user deleted from their own history)
         select_cols = "id, test_id, user_id, score, created_at, metadata, violation_count, questions_attempted"

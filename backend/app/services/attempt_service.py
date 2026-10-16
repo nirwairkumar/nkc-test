@@ -20,10 +20,20 @@ def process_progress(payload: ProgressUpdateRequest):
                 "status": status,
                 "last_active_at": datetime.now(timezone.utc).isoformat()
             }
-            if payload.answers is not None:
-                # Store a draft copy of answers inside the metadata jsonb column for emergency admin recovery
-                update_data["metadata"] = {"answers_draft": payload.answers}
-                
+            if payload.answers is not None and payload.user_id:
+                # Store a draft copy of answers inside the metadata jsonb column for emergency admin recovery.
+                # Merged, so the start form saved at /register (the candidate's name) survives.
+                current = supabase.table("test_registrations").select("metadata")\
+                    .eq("test_id", payload.test_id).eq("user_id", payload.user_id)\
+                    .limit(1).execute()
+                metadata = dict(((current.data or [{}])[0].get("metadata")) or {})
+                metadata["answers_draft"] = payload.answers
+                metadata["answered"] = sum(
+                    1 for v in payload.answers.values()
+                    if v not in (None, "", []) and not (isinstance(v, dict) and not v)
+                )
+                update_data["metadata"] = metadata
+
             query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
             if payload.user_id:
                 query = query.eq("user_id", payload.user_id)

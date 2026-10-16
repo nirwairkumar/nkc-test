@@ -410,12 +410,12 @@ export default function TestIntroPage() {
             return anonId;
         })();
 
-        try {
-            const { registerTestStart } = await import('@/lib/attemptsApi');
-            await registerTestStart(effectiveUserId, test.id);
-        } catch (err) {
-            console.error("Error registering start:", err);
-        }
+        // Not awaited: recording the start (so the examiner sees this candidate writing)
+        // must never hold up the exam, and the fullscreen request below wants the click.
+        const startForm = test.settings?.start_form?.enabled ? startFormValues : undefined;
+        import('@/lib/attemptsApi')
+            .then(({ registerTestStart }) => registerTestStart(effectiveUserId, test.id, startForm))
+            .catch(err => console.error("Error registering start:", err));
 
         if (enableFullScreen || test.settings?.force_fullscreen) {
             // Only request fullscreen if not already in fullscreen (e.g. entered via waiting room)

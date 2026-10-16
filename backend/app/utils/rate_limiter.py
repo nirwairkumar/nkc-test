@@ -281,6 +281,9 @@ ai_rank_per_ip = RateLimiter(requests=10, window=3600, name="ai_rank")
 
 # ── Exam submissions (H4) ─────────────────────────────────────────
 anon_submit_per_ip = RateLimiter(requests=30, window=3600, name="anon_submit")
+# Starting a live exam link mints the candidate's guest login. Roomy enough for a
+# computer lab behind one IP, and over the limit the start is simply not recorded.
+anon_start_per_ip = RateLimiter(requests=300, window=3600, name="anon_start")
 
 # ── Writes (M1: previously unprotected) ───────────────────────────
 write_per_user = RateLimiter(requests=120, window=60, name="write_user")

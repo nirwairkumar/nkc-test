@@ -1,7 +1,7 @@
 """
 A small in-memory stand-in for the supabase-py client, enough for the exam-session
 routes: table().select/insert/update/delete with eq/neq/in_/is_/lt/gt/gte/lte, order,
-limit, plus auth.get_claims and auth.admin.{get_user_by_id, create_user}.
+limit, single, plus auth.get_claims/get_user and auth.admin.{get_user_by_id, create_user}.
 
 Unique constraints mirror supabase/migrations/20261002120000_exam_sessions.sql, so the
 code paths that rely on a 23505 (duplicate key) error are exercised for real.
@@ -80,6 +80,7 @@ class Query:
         self._order: List[tuple] = []
         self._limit: Optional[int] = None
         self._count = False
+        self._single = False
 
     # builders
     def select(self, _cols: str = "*", count: Optional[str] = None):
@@ -141,6 +142,10 @@ class Query:
         self._limit = n
         return self
 
+    def single(self):
+        self._single = True
+        return self
+
     # run
     def _matches(self) -> List[Dict[str, Any]]:
         rows = self.db.tables.setdefault(self.table, [])
@@ -175,6 +180,8 @@ class Query:
             found.sort(key=lambda r: _cmp_value(r.get(col)), reverse=desc)
         if self._limit is not None:
             found = found[: self._limit]
+        if self._single:
+            return SimpleNamespace(data=copy.deepcopy(found[0]) if found else None, count=None)
         return SimpleNamespace(data=copy.deepcopy(found), count=len(found) if self._count else None)
 
 
@@ -206,7 +213,8 @@ class FakeAuth:
         uid = self.db.tokens.get(token)
         if not uid:
             raise Exception("invalid token")
-        return SimpleNamespace(user=SimpleNamespace(id=uid))
+        email = next((p.get("email") for p in self.db.tables.get("profiles", []) if p.get("id") == uid), None)
+        return SimpleNamespace(user=SimpleNamespace(id=uid, email=email))
 
 
 class FakeSupabase:
