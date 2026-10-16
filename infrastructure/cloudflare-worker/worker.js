@@ -296,6 +296,26 @@ function formatCategoryName(slug) {
   }).join(' ');
 }
 
+/** A live exam or unlisted/private link: an invitation, not a public practice page. */
+function isExamInvitation(test) {
+  const visibility = test.visibility || (test.is_public ? 'public' : 'private');
+  return !!(test.settings && test.settings.conduct_exam && test.settings.conduct_exam.enabled) || visibility !== 'public';
+}
+
+/** "Open the link, enter your name and roll no, then tap Start." — same words as the WhatsApp message. */
+function examInstruction(settings) {
+  const s = settings || {};
+  if (s.login_required) return 'Open the link, sign in when asked, then tap Start.';
+  if (!(s.start_form && s.start_form.enabled)) return 'Open the link and tap Start.';
+  let labels = (s.start_form.fields || [])
+    .map(f => String((f && f.label) || '').trim().toLowerCase())
+    .filter(Boolean);
+  if (labels.length === 0) labels = ['name'];
+  if (labels.length > 3) return 'Open the link, fill in your details, then tap Start.';
+  const asked = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  return `Open the link, enter your ${asked}, then tap Start.`;
+}
+
 /**
  * Generate comprehensive meta tags with strict canonical URLs
  */
@@ -311,10 +331,40 @@ function generateMetaTags(url, testData = null, joinData = null) {
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
   let keywords = 'online test maker for teachers, ai test generator, quiz creator for educators, exam builder, conduct online exam, assessment platform for coaching institutes, online examination software';
+  let siteName = 'TestoZa';
+  let card = 'summary_large_image';
+  let imageMeta = '';
 
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
-    if (testData) {
+    if (testData && isExamInvitation(testData)) {
+      // An examiner's link to their own candidates. It used to show our marketing banner
+      // and "| TestoZa" — an advert in a class WhatsApp group. Same rules as
+      // frontend/functions/_shared/testPreview.js (app.testoza.com).
+      const institute = (testData.institution_name || '').trim();
+      title = institute ? `${testData.title} — ${institute}` : (testData.title || 'Online exam');
+      const questionCount = testData.total_questions || testData.questions?.length || 0;
+      const facts = [
+        testData.duration ? `${testData.duration} minutes` : '',
+        questionCount ? `${questionCount} questions` : ''
+      ].filter(Boolean).join(' · ');
+      description = `${facts ? `${facts}. ` : ''}${examInstruction(testData.settings)}`;
+      type = 'article';
+      robots = 'noindex, nofollow';
+      siteName = institute || 'Online exam';
+      card = 'summary';
+      if (testData.institution_logo) {
+        image = testData.institution_logo;
+        imageMeta = `
+    <meta property="og:image:alt" content="${escapeHtml(institute || title)}">`;
+      } else {
+        image = 'https://app.testoza.com/exam-og.png';
+        imageMeta = `
+    <meta property="og:image:width" content="600">
+    <meta property="og:image:height" content="600">
+    <meta property="og:image:alt" content="Exam paper">`;
+      }
+    } else if (testData) {
       title = `${testData.title} | TestoZa`;
       const testDesc = testData.description
         ? (testData.description.length > 150 ? testData.description.substring(0, 147) + '...' : testData.description)
@@ -519,12 +569,12 @@ function generateMetaTags(url, testData = null, joinData = null) {
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:type" content="${type}">
     <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
-    <meta property="og:image" content="${escapeHtml(image)}">
-    <meta property="og:site_name" content="TestoZa">
+    <meta property="og:image" content="${escapeHtml(image)}">${imageMeta}
+    <meta property="og:site_name" content="${escapeHtml(siteName)}">
     <meta property="og:locale" content="en_IN">${extra}
 
     <!-- Twitter Cards -->
-    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="${card}">
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${escapeHtml(image)}">

@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { shareLink } from "@/utils/canonicalUrl";
+import { examInviteText } from "@/lib/conductExam";
 
 export { shareLink };
 
@@ -44,30 +45,13 @@ export const testLink = (test: any): string => {
 /** True when the teacher switched on "candidates must sign in" (Test settings). */
 export const needsSignIn = (test: any): boolean => Boolean(test?.settings?.login_required);
 
-/** "30 questions · 45 min" — whichever of the two we actually know. */
-const testFacts = (test: any): string => {
-    const count = test?.total_questions || (Array.isArray(test?.questions) ? test.questions.length : 0);
-    return [
-        test?.institution_name || null,
-        count ? `${count} question${count === 1 ? "" : "s"}` : null,
-        test?.duration ? `${test.duration} min` : null,
-    ].filter(Boolean).join(" · ");
-};
-
 /**
  * The message a teacher drops into the class group. Exported so the "Send to your
  * students" screen shows the teacher exactly what their students will read.
+ * Same text as the WhatsApp buttons on the dashboard (lib/conductExam.ts).
  */
 export function testInviteText(test: any): string {
-    const facts = testFacts(test);
-    const lines = [`📝 *${test?.title || "Test"}*`];
-    if (facts) lines.push(facts);
-    lines.push("", "Open this link to start:", testLink(test));
-    // Only promise what's true: a teacher can switch on "candidates must sign in".
-    lines.push("", needsSignIn(test) ? "Sign in when the page asks, then start." : "No app and no account needed — just type your name.");
-    // An institute's own paper shouldn't carry our name into their parents' groups.
-    if (!test?.institution_name) lines.push("", "Conducted on TestoZa");
-    return lines.join("\n");
+    return examInviteText(test);
 }
 
 /** Copy text and say so. Returns false when the browser refused (so callers can show the text instead). */

@@ -6,6 +6,7 @@
  * which produced a link that opened "test not found". Keep both pages on these helpers.
  */
 import { shareLink } from '@/utils/canonicalUrl';
+import { inputFields, inputsOn } from '@/lib/candidateInputs';
 
 /** Exam settings a stopped exam goes back to (same defaults the settings panel starts from). */
 export const DEFAULT_ENVIRONMENT_SETTINGS = {
@@ -119,19 +120,44 @@ export function getExamUrl(test: any, origin?: string): string {
     return at(`/test-intro/${test.id}`);
 }
 
+/**
+ * The message an examiner sends to candidates. It should read like a notice from the
+ * institute, not like a product: who, what, when, how long, one link, one instruction.
+ * The old version ("📝 … Start here: … No app and no account needed") read as an advert.
+ */
+export function examInviteText(test: any, opts: { startsAt?: Date | null } = {}): string {
+    const s = test?.settings || {};
+    const questions = test?.total_questions || test?.questions?.length || 0;
+    const scheduled = s.schedule?.enabled && s.schedule.start_time ? new Date(s.schedule.start_time) : null;
+    const startsAt = opts.startsAt || (scheduled && scheduled.getTime() > Date.now() ? scheduled : null);
+
+    const lines = [test?.institution_name ? `*${test.title}* — ${test.institution_name}` : `*${test?.title || 'Exam'}*`];
+    const facts = [
+        startsAt ? `📅 ${startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : '',
+        test?.duration ? `⏱ ${test.duration} min` : '',
+        questions ? `${questions} questions` : '',
+    ].filter(Boolean);
+    if (facts.length) lines.push(facts.join(' · '));
+
+    lines.push('', 'Exam link:', getExamUrl(test));
+    lines.push('', examInstruction(test));
+    const code = s.conduct_exam?.enabled ? s.conduct_exam.join_code : null;
+    if (code) lines.push(`Or open testoza.com/join and enter code *${code.slice(0, 3)} ${code.slice(3)}*`);
+    return lines.join('\n');
+}
+
+/** "Open the link, enter your name and roll no, then tap Start." — from the real start form. */
+function examInstruction(test: any): string {
+    const s = test?.settings || {};
+    if (s.login_required) return 'Open the link, sign in when asked, then tap Start.';
+    if (!inputsOn(s)) return 'Open the link and tap Start.';
+    const labels = inputFields(s).map(f => f.label.trim().toLowerCase());
+    if (labels.length > 3) return 'Open the link, fill in your details, then tap Start.';
+    const asked = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+    return `Open the link, enter your ${asked}, then tap Start.`;
+}
+
 /** wa.me link with a ready-to-send exam invitation. */
 export function examWhatsAppUrl(test: any, opts: { startsAt?: Date | null } = {}): string {
-    const questions = test.total_questions || test.questions?.length || 0;
-    const lines = [`📝 *${test.title}*`];
-    const facts = [questions ? `${questions} questions` : '', test.duration ? `${test.duration} min` : ''].filter(Boolean);
-    if (facts.length) lines.push(facts.join(' · '));
-    if (opts.startsAt) {
-        lines.push(`Starts ${opts.startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`);
-    }
-    lines.push('', `Start here: ${getExamUrl(test)}`);
-    const code = test?.settings?.conduct_exam?.enabled ? test.settings.conduct_exam.join_code : null;
-    if (code) lines.push(`Or open testoza.com/join and enter code *${code.slice(0, 3)} ${code.slice(3)}*`);
-    // The question every candidate asks first, answered before they ask it.
-    lines.push('', 'No app and no account needed — just type your name.');
-    return `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+    return `https://wa.me/?text=${encodeURIComponent(examInviteText(test, opts))}`;
 }
