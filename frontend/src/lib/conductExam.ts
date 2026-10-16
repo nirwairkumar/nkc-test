@@ -123,9 +123,17 @@ export function getExamUrl(test: any, origin?: string): string {
 /**
  * The message an examiner sends to candidates. It should read like a notice from the
  * institute, not like a product: who, what, when, how long, one link, one instruction.
- * The old version ("📝 … Start here: … No app and no account needed") read as an advert,
- * and so did bold titles, emoji and an "Exam link:" label under a preview card that
- * already shows the title. Plain lines, the way a teacher would type it.
+ * The old version ("📝 … Start here: … No app and no account needed") read as an advert.
+ * The bold title names who is conducting it (institute, else the teacher) — only here,
+ * not in the link preview, which stays the exam's own title.
+ *
+ *   *JEE Main Mock 3 — Sharma Classes*
+ *   📅 Sun 19 Oct, 6:00 pm · ⏱️ 180 min · 46 questions
+ *
+ *   Exam link:
+ *   https://app.testoza.com/test/…
+ *
+ *   Open the link, enter your name, then tap Start.
  */
 export function examInviteText(test: any, opts: { startsAt?: Date | null } = {}): string {
     const s = test?.settings || {};
@@ -133,18 +141,20 @@ export function examInviteText(test: any, opts: { startsAt?: Date | null } = {})
     const scheduled = s.schedule?.enabled && s.schedule.start_time ? new Date(s.schedule.start_time) : null;
     const startsAt = opts.startsAt || (scheduled && scheduled.getTime() > Date.now() ? scheduled : null);
 
-    const lines = [test?.institution_name ? `${test.title} — ${test.institution_name}` : (test?.title || 'Exam')];
-    const facts = [
-        test?.duration ? `${test.duration} min` : '',
-        questions ? `${questions} questions` : '',
-    ].filter(Boolean).join(', ');
-    const when = startsAt
-        ? `Starts ${startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}.`
-        : '';
-    const detail = [facts ? `${facts}.` : '', when].filter(Boolean).join(' ');
-    if (detail) lines.push(detail);
+    // WhatsApp bold breaks on a stray "*" inside the title.
+    const plain = (v: unknown) => String(v || '').replace(/\*/g, '').trim();
+    const by = plain(test?.institution_name) || plain(test?.creator_name);
+    const title = plain(test?.title) || 'Exam';
+    const lines = [`*${by ? `${title} — ${by}` : title}*`];
 
-    lines.push('', getExamUrl(test));
+    const facts = [
+        startsAt ? `📅 ${startsAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : '',
+        test?.duration ? `⏱️ ${test.duration} min` : '',
+        questions ? `${questions} questions` : '',
+    ].filter(Boolean).join(' · ');
+    if (facts) lines.push(facts);
+
+    lines.push('', 'Exam link:', getExamUrl(test));
     lines.push('', examInstruction(test));
     const code = s.conduct_exam?.enabled ? s.conduct_exam.join_code : null;
     if (code) lines.push(`Or open testoza.com/join and enter code ${code.slice(0, 3)} ${code.slice(3)}.`);
@@ -156,7 +166,9 @@ function examInstruction(test: any): string {
     const s = test?.settings || {};
     if (s.login_required) return 'Open the link, sign in when asked, then tap Start.';
     if (!inputsOn(s)) return 'Open the link and tap Start.';
-    const labels = inputFields(s).map(f => f.label.trim().toLowerCase());
+    // "Roll No" → "roll no", but "PRN" / "Email ID" keep their capitals.
+    const labels = inputFields(s).map(f => f.label.trim().split(/\s+/)
+        .map(w => (/^[A-Z0-9]{2,}$/.test(w) ? w : w.toLowerCase())).join(' '));
     if (labels.length > 3) return 'Open the link, fill in your details, then tap Start.';
     const asked = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
     return `Open the link, enter your ${asked}, then tap Start.`;

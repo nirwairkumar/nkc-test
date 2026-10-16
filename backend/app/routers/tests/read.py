@@ -291,7 +291,7 @@ def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[
 
 
 # Columns the creator dashboard needs — never `questions`, which is the heavy column.
-DASHBOARD_TEST_COLUMNS = "id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks"
+DASHBOARD_TEST_COLUMNS = "id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, creator_name, institution_name"
 
 # Safety cap for the conducted-exams list. Live exams sort first, so the cap only ever trims old ended ones.
 CONDUCTED_TESTS_LIMIT = 50

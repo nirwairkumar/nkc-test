@@ -308,7 +308,8 @@ function examInstruction(settings) {
   if (s.login_required) return 'Open the link, sign in when asked, then tap Start.';
   if (!(s.start_form && s.start_form.enabled)) return 'Open the link and tap Start.';
   let labels = (s.start_form.fields || [])
-    .map(f => String((f && f.label) || '').trim().toLowerCase())
+    .map(f => String((f && f.label) || '').trim().split(/\s+/)
+      .map(w => (/^[A-Z0-9]{2,}$/.test(w) ? w : w.toLowerCase())).join(' '))
     .filter(Boolean);
   if (labels.length === 0) labels = ['name'];
   if (labels.length > 3) return 'Open the link, fill in your details, then tap Start.';
