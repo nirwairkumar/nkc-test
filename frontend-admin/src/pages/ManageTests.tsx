@@ -406,22 +406,9 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         fetchActiveTabData(activeTab);
     }, [activeTab, fetchActiveTabData]);
 
-    // Fetch conduct mode tests on mount to get the active count for the sidebar badge
-    useEffect(() => {
-        const fetchInitialConductCount = async () => {
-            try {
-                const { data, error } = await fetchConductModeTests();
-                if (!error && data) {
-                    setConductModeTests(data || []);
-                    // Mark as loaded so navigating to the activity tab doesn't fetch again
-                    loadedTabsRef.current['activity'] = true;
-                }
-            } catch (err) {
-                console.error("Failed to load initial conduct mode tests count:", err);
-            }
-        };
-        fetchInitialConductCount();
-    }, []);
+    // Live exams load only for the 'activity' tab. AdminDashboard fetches the sidebar badge
+    // count itself, and Live Activity is ExamOpsPanel now, so this page no longer fetches
+    // every live exam on load.
 
     useEffect(() => {
         const interval = setInterval(() => {

@@ -330,3 +330,39 @@ def people(segment: str = "members", q: Optional[str] = None, sort: str = "newes
         "p_limit": limit,
         "p_offset": offset,
     })
+
+
+TEST_VIEWS = ("all", "live", "exams", "public", "link", "private", "unused", "reported", "examples", "team")
+TEST_SORTS = ("newest", "activity", "results", "title")
+
+
+@router.get("/manage-tests")
+def manage_tests(view: str = "all", q: Optional[str] = None, sort: str = "newest", creator: Optional[UUID] = None,
+                 limit: int = Query(40, ge=1, le=100), offset: int = Query(0, ge=0, le=100_000)):
+    """
+    Admin → Manage Tests: one page of tests with their state and results, counts for every
+    filter and platform totals. No question, answer or result content leaves the database.
+    """
+    if view not in TEST_VIEWS:
+        raise HTTPException(status_code=400, detail=f"view must be one of {', '.join(TEST_VIEWS)}")
+    if sort not in TEST_SORTS:
+        raise HTTPException(status_code=400, detail=f"sort must be one of {', '.join(TEST_SORTS)}")
+    # "#M568" is how IDs are shown on cards; people paste it with the hash.
+    term = (q or "").strip().lstrip("#").strip()[:100] or None
+    return _rpc("admin_report_tests", {
+        "p_view": view,
+        "p_q": term,
+        "p_sort": sort,
+        "p_creator": str(creator) if creator else None,
+        "p_limit": limit,
+        "p_offset": offset,
+    })
+
+
+@router.get("/manage-tests/{test_id}")
+def manage_test(test_id: UUID):
+    """One test for the admin sheet: facts, creator, results by day, latest results, open reports."""
+    data = _rpc("admin_report_test", {"p_id": str(test_id)})
+    if not data:
+        raise HTTPException(status_code=404, detail="Test not found")
+    return data

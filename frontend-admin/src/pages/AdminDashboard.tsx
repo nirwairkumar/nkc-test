@@ -13,6 +13,7 @@ import AdminLoginPanel from './AdminLoginPanel';
 import AnalyticsPanel from './analytics/AnalyticsPanel';
 import ExamOpsPanel from './activity/ExamOpsPanel';
 import UsersPanel from './users/UsersPanel';
+import TestsPanel from './tests/TestsPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
 import AITestImporter from './AITestImporter';
@@ -262,7 +263,8 @@ export default function AdminDashboard() {
                     {activeTab === 'users' && <UsersPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
                     {activeTab === 'activity' && <ExamOpsPanel />}
-                    {['tests', 'categories', 'verified_creators', 'combined'].includes(activeTab) && (
+                    {activeTab === 'tests' && <TestsPanel />}
+                    {['categories', 'verified_creators', 'combined'].includes(activeTab) && (
                         <ManageTests activeTab={activeTab} />
                     )}
                     {activeTab === 'builder' && <CreateTestPage />}

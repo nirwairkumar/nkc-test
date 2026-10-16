@@ -26,7 +26,11 @@ class ClassCreate(BaseModel):
     user_id: str
 
 @router.get("/all")
-async def get_all_classes(db: Client = Depends(get_db)):
+async def get_all_classes(request: Request, db: Client = Depends(get_db)):
+    # Every teacher's class and batch names, read with the service role: admins only.
+    # RLS (C2) already keeps `classes` from the anon key; this route skipped it.
+    from app.core.auth import verify_is_admin
+    verify_is_admin(request, db)
     with _classes_cache_lock:
         cached = _classes_cache.get("all")
         if cached is not None:
@@ -43,7 +47,9 @@ async def get_all_classes(db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/user/{user_id}")
-async def get_user_classes(user_id: str, db: Client = Depends(get_db)):
+async def get_user_classes(user_id: str, request: Request, db: Client = Depends(get_db)):
+    # A teacher's own classes (My Tests, dashboard, settings) or an admin looking.
+    verify_owner_or_admin(user_id, request, db)
     cache_key = f"user:{user_id}"
     with _classes_cache_lock:
         cached = _classes_cache.get(cache_key)

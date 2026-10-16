@@ -586,6 +586,22 @@ Not proof of absence of bugs, but every claim above was exercised:
 - **Builds:** both frontends build (not just typecheck — `tsc -p tsconfig.json` was found to be silently skipping files, so real `vite build` became the gate), backend `compileall` clean, worker passes `node --check`, all three edge functions parse.
 - **Database:** RLS baseline verified policy-for-policy against live; post-migration state confirmed at 125 policies, analytics tables at zero, `public_profiles` present, `increment_promo_usage` present.
 
+## 5.9 — Follow-up audit, 2026-10-16
+
+Re-checked live. **C2's answer-key protection was never in effect**, and four new gaps were found.
+
+| # | Finding | Fix |
+|---|---------|-----|
+| C2-bis | `REVOKE SELECT (questions, solutions, sections) ON tests` is a no-op while anon/authenticated hold table-wide SELECT (Supabase's default). Live: `has_column_privilege('anon','public.tests','questions','SELECT') = true` — the questions and answers of all 152 public tests (~15 MB) were downloadable with the anon key. RLS still hid unlisted/private rows, so live exams were not exposed. | `supabase/migrations/20261016130000_security_answer_columns_and_rpc.sql` — revoke table SELECT, grant back safe columns only. New columns are now private by default. |
+| N1 | `notify_admins_generic` (SECURITY DEFINER) callable by anyone via `/rest/v1/rpc` — any title, text and link into every admin's inbox. Same for `get_creator_rewards_stats`, `increment_post_view` and four trigger functions. | Same migration: EXECUTE for service_role only; `is_admin()` kept (RLS needs it); fixed `search_path`. |
+| N2 | `GET /api/pricing/promos` had no auth: every promo code and discount. | Admin-only (`pricing.py`). |
+| N3 | `GET /api/pricing/settings` returned `app_settings.updated_by` (admin email) — the C2 leak through the API. | Field dropped from the public response. |
+| N4 | `GET /api/classes/all` and `/classes/user/{id}` had no auth: every teacher's class and batch names. | Admin-only / owner-or-admin (`classes.py`). |
+
+Left as is, low risk (needs another user's UUID): `POST /api/attempts/batch-status` and `GET /api/attempts/check/{user_id}/{test_id}` reveal whether that user took given tests and their score; `GET /api/creators/{id}/rewards` shows a creator's test and submission counts.
+
+Dashboard settings still to switch (Supabase → Auth): **leaked-password protection** (off) and **email OTP expiry** (over an hour; set ≤ 3600 s).
+
 ---
 ---
 

@@ -27,33 +27,19 @@ async def get_all_tests(
         start = (page - 1) * limit
         end = start + limit - 1
 
-        # 2. Build Query
+        # 2. Build Query. Search used to go through search_tests_ranked(), which returns
+        # `questions` (~157 kB a test) for every hit; the pickers that call this only need
+        # the small columns below.
+        query = db.table("tests")\
+            .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
+            .order("created_at", desc=True)
         if search_query:
-            try:
-                # RPC Search
-                response = db.rpc("search_tests_ranked", {
-                    "search_query": search_query,
-                    "limit_val": limit,
-                    "offset_val": start,
-                    "is_admin": True # Ensures admin sees all visible relevant tests
-                }).execute()
-                tests = response.data
-            except Exception as rpc_error:
-                logger.error(f"RPC Admin Search Error: {rpc_error}")
-                # Fallback
-                cleaned_query = search_query.replace(",", "")
-                query = db.table("tests")\
-                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
-                    .order("created_at", desc=True)
+            # Commas and parentheses would break the or() filter syntax.
+            cleaned_query = "".join(ch for ch in search_query.strip().lstrip("#") if ch not in ",()")[:100]
+            if cleaned_query:
                 query = query.or_(f"title.ilike.%{cleaned_query}%,custom_id.ilike.%{cleaned_query}%")
-                response = query.range(start, end).execute()
-                tests = response.data
-        else:
-            query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
-                .order("created_at", desc=True)
-            response = query.range(start, end).execute()
-            tests = response.data
+        response = query.range(start, end).execute()
+        tests = response.data
 
         enriched = enrich_tests(tests, db)
 
@@ -293,8 +279,10 @@ async def get_conduct_mode_tests(request: Request):
         first_conduct_attempt_map = {}
         if candidate_ids:
             try:
+                # Only the two flags, not the whole metadata (start-form answers, stats,
+                # proctoring logs): this runs on every admin page load for the sidebar badge.
                 attempts_res = admin_db.table("user_tests")\
-                    .select("test_id, created_at, metadata")\
+                    .select("test_id, created_at, conduct:metadata->conduct_exam, conducted:metadata->is_conducted_attempt")\
                     .in_("test_id", candidate_ids)\
                     .order("created_at", desc=False)\
                     .execute()
@@ -303,8 +291,7 @@ async def get_conduct_mode_tests(request: Request):
                     submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
                     for a in attempts_res.data:
                         tid = a["test_id"]
-                        meta = a.get("metadata") or {}
-                        if meta.get("conduct_exam") or meta.get("is_conducted_attempt"):
+                        if a.get("conduct") or a.get("conducted"):
                             if tid not in first_conduct_attempt_map and a.get("created_at"):
                                 first_conduct_attempt_map[tid] = a.get("created_at")
             except Exception as se:

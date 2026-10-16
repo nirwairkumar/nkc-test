@@ -130,7 +130,10 @@ async def delete_plan(plan_id: str, request: Request, db: Client = Depends(get_d
 # --- Promo Codes Endpoints ---
 
 @router.get("/promos")
-async def get_promos(db: Client = Depends(get_db)):
+async def get_promos(request: Request, db: Client = Depends(get_db)):
+    # Every promo code, its discount and usage: admins only (Admin → Promo Codes).
+    # Buyers redeem through POST /promos/apply, which checks one code at a time.
+    _verify_admin_for_pricing(request, db)
     try:
         response = db.table("promo_codes").select("*").order("created_at", desc=False).execute()
         return response.data
@@ -254,7 +257,8 @@ async def get_premium_settings(db: Client = Depends(get_db)):
     try:
         response = db.table("app_settings").select("*").limit(1).execute()
         if response.data and len(response.data) > 0:
-            data = response.data[0]
+            # Public route: `updated_by` is the admin's email (the C2 leak, through the API).
+            data = {k: v for k, v in response.data[0].items() if k != "updated_by"}
             with _pricing_cache_lock:
                 _settings_cache["settings"] = data
             return data
