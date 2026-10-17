@@ -49,6 +49,7 @@ const READING_MODES = [
 const formatFileSize = (bytes: number) =>
     bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 import { Input } from "@/components/ui/input";
+import { OutputLanguagePicker } from "@/components/OutputLanguagePicker";
 import { AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, Plus, Camera, X, Key, Zap, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight, ChevronDown, LogIn } from "lucide-react";
 import {
     AlertDialog,
@@ -205,23 +206,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [negativeInput, setNegativeInput] = useState<string>('');
     const marksField = readMark(marksInput, false);
     const negativeField = readMark(negativeInput, true);
-
-    const handleLanguageToggle = (lang: string) => {
-        if (lang === 'default') {
-            setSelectedLanguages(['default']);
-            return;
-        }
-
-        setSelectedLanguages(prev => {
-            const withoutDefault = prev.filter(l => l !== 'default');
-            if (withoutDefault.includes(lang)) {
-                const next = withoutDefault.filter(l => l !== lang);
-                return next.length === 0 ? ['default'] : next;
-            } else {
-                return [...withoutDefault, lang];
-            }
-        });
-    };
 
     // AI Generation History State
     const [historyItems, setHistoryItems] = useState<any[]>([]);
@@ -2025,43 +2009,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 <Badge className="text-[9px] h-4 px-1.5 bg-indigo-500 text-white font-medium">Bilingual</Badge>
                                             )}
                                         </label>
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('default')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('default')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                Same as Material
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('English')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('English')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                English
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('Hindi')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('Hindi')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                Hindi
-                                            </button>
-                                        </div>
+                                        <OutputLanguagePicker value={selectedLanguages} onChange={setSelectedLanguages} />
                                         <p className="text-[10px] text-slate-400 leading-tight">
-                                            Select multiple (e.g. English + Hindi) for bilingual questions.
+                                            Select two (e.g. English + your language) for bilingual questions. 文A has every language.
                                         </p>
                                     </div>
 

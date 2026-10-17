@@ -1,6 +1,6 @@
 ---
 format: 1080x1920
-duration: 53s
+duration: 46.7s
 message: "Any PDF question paper becomes a live online test in about two minutes on TestoZa"
 arc: Hook (challenge) → Upload → AI reads → Ready → Go live → Student joins → Payoff + address
 audience: Indian teachers and coaching institutes
@@ -24,7 +24,7 @@ Voice: Hindi, male; on-screen text English.
 ## Frame 1 — The challenge
 
 - scene: A plain question paper fills the frame; the stopwatch sits at 0:00 above it
-- duration: 4.5s
+- duration: 7.6s
 - transition_in: cut
 - voiceover: "यह एक साधारण पी डी एफ़ है। सवाल ये है, कितनी देर में ये लाइव ऑनलाइन टेस्ट बन सकती है?"
 - super: "Just a PDF." / "How fast can it go live?"
@@ -35,7 +35,7 @@ Hook: the question the viewer wants answered. The stopwatch is introduced here a
 ## Frame 2 — Upload
 
 - scene: The paper shrinks into a PDF file chip and drops onto the real "Create Your Online Test" upload card; stopwatch starts
-- duration: 5.5s
+- duration: 4.8s
 - transition_in: cut
 - voiceover: "स्टॉपवॉच चालू। टेस्टोज़ा पर पी डी एफ़ अपलोड कीजिए।"
 - super: "Upload the PDF."
@@ -44,7 +44,7 @@ Hook: the question the viewer wants answered. The stopwatch is introduced here a
 ## Frame 3 — The AI reads every question
 
 - scene: The real extraction screen, cropped to the questions column, scrolls as questions arrive (states 0→4); the stopwatch fast-forwards with a "×5" badge
-- duration: 14s
+- duration: 10s
 - transition_in: cut
 - voiceover: "अब ए आई हर सवाल खुद पढ़ता है। ऑप्शंस, आंसर की, डायग्राम, और इक्वेशंस भी।"
 - super: "AI reads every question." / "Options. Answer key. Diagrams."
@@ -55,7 +55,7 @@ The longest frame: the reveal paced to the voice — options highlight on "ऑ�
 ## Frame 4 — Ready
 
 - scene: "Your questions are ready · 100% · 30 questions" lands; stopwatch reads 1:14 and the badge drops
-- duration: 5s
+- duration: 4s
 - transition_in: cut
 - voiceover: "तीस सवाल, एक मिनट चौदह सेकंड में तैयार।"
 - super: "30 questions in 1:14."
@@ -64,7 +64,7 @@ The longest frame: the reveal paced to the voice — options highlight on "ऑ�
 ## Frame 5 — Marks, go live, the code
 
 - scene: +4 / −1 marks set on a question card; "Live exams" card appears with the six-digit join code 482 913, pushed in big
-- duration: 11s
+- duration: 8.1s
 - transition_in: cut
 - voiceover: "मार्किंग सेट कीजिए, प्लस फ़ोर, माइनस वन, और टेस्ट लाइव। बच्चों को बस छह अंकों का कोड दीजिए।"
 - super: "+4 / −1. Live." / "One 6-digit code."
@@ -73,7 +73,7 @@ The longest frame: the reveal paced to the voice — options highlight on "ऑ�
 ## Frame 6 — A student joins on a phone
 
 - scene: A phone rises into frame: testoza.com/join, the code typed digit by digit (482 913), Start, the exam screen with question 2
-- duration: 7s
+- duration: 4.8s
 - transition_in: cut
 - voiceover: "ना ऐप, ना अकाउंट। फ़ोन पर कोड डाला, और टेस्ट शुरू।"
 - super: "No app. No sign-up."
@@ -82,10 +82,16 @@ The longest frame: the reveal paced to the voice — options highlight on "ऑ�
 ## Frame 7 — Stop the clock
 
 - scene: The stopwatch stops at about 1:50 and grows to centre; the phone recedes; TestoZa logo, "testoza.com", "Free"
-- duration: 5.5s
+- duration: 7.4s
 - transition_in: cut
 - voiceover: "पी डी एफ़ से लाइव टेस्ट, लगभग दो मिनट में। टेस्टोज़ा डॉट कॉम पर, बिल्कुल फ़्री।"
 - super: "PDF → live test. ~2 minutes." / "testoza.com · free"
 - asset_candidates: capture/assets/svgs/logo-*.svg (the TestoZa mark)
 
 Close on the address, with the logo landing while the stage is still moving.
+
+## Build notes (2026-10-16)
+
+- Built (status: animated). Voice hm_omega (Kokoro, Hindi) = 37.7 s; cut = 46.7 s. Music: HeyGen library track 7b519c72 (71 s), used from 0:15 with baked fades (assets/bgm/bed.mp3), carved under the voice.
+- Stopwatch = the app's own elapsed clock: real time in frame 2, ×7 through the AI read (frame 3 is 10 s, not 14 s), real time in frame 4, ×3 through marks + go live, stops at 1:47 in frame 7 with TEST IS LIVE.
+- Two captures said 31 questions (My Tests card, phone start page); fixed to 30 in their source and re-shot (capture/reshoot.mjs).

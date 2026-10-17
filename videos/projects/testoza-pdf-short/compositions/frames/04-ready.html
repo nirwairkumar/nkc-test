@@ -1,0 +1,37 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f4-card { top: 560px; height: 483px; }
+  #f4-card img, #f4-pv img { position: absolute; left: 0; top: 0; width: 960px; }
+  #f4-pv { top: 1067px; height: 453px; }
+  .f4-glow { position: absolute; inset: 0; border-radius: 26px; box-shadow: inset 0 0 0 5px rgba(34, 197, 94, 0.95); opacity: 0; }
+  #f4-n { display: inline-block; min-width: 1.1em; text-align: right; }
+</style>
+<div data-hf-id="hf-sdm1" id="root" data-composition-id="f04-ready" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-4edt" id="f4-stage" class="clip sf-stage" data-start="0" data-duration="4" data-track-index="0"></div>
+    <div data-hf-id="hf-5ihp" class="sf-panel" id="f4-card"><img data-hf-id="hf-mein" src="assets/ui/card-done.png" alt="" /><div data-hf-id="hf-fmkq" class="f4-glow" id="f4-glow"></div></div>
+    <div data-hf-id="hf-sm55" class="sf-panel" id="f4-pv"><img data-hf-id="hf-kqls" src="assets/ui/preview.png" alt="" /></div>
+    <div data-hf-id="hf-xq8s" class="sf-sup" id="f4-s"><span data-hf-id="hf-t7zu" id="f4-n">30</span> questions in <em data-hf-id="hf-rord">1:14.</em></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f04-ready';
+  const { q, tl, superIn, countUp } = SF(ID);
+  // the card updates in place (same rect as frame 3); the review screen slides up under it
+  tl.fromTo('#f4-glow', { opacity: 1 }, { opacity: 0, duration: 0.9, ease: 'power2.out' }, 0);
+  tl.fromTo('#f4-card', { scale: 1 }, { scale: 1.03, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.out' }, 0);
+  tl.fromTo('#f4-pv', { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out' }, 0.15);
+  tl.to('#f4-card', { y: -14, duration: 3.8, ease: 'sine.inOut' }, 0.2);
+  tl.to('#f4-pv', { y: -24, duration: 3.1, ease: 'sine.inOut' }, 0.85);
+  // "तीस सवाल, एक मिनट चौदह सेकंड में तैयार।"
+  superIn(0.2, q('#f4-s'), 0.12);
+  countUp(0.2, q('#f4-n'), 0, 30, 0.75);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

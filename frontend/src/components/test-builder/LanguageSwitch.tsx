@@ -85,24 +85,42 @@ export function LanguageSwitch({ value, onChange }: { value: string; onChange: (
                     </PopoverTrigger>
                 </div>
             </PopoverAnchor>
-            <PopoverContent
-                align="end"
-                sideOffset={8}
-                collisionPadding={12}
-                onOpenAutoFocus={e => {
-                    // On phones, focusing the search would throw up the keyboard over the list.
-                    if (window.matchMedia?.('(pointer: coarse)').matches) e.preventDefault();
-                }}
-                className={cn(
-                    'flex w-[min(600px,calc(100vw-24px))] max-h-[min(540px,var(--radix-popover-content-available-height))] flex-col overflow-hidden',
-                    'rounded-[18px] border-0 bg-white/95 p-0 text-slate-900 backdrop-blur-xl',
-                    'shadow-[0_22px_60px_-14px_rgba(15,23,42,0.38),0_0_0_0.5px_rgba(15,23,42,0.14)]',
-                    'origin-[var(--radix-popover-content-transform-origin)] data-[state=open]:duration-200',
-                )}
-            >
-                <LanguageMenu current={second?.code ?? null} onPick={pick} />
-            </PopoverContent>
+            <LanguageMenuContent current={second?.code ?? null} onPick={pick} />
         </Popover>
+    );
+}
+
+/**
+ * The menu as a popover body, for any trigger inside a <Popover>. `typing` (the builder)
+ * marks keyboard-only languages and explains English-letter typing; the AI import's
+ * output-language picker turns that off, since the AI writes the text itself.
+ */
+export function LanguageMenuContent({
+    current, onPick, typing = true, align = 'end',
+}: {
+    current: string | null;
+    onPick: (code: string) => void;
+    typing?: boolean;
+    align?: 'start' | 'center' | 'end';
+}) {
+    return (
+        <PopoverContent
+            align={align}
+            sideOffset={8}
+            collisionPadding={12}
+            onOpenAutoFocus={e => {
+                // On phones, focusing the search would throw up the keyboard over the list.
+                if (window.matchMedia?.('(pointer: coarse)').matches) e.preventDefault();
+            }}
+            className={cn(
+                'flex w-[min(600px,calc(100vw-24px))] max-h-[min(540px,var(--radix-popover-content-available-height))] flex-col overflow-hidden',
+                'rounded-[18px] border-0 bg-white/95 p-0 text-slate-900 backdrop-blur-xl',
+                'shadow-[0_22px_60px_-14px_rgba(15,23,42,0.38),0_0_0_0.5px_rgba(15,23,42,0.14)]',
+                'origin-[var(--radix-popover-content-transform-origin)] data-[state=open]:duration-200',
+            )}
+        >
+            <LanguageMenu current={current} onPick={onPick} typing={typing} />
+        </PopoverContent>
     );
 }
 
@@ -115,7 +133,7 @@ const KeyboardMark = ({ small }: { small?: boolean }) => (
 
 /* ── the menu: search, the local languages, then every language ─────────────── */
 
-function LanguageMenu({ current, onPick }: { current: string | null; onPick: (code: string) => void }) {
+function LanguageMenu({ current, onPick, typing }: { current: string | null; onPick: (code: string) => void; typing: boolean }) {
     const { codes, place } = useLanguageSuggestions();
     const [query, setQuery] = useState('');
     const listRef = useRef<HTMLDivElement>(null);
@@ -197,7 +215,7 @@ function LanguageMenu({ current, onPick }: { current: string | null; onPick: (co
                                     </span>
                                     {current === l.code
                                         ? <Check className="h-4 w-4 shrink-0 text-sky-600" strokeWidth={3} />
-                                        : needsKeyboard(l) && <KeyboardMark />}
+                                        : typing && needsKeyboard(l) && <KeyboardMark />}
                                 </button>
                             ))}
                         </div>
@@ -220,7 +238,7 @@ function LanguageMenu({ current, onPick }: { current: string | null; onPick: (co
                                         data-lang-item
                                         onClick={() => onPick(l.code)}
                                         aria-pressed={selected}
-                                        title={l.itc ? `${l.name} — type in English letters` : needsKeyboard(l) ? `${l.name} — type with a ${l.name} keyboard` : l.name}
+                                        title={!typing ? l.name : l.itc ? `${l.name} — type in English letters` : needsKeyboard(l) ? `${l.name} — type with a ${l.name} keyboard` : l.name}
                                         className={cn(
                                             'flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition-colors',
                                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
@@ -233,7 +251,7 @@ function LanguageMenu({ current, onPick }: { current: string | null; onPick: (co
                                         </span>
                                         {selected
                                             ? <Check className="h-3.5 w-3.5 shrink-0 text-sky-600" strokeWidth={3} />
-                                            : needsKeyboard(l) && <KeyboardMark small />}
+                                            : typing && needsKeyboard(l) && <KeyboardMark small />}
                                     </button>
                                 );
                             })}
@@ -244,10 +262,12 @@ function LanguageMenu({ current, onPick }: { current: string | null; onPick: (co
                 </section>
             </div>
 
-            <p className="flex items-start gap-1.5 border-t border-slate-900/[0.07] bg-slate-50/80 px-3.5 py-2 text-[11.5px] leading-snug text-slate-500">
-                <Keyboard className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span>Marked languages need their own keyboard. For the rest, type in English letters — हिंदी, العربية, 中文 and others appear when you press space.</span>
-            </p>
+            {typing && (
+                <p className="flex items-start gap-1.5 border-t border-slate-900/[0.07] bg-slate-50/80 px-3.5 py-2 text-[11.5px] leading-snug text-slate-500">
+                    <Keyboard className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <span>Marked languages need their own keyboard. For the rest, type in English letters — हिंदी, العربية, 中文 and others appear when you press space.</span>
+                </p>
+            )}
         </>
     );
 }
