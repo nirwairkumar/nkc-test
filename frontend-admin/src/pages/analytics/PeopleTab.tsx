@@ -105,6 +105,9 @@ function visitorName(r: { user_name?: string | null; user_id?: string | null; ci
 
 function VisitRow({ r, onClick }: { r: SessionRow; onClick: () => void }) {
     const source = r.referrer_host || r.utm_source;
+    // Signed in → counted per account (all their browsers); otherwise per browser.
+    const isNew = r.is_new_person ?? r.is_new_visitor;
+    const visits = r.person_visits ?? r.visitor_sessions;
     return (
         <li>
             <button type="button" onClick={onClick} className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none">
@@ -112,8 +115,8 @@ function VisitRow({ r, onClick }: { r: SessionRow; onClick: () => void }) {
                 <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                         <span className="truncate text-[14px] font-semibold text-slate-900">{visitorName(r)}</span>
-                        {r.is_new_visitor && <Chip tone="emerald">New</Chip>}
-                        {!r.is_new_visitor && r.visitor_sessions > 1 && <Chip title="Visits by this browser">{r.visitor_sessions} visits</Chip>}
+                        {isNew && <Chip tone="emerald">New</Chip>}
+                        {!isNew && visits > 1 && <Chip>{visits} visits</Chip>}
                         {r.is_internal && <Chip tone="violet">Team</Chip>}
                         {r.is_bot && <Chip tone="amber" title={r.bot_reason || undefined}>Bot</Chip>}
                     </span>

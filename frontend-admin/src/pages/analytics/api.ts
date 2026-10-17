@@ -153,6 +153,9 @@ export interface SessionRow {
     landing_type: string;
     visitor_sessions: number;
     visitor_first_seen_at: string;
+    /** Per account when signed in, per browser otherwise. Absent until the 2026-10-18 SQL is applied. */
+    person_visits?: number;
+    is_new_person?: boolean;
     user_name: string | null;
     user_email: string | null;
     user_designation: string | null;
