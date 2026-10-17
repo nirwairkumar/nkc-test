@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
     AlertTriangle, BarChart3, CalendarClock, Copy, KeyRound, Link as LinkIcon, MoreHorizontal, Pencil, FileText,
-    Settings, Share2, Square,
+    Send, Settings, Share2, ShieldCheck, Square,
 } from 'lucide-react';
 import JoinCodeLine from '@/components/exams/JoinCodeLine';
+import LiveExamCoach from '@/components/exams/LiveExamCoach';
 import { toast } from 'sonner';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -26,7 +27,12 @@ interface LiveNowSectionProps {
     onStop: (test: any) => void;
     /** Give this live exam a 6-digit code for testoza.com/join. */
     onGetCode?: (test: any) => void;
+    /** Go-live tips on a just-started exam (see LiveExamCoach); null hides them. */
+    coach?: LiveCoach | null;
+    onCoachChange?: (next: LiveCoach | null) => void;
 }
+
+export type LiveCoach = { testId: string; step: 'settings' | 'share' };
 
 async function copyLink(test: any) {
     const ok = await copyText(getExamUrl(test));
@@ -37,6 +43,7 @@ async function copyLink(test: any) {
 /** Exams running right now and the ones coming up — the first thing a teacher checks on exam day. */
 export default function LiveNowSection({
     live, upcoming, updatedAt, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop, onGetCode,
+    coach, onCoachChange,
 }: LiveNowSectionProps) {
     if (live.length === 0 && upcoming.length === 0) return null;
 
@@ -65,6 +72,8 @@ export default function LiveNowSection({
                                 onShare={onShare}
                                 onStop={onStop}
                                 onGetCode={onGetCode}
+                                coachStep={coach?.testId === exam.test.id ? coach.step : null}
+                                onCoachChange={onCoachChange}
                             />
                         ))}
                     </div>
@@ -117,12 +126,22 @@ export default function LiveNowSection({
 }
 
 function LiveExamCard({
-    exam, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop, onGetCode,
-}: { exam: LiveExam; now: Date } & Omit<LiveNowSectionProps, 'live' | 'upcoming' | 'updatedAt' | 'now'>) {
+    exam, now, onResults, onSettings, onEdit, onSolutions, onShare, onStop, onGetCode, coachStep, onCoachChange,
+}: { exam: LiveExam; now: Date; coachStep: LiveCoach['step'] | null }
+    & Omit<LiveNowSectionProps, 'live' | 'upcoming' | 'updatedAt' | 'now' | 'coach'>) {
     const { test, writingNow, submitted, startedAt, endsAt, proctoringOff } = exam;
     const joinCode: string | undefined = test.settings?.conduct_exam?.join_code;
     const url = getExamUrl(test);
     const questions = test.total_questions || 0;
+
+    // Settings is the second pill: the step-1 tip lines up with the row, its arrow measured to the button.
+    const settingsBtn = useRef<HTMLButtonElement>(null);
+    const [settingsArrow, setSettingsArrow] = useState(140);
+    useLayoutEffect(() => {
+        const b = settingsBtn.current;
+        if (coachStep === 'settings' && b) setSettingsArrow(b.offsetLeft + b.offsetWidth / 2);
+    }, [coachStep]);
+    const doneSharing = () => { if (coachStep === 'share') onCoachChange?.(null); };
 
     const timing = [
         startedAt ? `Started ${timeOfDay(startedAt)}` : null,
@@ -130,7 +149,7 @@ function LiveExamCard({
     ].filter(Boolean).join(' · ');
 
     return (
-        <article className="overflow-hidden rounded-2xl bg-white ring-1 ring-emerald-600/20 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-18px_rgba(5,150,105,0.45)]">
+        <article className="rounded-2xl bg-white ring-1 ring-emerald-600/20 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-18px_rgba(5,150,105,0.45)]">
             <div className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -187,7 +206,7 @@ function LiveExamCard({
 
                 {/* Exam link */}
                 <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
-                <div className="flex items-center gap-2">
+                <div className="relative flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
                         <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
                         <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={url}>
@@ -195,8 +214,8 @@ function LiveExamCard({
                         </span>
                         <button
                             type="button"
-                            onClick={() => copyLink(test)}
-                            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm ring-1 ring-slate-900/5 transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer"
+                            onClick={() => { copyLink(test); doneSharing(); }}
+                            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
                         >
                             <Copy className="h-3.5 w-3.5" /> Copy
                         </button>
@@ -207,19 +226,50 @@ function LiveExamCard({
                         rel="noopener noreferrer"
                         aria-label="Send on WhatsApp"
                         title="Send on WhatsApp"
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97]"
+                        onClick={doneSharing}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97] ${coachStep === 'share' ? 'ring-2 ring-sky-500/60 ring-offset-2' : ''}`}
                     >
                         <WhatsAppIcon className="h-5 w-5" />
                     </a>
+                    {coachStep === 'share' && (
+                        <LiveExamCoach
+                            step={2}
+                            icon={<Send className="h-[18px] w-[18px]" />}
+                            title="Send it to your candidates"
+                            body={`Copy the link or send it on WhatsApp to your class group. Candidates open it, ${test.settings?.login_required ? 'sign in' : 'type their name'} and start. No app to install.`}
+                            placement="below"
+                            align="end"
+                            arrowAt={48}
+                            onDismiss={() => onCoachChange?.(null)}
+                        />
+                    )}
                 </div>
                 {joinCode && <JoinCodeLine code={joinCode} />}
 
                 {/* Actions */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="relative mt-3 flex flex-wrap items-center gap-2">
+                    {coachStep === 'settings' && (
+                        <LiveExamCoach
+                            step={1}
+                            icon={<ShieldCheck className="h-[18px] w-[18px]" />}
+                            title="Set up the exam room"
+                            body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
+                            placement="above"
+                            align="start"
+                            arrowAt={settingsArrow}
+                            action={{ label: 'Open settings', onClick: () => onSettings(test) }}
+                            onDismiss={() => onCoachChange?.({ testId: test.id, step: 'share' })}
+                        />
+                    )}
                     <button type="button" className={PILL_BTN} onClick={() => onResults(test)}>
                         <BarChart3 className="h-4 w-4 text-sky-600" /> Results
                     </button>
-                    <button type="button" className={PILL_BTN} onClick={() => onSettings(test)}>
+                    <button
+                        ref={settingsBtn}
+                        type="button"
+                        className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
+                        onClick={() => onSettings(test)}
+                    >
                         <Settings className="h-4 w-4 text-sky-600" /> Settings
                     </button>
                     {proctoringOff && (

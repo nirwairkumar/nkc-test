@@ -25,7 +25,7 @@ import {
 
 import DashboardHeader from './DashboardHeader';
 import FirstExamChecklist from './FirstExamChecklist';
-import LiveNowSection from './LiveNowSection';
+import LiveNowSection, { type LiveCoach } from './LiveNowSection';
 import LatestResultCard from './LatestResultCard';
 import RecentResultsCard from './RecentResultsCard';
 import ContinueWorking from './ContinueWorking';
@@ -77,6 +77,8 @@ export default function TeacherDashboard() {
     const [conductTarget, setConductTarget] = useState<any>(null);
     const [conductLoading, setConductLoading] = useState(false);
     const [settingsTarget, setSettingsTarget] = useState<any>(null);
+    // Tips on a just-started exam: turn on anti-cheating, then send the link. Stay until acted on or closed.
+    const [liveCoach, setLiveCoach] = useState<LiveCoach | null>(null);
     const [resultsTarget, setResultsTarget] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const [stopTarget, setStopTarget] = useState<any>(null);
@@ -278,7 +280,8 @@ export default function TeacherDashboard() {
             return;
         }
         setConductTarget(null);
-        toast.success('Exam is live. Send the link to your candidates.');
+        toast.success('Exam is live.');
+        setLiveCoach({ testId: test.id, step: 'settings' });
         window.setTimeout(() => document.getElementById('live-now-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
     };
 
@@ -473,6 +476,8 @@ export default function TeacherDashboard() {
                 onShare={shareTest}
                 onStop={setStopTarget}
                 onGetCode={getJoinCode}
+                coach={settingsTarget ? null : liveCoach}
+                onCoachChange={setLiveCoach}
             />
 
             {examSessions && (checklist.hasTest || examSessions.length > 0) && (
@@ -568,7 +573,11 @@ export default function TeacherDashboard() {
             {settingsTarget && (
                 <TestSettingsPanel
                     test={settingsTarget}
-                    onClose={() => setSettingsTarget(null)}
+                    onClose={() => {
+                        // Done with Settings on a just-started exam → next tip: send the link.
+                        setLiveCoach(c => (c?.step === 'settings' && c.testId === settingsTarget.id ? { ...c, step: 'share' } : c));
+                        setSettingsTarget(null);
+                    }}
                     onUpdate={(updated) => {
                         if (updated) replaceTest(updated.id, updated);
                         else loadTests();
