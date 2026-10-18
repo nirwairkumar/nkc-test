@@ -134,12 +134,13 @@ function LiveExamCard({
     const url = getExamUrl(test);
     const questions = test.total_questions || 0;
 
-    // Settings is the second pill: the step-1 tip lines up with the row, its arrow measured to the button.
-    const settingsBtn = useRef<HTMLButtonElement>(null);
-    const [settingsArrow, setSettingsArrow] = useState(140);
+    // Settings is the second pill: on phones the step-1 tip drops below it and is pulled back
+    // to the start of the row, so it doesn't run off the right of the screen.
+    const settingsWrap = useRef<HTMLDivElement>(null);
+    const [settingsShift, setSettingsShift] = useState(0);
     useLayoutEffect(() => {
-        const b = settingsBtn.current;
-        if (coachStep === 'settings' && b) setSettingsArrow(b.offsetLeft + b.offsetWidth / 2);
+        const w = settingsWrap.current;
+        if (coachStep === 'settings' && w) setSettingsShift(w.offsetLeft);
     }, [coachStep]);
     const doneSharing = () => { if (coachStep === 'share') onCoachChange?.(null); };
 
@@ -212,13 +213,27 @@ function LiveExamCard({
                         <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={url}>
                             {url.replace(/^https?:\/\//, '')}
                         </span>
-                        <button
-                            type="button"
-                            onClick={() => { copyLink(test); doneSharing(); }}
-                            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
-                        >
-                            <Copy className="h-3.5 w-3.5" /> Copy
-                        </button>
+                        <div className="relative shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => { copyLink(test); doneSharing(); }}
+                                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
+                            >
+                                <Copy className="h-3.5 w-3.5" /> Copy
+                            </button>
+                            {/* Points at Copy; the card's right edge lines up with WhatsApp's (6px pill padding + 8px gap + 44px button). */}
+                            {coachStep === 'share' && (
+                                <LiveExamCoach
+                                    step={2}
+                                    icon={<Send className="h-[18px] w-[18px]" />}
+                                    title="Send it to your candidates"
+                                    body={`Copy the link or send it on WhatsApp to your class group. Candidates open it, ${test.settings?.login_required ? 'sign in' : 'type their name'} and start. No app to install.`}
+                                    placement="below"
+                                    cardClassName="left-auto -right-[58px]"
+                                    onDismiss={() => onCoachChange?.(null)}
+                                />
+                            )}
+                        </div>
                     </div>
                     <a
                         href={examWhatsAppUrl(test)}
@@ -231,47 +246,34 @@ function LiveExamCard({
                     >
                         <WhatsAppIcon className="h-5 w-5" />
                     </a>
-                    {coachStep === 'share' && (
-                        <LiveExamCoach
-                            step={2}
-                            icon={<Send className="h-[18px] w-[18px]" />}
-                            title="Send it to your candidates"
-                            body={`Copy the link or send it on WhatsApp to your class group. Candidates open it, ${test.settings?.login_required ? 'sign in' : 'type their name'} and start. No app to install.`}
-                            placement="below"
-                            align="end"
-                            arrowAt={48}
-                            onDismiss={() => onCoachChange?.(null)}
-                        />
-                    )}
                 </div>
                 {joinCode && <JoinCodeLine code={joinCode} />}
 
                 {/* Actions */}
                 <div className="relative mt-3 flex flex-wrap items-center gap-2">
-                    {coachStep === 'settings' && (
-                        <LiveExamCoach
-                            step={1}
-                            icon={<ShieldCheck className="h-[18px] w-[18px]" />}
-                            title="Set up the exam room"
-                            body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
-                            placement="above"
-                            align="start"
-                            arrowAt={settingsArrow}
-                            action={{ label: 'Open settings', onClick: () => onSettings(test) }}
-                            onDismiss={() => onCoachChange?.({ testId: test.id, step: 'share' })}
-                        />
-                    )}
                     <button type="button" className={PILL_BTN} onClick={() => onResults(test)}>
                         <BarChart3 className="h-4 w-4 text-sky-600" /> Results
                     </button>
-                    <button
-                        ref={settingsBtn}
-                        type="button"
-                        className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
-                        onClick={() => onSettings(test)}
-                    >
-                        <Settings className="h-4 w-4 text-sky-600" /> Settings
-                    </button>
+                    <div ref={settingsWrap} className="relative">
+                        <button
+                            type="button"
+                            className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
+                            onClick={() => onSettings(test)}
+                        >
+                            <Settings className="h-4 w-4 text-sky-600" /> Settings
+                        </button>
+                        {coachStep === 'settings' && (
+                            <LiveExamCoach
+                                step={1}
+                                icon={<ShieldCheck className="h-[18px] w-[18px]" />}
+                                title="Set up the exam room"
+                                body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
+                                placement="beside"
+                                phoneShift={settingsShift}
+                                onDismiss={() => onCoachChange?.({ testId: test.id, step: 'share' })}
+                            />
+                        )}
+                    </div>
                     {proctoringOff && (
                         <button
                             type="button"
