@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
+import { MATERIALS_ENABLED } from "@/lib/materialsFlag";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { TestProvider } from "@/contexts/TestContext";
@@ -380,9 +381,13 @@ const App = () => (
                     <Route
                       path="/materials"
                       element={
-                        <PrivateRoute>
-                          <MaterialsManager />
-                        </PrivateRoute>
+                        MATERIALS_ENABLED ? (
+                          <PrivateRoute>
+                            <MaterialsManager />
+                          </PrivateRoute>
+                        ) : (
+                          <Navigate to="/dashboard" replace />
+                        )
                       }
                     />
 

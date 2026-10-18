@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, FileText, Upload, ChevronRight, Activity, BookOpen, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MATERIALS_ENABLED } from '@/lib/materialsFlag';
 
 interface GlobalSearchModalProps {
     open: boolean;
@@ -31,7 +32,9 @@ export default function GlobalSearchModal({ open, onOpenChange, userTests = [] }
         { title: 'Type or paste questions', subtitle: 'Build a test with the maths keyboard', icon: Plus, action: () => navigate('/create-test'), color: 'text-sky-600 bg-sky-50' },
         { title: 'Combine two papers', subtitle: 'Paper I + Paper II with a break', icon: Layers, action: () => navigate('/create-combined-test'), color: 'text-amber-600 bg-amber-50' },
         { title: 'All results', subtitle: 'Every test your candidates have taken', icon: Activity, action: () => navigate('/all-submissions'), color: 'text-emerald-600 bg-emerald-50' },
-        { title: 'Class materials', subtitle: 'Notes and links for your batches', icon: BookOpen, action: () => navigate('/materials'), color: 'text-slate-600 bg-slate-100' },
+        ...(MATERIALS_ENABLED ? [
+            { title: 'Class materials', subtitle: 'Notes and links for your batches', icon: BookOpen, action: () => navigate('/materials'), color: 'text-slate-600 bg-slate-100' },
+        ] : []),
     ];
 
     const filteredTests = userTests.filter(t => t.title?.toLowerCase().includes(query.toLowerCase()));

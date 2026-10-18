@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { MATERIALS_ENABLED } from '@/lib/materialsFlag';
 
 interface AppSidebarProps {
     isCollapsed: boolean;
@@ -246,6 +247,11 @@ Item 2 & Value B & 200 \\\\
                 title: 'Materials',
                 path: '/materials',
                 icon: BookOpen,
+                ...(!MATERIALS_ENABLED ? {
+                    disabled: true,
+                    badge: 'SOON',
+                    badgeColor: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+                } : {}),
             }
         ] : []),
         ...(!isCreateTestPage ? [
@@ -365,15 +371,21 @@ Item 2 & Value B & 200 \\\\
                                 const active = isActive(item);
                                 const Icon = item.icon;
                                 const isAiItem = item.path === '/generate-with-ai';
+                                const disabled = 'disabled' in item && item.disabled;
 
                                 const content = (
                                     <div key={item.title} className="space-y-1">
                                         <button
-                                            onClick={() => handleItemClick(item.path)}
+                                            onClick={() => { if (!disabled) handleItemClick(item.path); }}
+                                            aria-disabled={disabled || undefined}
+                                            title={disabled ? `${item.title} — coming soon` : undefined}
                                             className={`
                                                 w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium
-                                                transition-all duration-200 group cursor-pointer text-left relative
-                                                ${active
+                                                transition-all duration-200 group text-left relative
+                                                ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+                                                ${disabled
+                                                    ? 'text-slate-500 dark:text-slate-500'
+                                                    : active
                                                     ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-md shadow-slate-900/10 dark:shadow-slate-100/10 font-semibold'
                                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60'
                                                 }
