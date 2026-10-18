@@ -3,8 +3,8 @@
  * Design + metric definitions: documentation/2026-09-26-analytics-v2.md
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ChevronRight, Database, History, RefreshCw } from 'lucide-react';
-import React, { Suspense, lazy, useState } from 'react';
+import { Database, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { insightsApi, NotInstalledError, type ContentKind, type Period, type Site } from './api';
 import { MiniBars } from './charts';
@@ -18,8 +18,6 @@ import TestsTab from './TestsTab';
 import TrafficTab from './TrafficTab';
 import VideoTab from './VideoTab';
 import { CARD, CountryCode, IosSheet, PILL_BTN, Segmented } from './ui';
-
-const LegacyAnalyticsPanel = lazy(() => import('../AdminAnalyticsPanel'));
 
 const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'video', 'people'] as const;
 type Tab = (typeof TABS)[number];
@@ -38,7 +36,6 @@ export default function AnalyticsPanel() {
     const [period, setPeriod] = usePersisted<Period>('tz_admin_analytics_period', '7d', PERIODS);
     const [site, setSite] = usePersisted<Site>('tz_admin_analytics_site', 'all', SITES);
     const [contentKind, setContentKind] = usePersisted<ContentKind>('tz_admin_analytics_content_kind', 'all', CONTENT_KINDS);
-    const [legacy, setLegacy] = useState(false);
     const [liveOpen, setLiveOpen] = useState(false);
     const [session, setSession] = useState<SessionMeta | null>(null);
     const [person, setPerson] = useState<{ visitor?: string | null; user?: string | null } | null>(null);
@@ -57,23 +54,6 @@ export default function AnalyticsPanel() {
         openPerson: (p) => { setSession(null); setPerson(p); },
         goTo: (t) => setTab(t),
     };
-
-    if (legacy) {
-        return (
-            <div className="space-y-4">
-                <button type="button" onClick={() => setLegacy(false)} className={PILL_BTN}>
-                    <ArrowLeft className="h-4 w-4" /> Back to Analytics
-                </button>
-                <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[13px] text-amber-900 ring-1 ring-amber-600/20">
-                    Legacy dashboard, kept for history (March–September 2026). Its visitor and time numbers are not reliable —
-                    one device fingerprint merged many people, and stay times were estimated. Use it for rough history only.
-                </div>
-                <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-slate-200/60" />}>
-                    <LegacyAnalyticsPanel />
-                </Suspense>
-            </div>
-        );
-    }
 
     const notInstalled = realtime.error instanceof NotInstalledError;
     const showSite = tab === 'overview' || tab === 'traffic' || tab === 'people';
@@ -114,7 +94,7 @@ export default function AnalyticsPanel() {
             </header>
 
             {notInstalled ? (
-                <SetupCard onLegacy={() => setLegacy(true)} />
+                <SetupCard />
             ) : (
                 <>
                     {/* ── Filters: one row above everything they scope ── */}
@@ -166,7 +146,7 @@ export default function AnalyticsPanel() {
                         />
                     </div>
 
-                    {tab === 'overview' && <OverviewTab period={period} site={site} nav={nav} onLegacy={() => setLegacy(true)} />}
+                    {tab === 'overview' && <OverviewTab period={period} site={site} nav={nav} />}
                     {tab === 'traffic' && <TrafficTab period={period} site={site} />}
                     {tab === 'growth' && <GrowthTab period={period} />}
                     {tab === 'tests' && <TestsTab period={period} onSeeCreated={() => { setContentKind('test'); setTab('content'); }} />}
@@ -226,7 +206,7 @@ function LiveList({ title, rows, empty }: { title: string; empty: string; rows: 
     );
 }
 
-function SetupCard({ onLegacy }: { onLegacy: () => void }) {
+function SetupCard() {
     const steps = [
         { t: 'Run the database migration', d: 'Supabase → SQL editor → paste supabase/migrations/20260926120000_analytics_v2.sql and run it.' },
         { t: 'Turn on city-level location', d: 'Cloudflare → testoza.com → Rules → Transform Rules → Managed Transforms → “Add visitor location headers”.' },
@@ -234,8 +214,7 @@ function SetupCard({ onLegacy }: { onLegacy: () => void }) {
         { t: 'Exclude your own devices', d: 'Sign in as admin on them, or open testoza.com/?tz_internal=1 once on each.' },
     ];
     return (
-        <div className="space-y-4">
-            <section className={cn(CARD, 'p-5 sm:p-6')}>
+        <section className={cn(CARD, 'p-5 sm:p-6')}>
                 <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-700 ring-1 ring-inset ring-sky-500/20">
                     <Database className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -256,12 +235,6 @@ function SetupCard({ onLegacy }: { onLegacy: () => void }) {
                     ))}
                 </ol>
             </section>
-            <button type="button" onClick={onLegacy} className={cn(CARD, 'flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50')}>
-                <History className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                <span className="flex-1 text-[14px] font-medium text-slate-800">Open the legacy dashboard meanwhile</span>
-                <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
-            </button>
-        </div>
     );
 }
 

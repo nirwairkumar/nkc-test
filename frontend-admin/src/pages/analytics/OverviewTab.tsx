@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ChevronRight, History, ShieldCheck } from 'lucide-react';
+import { ChevronRight, ShieldCheck } from 'lucide-react';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { Nav } from './AnalyticsPanel';
@@ -28,7 +28,7 @@ const METRICS: Record<Metric, { label: string; value: (p: SeriesPoint) => number
     tests_created: { label: 'Tests created', value: (p) => p.tests_created, format: num },
 };
 
-export default function OverviewTab({ period, site, nav, onLegacy }: { period: Period; site: Site; nav: Nav; onLegacy: () => void }) {
+export default function OverviewTab({ period, site, nav }: { period: Period; site: Site; nav: Nav }) {
     const [metric, setMetric] = useState<Metric>('visitors');
     const q = useQuery({
         queryKey: ['analytics', 'overview', period, site],
@@ -104,7 +104,7 @@ export default function OverviewTab({ period, site, nav, onLegacy }: { period: P
                 </div>
             </div>
 
-            <DataQuality onLegacy={onLegacy} />
+            <DataQuality />
         </div>
     );
 }
@@ -190,7 +190,7 @@ function MoreLink({ onClick }: { onClick: () => void }) {
     );
 }
 
-function DataQuality({ onLegacy }: { onLegacy: () => void }) {
+function DataQuality() {
     const { data } = useQuery({ queryKey: ['analytics', 'health'], queryFn: insightsApi.health, staleTime: 120_000 });
     if (!data) return null;
     return (
@@ -207,9 +207,6 @@ function DataQuality({ onLegacy }: { onLegacy: () => void }) {
                         </p>
                     </div>
                 </div>
-                <button type="button" onClick={onLegacy} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-200">
-                    <History className="h-3.5 w-3.5" /> Legacy data ({compact(data.legacy.page_views)} views)
-                </button>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Quality label="Bot visits filtered" value={num(data.bot_sessions_7d)} hint="last 7 days" />

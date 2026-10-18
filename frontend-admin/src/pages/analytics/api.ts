@@ -284,7 +284,6 @@ export interface Health {
     country_coverage_7d: number | null;
     city_coverage_7d: number | null;
     engagement_coverage_7d: number | null;
-    legacy: { page_views: number; first_at: string | null; last_at: string | null };
 }
 
 export type PeopleSegment = 'members' | 'educator' | 'student' | 'unset' | 'candidate' | 'team' | 'follow_up';
