@@ -10,7 +10,7 @@ import {
     BarChart2,
     BookOpen,
     History,
-    Book,
+    LifeBuoy,
     ClipboardList,
     PanelLeftClose,
     PanelLeft,
@@ -261,10 +261,12 @@ Item 2 & Value B & 200 \\\\
                 icon: History,
             }
         ] : []),
+        // Write to us, WhatsApp, User Guide, videos and FAQs (pages/HelpPage.tsx).
         {
-            title: 'User Guide',
-            path: '/user-guide',
-            icon: Book,
+            title: 'Help',
+            path: '/help',
+            icon: LifeBuoy,
+            matchPaths: ['/help'],
         },
     ];
 
@@ -282,7 +284,8 @@ Item 2 & Value B & 200 \\\\
     };
 
     const handleItemClick = (path: string) => {
-        navigate(path);
+        // Help sends the page they were on along with their message.
+        navigate(path, path === '/help' ? { state: { from: location.pathname } } : undefined);
         setMobileOpen(false);
     };
 

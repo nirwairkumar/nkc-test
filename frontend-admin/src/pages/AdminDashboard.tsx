@@ -5,8 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import AdminLoginPanel from './AdminLoginPanel';
@@ -27,12 +28,14 @@ import AdminAiAuditPanel from './AdminAiAuditPanel';
 import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
 import AdminNotificationsPanel from './AdminNotificationsPanel';
 import AdminTestingToolsPanel from './AdminTestingToolsPanel';
+import SupportPanel from './support/SupportPanel';
+import { supportApi } from './support/api';
 import { useNotifications } from '@/hooks/useNotifications';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
+type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
@@ -41,6 +44,14 @@ export default function AdminDashboard() {
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
     const [conductCount, setConductCount] = useState<number>(0);
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+    // Help messages still waiting for an answer (badge on Support).
+    const { data: supportWaiting = 0 } = useQuery({
+        queryKey: ['support', 'waiting'],
+        queryFn: async () => (await supportApi.list({ view: 'open', limit: 1 })).counts.open,
+        enabled: !!user && isAdmin,
+        refetchInterval: 60_000,
+        staleTime: 30_000,
+    });
 
     useEffect(() => {
         const loadInitialConductCount = async () => {
@@ -86,6 +97,7 @@ export default function AdminDashboard() {
             items: [
                 { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
                 { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+                { id: 'support' as const, label: 'Support', icon: LifeBuoy },
                 { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
                 { id: 'categories' as const, label: 'Categories', icon: BookOpen },
                 { id: 'users' as const, label: 'Users', icon: Users },
@@ -225,6 +237,13 @@ export default function AdminDashboard() {
                                             {unreadCount}
                                         </span>
                                     )}
+                                    {item.id === 'support' && supportWaiting > 0 && (
+                                        <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono ${
+                                            activeTab === 'support' ? 'bg-white/20 text-white border border-white/30' : 'bg-amber-500 text-white'
+                                        }`} title="Waiting for a reply">
+                                            {supportWaiting}
+                                        </span>
+                                    )}
                                     {item.id === 'activity' && (
                                         <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
                                             activeTab === 'activity'
@@ -262,6 +281,7 @@ export default function AdminDashboard() {
                     {activeTab === 'analytics' && <AnalyticsPanel />}
                     {activeTab === 'users' && <UsersPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
+                    {activeTab === 'support' && <SupportPanel />}
                     {activeTab === 'activity' && <ExamOpsPanel />}
                     {activeTab === 'tests' && <TestsPanel />}
                     {['categories', 'verified_creators', 'combined'].includes(activeTab) && (

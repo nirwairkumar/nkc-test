@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,7 @@ export default function AdminNotificationsPanel() {
         markAllAsRead,
         refetch
     } = useNotifications();
+    const [, setSearchParams] = useSearchParams();
 
     const [filterCategory, setFilterCategory] = useState<FilterCategory>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +142,13 @@ export default function AdminNotificationsPanel() {
     const handleNotificationClick = (n: Notification) => {
         if (!isRead(n)) {
             markAsRead(n.id);
+        }
+
+        // Help messages (backend services/support_mail.py) open in the Support tab.
+        const supportMatch = (n.link || '').match(/[?&]tab=support(?:&id=([\w-]+))?/);
+        if (supportMatch) {
+            setSearchParams(supportMatch[1] ? { tab: 'support', id: supportMatch[1] } : { tab: 'support' });
+            return;
         }
 
         const cat = getNotificationCategory(n);

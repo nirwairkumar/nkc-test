@@ -44,6 +44,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, Heart } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GUIDE_METAS } from '@/guides/meta';
+import { WHATSAPP_DISPLAY, whatsAppAppUrl, whatsAppGreeting, YOUTUBE_CHANNEL_URL } from '@/lib/helpContact';
 
 interface FooterLink {
     label: string;
@@ -282,6 +283,32 @@ export default function Footer() {
                                     className="text-xs font-medium text-sky-600 transition-colors hover:underline dark:text-sky-400"
                                 >
                                     linkedin.com/company/testoza
+                                </a>
+                            </dd>
+                        </div>
+                        <div className="flex flex-wrap items-baseline gap-x-1.5">
+                            <dt className="font-medium text-slate-900 dark:text-slate-200">WhatsApp:</dt>
+                            <dd>
+                                <a
+                                    href={whatsAppAppUrl(whatsAppGreeting())}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="tabular-nums text-slate-600 transition-colors hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
+                                >
+                                    {WHATSAPP_DISPLAY}
+                                </a>
+                            </dd>
+                        </div>
+                        <div className="flex flex-wrap items-baseline gap-x-1.5">
+                            <dt className="font-medium text-slate-900 dark:text-slate-200">YouTube:</dt>
+                            <dd>
+                                <a
+                                    href={YOUTUBE_CHANNEL_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-medium text-sky-600 transition-colors hover:underline dark:text-sky-400"
+                                >
+                                    @TestoZaOfficial
                                 </a>
                             </dd>
                         </div>

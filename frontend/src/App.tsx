@@ -84,6 +84,7 @@ const AllSubmissionsPage = safeLazy(() => import("./pages/AllSubmissionsPage"));
 const RewardsPage = safeLazy(() => import("./pages/RewardsPage"));
 const MaterialsManager = safeLazy(() => import("./pages/MaterialsManager"));
 const SupportPage = safeLazy(() => import("./pages/SupportPage"));
+const HelpPage = safeLazy(() => import("./pages/HelpPage"));
 const UserGuidePage = safeLazy(() => import("./pages/UserGuidePage"));
 const NotFound = safeLazy(() => import("./pages/NotFound"));
 const CreateTestPage = safeLazy(() => import("./pages/CreateTestPage"));
@@ -280,6 +281,7 @@ const App = () => (
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/support" element={<SupportPage />} />
+                    <Route path="/help" element={<HelpPage />} />
                     <Route path="/user-guide" element={<UserGuidePage />} />
                     <Route path="/user-guide/:slug" element={<UserGuidePage />} />
                     <Route path="/create-test" element={<CreateTestPage />} />
