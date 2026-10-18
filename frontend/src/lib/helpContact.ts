@@ -3,8 +3,10 @@
  * /support page and the footer all read from here. Change the number or hours here only.
  */
 
+// Owner's request: the number is never printed on the site. It lives only inside the
+// WhatsApp links and the QR code, so there is deliberately no display version here.
 export const WHATSAPP_NUMBER = '919263087676';
-export const WHATSAPP_DISPLAY = '+91 92630 87676';
+export const SUPPORT_EMAIL = 'support@testoza.com';
 export const SUPPORT_HOURS = '9 am – 9 pm IST';
 export const REPLY_PROMISE = 'A person replies, usually within a few hours.';
 

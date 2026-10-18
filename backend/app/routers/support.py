@@ -10,7 +10,7 @@ import base64
 import logging
 import re
 import uuid
-from app.utils.rate_limiter import check_support_rate_limit
+from app.utils.rate_limiter import check_support_rate_limit, check_support_reply_limit
 
 logger = logging.getLogger(__name__)
 
@@ -175,9 +175,68 @@ async def send_support_message(payload: SupportMessage, request: Request, db: Cl
     return {"success": True, "id": saved.get("id"), "email": email}
 
 
+# ── Conversation (support_replies, 20261018170000_support_threads.sql) ─────────
+
+def _threads(db: Client, message_ids: List[str]) -> Optional[Dict[str, List[Dict[str, Any]]]]:
+    """Each message's back-and-forth, oldest first. None when support_replies isn't there yet."""
+    if not message_ids:
+        return {}
+    try:
+        res = (db.table("support_replies").select("id, message_id, author, body, created_at")
+               .in_("message_id", message_ids).order("created_at").execute())
+    except Exception as err:
+        logger.warning("support_replies unavailable (run 20261018170000_support_threads.sql): %s", err)
+        return None
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for r in res.data or []:
+        out.setdefault(r["message_id"], []).append({k: r.get(k) for k in ("id", "author", "body", "created_at")})
+    return out
+
+
+def _attach_threads(db: Client, rows: List[Dict[str, Any]]) -> None:
+    threads = _threads(db, [r["id"] for r in rows if r.get("id")])
+    for r in rows:
+        if threads is not None:
+            r["thread"] = threads.get(r["id"], [])
+        elif r.get("reply"):
+            # Before the threads table: the single reply column is the whole conversation.
+            r["thread"] = [{"id": f"{r['id']}-reply", "author": "team", "body": r["reply"],
+                            "created_at": r.get("replied_at") or r.get("created_at")}]
+        else:
+            r["thread"] = []
+
+
+def _add_reply(db: Client, message_id: str, author: str, author_id: Optional[str], body: str) -> Dict[str, Any]:
+    """Append a turn to the conversation. Raises when support_replies is missing."""
+    res = db.table("support_replies").insert(
+        {"message_id": message_id, "author": author, "author_id": author_id, "body": body}
+    ).execute()
+    row = (res.data or [{}])[0]
+    return {k: row.get(k) for k in ("id", "author", "body", "created_at")}
+
+
+def _touch(db: Client, message_id: str, update: Dict[str, Any]) -> None:
+    """Update a message and move it to the top of the inbox."""
+    stamped = {**update, "last_activity_at": datetime.now(timezone.utc).isoformat()}
+    try:
+        db.table("support_messages").update(stamped).eq("id", message_id).execute()
+    except Exception as err:
+        if not _missing_column(err):
+            raise
+        db.table("support_messages").update(update).eq("id", message_id).execute()
+
+
+def _mark_team_notifications_read(db: Client, message_id: str) -> None:
+    """An answered message stops showing as unread in admin → Notifications."""
+    try:
+        db.table("notifications").update({"read": True, "is_read": True}).like("link", f"%id={message_id}%").execute()
+    except Exception as err:
+        logger.debug("could not mark support notifications read: %s", err)
+
+
 @router.get("/mine")
 async def my_support_messages(request: Request, db: Client = Depends(get_db)):
-    """The signed-in user's own messages, newest first, with our replies."""
+    """The signed-in user's own conversations, newest first."""
     user_id = verify_auth_token(request, db)
     table = db.table("support_messages")
     try:
@@ -188,7 +247,39 @@ async def my_support_messages(request: Request, db: Client = Depends(get_db)):
             raise HTTPException(status_code=500, detail="Couldn't load your messages.")
         res = (table.select("id, created_at, message, status")
                .eq("user_id", user_id).order("created_at", desc=True).limit(20).execute())
-    return {"messages": res.data or []}
+    rows = res.data or []
+    _attach_threads(db, rows)
+    return {"messages": rows}
+
+
+class SupportFollowup(BaseModel):
+    message: str
+
+
+@router.post("/messages/{message_id}/reply")
+async def user_followup(message_id: str, payload: SupportFollowup, request: Request, db: Client = Depends(get_db)):
+    """The writer answers back from their Help page; the message goes back to "waiting"."""
+    user_id = verify_auth_token(request, db)
+    check_support_reply_limit(user_id)
+    text = (payload.message or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Write a reply first.")
+    if len(text) > 5000:
+        raise HTTPException(status_code=400, detail="Please keep it under 5,000 characters.")
+
+    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
+    msg = (found.data or [None])[0]
+    if not msg or msg.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Message not found.")
+
+    try:
+        turn = _add_reply(db, message_id, "user", user_id, text)
+    except Exception as err:
+        logger.error("support follow-up not saved: %s", err)
+        raise HTTPException(status_code=503, detail="Couldn't send that. Please send it as a new message.")
+    _touch(db, message_id, {"status": "pending", "resolved_at": None, "resolved_by": None})
+    support_mail.on_user_followup_in_background(db, msg, text)
+    return {"success": True, "reply": turn}
 
 
 # ── Admin → Support ───────────────────────────────────────────────────────────
@@ -213,8 +304,16 @@ async def admin_support_messages(
     limit = max(1, min(limit, 100))
     offset = max(0, offset)
 
-    res = (_apply_view(db.table("support_messages").select("*", count="exact"), view)
-           .order("created_at", desc=True).range(offset, offset + limit - 1).execute())
+    def page(order_col: str):
+        return (_apply_view(db.table("support_messages").select("*", count="exact"), view)
+                .order(order_col, desc=True).range(offset, offset + limit - 1).execute())
+
+    try:
+        res = page("last_activity_at")  # whoever spoke last comes first
+    except Exception as err:
+        if not _missing_column(err):
+            raise
+        res = page("created_at")
     rows = res.data or []
 
     counts: Dict[str, int] = {}
@@ -222,6 +321,25 @@ async def admin_support_messages(
         head = _apply_view(db.table("support_messages").select("id", count="exact", head=True), v).execute()
         counts[v] = int(head.count or 0)
 
+    _enrich(db, rows)
+    return {"rows": rows, "total": int(res.count or 0), "counts": counts, "emails_on": support_mail.smtp_configured()}
+
+
+@router.get("/admin/messages/{message_id}")
+async def admin_support_message(message_id: str, request: Request, db: Client = Depends(get_db)):
+    """One conversation, for a notification that opens it directly."""
+    verify_is_admin(request, db)
+    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
+    if not found.data:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    rows = [found.data[0]]
+    _enrich(db, rows)
+    return {**rows[0], "emails_on": support_mail.smtp_configured()}
+
+
+def _enrich(db: Client, rows: List[Dict[str, Any]]) -> None:
+    """Screenshot link, the writer's account and the conversation, for admin."""
+    _attach_threads(db, rows)
     user_ids = list({r["user_id"] for r in rows if r.get("user_id")})
     profiles: Dict[str, Dict[str, Any]] = {}
     tests_by_user: Dict[str, int] = {}
@@ -247,8 +365,6 @@ async def admin_support_messages(
                 "tests": tests_by_user.get(uid, 0),
             }
 
-    return {"rows": rows, "total": int(res.count or 0), "counts": counts, "emails_on": support_mail.smtp_configured()}
-
 
 class SupportReply(BaseModel):
     reply: str
@@ -272,15 +388,24 @@ async def admin_reply_support_message(
     msg = found.data[0]
 
     now = datetime.now(timezone.utc).isoformat()
+    try:
+        turn = _add_reply(db, message_id, "team", admin_id, text)
+    except Exception as err:
+        # Before 20261018170000_support_threads.sql the reply column below is the record.
+        logger.warning("support_replies insert failed: %s", err)
+        turn = {"id": f"{message_id}-reply", "author": "team", "body": text, "created_at": now}
+
+    # `reply` keeps the latest answer for anything that still reads the single column.
     update: Dict[str, Any] = {"reply": text, "replied_at": now, "status": "resolved" if payload.resolve else "replied"}
     if payload.resolve:
         update.update({"resolved_at": now, "resolved_by": admin_id})
     try:
-        db.table("support_messages").update(update).eq("id", message_id).execute()
+        _touch(db, message_id, update)
     except Exception as err:
         if _missing_column(err):
             raise HTTPException(status_code=409, detail="Run supabase/migrations/20261018150000_support_help.sql first.")
         raise HTTPException(status_code=500, detail="Couldn't save the reply.")
+    _mark_team_notifications_read(db, message_id)
 
     notified = False
     if msg.get("user_id"):
@@ -299,7 +424,7 @@ async def admin_reply_support_message(
     if emailed:
         support_mail.send_reply_in_background(msg["email"], msg.get("name"), msg.get("message") or "", text)
 
-    return {"success": True, "status": update["status"], "notified": notified, "emailed": emailed}
+    return {"success": True, "status": update["status"], "notified": notified, "emailed": emailed, "reply": turn}
 
 
 class SupportStatus(BaseModel):
@@ -322,6 +447,8 @@ async def admin_set_support_status(
     res = db.table("support_messages").update(update).eq("id", message_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Message not found.")
+    if resolved:
+        _mark_team_notifications_read(db, message_id)
     return {"success": True, "status": payload.status}
 
 class ExitFeedbackCreate(BaseModel):

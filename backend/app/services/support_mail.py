@@ -1,17 +1,21 @@
 """
 Help messages: who hears about them, and what the emails say.
 
-A teacher writes from the Help page (app.testoza.com/help). Three things can follow:
+A teacher writes from the Help page (app.testoza.com/help); the team answers from admin
+(Support tab or Notifications); either side can write again. Each turn tells the other:
 
-  1. The team hears about it at once: an in-app notification for every admin, plus an
-     email to every admin address once SMTP is configured.
-  2. The teacher gets a short receipt: "we have it, here is when we reply".
-  3. When the team replies from admin → Support, the teacher gets the reply by email and
-     as an in-app notification that opens the Help page, where the reply also shows.
+  - New message or a teacher's follow-up → an in-app notification for every admin, plus
+    an email to every admin address once SMTP is configured.
+  - New message → a short receipt to the teacher ("we have it").
+  - Team reply → an in-app notification for the teacher (opens the Help page, where the
+    conversation lives) and an email.
 
-Until October 2026 messages went into support_messages and nobody was told. All of this
-is best-effort on a background thread: a mail or notification problem never fails the
-request, and the emails are skipped entirely until SMTP_PASSWORD is set.
+Emails to teachers come from the SMTP account with Reply-To support@testoza.com, so a
+reply by email lands in the support inbox, never in no-reply. The WhatsApp number is
+never printed (owner's request): emails link to WhatsApp instead.
+
+Everything here is best-effort on a background thread: a mail or notification problem
+never fails the request, and the emails are skipped until SMTP_PASSWORD is set.
 """
 
 import html
@@ -23,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 APP_ORIGIN = "https://app.testoza.com"
 ADMIN_ORIGIN = "https://admin.testoza.com"
-WHATSAPP_DISPLAY = "+91 92630 87676"
+SUPPORT_EMAIL = "support@testoza.com"
 WHATSAPP_LINK = "https://wa.me/919263087676"
 
 TOPIC_LABELS: Dict[str, str] = {
@@ -52,13 +56,13 @@ def smtp_configured() -> bool:
     return _smtp_ready() is not None
 
 
-def _send(to: str, subject: str, body: str) -> None:
+def _send(to: str, subject: str, body: str, reply_to: Optional[str] = None) -> None:
     cfg = _smtp_ready()
     if not cfg or not to:
         return
     from app.routers.email_broadcast import send_smtp_message
 
-    send_smtp_message(cfg, cfg["user"], cfg.get("from_name") or "TestoZa", to, subject, body)
+    send_smtp_message(cfg, cfg["user"], "TestoZa Support", to, subject, body, reply_to=reply_to)
 
 
 def _paragraphs(text: str) -> str:
@@ -76,7 +80,7 @@ def _shell(inner: str) -> str:
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;">
 {inner}
   </div>
-  <p style="max-width:560px;margin:14px auto 0;font-size:12px;color:#94a3b8;text-align:center;">TestoZa · testoza.com</p>
+  <p style="max-width:560px;margin:14px auto 0;font-size:12px;color:#94a3b8;text-align:center;">TestoZa · testoza.com · {SUPPORT_EMAIL}</p>
 </body></html>"""
 
 
@@ -87,12 +91,34 @@ def _quote(text: str) -> str:
     )
 
 
+def _button(href: str, label: str, color: str = "#0284c7") -> str:
+    return (
+        f'<a href="{href}" style="display:inline-block;background:{color};color:#ffffff;text-decoration:none;'
+        f'font-weight:600;font-size:15px;padding:12px 20px;border-radius:12px;">{label}</a>'
+    )
+
+
+_FOOTNOTE = (
+    '<p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#64748b;">'
+    "Reply to this email, write back from your Help page, or "
+    f'<a href="{WHATSAPP_LINK}" style="color:#0284c7;">chat with us on WhatsApp</a>.</p>'
+)
+
+
 # ── Email bodies (pure, so they can be tested without SMTP) ─────────────────────
 
-def build_team_alert(msg: Dict[str, Any]) -> Dict[str, str]:
+def build_team_alert(msg: Dict[str, Any], followup: Optional[str] = None) -> Dict[str, str]:
+    """To admins: a new message, or (followup=text) the teacher wrote again."""
     topic = TOPIC_LABELS.get(msg.get("topic") or "", "")
     who = msg.get("name") or msg.get("email") or "Someone"
-    subject = f"Help: {topic + ' · ' if topic else ''}{who}"
+    if followup is not None:
+        subject = f"Help: {who} replied"
+        lead = "Wrote again"
+        body = _quote(followup)
+    else:
+        subject = f"Help: {topic + ' · ' if topic else ''}{who}"
+        lead = "New help message"
+        body = _quote(msg.get("message") or "")
     ctx = msg.get("context") or {}
     rows = [
         ("From", f"{html.escape(who)} &lt;{html.escape(msg.get('email') or '')}&gt;"),
@@ -107,10 +133,10 @@ def build_team_alert(msg: Dict[str, Any]) -> Dict[str, str]:
         f'<td style="padding:3px 0;font-size:13px;">{v}</td></tr>'
         for k, v in rows if v
     )
-    inner = f"""    <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0284c7;">New help message</p>
-    {_quote(msg.get("message") or "")}
+    inner = f"""    <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0284c7;">{lead}</p>
+    {body}
     <table style="border-collapse:collapse;margin:0 0 22px;">{table}</table>
-    <a href="{admin_link(msg.get('id') or '')}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 20px;border-radius:12px;">Reply in admin</a>"""
+    {_button(admin_link(msg.get('id') or ''), 'Reply in admin', '#0f172a')}"""
     return {"subject": subject, "html": _shell(inner)}
 
 
@@ -122,7 +148,7 @@ def build_receipt(name: Optional[str], message: str) -> Dict[str, str]:
     {_quote(message)}
     <p style="margin:0;font-size:14px;line-height:1.55;color:#475569;">
       Our reply comes to this email and shows on your <a href="{APP_ORIGIN}/help" style="color:#0284c7;">Help page</a>.
-      In a hurry? WhatsApp us on <a href="{WHATSAPP_LINK}" style="color:#0284c7;">{WHATSAPP_DISPLAY}</a>.
+      In a hurry? <a href="{WHATSAPP_LINK}" style="color:#0284c7;">Chat with us on WhatsApp</a>.
     </p>"""
     return {"subject": "We got your message · TestoZa", "html": _shell(inner)}
 
@@ -134,11 +160,8 @@ def build_reply(name: Optional[str], original: str, reply: str) -> Dict[str, str
     <p style="margin:0 0 20px;font-size:16px;line-height:1.6;">{_paragraphs(reply)}</p>
     <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">You wrote:</p>
     {_quote(original)}
-    <a href="{APP_ORIGIN}/help" style="display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 20px;border-radius:12px;">Write back</a>
-    <p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#64748b;">
-      This address doesn't receive mail. Write back from the Help page, or WhatsApp us on
-      <a href="{WHATSAPP_LINK}" style="color:#0284c7;">{WHATSAPP_DISPLAY}</a>.
-    </p>"""
+    {_button(f'{APP_ORIGIN}/help', 'Open the conversation')}
+    {_FOOTNOTE}"""
     return {"subject": "Re: your message to TestoZa", "html": _shell(inner)}
 
 
@@ -155,7 +178,7 @@ def _admin_targets(db) -> Dict[str, List[str]]:
     return {"emails": emails, "ids": ids}
 
 
-def _on_new_message(db, msg: Dict[str, Any]) -> None:
+def _tell_team(db, msg: Dict[str, Any], followup: Optional[str] = None) -> None:
     try:
         targets = _admin_targets(db)
     except Exception as err:
@@ -163,38 +186,46 @@ def _on_new_message(db, msg: Dict[str, Any]) -> None:
         return
 
     who = msg.get("name") or msg.get("email") or "Someone"
+    text = followup if followup is not None else (msg.get("message") or "")
     if targets["ids"]:
         try:
             db.table("notifications").insert([
                 {
                     "user_id": aid,
-                    "title": "New support message",
-                    "message": f"{who}: {(msg.get('message') or '')[:140]}",
+                    "title": f"{who} replied" if followup is not None else "New support message",
+                    "message": f"{who}: {text[:140]}",
                     "link": admin_link(msg.get("id") or ""),
+                    "sender_name": who,
+                    "sender_email": msg.get("email"),
                 } for aid in targets["ids"]
             ]).execute()
         except Exception as err:
             logger.warning("Help message %s: admin notification failed: %s", msg.get("id"), err)
 
     try:
-        alert = build_team_alert(msg)
+        alert = build_team_alert(msg, followup)
         for to in targets["emails"]:
-            _send(to, alert["subject"], alert["html"])
-        receipt = build_receipt(msg.get("name"), msg.get("message") or "")
-        _send(msg.get("email") or "", receipt["subject"], receipt["html"])
+            _send(to, alert["subject"], alert["html"], reply_to=msg.get("email"))
+        if followup is None:
+            receipt = build_receipt(msg.get("name"), msg.get("message") or "")
+            _send(msg.get("email") or "", receipt["subject"], receipt["html"], reply_to=SUPPORT_EMAIL)
     except Exception as err:
         logger.warning("Help message %s: email failed: %s", msg.get("id"), err)
 
 
 def on_new_message_in_background(db, msg: Dict[str, Any]) -> None:
     """Fire and forget. The message is already saved."""
-    threading.Thread(target=_on_new_message, args=(db, msg), daemon=True, name="help-message").start()
+    threading.Thread(target=_tell_team, args=(db, msg), daemon=True, name="help-message").start()
+
+
+def on_user_followup_in_background(db, msg: Dict[str, Any], text: str) -> None:
+    threading.Thread(target=_tell_team, args=(db, msg, text), daemon=True, name="help-followup").start()
 
 
 def _send_reply(to: str, name: Optional[str], original: str, reply: str) -> None:
     try:
         mail = build_reply(name, original, reply)
-        _send(to, mail["subject"], mail["html"])
+        _send(to, mail["subject"], mail["html"], reply_to=SUPPORT_EMAIL)
     except Exception as err:
         logger.warning("Help reply email to %s failed: %s", to, err)
 

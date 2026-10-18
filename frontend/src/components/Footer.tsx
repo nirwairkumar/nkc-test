@@ -44,7 +44,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, Heart } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GUIDE_METAS } from '@/guides/meta';
-import { WHATSAPP_DISPLAY, whatsAppAppUrl, whatsAppGreeting, YOUTUBE_CHANNEL_URL } from '@/lib/helpContact';
+import { whatsAppAppUrl, whatsAppGreeting, YOUTUBE_CHANNEL_URL } from '@/lib/helpContact';
 
 interface FooterLink {
     label: string;
@@ -293,9 +293,9 @@ export default function Footer() {
                                     href={whatsAppAppUrl(whatsAppGreeting())}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="tabular-nums text-slate-600 transition-colors hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
+                                    className="text-slate-600 transition-colors hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
                                 >
-                                    {WHATSAPP_DISPLAY}
+                                    Chat with us
                                 </a>
                             </dd>
                         </div>

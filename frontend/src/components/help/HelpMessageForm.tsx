@@ -11,6 +11,7 @@ import { CheckCircle2, ImagePlus, Loader2, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { sendSupportMessage } from '@/lib/supportApi';
 import { HELP_TOPICS, REPLY_PROMISE, type HelpTopic } from '@/lib/helpContact';
+import PhoneField from './PhoneField';
 
 const MAX_SIDE = 1600;
 
@@ -62,6 +63,7 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
     const [shot, setShot] = useState<string | null>(null);
     const [sending, setSending] = useState(false);
     const [sentTo, setSentTo] = useState<string | null>(null);
+    const [sentCount, setSentCount] = useState(0);
     const fileRef = useRef<HTMLInputElement>(null);
     const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
@@ -120,6 +122,7 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
             return;
         }
         setSentTo(data?.email || accountEmail || email.trim());
+        setSentCount(n => n + 1);
         setMessage('');
         setTopic(null);
         setShot(null);
@@ -135,7 +138,7 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
                 <p className="mt-3 text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Message sent</p>
                 <p className="mt-1 max-w-sm text-[14px] leading-relaxed text-slate-600">
                     We'll reply to <span className="font-medium text-slate-800">{sentTo}</span>. {REPLY_PROMISE}
-                    {signedIn && ' The reply also shows below.'}
+                    {signedIn && ' The reply also shows below, where you can write back.'}
                 </p>
                 <button
                     type="button"
@@ -237,17 +240,12 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
                 )}
             </div>
 
-            <label className="block">
-                <span className={LABEL}>WhatsApp number <span className="text-slate-400">(optional, if you'd like a reply there)</span></span>
-                <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    autoComplete="tel"
-                    placeholder="+91"
-                    className={`${FIELD} h-10 sm:max-w-[260px]`}
-                />
-            </label>
+            <div>
+                <label htmlFor="help-phone" className={LABEL}>
+                    WhatsApp number <span className="text-slate-400">(optional, if you'd like a reply there)</span>
+                </label>
+                <PhoneField id="help-phone" onChange={setPhone} resetKey={sentCount} />
+            </div>
 
             <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[12px] leading-relaxed text-slate-500">

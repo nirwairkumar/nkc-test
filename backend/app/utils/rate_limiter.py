@@ -289,6 +289,7 @@ anon_start_per_ip = RateLimiter(requests=300, window=3600, name="anon_start")
 write_per_user = RateLimiter(requests=120, window=60, name="write_user")
 upload_per_user = RateLimiter(requests=40, window=3600, name="upload_user")
 support_per_ip = RateLimiter(requests=10, window=3600, name="support_ip")
+support_reply_per_user = RateLimiter(requests=30, window=3600, name="support_reply")
 password_update_per_user = RateLimiter(requests=5, window=3600, name="pwd_update")
 
 # ── Exam sessions (/join) ─────────────────────────────────────────
@@ -361,3 +362,10 @@ async def check_support_rate_limit(request: Request):
     allowed, _, reset_in = support_per_ip.check(_get_client_ip(request))
     if not allowed:
         _reject(support_per_ip, reset_in, "Too many messages sent. Please try again later.")
+
+
+def check_support_reply_limit(user_id: str) -> None:
+    """Turns in a Help conversation: per signed-in user, so a staff room on one IP isn't blocked."""
+    allowed, _, reset_in = support_reply_per_user.check(user_id)
+    if not allowed:
+        _reject(support_reply_per_user, reset_in, "You're sending a lot of replies. Please wait a few minutes.")

@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import ConversationSheet, { STATUS_CHIP } from './support/ConversationSheet';
+import { supportApi } from './support/api';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import {
     Bell, Check, CheckCheck, Trash2, Search, Filter, RefreshCw,
     Mail, ExternalLink, LifeBuoy, Star, AlertTriangle, MessageSquare,
-    Clock, User, Phone, ArrowUpRight, CheckCircle2, XCircle, Info, Sparkles
+    Clock, User, Phone, ArrowUpRight, CheckCircle2, XCircle, Info, Sparkles, Reply
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -50,6 +52,13 @@ const getNotificationCategory = (n: Notification): 'support' | 'feedback' | 'rep
     return 'system';
 };
 
+/** The help message a notification is about: new links (?tab=support&id=…) and the old support://…&id=… ones. */
+const supportMessageId = (n: Notification): string | null => {
+    const link = n.link || '';
+    if (!link.includes('tab=support') && !link.startsWith('support://')) return null;
+    return link.match(/[?&]id=([0-9a-f-]{36})/i)?.[1] ?? null;
+};
+
 export default function AdminNotificationsPanel() {
     const {
         notifications,
@@ -61,7 +70,17 @@ export default function AdminNotificationsPanel() {
         markAllAsRead,
         refetch
     } = useNotifications();
-    const [, setSearchParams] = useSearchParams();
+    const [conversationId, setConversationId] = useState<string | null>(null);
+    // Status of each help conversation (Waiting / Replied / Resolved) for the rows.
+    const supportStatus = useQuery({
+        queryKey: ['support', 'list', 'all-for-notifications'],
+        queryFn: () => supportApi.list({ view: 'all', limit: 100 }),
+        staleTime: 20_000,
+    });
+    const supportById = useMemo(
+        () => new Map((supportStatus.data?.rows || []).map(r => [r.id, r] as const)),
+        [supportStatus.data],
+    );
 
     const [filterCategory, setFilterCategory] = useState<FilterCategory>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -99,9 +118,14 @@ export default function AdminNotificationsPanel() {
         let feedback = 0;
         let reports = 0;
 
+        const conversations = new Set<string>();
         notifications.forEach(n => {
             const cat = getNotificationCategory(n);
-            if (cat === 'support') support++;
+            const messageId = supportMessageId(n);
+            if (messageId) {
+                if (!conversations.has(messageId)) support++;
+                conversations.add(messageId);
+            } else if (cat === 'support') support++;
             else if (cat === 'feedback') feedback++;
             else if (cat === 'report') reports++;
         });
@@ -115,9 +139,33 @@ export default function AdminNotificationsPanel() {
         };
     }, [notifications, unreadCount]);
 
+    // One row per help conversation: a new message, the old duplicate alert and any
+    // "wrote again" notices for the same message collapse into the newest one.
+    const supportGroups = useMemo(() => {
+        const groups = new Map<string, Notification[]>();
+        notifications.forEach(n => {
+            const id = supportMessageId(n);
+            if (id) groups.set(id, [...(groups.get(id) || []), n]);
+        });
+        return groups;
+    }, [notifications]);
+
+    const openConversation = (messageId: string) => {
+        (supportGroups.get(messageId) || []).forEach(n => { if (!isRead(n)) markAsRead(n.id); });
+        setConversationId(messageId);
+    };
+
     // Filtered notifications
     const filteredNotifications = useMemo(() => {
+        const newest = new Map<string, string>();
+        supportGroups.forEach((group, id) => {
+            const top = [...group].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))[0];
+            newest.set(id, top.id);
+        });
         return notifications.filter(n => {
+            const messageId = supportMessageId(n);
+            if (messageId && newest.get(messageId) !== n.id) return false;
+
             // Category filter
             const cat = getNotificationCategory(n);
             if (filterCategory === 'unread' && isRead(n)) return false;
@@ -137,17 +185,17 @@ export default function AdminNotificationsPanel() {
 
             return true;
         });
-    }, [notifications, filterCategory, searchQuery]);
+    }, [notifications, supportGroups, filterCategory, searchQuery]);
 
     const handleNotificationClick = (n: Notification) => {
         if (!isRead(n)) {
             markAsRead(n.id);
         }
 
-        // Help messages (backend services/support_mail.py) open in the Support tab.
-        const supportMatch = (n.link || '').match(/[?&]tab=support(?:&id=([\w-]+))?/);
-        if (supportMatch) {
-            setSearchParams(supportMatch[1] ? { tab: 'support', id: supportMatch[1] } : { tab: 'support' });
+        // Help messages open their conversation right here, with the reply box.
+        const messageId = supportMessageId(n);
+        if (messageId) {
+            openConversation(messageId);
             return;
         }
 
@@ -388,7 +436,12 @@ export default function AdminNotificationsPanel() {
                 ) : (
                     filteredNotifications.map((n) => {
                         const cat = getNotificationCategory(n);
-                        const readStatus = isRead(n);
+                        const messageId = supportMessageId(n);
+                        const ticket = messageId ? supportById.get(messageId) : undefined;
+                        const ticketChip = ticket ? STATUS_CHIP[ticket.status || 'pending'] || STATUS_CHIP.pending : null;
+                        const readStatus = messageId
+                            ? (supportGroups.get(messageId) || [n]).every(isRead)
+                            : isRead(n);
 
                         return (
                             <div
@@ -430,6 +483,16 @@ export default function AdminNotificationsPanel() {
                                             }`}>
                                                 {cat === 'support' ? 'Support Ticket' : cat === 'feedback' ? 'Rating / Feedback' : cat === 'report' ? 'Issue Report' : 'System Notice'}
                                             </Badge>
+
+                                            {ticketChip && (
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset ${
+                                                    ticketChip.tone === 'amber' ? 'bg-amber-50 text-amber-800 ring-amber-600/20'
+                                                        : ticketChip.tone === 'sky' ? 'bg-sky-50 text-sky-700 ring-sky-600/15'
+                                                            : 'bg-emerald-50 text-emerald-700 ring-emerald-600/15'
+                                                }`}>
+                                                    {ticketChip.label}
+                                                </span>
+                                            )}
 
                                             {!readStatus && (
                                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full">
@@ -473,6 +536,15 @@ export default function AdminNotificationsPanel() {
 
                                 {/* Actions on Hover / Right Side */}
                                 <div className="flex items-center gap-1 shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+                                    {messageId && (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => openConversation(messageId)}
+                                            className="h-8 rounded-full bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700"
+                                        >
+                                            <Reply className="mr-1 h-3.5 w-3.5" /> Reply
+                                        </Button>
+                                    )}
                                     {!readStatus && (
                                         <Button
                                             variant="ghost"
@@ -720,6 +792,13 @@ export default function AdminNotificationsPanel() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Help conversation: read and reply without leaving Notifications */}
+            <ConversationSheet
+                messageId={conversationId}
+                preview={conversationId ? supportById.get(conversationId) : null}
+                onClose={() => { setConversationId(null); refetch(); }}
+            />
         </div>
     );
 }

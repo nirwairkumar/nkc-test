@@ -15,6 +15,14 @@ export interface SupportAccount {
     tests: number;
 }
 
+/** One turn after the first message: our answer or the writer's follow-up. */
+export interface SupportTurn {
+    id: string;
+    author: 'team' | 'user';
+    body: string;
+    created_at: string;
+}
+
 export interface SupportMessage {
     id: string;
     created_at: string;
@@ -32,7 +40,9 @@ export interface SupportMessage {
     reply?: string | null;
     replied_at?: string | null;
     resolved_at?: string | null;
+    last_activity_at?: string | null;
     account?: SupportAccount;
+    thread: SupportTurn[];
 }
 
 export interface SupportList {
@@ -46,6 +56,8 @@ export interface SupportList {
 export const supportApi = {
     list: async (p: { view: SupportView; limit?: number; offset?: number }): Promise<SupportList> =>
         (await apiClient.get('/support/admin/messages', { params: p })).data,
+    get: async (id: string): Promise<SupportMessage & { emails_on: boolean }> =>
+        (await apiClient.get(`/support/admin/messages/${id}`)).data,
     reply: async (id: string, reply: string, resolve: boolean) =>
         (await apiClient.post(`/support/admin/messages/${id}/reply`, { reply, resolve })).data as {
             status: SupportStatus; notified: boolean; emailed: boolean;

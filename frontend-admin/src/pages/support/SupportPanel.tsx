@@ -6,29 +6,21 @@
  * Reply here and the writer gets it on their Help page, as a notification, and by email
  * once SMTP is set. WhatsApp and email buttons are there for a faster personal answer.
  */
-import { keepPreviousData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, ChevronRight, ImageIcon, Inbox, Mail, MessageCircle, Phone, RotateCcw, Send } from 'lucide-react';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { CheckCircle2, ChevronRight, ImageIcon, Inbox, Mail, MessageSquare, Phone } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { initials, istDate, istDateTime, num, relative } from '../analytics/format';
+import { initials, num, relative } from '../analytics/format';
 import { ErrorState, usePersisted } from '../analytics/shared';
-import { CARD, Chip, Empty, GroupedList, IosSheet, KeyValue, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
-import { mailto } from '../users/roles';
-import { deviceSummary, supportApi, TOPIC_LABEL, whatsAppTo, type SupportMessage, type SupportView } from './api';
+import { CARD, Chip, Empty, GroupedList, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
+import { supportApi, TOPIC_LABEL, type SupportMessage, type SupportView } from './api';
+import ConversationSheet, { STATUS_CHIP } from './ConversationSheet';
 
 const VIEWS: readonly SupportView[] = ['open', 'replied', 'resolved', 'all'];
 const PAGE = 30;
-const SECTION = 'mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400';
 
-const STATUS_CHIP: Record<string, { label: string; tone: 'amber' | 'sky' | 'emerald' }> = {
-    pending: { label: 'Waiting', tone: 'amber' },
-    replied: { label: 'Replied', tone: 'sky' },
-    resolved: { label: 'Resolved', tone: 'emerald' },
-};
 
-const firstName = (m: SupportMessage) => (m.account?.full_name || m.name || '').trim().split(' ')[0] || 'there';
 
 export default function SupportPanel() {
     const [view, setView] = usePersisted<SupportView>('tz_admin_support_view', 'open', VIEWS);
@@ -126,7 +118,7 @@ export default function SupportPanel() {
                 </>
             )}
 
-            <MessageSheet message={open} onClose={close} />
+            <ConversationSheet messageId={openId} preview={open} onClose={close} />
         </div>
     );
 }
@@ -159,6 +151,7 @@ function Avatar({ m }: { m: SupportMessage }) {
 
 function Row({ m, onOpen }: { m: SupportMessage; onOpen: () => void }) {
     const s = STATUS_CHIP[m.status || 'pending'] || STATUS_CHIP.pending;
+    const last = m.thread?.[m.thread.length - 1];
     return (
         <li>
             <button type="button" onClick={onOpen}
@@ -171,174 +164,26 @@ function Row({ m, onOpen }: { m: SupportMessage; onOpen: () => void }) {
                         {m.topic && <Chip>{TOPIC_LABEL[m.topic] || m.topic}</Chip>}
                         {!m.user_id && <Chip title="Sent from the public /support page">Not signed in</Chip>}
                     </span>
-                    <span className="mt-1 line-clamp-2 block text-[13px] leading-relaxed text-slate-600">{m.message}</span>
+                    <span className="mt-1 line-clamp-2 block text-[13px] leading-relaxed text-slate-600">
+                        {last && last.author === 'user' ? <span className="font-medium text-slate-800">Wrote again: </span> : null}
+                        {last && last.author === 'user' ? last.body : m.message}
+                    </span>
                     <span className="mt-1 flex items-center gap-2 text-[12px] text-slate-400">
                         <span className="truncate">{m.email}</span>
                         {m.screenshot_url && <ImageIcon className="h-3.5 w-3.5 shrink-0" aria-label="Has a screenshot" />}
                         {m.phone && <Phone className="h-3.5 w-3.5 shrink-0" aria-label="Left a phone number" />}
+                        {m.thread?.length > 0 && (
+                            <span className="inline-flex shrink-0 items-center gap-0.5" title="Replies in this conversation">
+                                <MessageSquare className="h-3.5 w-3.5" /> {m.thread.length}
+                            </span>
+                        )}
                     </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="text-[12px] text-slate-500">{relative(m.created_at)}</span>
+                    <span className="text-[12px] text-slate-500">{relative(m.last_activity_at || m.created_at)}</span>
                     <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
                 </span>
             </button>
         </li>
-    );
-}
-
-function MessageSheet({ message, onClose }: { message: SupportMessage | null; onClose: () => void }) {
-    // Keep the last message on screen while the sheet animates closed.
-    const [kept, setKept] = useState<SupportMessage | null>(message);
-    useEffect(() => { if (message) setKept(message); }, [message]);
-    const m = message || kept;
-    const qc = useQueryClient();
-    const [reply, setReply] = useState('');
-    const [resolve, setResolve] = useState(true);
-    const [busy, setBusy] = useState(false);
-
-    useEffect(() => { setReply(''); setResolve(true); }, [m?.id]);
-
-    if (!m) return <IosSheet open={false} onOpenChange={() => onClose()} title="">{null}</IosSheet>;
-
-    const status = m.status || 'pending';
-    const s = STATUS_CHIP[status] || STATUS_CHIP.pending;
-    const refresh = () => qc.invalidateQueries({ queryKey: ['support'] });
-    const greeting = `Hi ${firstName(m)}, this is the TestoZa team about your message:\n"${m.message.slice(0, 120)}${m.message.length > 120 ? '…' : ''}"\n\n`;
-    const wa = m.phone ? whatsAppTo(m.phone, greeting) : null;
-
-    const send = async () => {
-        if (!reply.trim()) return;
-        setBusy(true);
-        try {
-            const res = await supportApi.reply(m.id, reply.trim(), resolve);
-            const where = [res.notified && 'on their Help page', res.emailed && 'by email'].filter(Boolean).join(' and ');
-            toast.success(where ? `Reply sent ${where}` : 'Reply saved. They aren\'t signed in and email is off, so also email or WhatsApp them.');
-            setReply('');
-            refresh();
-        } catch (err: any) {
-            toast.error(err?.response?.data?.detail || 'Couldn’t send the reply. Try again.');
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    const toggleResolved = async () => {
-        setBusy(true);
-        try {
-            await supportApi.setStatus(m.id, status === 'resolved' ? 'pending' : 'resolved');
-            toast.success(status === 'resolved' ? 'Reopened' : 'Marked resolved');
-            refresh();
-        } catch {
-            toast.error('Couldn’t update. Try again.');
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    return (
-        <IosSheet
-            open={!!message}
-            onOpenChange={(o) => { if (!o) onClose(); }}
-            title={m.account?.full_name || m.name}
-            subtitle={<>{istDateTime(m.created_at)} · {m.email}</>}
-            headerExtra={
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Chip tone={s.tone}>{s.label}</Chip>
-                    {m.topic && <Chip>{TOPIC_LABEL[m.topic] || m.topic}</Chip>}
-                </div>
-            }
-        >
-            <div className="space-y-5">
-                {/* What they wrote */}
-                <section>
-                    <p className={SECTION}>Message</p>
-                    <div className={cn(CARD, 'whitespace-pre-line px-4 py-3.5 text-[14px] leading-relaxed text-slate-800')}>{m.message}</div>
-                    {m.screenshot_url && (
-                        <a href={m.screenshot_url} target="_blank" rel="noopener noreferrer" className="mt-2 block overflow-hidden rounded-2xl ring-1 ring-slate-900/[0.08]">
-                            <img src={m.screenshot_url} alt="Screenshot they attached" className="max-h-[320px] w-full bg-white object-contain" />
-                        </a>
-                    )}
-                    {m.context?.screenshot === 'upload failed' && (
-                        <p className="mt-2 px-1 text-[12px] text-amber-700">They attached a screenshot but it failed to upload.</p>
-                    )}
-                </section>
-
-                {/* Answer */}
-                <section>
-                    <p className={SECTION}>Answer</p>
-                    <div className="flex flex-wrap gap-2">
-                        {wa && (
-                            <a href={wa} target="_blank" rel="noopener noreferrer"
-                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-[13px] font-semibold text-white hover:brightness-95">
-                                <MessageCircle className="h-4 w-4" /> WhatsApp {m.phone}
-                            </a>
-                        )}
-                        <a href={mailto(m.email, 'Re: your message to TestoZa', `Hi ${firstName(m)},\n\n`)} className={PILL_BTN}>
-                            <Mail className="h-4 w-4 text-sky-600" /> Email
-                        </a>
-                        <button type="button" onClick={toggleResolved} disabled={busy} className={PILL_BTN}>
-                            {status === 'resolved'
-                                ? <><RotateCcw className="h-4 w-4 text-slate-500" /> Reopen</>
-                                : <><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Mark resolved</>}
-                        </button>
-                    </div>
-
-                    {m.reply && (
-                        <div className="mt-3 rounded-2xl bg-sky-50/70 px-4 py-3 ring-1 ring-inset ring-sky-600/10">
-                            <p className="text-[12px] font-semibold text-sky-800">Our reply · {istDateTime(m.replied_at || m.created_at)}</p>
-                            <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-slate-800">{m.reply}</p>
-                        </div>
-                    )}
-
-                    <div className={cn(CARD, 'mt-3 p-3')}>
-                        <textarea
-                            value={reply}
-                            onChange={(e) => setReply(e.target.value)}
-                            rows={4}
-                            placeholder={m.reply ? 'Write a follow-up…' : `Hi ${firstName(m)}, …`}
-                            className="w-full resize-y rounded-xl bg-slate-100 px-3 py-2.5 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                        />
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-600">
-                                <input type="checkbox" checked={resolve} onChange={(e) => setResolve(e.target.checked)} className="h-4 w-4 accent-sky-600" />
-                                Mark resolved
-                            </label>
-                            <button type="button" onClick={send} disabled={busy || !reply.trim()}
-                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-sky-600 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-sky-700 disabled:opacity-50">
-                                <Send className="h-4 w-4" /> Send reply
-                            </button>
-                        </div>
-                        <p className="mt-2 text-[12px] leading-relaxed text-slate-500">
-                            {m.user_id
-                                ? 'They see it on their Help page and get a notification, plus an email when SMTP is on.'
-                                : 'Not signed in: they only get it by email (when SMTP is on). Email or WhatsApp them to be sure.'}
-                        </p>
-                    </div>
-                </section>
-
-                {/* Who and where */}
-                <section>
-                    <p className={SECTION}>Who and where</p>
-                    <GroupedList>
-                        <KeyValue label="Email">{m.email}</KeyValue>
-                        {m.phone && <KeyValue label="Phone">{m.phone}</KeyValue>}
-                        {m.account ? (
-                            <>
-                                {m.account.designation && <KeyValue label="Role">{m.account.designation}</KeyValue>}
-                                <KeyValue label="Tests made">{num(m.account.tests)}</KeyValue>
-                                {m.account.joined_at && <KeyValue label="Joined">{istDate(m.account.joined_at)}</KeyValue>}
-                            </>
-                        ) : (
-                            <KeyValue label="Account">Not signed in</KeyValue>
-                        )}
-                        {m.context?.from && <KeyValue label="Came from">{m.context.from}</KeyValue>}
-                        {m.user_agent && <KeyValue label="Device">{deviceSummary(m.user_agent)}</KeyValue>}
-                        {m.context?.viewport && <KeyValue label="Screen">{m.context.viewport.replace('x', ' × ')}</KeyValue>}
-                        {m.context?.language && <KeyValue label="Language">{m.context.language}</KeyValue>}
-                    </GroupedList>
-                </section>
-            </div>
-        </IosSheet>
     );
 }

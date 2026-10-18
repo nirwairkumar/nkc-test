@@ -42,13 +42,18 @@ def env(monkeypatch):
     db.tables["admins"] = [{"email": "owner@testoza.com"}]
     db.tables["support_messages"] = []
     db.tables["notifications"] = []
+    db.tables["support_replies"] = []
     uploads = {}
     db.storage = SimpleNamespace(from_=lambda _bucket: FakeBucket(uploads))
 
     monkeypatch.setattr(rate_limiter, "SHARED_ENABLED", False)
+    # Every test posts from the same test-client IP; start each with a clean allowance.
+    rate_limiter.support_per_ip.clients.clear()
+    rate_limiter.support_reply_per_user.clients.clear()
     monkeypatch.setattr(auth_core, "_admin_cache", {})
     # Run the "tell the team" step inline so the test can see it.
-    monkeypatch.setattr(support_mail, "on_new_message_in_background", support_mail._on_new_message)
+    monkeypatch.setattr(support_mail, "on_new_message_in_background", support_mail._tell_team)
+    monkeypatch.setattr(support_mail, "on_user_followup_in_background", support_mail._tell_team)
     monkeypatch.setattr(support_mail, "_smtp_ready", lambda: None)
     app.dependency_overrides[get_db] = lambda: db
     client = TestClient(app)
@@ -142,6 +147,7 @@ def test_reply_is_admin_only_and_reaches_the_writer(env):
 
     mine = env["client"].get("/api/support/mine", headers=_auth(TEACHER)).json()["messages"]
     assert mine[0]["reply"] == "Open My Tests → Results."
+    assert [(t["author"], t["body"]) for t in mine[0]["thread"]] == [("team", "Open My Tests → Results.")]
 
 
 def test_mine_shows_only_own_messages(env):
@@ -168,3 +174,38 @@ def test_emails_escape_user_text():
     reply = support_mail.build_reply("Asha Verma", "line one\nline two", "Fixed <now>")
     assert "Hi Asha," in reply["html"] and "line one<br>line two" in reply["html"]
     assert "Fixed &lt;now&gt;" in reply["html"]
+
+
+def test_conversation_back_and_forth(env):
+    client, db = env["client"], env["db"]
+    client.post("/api/support/message", json={"message": "PIN exam help"}, headers=_auth(TEACHER))
+    msg_id = db.tables["support_messages"][0]["id"]
+    client.post(f"/api/support/admin/messages/{msg_id}/reply", json={"reply": "Open Exams → New exam.", "resolve": True}, headers=_auth(ADMIN))
+    db.tables["notifications"].clear()
+
+    other = db.add_user("other-token", email="x@y.in")
+    assert other
+    stranger = client.post(f"/api/support/messages/{msg_id}/reply", json={"message": "me too"}, headers=_auth("other-token"))
+    assert stranger.status_code == 404
+
+    res = client.post(f"/api/support/messages/{msg_id}/reply", json={"message": "Where is New exam?"}, headers=_auth(TEACHER))
+    assert res.status_code == 200, res.text
+    saved = db.tables["support_messages"][0]
+    assert saved["status"] == "pending" and saved["resolved_at"] is None
+    # The team hears about the follow-up.
+    notes = db.tables["notifications"]
+    assert [n["user_id"] for n in notes] == [env["admin"]]
+    assert "replied" in notes[0]["title"]
+
+    one = client.get(f"/api/support/admin/messages/{msg_id}", headers=_auth(ADMIN)).json()
+    assert [t["author"] for t in one["thread"]] == ["team", "user"]
+    assert client.get(f"/api/support/admin/messages/{msg_id}", headers=_auth(TEACHER)).status_code == 403
+
+
+def test_emails_never_print_the_whatsapp_number():
+    for mail in (
+        support_mail.build_receipt("Asha", "hi"),
+        support_mail.build_reply("Asha", "hi", "hello"),
+        support_mail.build_team_alert({"id": "m", "name": "A", "email": "a@b.c", "message": "x"}),
+    ):
+        assert "9263087676" not in mail["html"].replace("wa.me/919263087676", "")

@@ -4,16 +4,15 @@
  * A phone has the app, so one green button (wa.me) opens the chat. Most teachers' computers
  * don't, and wa.me there stops on a "Continue to chat" page first. So on a computer the
  * card leads with a QR code to scan with the phone they already chat on, then offers
- * WhatsApp Web, the desktop app, and the number to copy.
+ * WhatsApp Web and the desktop app.
+ *
+ * The number itself is never shown (owner's request); it is only inside the links and QR.
  */
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, ExternalLink, Monitor } from 'lucide-react';
-import { toast } from 'sonner';
+import { ExternalLink, Monitor } from 'lucide-react';
 import QrCode from '@/components/exams/QrCode';
 import { WhatsAppIcon } from '@/components/dashboard/dashboardUi';
-import {
-    SUPPORT_HOURS, WHATSAPP_DISPLAY, WHATSAPP_NUMBER, whatsAppAppUrl, whatsAppGreeting, whatsAppWebUrl,
-} from '@/lib/helpContact';
+import { SUPPORT_HOURS, whatsAppAppUrl, whatsAppGreeting, whatsAppWebUrl } from '@/lib/helpContact';
 
 const PHONE_UA = /Android|iPhone|iPad|iPod|Mobile/i;
 const COARSE = '(pointer: coarse)';
@@ -38,20 +37,8 @@ function useTouchDevice() {
 
 export default function WhatsAppCard({ email }: { email?: string | null }) {
     const touch = useTouchDevice();
-    const [copied, setCopied] = useState(false);
     const text = whatsAppGreeting(email);
     const appUrl = whatsAppAppUrl(text);
-
-    const copyNumber = async () => {
-        try {
-            await navigator.clipboard.writeText(`+${WHATSAPP_NUMBER}`);
-            setCopied(true);
-            toast.success('Number copied');
-            window.setTimeout(() => setCopied(false), 1800);
-        } catch {
-            toast.error(`Couldn't copy. The number is ${WHATSAPP_DISPLAY}`);
-        }
-    };
 
     return (
         <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.14)] sm:p-5">
@@ -61,9 +48,7 @@ export default function WhatsAppCard({ email }: { email?: string | null }) {
                 </span>
                 <div className="min-w-0">
                     <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">Chat on WhatsApp</h2>
-                    <p className="text-[13px] text-slate-500">
-                        <span className="font-medium tabular-nums text-slate-700">{WHATSAPP_DISPLAY}</span> · {SUPPORT_HOURS}
-                    </p>
+                    <p className="text-[13px] text-slate-500">Replies {SUPPORT_HOURS}</p>
                 </div>
             </div>
 
@@ -77,20 +62,17 @@ export default function WhatsAppCard({ email }: { email?: string | null }) {
                     <WhatsAppIcon className="h-5 w-5" /> Open WhatsApp
                 </a>
             ) : (
-                <div className="mt-4 flex gap-4">
-                    <QrCode value={appUrl} size={112} className="shrink-0 ring-1 ring-slate-900/[0.06]" />
-                    <div className="min-w-0 self-center">
-                        <p className="text-[13px] font-semibold text-slate-800">Scan with your phone</p>
-                        <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-                            Point the camera at the code. WhatsApp opens with the chat ready.
-                        </p>
+                <>
+                    <div className="mt-4 flex gap-4">
+                        <QrCode value={appUrl} size={112} className="shrink-0 ring-1 ring-slate-900/[0.06]" />
+                        <div className="min-w-0 self-center">
+                            <p className="text-[13px] font-semibold text-slate-800">Scan with your phone</p>
+                            <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
+                                Point the camera at the code. WhatsApp opens with the chat ready.
+                            </p>
+                        </div>
                     </div>
-                </div>
-            )}
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-                {!touch && (
-                    <>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                         <a
                             href={whatsAppWebUrl(text)}
                             target="_blank"
@@ -108,17 +90,9 @@ export default function WhatsAppCard({ email }: { email?: string | null }) {
                         >
                             <Monitor className="h-3.5 w-3.5" /> Desktop app
                         </a>
-                    </>
-                )}
-                <button
-                    type="button"
-                    onClick={copyNumber}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-slate-100 px-3 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-200/80 cursor-pointer"
-                >
-                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                    Copy number
-                </button>
-            </div>
+                    </div>
+                </>
+            )}
         </section>
     );
 }

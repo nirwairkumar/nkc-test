@@ -83,7 +83,7 @@ class Query:
         self._single = False
 
     # builders
-    def select(self, _cols: str = "*", count: Optional[str] = None):
+    def select(self, _cols: str = "*", count: Optional[str] = None, head: bool = False):
         self.op = "select"
         self._count = bool(count)
         return self
