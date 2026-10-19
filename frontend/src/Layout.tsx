@@ -11,7 +11,6 @@ import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
 import { GUIDE_METAS } from '@/guides/meta';
 import { AI_IMPORT_STEP_EVENT } from '@/lib/aiImportStep';
-import MaintenanceStrip from '@/components/MaintenanceStrip'; // TEMPORARY (2026-10-17)
 
 /** Guides and their index (pages/GuidesIndex.tsx) are reading pages: no app sidebar. */
 const GUIDE_PATHS = new Set(['/guides', ...GUIDE_METAS.map((g) => g.path)]);
@@ -182,8 +181,6 @@ export default function Layout() {
             {!isLiveTestPage && !isLandingPage && !isPannaPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar onToggleSidebar={handleToggleSidebar} />
-                    {/* TEMPORARY maintenance notice (2026-10-17): remove this line + import + components/MaintenanceStrip.tsx */}
-                    <MaintenanceStrip />
                 </div>
             )}
 
