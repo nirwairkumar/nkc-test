@@ -17,7 +17,7 @@ const ORGANIZATION = {
     alternateName: 'TestoZa',
     url: PANNA.testoza,
     logo: { '@type': 'ImageObject', url: `${PANNA.testoza}/logo-testoza-square.png` },
-    sameAs: ['https://www.linkedin.com/company/testoza', 'https://www.youtube.com/@TestoZaOfficial'],
+    sameAs: ['https://www.linkedin.com/company/testoza', 'https://www.youtube.com/@TestoZaOfficial', 'https://www.youtube.com/channel/UCOQLWFdKAuFgDpb1fVbeg9Q', 'https://www.facebook.com/TestoZaOfficial'],
     address: {
         '@type': 'PostalAddress',
         streetAddress: '1st Floor, Nirmaan, Sudha & Shankar Inv Hub, IIT Madras',
