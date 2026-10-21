@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Home, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { isCandidateVisit } from '@/lib/candidateExit';
+import PoweredByTestoZa from '@/components/PoweredByTestoZa';
 
 export default function TestSubmissionSuccess() {
     const navigate = useNavigate();
@@ -49,7 +50,8 @@ export default function TestSubmissionSuccess() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 flex flex-col">
+            <div className="flex-1 flex items-center justify-center p-4">
             <Card className="max-w-2xl w-full shadow-2xl border-2 border-purple-200 dark:border-purple-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur">
                 <CardContent className="p-8 md:p-12 text-center space-y-6">
                     {/* Success Icon with Animation */}
@@ -117,6 +119,8 @@ export default function TestSubmissionSuccess() {
                     </p>
                 </CardContent>
             </Card>
+            </div>
+            <PoweredByTestoZa className="pt-2" />
         </div>
     );
 }

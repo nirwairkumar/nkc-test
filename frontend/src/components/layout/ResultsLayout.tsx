@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { shareWithFriends, shareResultWhatsApp, shareResultImage, shareToFacebook, shareToReddit } from '@/utils/shareUtils';
+import PoweredByTestoZa from '@/components/PoweredByTestoZa';
 
 const CustomFeedbackIcon = ({ className }: { className?: string }) => (
     <svg
@@ -366,6 +367,7 @@ export default function ResultsLayout() {
                 <main className="flex-1 w-full bg-slate-50 dark:bg-slate-950 pb-20">
                     {/* We pass stateData through Outlet context just in case child routes need it */}
                     <Outlet context={{ stateData }} />
+                    <PoweredByTestoZa />
                 </main>
 
                 {/* Mobile Sticky Bottom Navigation */}
