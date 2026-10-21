@@ -364,10 +364,10 @@ export default function ResultsLayout() {
                 </header>
 
                 {/* Sub-page Injection Point */}
-                <main className="flex-1 w-full bg-slate-50 dark:bg-slate-950 pb-20">
+                <main className="flex-1 w-full bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
                     {/* We pass stateData through Outlet context just in case child routes need it */}
                     <Outlet context={{ stateData }} />
-                    <PoweredByTestoZa />
+                    <PoweredByTestoZa className="pb-20 md:pb-3 pt-3" />
                 </main>
 
                 {/* Mobile Sticky Bottom Navigation */}

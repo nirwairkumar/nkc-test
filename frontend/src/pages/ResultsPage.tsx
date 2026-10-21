@@ -642,8 +642,8 @@ const ResultsPage = () => {
   // Determine testId for feedback
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full">
-      <div className="flex-1 overflow-y-auto bg-slate-50/30 dark:bg-slate-950/30 min-h-screen">
+    <div className="flex flex-col md:flex-row w-full flex-1">
+      <div className="flex-1 bg-slate-50/30 dark:bg-slate-950/30">
         <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
 
           <AnimatePresence mode="wait">

@@ -120,7 +120,7 @@ export default function TestSubmissionSuccess() {
                 </CardContent>
             </Card>
             </div>
-            <PoweredByTestoZa className="pt-2" />
+            <PoweredByTestoZa className="pt-1 pb-3" />
         </div>
     );
 }

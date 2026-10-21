@@ -21,7 +21,7 @@ export default function FeedbackViewPage() {
     }
 
     return (
-        <div className="p-4 md:p-8 min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div className="p-4 md:p-8 flex-1 flex items-center justify-center relative overflow-hidden">
             {/* Soft background glows */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-400/10 blur-3xl mix-blend-multiply dark:mix-blend-screen" />

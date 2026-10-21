@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
+        <loc>https://testoza.com/test-intro/c9a98609-f5a9-4eeb-b14a-a03899ecab25</loc>
+        <lastmod>2026-10-19T17:05:05.046Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/test-intro/f18d9c75-bc2d-46ba-8b85-957b096e2020</loc>
+        <lastmod>2026-10-18T17:50:03.626Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/test-intro/2e892620-67f7-434a-b787-249f65f9f5fc</loc>
+        <lastmod>2026-10-15T17:03:03.933Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/test-intro/7b56d988-3a14-4706-9ea4-a74100e5d692</loc>
+        <lastmod>2026-10-15T12:03:09.998Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://testoza.com/test-intro/7c14148c-a914-4017-afa6-911eaba49f3a</loc>
+        <lastmod>2026-10-14T14:52:14.118Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://testoza.com/test-intro/e2029458-47dd-4464-b473-4891d9a5bb89</loc>
         <lastmod>2026-10-02T10:30:27.304Z</lastmod>
         <changefreq>weekly</changefreq>
