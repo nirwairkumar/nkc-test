@@ -766,8 +766,11 @@ export default function AdminEmailBroadcastPanel() {
                                                 🎯 {user.tests_created} {user.tests_created === 1 ? 'test' : 'tests'}
                                             </span>
                                             {user.quality_tests_count !== undefined && user.quality_tests_count > 0 && (
-                                                <span className="text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800">
-                                                    ⭐ {user.quality_tests_count} qualified
+                                                <span
+                                                    title="Tests this user created that have 20+ submissions (counts toward creator badges)"
+                                                    className="text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800"
+                                                >
+                                                    ⭐ {user.quality_tests_count} conducted (20+)
                                                 </span>
                                             )}
                                             <span className="text-[10px] text-slate-400">
