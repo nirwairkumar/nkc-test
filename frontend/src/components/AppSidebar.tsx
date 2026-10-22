@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
     LayoutDashboard,
     FileText,
-    Award,
     Sparkles,
     PlusCircle,
     BarChart2,
@@ -233,15 +232,6 @@ Item 2 & Value B & 200 \\\\
                 path: '/all-submissions',
                 icon: ClipboardList,
                 matchPaths: ['/all-submissions']
-            },
-            {
-                title: 'Rewards',
-                path: '/rewards',
-                icon: Award,
-                badge: 'NEW',
-                badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-                iconColor: 'text-amber-500 dark:text-amber-400',
-                matchPaths: ['/rewards']
             },
             {
                 title: 'Materials',

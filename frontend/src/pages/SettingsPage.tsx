@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { Crown, Key, Lock, Loader2, ShieldCheck, ChevronRight, Sparkles } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Award, Crown, Key, Lock, Loader2, ShieldCheck, ChevronRight, Sparkles } from 'lucide-react';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
+import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
+
+type SettingsTab = 'security' | 'billing' | 'rewards';
+const SETTINGS_TABS: SettingsTab[] = ['security', 'billing', 'rewards'];
 
 export default function SettingsPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'security' | 'billing'>('security');
+    // ?tab=rewards opens straight on a tab (the full Rewards page links back here).
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab') as SettingsTab | null;
+    const activeTab: SettingsTab = tabParam && SETTINGS_TABS.includes(tabParam) ? tabParam : 'security';
+    const setActiveTab = (tab: SettingsTab) => setSearchParams(tab === 'security' ? {} : { tab }, { replace: true });
+
+    // Creator rewards (moved here from the sidebar) — fetched only once the tab is opened.
+    const [rewardsStats, setRewardsStats] = useState<CreatorRewardsStats | null>(null);
+    const [rewardsLoading, setRewardsLoading] = useState(true);
+    const [rewardsRequested, setRewardsRequested] = useState(false);
+
+    useEffect(() => {
+        if (activeTab !== 'rewards' || !user || rewardsRequested) return;
+        setRewardsRequested(true);
+        fetchCreatorRewards(user.id).then(({ data }) => {
+            setRewardsStats(data);
+            setRewardsLoading(false);
+        });
+    }, [activeTab, user, rewardsRequested]);
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -75,6 +98,16 @@ export default function SettingsPage() {
                         }`}
                     >
                         <Crown className="h-3.5 w-3.5" /> Subscription
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('rewards')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                            activeTab === 'rewards'
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <Award className="h-3.5 w-3.5" /> Rewards
                     </button>
                 </div>
 
@@ -201,6 +234,23 @@ export default function SettingsPage() {
                                 </a>
                             </p>
                         </div>
+                    </div>
+                )}
+
+                {/* Rewards Tab — goal card opens the full badges page (/rewards) */}
+                {activeTab === 'rewards' && (
+                    <div className="space-y-3">
+                        <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} />
+                        <button
+                            type="button"
+                            onClick={() => navigate('/rewards')}
+                            className="w-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors cursor-pointer"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Award className="h-4 w-4 text-amber-500" /> All badges & conducted tests
+                            </span>
+                            <ChevronRight className="h-4 w-4 text-slate-400" />
+                        </button>
                     </div>
                 )}
             </div>
