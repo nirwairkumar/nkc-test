@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -17,55 +17,124 @@ export type Notification = {
     type?: string;
 };
 
-export const useNotifications = () => {
-    const { user } = useAuth();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [loading, setLoading] = useState(true);
+// One shared copy for every component on the page: the dashboard header and the
+// notification panel used to poll separately, every 30 s, even in hidden tabs.
+// Now: every 2 minutes while the tab is visible, straight away when it comes back
+// into view, and when a panel is opened (see `freshen`).
+const POLL_MS = 2 * 60 * 1000;
+const FRESH_MS = 30 * 1000;
 
-    const fetchNotifications = useCallback(async () => {
-        if (!user) return;
+type Snapshot = { notifications: Notification[]; unreadCount: number; loading: boolean };
+
+const SIGNED_OUT: Snapshot = { notifications: [], unreadCount: 0, loading: false };
+const LOADING: Snapshot = { notifications: [], unreadCount: 0, loading: true };
+let snap: Snapshot = LOADING;
+let owner: string | null = null; // the user `snap` belongs to
+let fetchedAt = 0;
+let inFlight: { userId: string; done: Promise<void> } | null = null;
+let watchers = 0;
+let timer: ReturnType<typeof setInterval> | null = null;
+const listeners = new Set<() => void>();
+
+function publish(next: Partial<Snapshot>) {
+    snap = { ...snap, ...next };
+    listeners.forEach((l) => l());
+}
+
+function publishList(list: Notification[]) {
+    publish({ notifications: list, unreadCount: list.filter((n) => !n.read).length, loading: false });
+}
+
+function subscribe(listener: () => void) {
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+}
+
+const getSnapshot = () => snap;
+
+function load(userId: string): Promise<void> {
+    if (inFlight?.userId === userId) return inFlight.done;
+    const done = (async () => {
         try {
             const { default: apiClient } = await import('@/lib/apiClient');
-            const response = await apiClient.get(`/social/notifications/${user.id}`, {
+            const response = await apiClient.get(`/social/notifications/${userId}`, {
                 params: { limit: 50 }
             });
-            if (response.data && Array.isArray(response.data)) {
-                const list = response.data.map((item: any) => ({
+            if (owner === userId && response.data && Array.isArray(response.data)) {
+                publishList(response.data.map((item: any) => ({
                     ...item,
                     read: Boolean(item.read || item.is_read)
-                }));
-                setNotifications(list);
-                setUnreadCount(list.filter((n: Notification) => !n.read).length);
+                })));
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
         } finally {
-            setLoading(false);
+            if (owner === userId) {
+                fetchedAt = Date.now();
+                if (snap.loading) publish({ loading: false });
+            }
+            if (inFlight?.userId === userId) inFlight = null;
         }
-    }, [user]);
+    })();
+    inFlight = { userId, done };
+    return done;
+}
+
+/** Load unless the list is from the last 30 seconds. */
+function loadIfOld() {
+    if (owner && document.visibilityState === 'visible' && Date.now() - fetchedAt > FRESH_MS) load(owner);
+}
+
+function poll() {
+    if (owner && document.visibilityState === 'visible') load(owner);
+}
+
+function watch(userId: string) {
+    if (owner !== userId) {
+        owner = userId;
+        fetchedAt = 0;
+        publish(LOADING);
+    }
+    if (++watchers === 1) {
+        timer = setInterval(poll, POLL_MS);
+        document.addEventListener('visibilitychange', loadIfOld);
+    }
+    loadIfOld();
+    return () => {
+        if (--watchers === 0) {
+            if (timer) clearInterval(timer);
+            timer = null;
+            document.removeEventListener('visibilitychange', loadIfOld);
+        }
+    };
+}
+
+/** Signed out: drop the previous account's notifications. */
+function forget() {
+    if (owner === null) return;
+    owner = null;
+    fetchedAt = 0;
+    publish(LOADING);
+}
+
+export const useNotifications = () => {
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
+    const shared = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    // Until this user's first load starts, never show another account's list.
+    const { notifications, unreadCount, loading } = !userId ? SIGNED_OUT : owner === userId ? shared : LOADING;
 
     useEffect(() => {
-        if (user) {
-            fetchNotifications();
+        if (userId) return watch(userId);
+        forget();
+    }, [userId]);
 
-            const pollInterval = setInterval(() => {
-                fetchNotifications();
-            }, 30000);
-
-            return () => {
-                clearInterval(pollInterval);
-            };
-        } else {
-            setNotifications([]);
-            setUnreadCount(0);
-            setLoading(false);
-        }
-    }, [user, fetchNotifications]);
+    const fetchNotifications = useCallback(async () => {
+        if (userId) await load(userId);
+    }, [userId]);
 
     const handleDelete = async (id: string) => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        publishList(snap.notifications.filter((n) => n.id !== id));
 
         try {
             const { default: apiClient } = await import('@/lib/apiClient');
@@ -77,8 +146,7 @@ export const useNotifications = () => {
     };
 
     const markAsRead = async (id: string) => {
-        setNotifications((prev) => prev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n));
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        publishList(snap.notifications.map(n => n.id === id ? { ...n, read: true, is_read: true } : n));
 
         try {
             const { default: apiClient } = await import('@/lib/apiClient');
@@ -90,8 +158,7 @@ export const useNotifications = () => {
     };
 
     const markAllRead = async () => {
-        setNotifications((prev) => prev.map(n => ({ ...n, read: true, is_read: true })));
-        setUnreadCount(0);
+        publishList(snap.notifications.map(n => ({ ...n, read: true, is_read: true })));
         if (!user) return;
 
         try {
@@ -105,8 +172,7 @@ export const useNotifications = () => {
     };
 
     const handleClearAll = async () => {
-        setNotifications([]);
-        setUnreadCount(0);
+        publishList([]);
         if (!user) return;
 
         try {
@@ -127,6 +193,8 @@ export const useNotifications = () => {
         handleClearAll,
         markAsRead,
         markAllRead,
-        refresh: fetchNotifications
+        refresh: fetchNotifications,
+        /** Call when a notification panel opens: reloads unless the list is under 30 s old. */
+        freshen: loadIfOld
     };
 };

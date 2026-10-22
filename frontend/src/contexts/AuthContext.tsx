@@ -4,9 +4,13 @@ import { authApi } from '@/lib/authApi';
 import apiClient from '@/lib/apiClient';
 import { supabase } from '@/integrations/supabase/client';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { getApiUrl } from '@/lib/getApiUrl';
 
 // Shared initialization promise to prevent duplicate concurrent runs
 let initPromise: Promise<void> | null = null;
+
+const WARMUP_KEY = 'tz_backend_warmed_at';
+const WARMUP_EVERY_MS = 5 * 60 * 1000;
 
 type AuthContextType = {
     session: any | null;
@@ -316,11 +320,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         // Fire backend warmup FIRST — Cloud Run may be CPU-throttled and needs
         // maximum head-start before the user interacts with login/dashboard.
-        // Using top-level imported apiClient (no dynamic import delay).
+        // One request wakes the whole instance; route handlers need no warming of their own.
+        // A plain GET without the auth header, so the browser sends no preflight first.
+        // Skipped when this browser already woke the server in the last 5 minutes:
+        // Cloud Run keeps an instance for about 15 idle minutes.
         const warmUpBackend = () => {
-            // Warm both the health endpoint AND the auth path (different route handlers)
-            apiClient.get('health').catch(() => { });
-            apiClient.options('auth/login').catch(() => { });
+            try {
+                const last = Number(localStorage.getItem(WARMUP_KEY) || 0);
+                if (Date.now() - last < WARMUP_EVERY_MS) return;
+                localStorage.setItem(WARMUP_KEY, String(Date.now()));
+            } catch {
+                /* storage blocked: warm anyway */
+            }
+            fetch(`${getApiUrl()}/health`, { credentials: 'omit' }).catch(() => { });
         };
         warmUpBackend();
 

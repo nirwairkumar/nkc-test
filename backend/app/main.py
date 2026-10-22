@@ -57,6 +57,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Browsers may reuse a preflight answer this long (Chrome caps it at 2 hours;
+    # the default is 10 minutes). Every preflight is a billed Cloudflare Worker
+    # request, about a fifth of all API traffic on an exam day.
+    max_age=7200,
 )
 
 from fastapi import Request

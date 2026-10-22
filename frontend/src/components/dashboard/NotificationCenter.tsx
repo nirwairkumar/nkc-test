@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
     Bell, 
@@ -28,9 +28,14 @@ export default function NotificationCenter({ open, onOpenChange }: NotificationC
         loading, 
         handleDelete, 
         handleClearAll, 
-        markAsRead, 
-        markAllRead 
+        markAsRead,
+        markAllRead,
+        freshen
     } = useNotifications();
+
+    useEffect(() => {
+        if (open) freshen();
+    }, [open, freshen]);
 
     const getNotificationVisuals = (item: Notification) => {
         const titleLower = (item.title || '').toLowerCase();
