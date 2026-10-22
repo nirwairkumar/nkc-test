@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "node scripts/generateSitemap.js && vite build",
+        "build": "node scripts/generateSitemap.js && vite build && node scripts/generatePagesRoutes.mjs",
         "build:dev": "vite build --mode development",
         "build:analyze": "vite build --mode analyze",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

@@ -30,6 +30,8 @@ import {
 // Which paths testoza.com serves itself; everything else lives on app.testoza.com.
 // The app's in-browser redirect and canonical tags use the same rule.
 import { APP_ORIGIN, isAuthReturn, isMarketingPath, publicUrl } from '../../frontend/src/utils/marketingPaths.ts';
+import { APP_SECTIONS as KNOWN_APP_SECTIONS, isKnownPath } from '../../frontend/src/utils/knownPaths.ts';
+import { nearMissRedirect, notFoundPage } from '../../frontend/functions/_shared/notFound.js';
 
 // Configuration
 const CONFIG = {
@@ -269,6 +271,43 @@ function appRedirect(request, url) {
   }
   if (isMarketingPath(url.pathname)) return null;
   return redirectTo(`${APP_ORIGIN}${url.pathname}${url.search}`, 301);
+}
+
+/**
+ * testoza.com's answer for a path no page answers (frontend/src/utils/knownPaths.ts),
+ * or null to carry on. A near miss (/pricing.php) 301s to the real page; a one-word
+ * address that is a blog post's 301s to the blog; anything else is a 404 with the
+ * app's index.html (shared with functions/[[path]].js on app.testoza.com).
+ */
+async function missingPage(request, url) {
+  if (url.hostname !== 'testoza.com') return null;
+  if (request.method !== 'GET' && request.method !== 'HEAD') return null;
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/cdn-cgi/')) return null;
+  if (isAuthReturn(url.search) || isKnownPath(url.pathname)) return null;
+
+  const redirect = nearMissRedirect(url);
+  if (redirect) return redirect;
+
+  // The app renders /<slug> as a blog post, so old one-word post links still work.
+  const segments = url.pathname.split('/').filter(Boolean);
+  if (segments.length === 1 && !segments[0].includes('.')) {
+    let slug = segments[0];
+    try { slug = decodeURIComponent(slug); } catch { /* keep the raw segment */ }
+    if (STATIC_ARTICLES.some((a) => a.meta.slug === slug)) {
+      return Response.redirect(`${blogPostUrl(slug)}${url.search}`, 301);
+    }
+    const posts = await fetchBlogFeed();
+    // Can't tell without the feed: keep the old answer (a 301 to the app).
+    if (!posts) return null;
+    const post = posts.find((p) => p.slug === slug || p.id === slug);
+    if (post) return Response.redirect(`${blogPostUrl(post.slug)}${url.search}`, 301);
+  }
+
+  const response = await notFoundPage(request, (r) => fetch(r));
+  if (response.status !== 404) return response;
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(securityHeaders())) headers.set(name, value);
+  return new Response(response.body, { status: 404, headers });
 }
 
 /** A redirect browsers keep for an hour only, so moving a page between hosts later is not stuck in caches. */
@@ -1497,20 +1536,11 @@ const BLOG_PREFIXES = ['news', 'blog', 'posts'];
 
 /**
  * First path segments of testoza.com app pages (src/App.tsx) and Pages Functions
- * (functions/). The blog's header and footer link to them with relative URLs, so
- * on this host they are duplicates of testoza.com pages — they 301 to testoza.com.
+ * (functions/), from the shared list in frontend/src/utils/knownPaths.ts. The blog's
+ * header and footer link to them with relative URLs, so on this host they are
+ * duplicates of testoza.com pages — they 301 to testoza.com.
  */
-const APP_SECTIONS = new Set([
-  'share', 'about', 'ai-question-generator', 'all-submissions', 'analysis', 'analytics', 'assessment-platform',
-  'auth', 'auth-error', 'auto-grading-software', 'combined-break', 'combined-intro', 'compare',
-  'create-combined-test', 'create-mock-test-online', 'create-test', 'creator', 'dashboard', 'edit-test', 'exam-software-for-schools',
-  'explore', 'generate-with-ai', 'history', 'live', 'login', 'materials', 'mcq-test-maker', 'more-tests',
-  'my-posts', 'my-tests', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
-  'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf-to-quiz', 'premium', 'pricing',
-  'privacy-policy', 'profile', 'quiz-creator', 'results', 'rewards', 'settings', 'solutions',
-  'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test', 'test-analysis', 'test-intro',
-  'test-submitted', 'tests', 'update-password', 'user-guide', 'white-label-test-platform', 'youtube-to-quiz'
-]);
+const APP_SECTIONS = new Set(KNOWN_APP_SECTIONS);
 // Guides and their index live on testoza.com too.
 APP_SECTIONS.add('guides');
 for (const { meta } of GUIDES) APP_SECTIONS.add(meta.slug);
@@ -2153,6 +2183,14 @@ export default {
       const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|mp4|webm)$/i.test(url.pathname);
       if (hasStaticExtension) {
         return fetch(request);
+      }
+
+      // A path no page answers, often an AI assistant's guess ("/inputs.php"): a near
+      // miss 301s to the real page, the rest is a real 404 here — not a 301 to a second
+      // missing page on app.testoza.com, which Pages would answer with a 200.
+      const missing = await missingPage(request, url);
+      if (missing) {
+        return missing;
       }
 
       // App pages (pricing, tests, sign-in …) → app.testoza.com, as a real HTTP redirect.

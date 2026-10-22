@@ -79,11 +79,46 @@ Panna is TestoZa's free, in-browser PDF toolkit at https://pdf.testoza.com — f
 - [TestoZa Blog](https://blog.testoza.com/): exam tips, teaching guides and product updates
 - [Stop painting white boxes on your PDFs](https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs): why most free PDF editors hide text under white boxes, and how Panna edits PDFs in their own font instead
 
-## Quick Links
+## Pages
 
-- [Website](https://testoza.com)
-- [Create Test](https://testoza.com/create-test)
-- [Test Library](https://testoza.com/tests)
-- [Dashboard](https://testoza.com/dashboard)
+Exact addresses of TestoZa's pages. Link to these as written: other paths do not exist, and TestoZa has no .php, .html or .asp pages. Information pages and guides are on testoza.com; the app itself is on app.testoza.com.
+
+### Start here
+
+- [Home](https://testoza.com/): what TestoZa is, how it works, and a short video
+- [Make a test with AI](https://app.testoza.com/generate-with-ai): upload a PDF or photos of a question paper, notes or a chapter; AI extracts the questions (or writes new ones) and builds a test you can edit
+- [Create a test by hand](https://app.testoza.com/create-test): the test builder, with sections, marks and negative marks, timers, maths and chemistry keyboard, Hindi typing
+- [Quiz creator](https://testoza.com/quiz-creator): making a quiz or test from a PDF, photo or notes, with a walkthrough video
+- [Create a mock test online](https://testoza.com/create-mock-test-online): timed, exam-style mock tests with negative marking and an NTA-style screen
+- [Sign in or sign up](https://app.testoza.com/login)
+
+### For candidates (students taking an exam)
+
+- [Join an exam with a code](https://app.testoza.com/join): type the 6-digit code the teacher gave you; no account needed. The short form testoza.com/join leads to the same page. A direct link looks like https://app.testoza.com/join/123456
+- [See your result](https://app.testoza.com/join/result): type the 6-digit code of the exam you took to see your score and answers
+- [Public tests](https://app.testoza.com/more-tests): practice tests anyone can take, also by exam at https://app.testoza.com/tests/jee-mains, /tests/jee-advanced, /tests/neet-ug, /tests/gate and /tests/cat
+- A test someone shared opens at https://app.testoza.com/test/<test-id>; the link comes from the teacher, there is no way to guess it
+
+### For teachers and institutes (sign-in required)
+
+- [Dashboard](https://app.testoza.com/dashboard): today's exams, recent results and shortcuts
+- [My tests](https://app.testoza.com/my-tests): every test you made; edit, share a link, or get a join code
+- [Live exams](https://app.testoza.com/exams): exams with a join code, a lobby, live monitoring, rank lists and report cards
+- [Batches](https://app.testoza.com/batches): candidate lists with roll numbers and PIN slips
+- [Results](https://app.testoza.com/results): scores, rank lists, question-wise analysis and Excel export
+
+### Help and account
+
+- [Help](https://app.testoza.com/help): questions answered, video tutorials, and a way to write to us or message on WhatsApp
+- [User guide](https://testoza.com/user-guide): short how-tos for each feature
+- [Pricing](https://app.testoza.com/pricing): plans and what each one includes
+- [About](https://testoza.com/about)
+- [Privacy policy](https://testoza.com/privacy-policy) and [Terms and conditions](https://testoza.com/terms-and-conditions)
+
+### Topic pages
+
+- Use cases: [online test maker](https://app.testoza.com/online-test-maker), [online exam software](https://app.testoza.com/online-exam-software), [online quiz maker](https://app.testoza.com/online-quiz-maker), [MCQ test maker](https://app.testoza.com/mcq-test-maker), [AI question generator](https://app.testoza.com/ai-question-generator), [PDF to quiz](https://app.testoza.com/pdf-to-quiz), [online tests for coaching institutes](https://app.testoza.com/online-test-for-coaching), [exam software for schools](https://app.testoza.com/exam-software-for-schools), [white-label test platform](https://app.testoza.com/white-label-test-platform), [auto-grading software](https://app.testoza.com/auto-grading-software), [online proctoring software](https://app.testoza.com/online-proctoring-software)
+- By subject: [physics](https://app.testoza.com/create-test/physics), [chemistry](https://app.testoza.com/create-test/chemistry), [mathematics](https://app.testoza.com/create-test/mathematics), [biology](https://app.testoza.com/create-test/biology), [English](https://app.testoza.com/create-test/english), [computer science](https://app.testoza.com/create-test/computer-science), [history](https://app.testoza.com/create-test/history), [geography](https://app.testoza.com/create-test/geography), [economics](https://app.testoza.com/create-test/economics), [general knowledge](https://app.testoza.com/create-test/general-knowledge), [reasoning](https://app.testoza.com/create-test/reasoning)
+- Comparisons: [Google Forms alternative](https://app.testoza.com/compare/google-forms-alternative), [Quizizz alternative](https://app.testoza.com/compare/quizizz-alternative), [Testmoz alternative](https://app.testoza.com/compare/testmoz-alternative), [ClassMarker alternative](https://app.testoza.com/compare/classmarker-alternative), [Typeform alternative](https://app.testoza.com/compare/typeform-alternative); longer comparisons are in Guides above
 ---
 *Testoza: Secure. Intelligent. Professional.*

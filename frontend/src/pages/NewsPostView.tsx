@@ -15,7 +15,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
-import { BLOG_NAME, BLOG_URL, blogHomePath, blogPostPath, blogPostUrl } from '@/lib/blog';
+import { BLOG_NAME, BLOG_URL, blogHomePath, blogPostPath, blogPostUrl, isBlogHost } from '@/lib/blog';
+import NotFound from '@/pages/NotFound';
 
 // Tiptap Read-Only Renderer
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -244,6 +245,12 @@ export default function NewsPostView() {
                 </div>
             </div>
         );
+    }
+
+    // Off the blog, /<slug> is the catch-all for any one-word address ("/inputs"), so a
+    // missing post is a missing page, not a missing article.
+    if (!isBlogHost && (error || !post)) {
+        return <NotFound />;
     }
 
     if (!user?.user_metadata?.roles?.includes('admin') && !isNewsEnabled) {

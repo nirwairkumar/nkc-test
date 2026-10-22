@@ -2,6 +2,7 @@
  * Subdomain routing utility
  */
 import { APP_ORIGIN, isAuthReturn, isMarketingPath } from '@/utils/marketingPaths';
+import { isKnownPath } from '@/utils/knownPaths';
 
 export const getAppUrl = (path: string): string => {
   const hostname = window.location.hostname;
@@ -35,7 +36,10 @@ export const mainDomainRedirect = (loc: { pathname: string; search: string; hash
     return `${APP_ORIGIN}/auth/callback${loc.search}${loc.hash}`;
   }
 
-  return isMarketingPath(loc.pathname) ? null : `${APP_ORIGIN}${loc.pathname}${loc.search}${loc.hash}`;
+  // A path no page answers stays here: the worker served it as a 404 and the app
+  // shows NotFound, rather than sending the visitor to a second missing page.
+  if (isMarketingPath(loc.pathname) || !isKnownPath(loc.pathname)) return null;
+  return `${APP_ORIGIN}${loc.pathname}${loc.search}${loc.hash}`;
 };
 
 export const getMarketingUrl = (path: string): string => {

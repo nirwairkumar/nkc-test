@@ -13,6 +13,7 @@ import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import CandidateBackGuard from "@/components/CandidateBackGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
+import { isBlogHost } from "@/lib/blog";
 import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
@@ -134,7 +135,10 @@ const STATIC_ARTICLE_PAGES: Record<string, React.ComponentType> = {
 const BlogPostRoute = () => {
   const { slug } = useParams<{ slug: string }>();
   const StaticArticle = slug ? STATIC_ARTICLE_PAGES[slug] : undefined;
-  return StaticArticle ? <StaticArticle /> : <NewsPostView />;
+  if (StaticArticle) return <StaticArticle />;
+  // Post slugs never contain a dot; "/inputs.php" and "/pricing.html" are missing pages.
+  if (slug?.includes('.') && !isBlogHost) return <NotFound />;
+  return <NewsPostView />;
 };
 
 // Guides (src/guides): long-form pages on testoza.com, served to crawlers by the worker.
