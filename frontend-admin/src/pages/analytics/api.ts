@@ -4,8 +4,9 @@
  * traffic excluded, days in IST.
  */
 import apiClient from '@/lib/apiClient';
+import { periodParams, type Period } from './period';
 
-export type Period = 'today' | 'yesterday' | '7d' | '30d' | '90d' | '12m';
+export type { Period, Preset } from './period';
 export type Site = 'all' | 'main' | 'pdf' | 'blog';
 export type Traffic = 'humans' | 'bots' | 'internal' | 'all';
 
@@ -439,22 +440,22 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
 }
 
 export const insightsApi = {
-    overview: (period: Period, site: Site) => get<Overview>('overview', { period, site }),
-    traffic: (period: Period, site: Site) => get<TrafficReport>('traffic', { period, site }),
+    overview: (period: Period, site: Site) => get<Overview>('overview', { ...periodParams(period), site }),
+    traffic: (period: Period, site: Site) => get<TrafficReport>('traffic', { ...periodParams(period), site }),
     realtime: (site: Site) => get<Realtime>('realtime', { site }),
     sessions: (p: { period: Period; site: Site; traffic: Traffic; q?: string; before?: string | null; visitor?: string; user?: string; limit?: number }) =>
-        get<SessionsPage>('sessions', { ...p, before: p.before || undefined, q: p.q || undefined, limit: p.limit ?? 40 }),
+        get<SessionsPage>('sessions', { ...p, ...periodParams(p.period), before: p.before || undefined, q: p.q || undefined, limit: p.limit ?? 40 }),
     session: (id: string) => get<SessionDetail>(`sessions/${id}`),
     person: (p: { visitor?: string | null; user?: string | null }) =>
         get<Person>('person', { visitor: p.visitor || undefined, user: p.user || undefined }),
-    growth: (period: Period) => get<GrowthReport>('growth', { period }),
-    tests: (period: Period) => get<TestsReport>('tests', { period, limit: 50 }),
+    growth: (period: Period) => get<GrowthReport>('growth', periodParams(period)),
+    tests: (period: Period) => get<TestsReport>('tests', { ...periodParams(period), limit: 50 }),
     content: (p: { period: Period; kind: ContentKind; q?: string; before?: ContentCursor | null; limit?: number }) =>
         get<ContentPage>('content', {
-            period: p.period, kind: p.kind, q: p.q || undefined,
+            ...periodParams(p.period), kind: p.kind, q: p.q || undefined,
             before_at: p.before?.at, before_id: p.before?.id, limit: p.limit ?? 30,
         }),
-    video: (period: Period) => get<VideoReport>('video', { period, limit: 30 }),
+    video: (period: Period) => get<VideoReport>('video', { ...periodParams(period), limit: 30 }),
     health: () => get<Health>('health'),
     people: (p: { segment: PeopleSegment; q?: string; sort: PeopleSort; limit?: number; offset?: number }) =>
         get<PeopleReport>('people', { ...p, q: p.q || undefined, limit: p.limit ?? 40, offset: p.offset ?? 0 }),

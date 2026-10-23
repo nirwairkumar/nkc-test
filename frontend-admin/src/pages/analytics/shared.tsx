@@ -35,11 +35,13 @@ export const DEVICE_LABEL: Record<string, string> = { mobile: 'Mobile', desktop:
 
 
 /** A per-viewer convenience (tab, period, site). Survives reloads; failures are ignored. */
-export function usePersisted<T extends string>(key: string, initial: T, allowed: readonly T[]): [T, (v: T) => void] {
+export function usePersisted<T extends string>(
+    key: string, initial: T, allowed: readonly T[] | ((v: string) => boolean),
+): [T, (v: T) => void] {
     const [value, setValue] = useState<T>(() => {
         try {
             const v = localStorage.getItem(key) as T | null;
-            return v && allowed.includes(v) ? v : initial;
+            return v && (typeof allowed === 'function' ? allowed(v) : allowed.includes(v)) ? v : initial;
         } catch {
             return initial;
         }

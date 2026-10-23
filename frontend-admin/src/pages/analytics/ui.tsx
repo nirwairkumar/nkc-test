@@ -7,7 +7,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as Popover from '@radix-ui/react-popover';
 import { motion } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight, Info, Minus, X } from 'lucide-react';
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export const CARD =
@@ -92,8 +92,19 @@ export function Segmented<T extends string>({
     ariaLabel?: string;
 }) {
     const id = useId();
+    const trackRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        // On narrow screens the track scrolls sideways; keep the selected item in view.
+        const track = trackRef.current;
+        const active = track?.querySelector<HTMLElement>('[aria-selected="true"]');
+        if (!track || !active || track.scrollWidth <= track.clientWidth) return;
+        const t = track.getBoundingClientRect(), a = active.getBoundingClientRect();
+        if (a.left < t.left) track.scrollLeft += a.left - t.left - 4;
+        else if (a.right > t.right) track.scrollLeft += a.right - t.right + 4;
+    }, [value]);
     return (
         <div
+            ref={trackRef}
             role="tablist"
             aria-label={ariaLabel}
             className={cn('inline-flex max-w-full overflow-x-auto rounded-xl bg-slate-200/60 p-1 [scrollbar-width:none]', className)}

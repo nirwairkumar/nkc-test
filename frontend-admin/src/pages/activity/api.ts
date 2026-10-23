@@ -3,7 +3,7 @@
  * Backend: app/routers/analytics/exam_ops.py. Every day boundary is IST.
  */
 import apiClient from '@/lib/apiClient';
-import type { Period } from '../analytics/api';
+import { periodParams, type Period } from '../analytics/period';
 
 export type { Period };
 /** Whose exams to count. "customers" leaves our own team's runs out — the default. */
@@ -196,6 +196,6 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
 }
 
 export const examOpsApi = {
-    report: (period: Period, audience: Audience) => get<ExamOps>('exam-ops', { period, audience }),
+    report: (period: Period, audience: Audience) => get<ExamOps>('exam-ops', { ...periodParams(period), audience }),
     sitting: (test_id: string, day: string) => get<SittingDetail>('exam-ops/sitting', { test_id, day }),
 };

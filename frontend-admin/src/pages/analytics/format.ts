@@ -70,7 +70,7 @@ export const istDateTime = (iso: string) =>
 export const istTime = (iso: string) =>
     new Date(iso).toLocaleTimeString('en-IN', { timeZone: IST, hour: 'numeric', minute: '2-digit', hour12: true });
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** Labels for series buckets, which arrive as IST wall-clock "YYYY-MM-DDTHH:MM". */
 export function bucketLabel(t: string, bucket: string, long = false): string {
@@ -85,23 +85,6 @@ export function bucketLabel(t: string, bucket: string, long = false): string {
     if (bucket === 'week') return long ? `Week of ${day} ${MONTHS[m - 1]}` : `${day} ${MONTHS[m - 1]}`;
     return long ? `${day} ${MONTHS[m - 1]} ${y}` : `${day} ${MONTHS[m - 1]}`;
 }
-
-export const PERIOD_LABEL: Record<string, string> = {
-    today: 'today',
-    yesterday: 'yesterday',
-    '7d': 'the last 7 days',
-    '30d': 'the last 30 days',
-    '90d': 'the last 90 days',
-    '12m': 'the last 12 months',
-};
-export const PREVIOUS_LABEL: Record<string, string> = {
-    today: 'yesterday at this time',
-    yesterday: 'the day before',
-    '7d': 'the previous 7 days',
-    '30d': 'the previous 30 days',
-    '90d': 'the previous 90 days',
-    '12m': 'the previous 12 months',
-};
 
 // ── labels ───────────────────────────────────────────────────────────────────
 let regionNames: Intl.DisplayNames | null = null;

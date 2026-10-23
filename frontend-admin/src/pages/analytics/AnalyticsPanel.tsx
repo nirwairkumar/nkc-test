@@ -13,6 +13,8 @@ import { countryName, num } from './format';
 import GrowthTab from './GrowthTab';
 import OverviewTab from './OverviewTab';
 import PeopleTab, { PersonSheet, SessionSheet, type SessionMeta } from './PeopleTab';
+import { isPeriod } from './period';
+import PeriodPicker from './PeriodPicker';
 import { ChannelIcon, PathLabel, usePersisted } from './shared';
 import TestsTab from './TestsTab';
 import TrafficTab from './TrafficTab';
@@ -21,7 +23,6 @@ import { CARD, CountryCode, IosSheet, PILL_BTN, Segmented } from './ui';
 
 const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'video', 'people'] as const;
 type Tab = (typeof TABS)[number];
-const PERIODS: readonly Period[] = ['today', 'yesterday', '7d', '30d', '90d', '12m'];
 const SITES: readonly Site[] = ['all', 'main', 'pdf', 'blog'];
 const CONTENT_KINDS: readonly ContentKind[] = ['all', 'test', 'material', 'ai_upload'];
 
@@ -33,7 +34,7 @@ export interface Nav {
 
 export default function AnalyticsPanel() {
     const [tab, setTab] = usePersisted<Tab>('tz_admin_analytics_tab', 'overview', TABS);
-    const [period, setPeriod] = usePersisted<Period>('tz_admin_analytics_period', '7d', PERIODS);
+    const [period, setPeriod] = usePersisted<Period>('tz_admin_analytics_period', '7d', isPeriod);
     const [site, setSite] = usePersisted<Site>('tz_admin_analytics_site', 'all', SITES);
     const [contentKind, setContentKind] = usePersisted<ContentKind>('tz_admin_analytics_content_kind', 'all', CONTENT_KINDS);
     const [liveOpen, setLiveOpen] = useState(false);
@@ -99,19 +100,7 @@ export default function AnalyticsPanel() {
                 <>
                     {/* ── Filters: one row above everything they scope ── */}
                     <div className="flex flex-wrap items-center gap-2">
-                        <Segmented<Period>
-                            ariaLabel="Period"
-                            value={period}
-                            onChange={setPeriod}
-                            options={[
-                                { value: 'today', label: 'Today' },
-                                { value: 'yesterday', label: 'Yesterday' },
-                                { value: '7d', label: '7D', title: 'Last 7 days' },
-                                { value: '30d', label: '30D', title: 'Last 30 days' },
-                                { value: '90d', label: '90D', title: 'Last 90 days' },
-                                { value: '12m', label: '12M', title: 'Last 12 months' },
-                            ]}
-                        />
+                        <PeriodPicker value={period} onChange={setPeriod} />
                         {showSite && (
                             <Segmented<Site>
                                 ariaLabel="Site"

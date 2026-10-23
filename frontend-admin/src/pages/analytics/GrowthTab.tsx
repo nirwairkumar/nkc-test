@@ -4,7 +4,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { insightsApi, type Period } from './api';
 import { ActiveUsersChart, Columns, Funnel, RetentionGrid } from './charts';
-import { bucketLabel, change, num, pct, PERIOD_LABEL, PREVIOUS_LABEL, ratio } from './format';
+import { bucketLabel, change, num, pct, ratio } from './format';
+import { inPeriod, previousLabel } from './period';
 import { ChannelIcon, ErrorState } from './shared';
 import { BarList, Card, Skeleton, StatTile, TileSkeletons } from './ui';
 
@@ -18,7 +19,7 @@ export default function GrowthTab({ period }: { period: Period }) {
     if (q.error && !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
     const d = q.data;
     const g = d?.growth, p = d?.previous;
-    const vs = `vs ${PREVIOUS_LABEL[period]}`;
+    const vs = `vs ${previousLabel(period)}`;
 
     const weeks = d?.north_star ?? [];
     const thisWeek = weeks[weeks.length - 1]?.submissions ?? 0;
@@ -61,7 +62,7 @@ export default function GrowthTab({ period }: { period: Period }) {
                 {g && p ? (
                     <>
                         <StatTile label="Sign-ups" value={num(g.signups)} delta={change(g.signups, p.signups)} deltaTitle={vs}
-                            sub={g.candidates ? `+${num(g.candidates)} exam candidates (not counted)` : `in ${PERIOD_LABEL[period]}`} />
+                            sub={g.candidates ? `+${num(g.candidates)} exam candidates (not counted)` : inPeriod(period)} />
                         <StatTile label="Visitor → sign-up" value={pct(ratio(g.signups, g.new_visitors), 1)}
                             info="Sign-ups divided by new visitors in the period." sub={`${num(g.new_visitors)} new visitors`} />
                         <StatTile label="Created a test" value={pct(ratio(g.created_test, g.signups))}
@@ -75,7 +76,7 @@ export default function GrowthTab({ period }: { period: Period }) {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-                <Card title="Activation funnel" subtitle={`People who signed up in ${PERIOD_LABEL[period]}`}>
+                <Card title="Activation funnel" subtitle={`People who signed up ${inPeriod(period)}`}>
                     {g ? (
                         <Funnel steps={[
                             { label: 'New visitors', value: g.new_visitors },

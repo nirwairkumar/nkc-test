@@ -3,7 +3,8 @@ import { FileText, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { insightsApi, type Period, type TestRow } from './api';
-import { change, derive, num, pct, PREVIOUS_LABEL, ratio } from './format';
+import { change, derive, num, pct, ratio } from './format';
+import { previousLabel } from './period';
 import { ErrorState } from './shared';
 import { BarList, CARD, Card, Chip, Empty, Segmented, Skeleton, StatTile, TileSkeletons } from './ui';
 
@@ -40,7 +41,7 @@ export default function TestsTab({ period, onSeeCreated }: { period: Period; onS
     if (q.error && !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
     const d = q.data;
     const s = d?.summary, p = d?.previous;
-    const vs = `vs ${PREVIOUS_LABEL[period]}`;
+    const vs = `vs ${previousLabel(period)}`;
 
     return (
         <div className={cn('space-y-4', q.isPlaceholderData && 'opacity-60')}>

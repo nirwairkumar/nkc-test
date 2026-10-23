@@ -15,8 +15,10 @@ import {
 import React, { useMemo, useState } from 'react';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import { cn } from '@/lib/utils';
-import { bucketLabel, change, istDate, istDateTime, num, pct, PERIOD_LABEL, PREVIOUS_LABEL, relative } from '../analytics/format';
+import { bucketLabel, change, istDate, istDateTime, num, pct, relative } from '../analytics/format';
 import { Columns } from '../analytics/charts';
+import { inPeriod, isPeriod, periodLabel, previousLabel } from '../analytics/period';
+import PeriodPicker from '../analytics/PeriodPicker';
 import { ErrorState, usePersisted } from '../analytics/shared';
 import {
     BarList, CARD, Card, Chip, Empty, IosSheet, PILL_BTN, Segmented, SectionTitle, Skeleton, StatTile, TileSkeletons,
@@ -26,7 +28,6 @@ import LiveNow from './LiveNow';
 import { proctoringRules } from './proctoring';
 import SittingSheet from './SittingSheet';
 
-const PERIODS: readonly Period[] = ['today', 'yesterday', '7d', '30d', '90d', '12m'];
 const AUDIENCES: readonly Audience[] = ['customers', 'everyone', 'team'];
 type Metric = 'exams' | 'candidates' | 'submissions';
 
@@ -37,7 +38,7 @@ const METRIC_LABEL: Record<Metric, string> = {
 };
 
 export default function ExamOpsPanel() {
-    const [period, setPeriod] = usePersisted<Period>('tz_admin_activity_period', '7d', PERIODS);
+    const [period, setPeriod] = usePersisted<Period>('tz_admin_activity_period', '7d', isPeriod);
     const [audience, setAudience] = usePersisted<Audience>('tz_admin_activity_audience', 'customers', AUDIENCES);
     const [metric, setMetric] = useState<Metric>('exams');
     const [focus, setFocus] = useState<string | null>(null);
@@ -118,22 +119,10 @@ export default function ExamOpsPanel() {
 
             {/* ── 2. Conducted exams ───────────────────────────────────────── */}
             <section className="space-y-4">
-                <SectionTitle title="Exams conducted" subtitle={`Counted as one exam per test per day · ${PERIOD_LABEL[period]}`} />
+                <SectionTitle title="Exams conducted" subtitle={`Counted as one exam per test per day · ${periodLabel(period)}`} />
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <Segmented<Period>
-                        ariaLabel="Period"
-                        value={period}
-                        onChange={setPeriod}
-                        options={[
-                            { value: 'today', label: 'Today' },
-                            { value: 'yesterday', label: 'Yesterday' },
-                            { value: '7d', label: '7D', title: 'Last 7 days' },
-                            { value: '30d', label: '30D', title: 'Last 30 days' },
-                            { value: '90d', label: '90D', title: 'Last 90 days' },
-                            { value: '12m', label: '12M', title: 'Last 12 months' },
-                        ]}
-                    />
+                    <PeriodPicker value={period} onChange={setPeriod} />
                     <Segmented<Audience>
                         ariaLabel="Whose exams"
                         value={audience}
@@ -152,12 +141,12 @@ export default function ExamOpsPanel() {
 
                 <Card
                     title={METRIC_LABEL[metric]}
-                    subtitle={`Per ${d?.range.bucket ?? 'day'}, ${PERIOD_LABEL[period]}`}
+                    subtitle={`Per ${d?.range.bucket ?? 'day'}, ${periodLabel(period)}`}
                     action={d && d.totals.exams > 0 ? <span className="text-[12px] text-slate-400">Tap a tile above to switch the measure</span> : undefined}
                 >
                     {!d ? <Skeleton className="h-44" /> : d.totals.exams === 0 ? (
                         <Empty icon={CalendarClock} title="Nothing to chart yet">
-                            No exam was conducted {PERIOD_LABEL[period]}. Widen the period, or switch the audience to Everyone
+                            No exam was conducted {inPeriod(period)}. Widen the period, or switch the audience to Everyone
                             to include our own runs.
                         </Empty>
                     ) : (
@@ -234,7 +223,7 @@ export default function ExamOpsPanel() {
 // ── Tiles ─────────────────────────────────────────────────────────────────────
 function Tiles({ d, period, metric, setMetric }: { d: ExamOps; period: Period; metric: Metric; setMetric: (m: Metric) => void }) {
     const t = d.totals, p = d.previous;
-    const vs = `vs ${PREVIOUS_LABEL[period]}`;
+    const vs = `vs ${previousLabel(period)}`;
     const pick = (m: Metric) => ({ selected: metric === m, onClick: () => setMetric(m), deltaTitle: vs });
     return (
         <>
@@ -534,6 +523,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 // ── What the numbers mean, and what they cannot tell you ──────────────────────
 function Footnotes({ d, period }: { d: ExamOps; period: Period }) {
+    // `to` is the exclusive end (midnight after a finished day), so show the last day inside the period.
+    const lastDay = istDate(new Date(Date.parse(d.range.to) - 1).toISOString());
     const notes: { icon: React.ElementType; tone: 'amber' | 'slate'; title: string; body: React.ReactNode }[] = [];
 
     if (d.team_configured === 0) {
@@ -608,9 +599,9 @@ function Footnotes({ d, period }: { d: ExamOps; period: Period }) {
             <div className={cn(CARD, 'flex items-start gap-3 p-4')}>
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                 <div className="min-w-0">
-                    <p className="text-[13.5px] font-semibold text-slate-900">Period compared with {PREVIOUS_LABEL[period]}</p>
+                    <p className="text-[13.5px] font-semibold text-slate-900">Period compared with {previousLabel(period)}</p>
                     <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-                        {istDate(d.range.from)} → {istDate(d.range.to)}. Today’s numbers are compared with the same hours yesterday,
+                        {istDate(d.range.from)}{lastDay !== istDate(d.range.from) && ` → ${lastDay}`}. Today’s numbers are compared with the same hours yesterday,
                         so a morning reading is never flattered by a full previous day.
                     </p>
                 </div>

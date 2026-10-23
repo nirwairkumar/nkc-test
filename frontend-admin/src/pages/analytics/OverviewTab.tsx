@@ -6,8 +6,9 @@ import type { Nav } from './AnalyticsPanel';
 import { insightsApi, type Overview, type Period, type SeriesPoint, type Site } from './api';
 import { SERIES, ShareBar, TrendChart } from './charts';
 import {
-    change, compact, countryName, derive, duration, istDate, num, pct, PERIOD_LABEL, PREVIOUS_LABEL, relative,
+    cap, change, compact, countryName, derive, duration, istDate, num, pct, relative,
 } from './format';
+import { periodLabel, previousLabel } from './period';
 import { CHANNEL_HELP, ChannelIcon, DEVICE_LABEL, ErrorState, PathLabel } from './shared';
 import { BarList, Card, CountryCode, Segmented, StatTile, TileSkeletons, Skeleton, CARD } from './ui';
 
@@ -48,7 +49,7 @@ export default function OverviewTab({ period, site, nav }: { period: Period; sit
 
             <Card
                 title={METRICS[metric].label}
-                subtitle={`${PERIOD_LABEL[period][0].toUpperCase()}${PERIOD_LABEL[period].slice(1)}, compared with ${PREVIOUS_LABEL[period]}`}
+                subtitle={`${cap(periodLabel(period))}, compared with ${previousLabel(period)}`}
             >
                 {d ? (
                     <TrendChart
@@ -112,7 +113,7 @@ export default function OverviewTab({ period, site, nav }: { period: Period; sit
 function Tiles({ d, period, metric, setMetric }: { d: Overview; period: Period; metric: Metric; setMetric: (m: Metric) => void }) {
     const s = d.summary, p = d.previous;
     const cur = derive(s), prev = derive(p);
-    const vs = `vs ${PREVIOUS_LABEL[period]}`;
+    const vs = `vs ${previousLabel(period)}`;
     const tile = (m: Metric) => ({ selected: metric === m, onClick: () => setMetric(m), deltaTitle: vs });
     return (
         <>
