@@ -77,8 +77,8 @@ export function previewMeta(test) {
  * group. It used to inherit the homepage head — "Free Online Test Maker for Teachers"
  * and the big marketing banner, an advert. Now the card is the page itself: a 256px
  * picture of the code screen (six empty boxes, "testoza.com/join"), small enough for
- * WhatsApp's side thumbnail, same as an exam link. og:url is testoza.com/join, the
- * address people actually share (it 301s here). Keep in step with worker.js.
+ * WhatsApp's side thumbnail, same as an exam link. og:url is app.testoza.com/join, the
+ * page that answers (testoza.com/join 301s here). Keep in step with worker.js.
  */
 export function joinPageMeta() {
     return {

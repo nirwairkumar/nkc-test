@@ -10,5 +10,7 @@ export async function onRequest(context) {
     const response = await env.ASSETS.fetch(request);
     const contentType = response.headers.get('content-type') || '';
     if (!response.ok || !contentType.includes('text/html')) return response;
-    return rewriteHead(response, joinPageMeta(), 'https://testoza.com/join');
+    // The page that answers, not testoza.com/join: a canonical/og:url that redirects makes
+    // Facebook's scraper (WhatsApp's) chase it and fall back to a stale card.
+    return rewriteHead(response, joinPageMeta(), 'https://app.testoza.com/join');
 }
