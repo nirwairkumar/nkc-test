@@ -936,7 +936,9 @@ export default function UserTestManager() {
             const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
             navigate(`/test/${conductSlug}`);
         } else if (t.visibility === 'private' || !t.is_public) {
-            navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
+            // A freshly saved private test has no slug yet; "unlisted-…" only exists once it has
+            // been conducted, so fall back to the id (the owner can always open it by id).
+            navigate(`/test/${t.slug || t.id}`);
         } else {
             navigate(`/test-intro/${t.id}`);
         }
