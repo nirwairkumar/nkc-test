@@ -25,7 +25,7 @@ import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
-import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
+import EmailPanel from './email/EmailPanel';
 import AdminNotificationsPanel from './AdminNotificationsPanel';
 import AdminTestingToolsPanel from './AdminTestingToolsPanel';
 import SupportPanel from './support/SupportPanel';
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
                     {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
-                    {activeTab === 'email_broadcast' && <AdminEmailBroadcastPanel />}
+                    {activeTab === 'email_broadcast' && <EmailPanel />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}
                     {activeTab === 'pricing' && <AdminPricingPanel />}
                     {activeTab === 'promos' && <AdminPromoCodesPanel />}
