@@ -94,6 +94,17 @@ const SHAREABLE_PREFIXES = ['/test/', '/test-intro/', '/join/'];
 
 const isShareableRoute = (pathname) => SHAREABLE_PREFIXES.some((p) => pathname.startsWith(p));
 
+/**
+ * The /join code screen as a 256px picture (six empty boxes, "testoza.com/join"); under
+ * 300px, so WhatsApp shows the small side thumbnail, not a big advert-style card.
+ * Same image as frontend/functions/_shared/testPreview.js joinPageMeta().
+ */
+const JOIN_PREVIEW_IMAGE = 'https://app.testoza.com/join-preview.png';
+const JOIN_PREVIEW_IMAGE_META = `
+    <meta property="og:image:width" content="256">
+    <meta property="og:image:height" content="256">
+    <meta property="og:image:alt" content="Join your exam: six boxes for the exam code">`;
+
 /** The join code in /join/<code> — six digits, nothing else. */
 function joinCodeFromPath(pathname) {
   const m = pathname.match(/^\/join\/(\d{4,8})(?:\/|$)/);
@@ -427,22 +438,47 @@ function generateMetaTags(url, testData = null, joinData = null) {
   } else if (joinCodeFromPath(path)) {
     // The invitation card a batch sees in WhatsApp. It used to inherit the homepage's
     // title, description, og:url and image — an ad for a test maker, sent to parents.
+    // Same small card as an exam link: the institute's logo, else the 256px picture of
+    // the code screen (frontend/public/join-preview.png), never the big banner.
     const code = joinCodeFromPath(path);
     const pretty = `${code.slice(0, 3)} ${code.slice(3)}`;
     const test = joinData && joinData.test ? joinData.test : null;
+    const institute = test && test.institution_name ? test.institution_name.trim() : '';
     robots = 'noindex, nofollow';
     type = 'article';
+    card = 'summary';
+    siteName = institute || 'TestoZa';
     if (test && test.title) {
-      title = test.institution_name ? `${test.title} — ${test.institution_name}` : `${test.title} | TestoZa`;
+      title = institute ? `${test.title} — ${institute}` : test.title;
       const facts = [
-        test.questions ? `${test.questions} questions` : null,
-        test.duration ? `${test.duration} minutes` : null
-      ].filter(Boolean).join(', ');
-      description = `Enter code ${pretty} and type your name to start${facts ? ` (${facts})` : ''}. No app and no account needed.`;
+        test.duration ? `${test.duration} minutes` : null,
+        test.questions ? `${test.questions} questions` : null
+      ].filter(Boolean).join(' · ');
+      description = `${facts ? `${facts}. ` : ''}Open the link, check code ${pretty}, type your name, then start.`;
     } else {
-      title = `Join your exam — enter code ${pretty} | TestoZa`;
-      description = `Open this link, enter code ${pretty} and type your name to start your exam. No app and no account needed.`;
+      title = `Join your exam — code ${pretty}`;
+      description = `Open the link, check code ${pretty}, type your name, then start your exam.`;
     }
+    if (test && test.institution_logo) {
+      image = test.institution_logo;
+      imageMeta = `
+    <meta property="og:image:alt" content="${escapeHtml(institute || title)}">`;
+    } else {
+      image = JOIN_PREVIEW_IMAGE;
+      imageMeta = JOIN_PREVIEW_IMAGE_META;
+    }
+  } else if (path === '/join' || path === '/join/' || path.startsWith('/join/result')) {
+    // The code screen and the result lookup. /join itself is normally answered by
+    // frontend/functions/join/index.js (this route only covers /join/*); same card.
+    const result = path.startsWith('/join/result');
+    robots = 'noindex, nofollow';
+    card = 'summary';
+    title = result ? 'See your exam result — testoza.com/join/result' : 'Join your exam — testoza.com/join';
+    description = result
+      ? 'Type the 6-digit exam code and your details to see your result.'
+      : 'Type the 6-digit exam code you were given, then your name, and start your exam.';
+    image = JOIN_PREVIEW_IMAGE;
+    imageMeta = JOIN_PREVIEW_IMAGE_META;
   } else if (path.startsWith('/tests/')) {
     const category = path.split('/')[2];
     const catName = formatCategoryName(category);

@@ -72,6 +72,25 @@ export function previewMeta(test) {
     };
 }
 
+/**
+ * testoza.com/join, the address a teacher writes on the board or posts to the class
+ * group. It used to inherit the homepage head — "Free Online Test Maker for Teachers"
+ * and the big marketing banner, an advert. Now the card is the page itself: a 256px
+ * picture of the code screen (six empty boxes, "testoza.com/join"), small enough for
+ * WhatsApp's side thumbnail, same as an exam link. og:url is testoza.com/join, the
+ * address people actually share (it 301s here). Keep in step with worker.js.
+ */
+export function joinPageMeta() {
+    return {
+        title: 'Join your exam — testoza.com/join',
+        description: 'Type the 6-digit exam code you were given, then your name, and start your exam.',
+        robots: 'noindex, nofollow',
+        siteName: 'TestoZa',
+        card: 'summary',
+        image: { url: 'https://app.testoza.com/join-preview.png', width: 256, height: 256, alt: 'Join your exam: six boxes for the exam code' },
+    };
+}
+
 /** Rewrites the SPA shell's head with `meta`. */
 export function rewriteHead(response, meta, canonicalUrl) {
     const set = (value) => ({ element(e) { if (value == null) e.remove(); else e.setAttribute('content', String(value)); } });
