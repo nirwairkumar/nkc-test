@@ -1129,7 +1129,7 @@ export default function FullTestAnalysisPage() {
         if (!drawerStudent) return;
         setStudents(prev => prev.map(s => s.id === drawerStudent.id ? { ...s, teacherNotes: drawerTeacherNotes } : s));
         setDrawerStudent(prev => prev ? { ...prev, teacherNotes: drawerTeacherNotes } : null);
-        toast.success("Teacher remarks updated.");
+        toast.success("Educator remarks updated.");
     };
 
     // Drawer Evaluation
@@ -1328,7 +1328,7 @@ export default function FullTestAnalysisPage() {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 text-xs text-slate-500 font-medium flex-wrap">
-                                <span className="font-semibold text-slate-700">Teacher Analytical Report</span>
+                                <span className="font-semibold text-slate-700">Educator Analytical Report</span>
                                 <span>•</span>
                                 <span className="text-slate-600">{new Date(testInfo.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                                 <span>•</span>
@@ -2274,7 +2274,7 @@ export default function FullTestAnalysisPage() {
                                     {/* Teacher Notes */}
                                     <div className="space-y-2 bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Teacher Remarks & Feedback</h4>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Educator Remarks & Feedback</h4>
                                             <Button size="sm" onClick={handleSaveTeacherNotes} className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
                                                 Save Remarks
                                             </Button>

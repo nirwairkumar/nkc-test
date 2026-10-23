@@ -206,7 +206,7 @@ export default function OnboardingPage() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="Student">Student</SelectItem>
-                                                    <SelectItem value="Teacher">Teacher</SelectItem>
+                                                    <SelectItem value="Teacher">Educator</SelectItem>
                                                     <SelectItem value="Institution">Institution</SelectItem>
                                                     <SelectItem value="Other">Other</SelectItem>
                                                 </SelectContent>

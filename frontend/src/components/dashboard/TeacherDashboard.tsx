@@ -391,7 +391,7 @@ export default function TeacherDashboard() {
 
     const fullName = profileForRole?.full_name || (!isImpersonating ? user?.user_metadata?.full_name : '') || '';
     const callName = isInstitution ? fullName : fullName.split(' ')[0];
-    const eyebrow = isInstitution ? 'Institute dashboard' : 'Teacher dashboard';
+    const eyebrow = isInstitution ? 'Institute dashboard' : 'Educator dashboard';
     const { live, upcoming, latest } = model;
     // A sitting with a join code counts as running an exam, and its submissions as results.
     const checklist = {

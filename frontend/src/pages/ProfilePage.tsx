@@ -22,6 +22,7 @@ import {
 import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { roleLabel } from '@/lib/roleLabel';
 
 const ProfilePage = () => {
     const { user, session, isAdmin } = useAuth();
@@ -201,7 +202,7 @@ const ProfilePage = () => {
                             ) : (
                                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${designationColor[role] || designationColor.Student}`}>
-                                        {role}
+                                        {roleLabel(role)}
                                     </span>
                                     {isCreator && (
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
@@ -328,7 +329,7 @@ const ProfilePage = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Student">Student</SelectItem>
-                                        <SelectItem value="Teacher">Teacher</SelectItem>
+                                        <SelectItem value="Teacher">Educator</SelectItem>
                                         <SelectItem value="Institution">Institution</SelectItem>
                                         <SelectItem value="Guest">Guest</SelectItem>
                                     </SelectContent>

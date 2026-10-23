@@ -1,12 +1,12 @@
 /**
  * Roles exactly as people choose them at sign-up (frontend/src/pages/OnboardingPage.tsx:
- * Student · Teacher · Institution · Other). Admin access is NOT a role: it comes from
- * the `admins` table, so it is never offered here.
+ * Student · Educator · Institution · Other). Admin access is NOT a role: it comes from
+ * the `admins` table, so it is never offered here. "Educator" is stored as `Teacher`.
  */
 import type { EducatorStage, FollowUp, PersonKind } from '../analytics/api';
 
 export const ROLES = [
-    { value: 'Teacher', label: 'Teacher', hint: 'Creates and runs tests' },
+    { value: 'Teacher', label: 'Educator', hint: 'Creates and runs tests' },
     { value: 'Institution', label: 'Institution', hint: 'School or coaching centre' },
     { value: 'Student', label: 'Student', hint: 'Takes tests' },
     { value: 'Other', label: 'Other', hint: 'The sign-up pop-up shows this as “Student / Independent Creator”' },
@@ -19,6 +19,11 @@ export const LEGACY_ROLES: Record<string, string> = {
     Guest: 'Guest — an old sign-up choice, no longer offered',
     Admin: 'Admin — a label only; admin access comes from the admins list',
 };
+
+/** What admins see for a stored role: `Teacher` reads "Educator", everything else as stored. */
+export function roleLabel(designation: string | null | undefined): string {
+    return designation === 'Teacher' ? 'Educator' : designation || '';
+}
 
 export const KIND_LABEL: Record<PersonKind, string> = {
     educator: 'Educator',

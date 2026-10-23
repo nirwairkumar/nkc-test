@@ -28,6 +28,7 @@ import { CARD, Chip, GroupedList, IosSheet, KeyValue, Segmented, Skeleton } from
 import { testsApi, type TestDetail, type TestRow, type Visibility } from './api';
 import CloneToUserDialog from './CloneToUserDialog';
 import { CreatorAvatar, factsLine, pctText, StateChips, StateIcon, VISIBILITY } from './display';
+import { roleLabel } from '../users/roles';
 
 const SECTION = 'mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400';
 
@@ -398,7 +399,7 @@ function Creator({ d, onShowAll }: { d: TestDetail; onShowAll: () => void }) {
                             {c.is_team && <Chip tone="violet">Team</Chip>}
                         </span>
                         <span className="block truncate text-[12px] text-slate-500">
-                            {[c.designation, c.email].filter(Boolean).join(' · ')}
+                            {[roleLabel(c.designation), c.email].filter(Boolean).join(' · ')}
                         </span>
                         <span className="block text-[12px] text-slate-500">
                             {num(c.tests)} test{c.tests === 1 ? '' : 's'}{c.joined_at ? ` · joined ${istDate(c.joined_at)}` : ''}

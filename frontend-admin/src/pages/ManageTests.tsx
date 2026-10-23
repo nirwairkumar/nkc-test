@@ -52,6 +52,7 @@ import {
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import { shareTest } from '@/utils/shareUtils';
+import { roleLabel } from './users/roles';
 
 interface ManageTestsProps {
     activeTab?: string;
@@ -1657,7 +1658,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                                 className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                             >
                                                                 <option value="Student">Student</option>
-                                                                <option value="Teacher">Teacher</option>
+                                                                <option value="Teacher">Educator</option>
                                                                 <option value="Institution">Institution</option>
                                                                 <option value="Guest">Guest</option>
                                                                 <option value="Admin">Admin</option>
@@ -1799,7 +1800,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                                 className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                                             >
                                                                 <option value="Student">Student</option>
-                                                                <option value="Teacher">Teacher</option>
+                                                                <option value="Teacher">Educator</option>
                                                                 <option value="Institution">Institution</option>
                                                                 <option value="Guest">Guest</option>
                                                                 <option value="Admin">Admin</option>
@@ -2484,7 +2485,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                             </Avatar>
                             <div className="text-center space-y-1">
                                 <h3 className="font-bold text-xl">{viewingCreator.full_name || viewingCreator.email || 'Unknown User'}</h3>
-                                <Badge variant="secondary">{viewingCreator.designation || 'Member'}</Badge>
+                                <Badge variant="secondary">{roleLabel(viewingCreator.designation) || 'Member'}</Badge>
                                 <p className="text-sm text-muted-foreground">{viewingCreator.email || 'No email registered'}</p>
                             </div>
 

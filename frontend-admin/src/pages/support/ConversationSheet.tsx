@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { istDate, istDateTime, num } from '../analytics/format';
 import { CARD, Chip, GroupedList, IosSheet, KeyValue, PILL_BTN, Skeleton } from '../analytics/ui';
-import { mailto } from '../users/roles';
+import { mailto, roleLabel } from '../users/roles';
 import { deviceSummary, supportApi, TOPIC_LABEL, whatsAppTo, type SupportMessage } from './api';
 
 const SECTION = 'mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400';
@@ -207,7 +207,7 @@ export default function ConversationSheet({ messageId, preview, onClose }: {
                         {m.phone && <KeyValue label="Phone">{m.phone}</KeyValue>}
                         {m.account ? (
                             <>
-                                {m.account.designation && <KeyValue label="Role">{m.account.designation}</KeyValue>}
+                                {m.account.designation && <KeyValue label="Role">{roleLabel(m.account.designation)}</KeyValue>}
                                 <KeyValue label="Tests made">{num(m.account.tests)}</KeyValue>
                                 {m.account.joined_at && <KeyValue label="Joined">{istDate(m.account.joined_at)}</KeyValue>}
                             </>

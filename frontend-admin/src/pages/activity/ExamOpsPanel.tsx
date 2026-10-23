@@ -27,6 +27,7 @@ import { examOpsApi, NotDeployedError, type Audience, type ExamOps, type LiveExa
 import LiveNow from './LiveNow';
 import { proctoringRules } from './proctoring';
 import SittingSheet from './SittingSheet';
+import { roleLabel } from '../users/roles';
 
 const AUDIENCES: readonly Audience[] = ['customers', 'everyone', 'team'];
 type Metric = 'exams' | 'candidates' | 'submissions';
@@ -201,7 +202,7 @@ export default function ExamOpsPanel() {
                                             {!e.is_first_time && e.exams > 1 && <Chip tone="violet" title={`${e.exams} exams on ${e.days} day(s)`}>Repeat</Chip>}
                                         </span>
                                     ),
-                                    hint: e.designation || undefined,
+                                    hint: roleLabel(e.designation) || undefined,
                                 }))}
                             />
                         )}

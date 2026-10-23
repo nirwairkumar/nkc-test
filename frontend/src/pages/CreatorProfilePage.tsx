@@ -16,6 +16,7 @@ import { fetchCategories } from '@/lib/categoriesApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import { toast } from 'sonner';
+import { roleLabel } from '@/lib/roleLabel';
 
 interface CreatorProfile {
     id: string;
@@ -145,7 +146,7 @@ export default function CreatorProfilePage() {
                             style={getBadgeStyle(creator.designation || 'Student')}
                         >
                             {getRoleIcon(creator.designation || 'Student')}
-                            {creator.designation || 'Student'}
+                            {roleLabel(creator.designation) || 'Student'}
                         </Badge>
                         <Badge variant="outline" className="gap-1"><BookOpen className="h-3 w-3" /> {tests.length} Tests</Badge>
                         <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" /> {files.length} Files</Badge>

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { roleLabel } from './users/roles';
 
 type AiSubSection = 'all' | 'generate_with_ai' | 'youtube' | 'topics' | 'manual';
 
@@ -455,7 +456,7 @@ export default function AdminAiAuditPanel() {
                                                             <p className="text-[11px] text-slate-500 line-clamp-1">{userProfile.email || 'No email'}</p>
                                                             {userProfile.designation && (
                                                                 <span className="inline-block mt-0.5 text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                                                                    {userProfile.designation}
+                                                                    {roleLabel(userProfile.designation)}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -763,7 +764,7 @@ export default function AdminAiAuditPanel() {
                                     <div className="text-right">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">User Role</span>
                                         <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold capitalize mt-0.5">
-                                            {selectedItem.user_profile?.designation || 'Student / Teacher'}
+                                            {roleLabel(selectedItem.user_profile?.designation) || 'Student / Educator'}
                                         </Badge>
                                     </div>
                                 </div>

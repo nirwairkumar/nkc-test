@@ -277,7 +277,7 @@ export default function AuthModal() {
                                         <SelectValue placeholder="Select your role..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Teacher">Teacher / Educator</SelectItem>
+                                        <SelectItem value="Teacher">Educator</SelectItem>
                                         <SelectItem value="Institution">School / Coaching Institution</SelectItem>
                                         <SelectItem value="Other">Student / Independent Creator</SelectItem>
                                     </SelectContent>

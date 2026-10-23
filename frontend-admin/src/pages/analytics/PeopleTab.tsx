@@ -9,6 +9,7 @@ import {
 } from './format';
 import { ChannelIcon, DeviceIcon, ErrorState, PathLabel } from './shared';
 import { CARD, Chip, Empty, GroupedList, IosSheet, KeyValue, PILL_BTN, Segmented, Skeleton } from './ui';
+import { roleLabel } from '../users/roles';
 
 export type SessionMeta = SessionRow | PersonSession;
 
@@ -259,7 +260,7 @@ export function PersonSheet({ who, onClose, nav }: { who: { visitor?: string | n
 
     return (
         <IosSheet open={!!who} onOpenChange={(o) => !o && onClose()} title={title}
-            subtitle={u ? [u.email, u.designation].filter(Boolean).join(' · ') : 'Anonymous — no account linked to this browser'}>
+            subtitle={u ? [u.email, roleLabel(u.designation)].filter(Boolean).join(' · ') : 'Anonymous — no account linked to this browser'}>
             {error ? <ErrorState error={error} /> : !data ? <Skeleton className="h-64" /> : (
                 <div className="space-y-4">
                     {u && (

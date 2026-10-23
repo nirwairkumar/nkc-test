@@ -14,7 +14,7 @@ import { insightsApi, NotInstalledError, type PeopleReport, type PeopleRow, type
 import { initials, num, relative } from '../analytics/format';
 import { ErrorState, usePersisted } from '../analytics/shared';
 import { CARD, Chip, Empty, GroupedList, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
-import { displayName, firstName, FOLLOW_UP, KIND_LABEL, KIND_TONE, mailto, STAGES } from './roles';
+import { displayName, firstName, FOLLOW_UP, KIND_LABEL, KIND_TONE, mailto, roleLabel, STAGES } from './roles';
 import UserSheet from './UserSheet';
 
 const SEGMENTS: readonly PeopleSegment[] = ['members', 'educator', 'student', 'unset', 'candidate', 'team', 'follow_up'];
@@ -310,7 +310,7 @@ function Row({ r, onOpen, showReason }: { r: PeopleRow; onOpen: () => void; show
                     <span className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate text-[14px] font-semibold text-slate-900">{displayName(r)}</span>
                         {r.is_verified_creator && <BadgeCheck className="h-4 w-4 shrink-0 text-sky-600" aria-label="Verified creator" />}
-                        <Chip tone={KIND_TONE[r.kind]}>{r.kind === 'educator' && r.designation ? r.designation : KIND_LABEL[r.kind]}</Chip>
+                        <Chip tone={KIND_TONE[r.kind]}>{r.kind === 'educator' && r.designation ? roleLabel(r.designation) : KIND_LABEL[r.kind]}</Chip>
                         {r.is_premium && <Chip tone="amber">Premium</Chip>}
                     </span>
                     <span className="mt-0.5 block truncate text-[12px] text-slate-500">

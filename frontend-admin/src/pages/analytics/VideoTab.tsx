@@ -32,7 +32,7 @@ const PLACES: Record<string, PlaceMeta> = {
         tint: 'bg-amber-50 text-amber-600 ring-amber-600/20',
     },
     dashboard: {
-        label: 'Teacher dashboard',
+        label: 'Educator dashboard',
         where: 'First-exam checklist',
         icon: LayoutDashboard,
         tint: 'bg-violet-50 text-violet-600 ring-violet-600/15',
