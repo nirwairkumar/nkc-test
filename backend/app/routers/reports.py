@@ -82,6 +82,22 @@ async def get_creator_reports(creator_id: str, request: Request, db: Client = De
         logger.error(f"Error fetching creator reports: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# 2b. Exam feedback candidates left on the result page (stars + an optional note)
+@router.get("/creator/{creator_id}/feedback")
+async def get_creator_feedback(creator_id: str, request: Request, db: Client = Depends(get_db)):
+    verify_owner_or_admin(creator_id, request, db)
+    try:
+        response = admin_db.table("feedback") \
+                     .select("id, created_at, test_id, rating, comment, improvements, dislikes, sender_name, tests!inner(title, custom_id, created_by)") \
+                     .eq("tests.created_by", creator_id) \
+                     .order("created_at", desc=True) \
+                     .limit(300) \
+                     .execute()
+        return response.data
+    except Exception as e:
+        logger.error(f"Error fetching creator feedback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 3. Mark report as solved (Creator or Admin)
 @router.put("/{report_id}/status")
 async def update_report_status(report_id: str, payload: ReportStatusUpdate, request: Request, db: Client = Depends(get_db)):

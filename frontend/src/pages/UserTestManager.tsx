@@ -4,7 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Loader2, Pencil, Plus, Radio, Settings, BarChart3, Link as LinkIcon, X, GraduationCap, Search, Inbox,
     CheckCircle, AlertTriangle, Copy, Share2, Globe, Lock, Info, Trash2, MoreHorizontal, Check, FileText,
-    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown, KeyRound, Send, ShieldCheck,
+    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown, KeyRound, Send, ShieldCheck, Star,
+    MessageSquareText,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ import { fetchClasses } from '@/lib/classesApi';
 import { fetchUserDetails } from '@/lib/usersApi';
 import { fetchCategories } from '@/lib/categoriesApi';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fetchCreatorReports, updateReportStatus, Report } from "@/lib/reportsApi";
+import { fetchCreatorReports, fetchCreatorFeedback, updateReportStatus, Report, ExamFeedback } from "@/lib/reportsApi";
 import { shareTest, needsSignIn } from '@/utils/shareUtils';
 import LiveExamCoach from '@/components/exams/LiveExamCoach';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
@@ -250,6 +251,10 @@ export default function UserTestManager() {
     // Reports State
     const [reports, setReports] = useState<Report[]>([]);
     const [reportsLoading, setReportsLoading] = useState(false);
+    // Exam feedback (stars + note from the result page); loaded only when the tab opens.
+    const [feedback, setFeedback] = useState<ExamFeedback[]>([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+    const reportsView = new URLSearchParams(location.search).get('view') === 'feedback' ? 'feedback' : 'reports';
 
     const [showTour, setShowTour] = useState(false);
 
@@ -319,6 +324,35 @@ export default function UserTestManager() {
             loadReports();
         }
     }, [targetUserId]);
+
+    const loadFeedback = async () => {
+        if (!targetUserId) return;
+        setFeedbackLoading(true);
+        const { data, error } = await fetchCreatorFeedback(targetUserId);
+        if (error) {
+            toast.error("Failed to load feedback");
+        } else {
+            setFeedback(data || []);
+        }
+        setFeedbackLoading(false);
+    };
+
+    useEffect(() => {
+        if (activeTab === 'reports' && targetUserId) {
+            loadFeedback();
+        }
+    }, [activeTab, targetUserId]);
+
+    const setReportsView = (view: 'reports' | 'feedback') => {
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('tab', 'reports');
+        if (view === 'feedback') {
+            searchParams.set('view', 'feedback');
+        } else {
+            searchParams.delete('view');
+        }
+        navigate(`/my-tests?${searchParams.toString()}`, { replace: true });
+    };
 
     const unresolvedReportsByTestId = React.useMemo(() => {
         const map: Record<string, number> = {};
@@ -877,6 +911,10 @@ export default function UserTestManager() {
 
     const openReportsCount = reports.filter(r => r.status === 'open').length;
     const visibleReports = selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports;
+    const visibleFeedback = selectedReportTestId ? feedback.filter(f => f.test_id === selectedReportTestId) : feedback;
+    const averageRating = visibleFeedback.length
+        ? visibleFeedback.reduce((sum, f) => sum + (f.rating || 0), 0) / visibleFeedback.length
+        : 0;
 
     const goToCreateTest = () => {
         if (isAdmin && impersonateUserId) {
@@ -925,7 +963,7 @@ export default function UserTestManager() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer">
                         <span className="flex items-center">
-                            <Inbox className="mr-2.5 h-4 w-4 text-slate-500" /> Student reports
+                            <Inbox className="mr-2.5 h-4 w-4 text-slate-500" /> Reports & feedback
                         </span>
                         {reportsCount > 0 && (
                             <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
@@ -1040,8 +1078,8 @@ export default function UserTestManager() {
                         <TabsTrigger value="tests" className={SEGMENT}>
                             My tests
                         </TabsTrigger>
-                        <TabsTrigger value="reports" className={SEGMENT}>
-                            Student reports
+                        <TabsTrigger value="reports" className={`${SEGMENT} px-2.5 sm:px-4`}>
+                            Reports & feedback
                             {openReportsCount > 0 && (
                                 <span className="ml-1.5 min-w-[20px] rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
                                     {openReportsCount}
@@ -1391,16 +1429,42 @@ export default function UserTestManager() {
                 <TabsContent value="reports" className="m-0 space-y-4 border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">Student reports</h2>
+                            <h2 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">Reports & feedback</h2>
                             <p className="mt-0.5 text-[13px] text-slate-600">
-                                Problems students flagged in your questions. Fix the question, then mark the report solved.
+                                {reportsView === 'feedback'
+                                    ? 'Ratings candidates gave your exams on the result page.'
+                                    : 'Problems students flagged in your questions. Fix the question, then mark the report solved.'}
                             </p>
+                            <div role="tablist" aria-label="Reports or feedback" className="mt-3 inline-flex rounded-xl bg-slate-200/60 p-1">
+                                {([
+                                    { key: 'reports', label: 'Question reports', count: openReportsCount },
+                                    { key: 'feedback', label: 'Feedback', count: 0 }, // no "unread" state to badge
+                                ] as const).map(({ key, label, count }) => (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={reportsView === key}
+                                        onClick={() => setReportsView(key)}
+                                        className={`inline-flex h-8 items-center rounded-[9px] px-3 text-[13px] font-semibold transition-all cursor-pointer ${reportsView === key
+                                            ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.12),0_1px_1px_rgba(15,23,42,0.04)]'
+                                            : 'text-slate-600 hover:text-slate-900'}`}
+                                    >
+                                        {label}
+                                        {count > 0 && (
+                                            <span className="ml-1.5 min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {selectedReportTestId && (
                             <div className="flex max-w-full items-center gap-1 self-start rounded-full bg-sky-50 py-1 pl-3 pr-1 text-[13px] text-sky-800 ring-1 ring-inset ring-sky-600/15 sm:self-auto">
                                 <span className="truncate">
-                                    Showing: <strong className="font-semibold">{tests.find(t => t.id === selectedReportTestId)?.title || reports.find(r => r.test_id === selectedReportTestId)?.tests?.title || 'Selected test'}</strong>
+                                    Showing: <strong className="font-semibold">{tests.find(t => t.id === selectedReportTestId)?.title || reports.find(r => r.test_id === selectedReportTestId)?.tests?.title || feedback.find(f => f.test_id === selectedReportTestId)?.tests?.title || 'Selected test'}</strong>
                                 </span>
                                 <button
                                     type="button"
@@ -1413,7 +1477,67 @@ export default function UserTestManager() {
                         )}
                     </div>
 
-                    {reportsLoading ? (
+                    {reportsView === 'feedback' ? (
+                        feedbackLoading && feedback.length === 0 ? (
+                            <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-14 text-sm text-slate-500 ring-1 ring-slate-900/[0.06]">
+                                <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
+                                <span>Loading feedback...</span>
+                            </div>
+                        ) : visibleFeedback.length === 0 ? (
+                            <div className="grid">
+                                <EmptyState
+                                    icon={MessageSquareText}
+                                    title="No feedback yet"
+                                    body="Turn on Exam feedback in a test's Settings → Results & Timing. Candidates then rate the exam on their result page."
+                                    action={selectedReportTestId ? (
+                                        <button type="button" className={PILL_BTN} onClick={clearReportFilter}>
+                                            View all feedback
+                                        </button>
+                                    ) : undefined}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-[13px] text-slate-600">
+                                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                                    <span>
+                                        <strong className="font-semibold text-slate-900 tabular-nums">{averageRating.toFixed(1)}</strong> average from {plural(visibleFeedback.length, 'rating')}
+                                    </span>
+                                </div>
+                                <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.14)]">
+                                    {visibleFeedback.map((item) => {
+                                        // Old platform-form rows kept their text in other columns.
+                                        const note = [item.comment, item.improvements, item.dislikes]
+                                            .map(t => (t || '').trim()).filter(Boolean).join(' · ');
+                                        return (
+                                            <li key={item.id} className="px-4 py-4 sm:px-5">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="flex" aria-label={`${item.rating} out of 5 stars`}>
+                                                        {[1, 2, 3, 4, 5].map(n => (
+                                                            <Star key={n} className={`h-4 w-4 ${n <= item.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                                                        ))}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</span>
+                                                </div>
+                                                <p className="mt-2 text-[15px] font-semibold text-slate-900">
+                                                    {item.tests?.title || 'Unknown test'}
+                                                    {item.tests?.custom_id && (
+                                                        <span className="ml-1.5 font-mono text-xs font-normal text-slate-500">#{item.tests.custom_id}</span>
+                                                    )}
+                                                </p>
+                                                {note ? (
+                                                    <p className="mt-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700">"{note}"</p>
+                                                ) : (
+                                                    <p className="mt-1 text-sm text-slate-500">No note</p>
+                                                )}
+                                                <p className="mt-2 text-xs text-slate-500">— {item.sender_name || 'Anonymous'}</p>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )
+                    ) : reportsLoading ? (
                         <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-14 text-sm text-slate-500 ring-1 ring-slate-900/[0.06]">
                             <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
                             <span>Loading reports...</span>

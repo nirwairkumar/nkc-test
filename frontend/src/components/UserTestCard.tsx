@@ -195,7 +195,7 @@ export function UserTestCard({
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onViewReports?.(test)} className="flex items-center justify-between rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer">
                             <span className="flex items-center">
-                                <Inbox className="mr-2.5 h-4 w-4 text-slate-500" /> Student reports
+                                <Inbox className="mr-2.5 h-4 w-4 text-slate-500" /> Reports & feedback
                             </span>
                             {unresolvedReportsCount > 0 && (
                                 <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">

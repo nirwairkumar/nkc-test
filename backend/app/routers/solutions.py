@@ -3,7 +3,7 @@ from app.core.database import get_db
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
-from app.routers.tests.utils import exam_window_still_open
+from app.routers.tests.utils import exam_window_still_open, result_view_allows
 import logging
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ async def get_test_solutions(
         if requesting_user_id:
             if test_row.get("created_by") == requesting_user_id or is_admin_user(requesting_user_id, db):
                 allowed = True
-            elif not exam_window_still_open(test_row.get("settings")):
+            elif not exam_window_still_open(test_row.get("settings")) and result_view_allows(test_row.get("settings"), "solutions"):
                 attempt = db.table("user_tests").select("id")                    .eq("user_id", requesting_user_id).eq("test_id", test_id).limit(1).execute()
                 allowed = bool(attempt.data)
         if not allowed:
@@ -97,8 +97,9 @@ async def get_test_solutions(
 
         solutions = test_row.get("solutions")
         
+        # A cleared editor saves empty strings, which is not "uploaded".
         return {
-            "has_solutions": solutions is not None and len(solutions) > 0,
+            "has_solutions": isinstance(solutions, dict) and any(str(v or "").strip() for v in solutions.values()),
             "solutions": solutions or {}
         }
         

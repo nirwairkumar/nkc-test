@@ -38,8 +38,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
-import { FeedbackForm } from '@/components/FeedbackForm';
 import { BehavioralTimeMatrix } from '@/components/results/BehavioralTimeMatrix';
+import { resolveResultView } from '@/lib/resultView';
 
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
@@ -377,6 +377,8 @@ const ResultsPage = () => {
 
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
   const selectedTest = stateData?.test || contextSelectedTest;
+  // Only what the creator lets candidates see; with everything off, just the marks row.
+  const view = resolveResultView(selectedTest?.settings);
 
   // Normalize answers with memoization
   const answers: Record<number, string> = useMemo(() => {
@@ -397,10 +399,13 @@ const ResultsPage = () => {
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [showPopup, setShowPopup] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
-  const showAIChatFromParams = searchParams.get('ai_chat') === 'true';
+  const requestedTab = searchParams.get('tab') || 'overview';
+  // A hand-typed ?tab= can't open a part the creator turned off.
+  const activeTab = (requestedTab === 'topics' && view.time_matrix) || (requestedTab === 'solution-key' && view.solution_key)
+    ? requestedTab
+    : 'overview';
+  const showAIChatFromParams = view.ai_analysis && searchParams.get('ai_chat') === 'true';
   const [isAIChatOpen, setIsAIChatOpen] = useState(showAIChatFromParams);
 
   useEffect(() => {
@@ -426,9 +431,6 @@ const ResultsPage = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-
-  const [popupDismissed, setPopupDismissed] = useState(false);
-  const [isDismissing, setIsDismissing] = useState(false);
 
   const justSubmitted = stateData?.justSubmitted;
   const testId = selectedTest?.id;
@@ -508,31 +510,6 @@ const ResultsPage = () => {
       return () => clearInterval(interval);
     }
   }, [showPersonalResults, selectedTest, justSubmitted, testId]);
-
-  useEffect(() => {
-    // Check if popup was already shown for this test in this "session" or permanently
-    const popupShownKey = testId ? `feedback_popup_shown_${testId}` : null;
-    const isAlreadyShown = popupShownKey ? localStorage.getItem(popupShownKey) : null;
-
-    if (justSubmitted && !popupDismissed && !isAlreadyShown) {
-      const timer = setTimeout(() => {
-        // setShowPopup(true); // Temporarily disabled
-      }, 5000); // 5 seconds delay
-      return () => clearTimeout(timer);
-    }
-  }, [justSubmitted, popupDismissed, testId]);
-
-  const handleDismissPopup = () => {
-    setIsDismissing(true);
-    if (testId) {
-      localStorage.setItem(`feedback_popup_shown_${testId}`, 'true');
-    }
-    // After animation finishes, actually remove it from DOM
-    setTimeout(() => {
-      setShowPopup(false);
-      setPopupDismissed(true);
-    }, 600);
-  };
 
   const answersKey = useMemo(() => JSON.stringify(answers), [answers]);
 
@@ -731,7 +708,7 @@ const ResultsPage = () => {
                 </div>
 
                 {/* AI Rank Predictor (Shown only for supported competitive exam categories) */}
-                {isRankPredictorSupported(selectedTest) && (
+                {view.ai_analysis && isRankPredictorSupported(selectedTest) && (
                   <div className="mt-6 mb-8 relative">
                     <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
                       {isPredictingRank && (
@@ -816,22 +793,25 @@ const ResultsPage = () => {
                   </div>
                 )}
 
-                {/* Method 1: Behavioral Time & Cognitive Matrix */}
-                <BehavioralTimeMatrix
-                  questions={allQuestions}
-                  answers={answers}
-                  questionTimes={questionTimes}
-                  testDurationMinutes={selectedTest?.duration || 60}
-                  questionStatus={questionStatus}
-                  onSelectQuestion={(idx) => {
-                    const qId = allQuestions[idx]?.id;
-                    setSearchParams({ tab: 'solution-key', q: String(idx + 1) });
-                    setTimeout(() => {
-                      const el = document.getElementById(`solution-item-${qId}`);
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 120);
-                  }}
-                />
+                {/* Method 1: Behavioral Time & Cognitive Matrix (no questions or answers without the solution key) */}
+                {view.time_matrix && (
+                  <BehavioralTimeMatrix
+                    questions={allQuestions}
+                    answers={answers}
+                    questionTimes={questionTimes}
+                    testDurationMinutes={selectedTest?.duration || 60}
+                    questionStatus={questionStatus}
+                    compactOnly={!view.solution_key}
+                    onSelectQuestion={view.solution_key ? (idx) => {
+                      const qId = allQuestions[idx]?.id;
+                      setSearchParams({ tab: 'solution-key', q: String(idx + 1) });
+                      setTimeout(() => {
+                        const el = document.getElementById(`solution-item-${qId}`);
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 120);
+                    } : undefined}
+                  />
+                )}
               </motion.div>
             )}
 
@@ -1249,58 +1229,6 @@ const ResultsPage = () => {
                 </Card>
               </motion.div>
             )}
-
-            {activeTab === 'solutions' && (
-              <motion.div
-                key="solutions"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
-              >
-                <CheckCircle className="w-12 h-12 opacity-20" />
-                <p className="font-bold">Solutions page content coming soon.</p>
-              </motion.div>
-            )}
-
-            {activeTab === 'advance-analysis' && (
-              <motion.div
-                key="advance-analysis"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
-              >
-                <Target className="w-12 h-12 opacity-20" />
-                <p className="font-bold">Advance Analysis content coming soon.</p>
-              </motion.div>
-            )}
-
-            {activeTab === 'feedback' && (
-              <motion.div
-                key="feedback"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="max-w-2xl mx-auto"
-              >
-                {testId && (
-                  <div id="feedback-section" className="scroll-mt-24">
-                    <div className="space-y-1 mb-8 text-center">
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-white">Share Your Feedback</h3>
-                      <p className="text-sm text-slate-500 font-medium">Your thoughts help us improve the test quality for everyone.</p>
-                    </div>
-                    <FeedbackForm
-                      testId={testId}
-                      studentName={contextStudentName}
-                      creatorId={selectedTest?.created_by}
-                      testTitle={selectedTest?.title}
-                      testCustomId={selectedTest?.custom_id}
-                    />
-                  </div>
-                )}
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
         <div className="hidden md:block">
@@ -1308,59 +1236,8 @@ const ResultsPage = () => {
         </div>
       </div>
 
-
-
-      {/* Ad-like Sliding Popup */}
-      <AnimatePresence>
-        {showPopup && testId && (
-          <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={isDismissing
-              ? { x: "-50vw", y: "-20vh", scale: 0, opacity: 0 }
-              : { y: 0, opacity: 1, x: 0, scale: 1 }
-            }
-            exit={{ opacity: 0, scale: 0 }}
-            transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="fixed bottom-20 md:bottom-6 right-6 lg:right-12 z-50 w-[350px] shadow-2xl rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900"
-          >
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 relative">
-              <button
-                onClick={handleDismissPopup}
-                className="absolute top-2 right-2 p-1 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-full">
-                  <Sparkles className="w-5 h-5 text-yellow-300" />
-                </div>
-                <h3 className="text-white font-bold text-lg leading-tight">We value your opinion!</h3>
-              </div>
-            </div>
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Help us improve your experience by sharing a quick feedback. It takes less than a minute!
-              </p>
-              <Button
-                onClick={() => {
-                  setShowPopup(false);
-                  if (testId) {
-                    localStorage.setItem(`feedback_popup_shown_${testId}`, 'true');
-                  }
-                  navigate(`/results/feedback/${testId}`, { state: stateData });
-                }}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 shadow-md h-11"
-              >
-                Give Feedback
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* TestoZa AI Chatbot */}
-      {showPersonalResults && analysisData && selectedTest && (
+      {view.ai_analysis && showPersonalResults && analysisData && selectedTest && (
         <AIChatBot
           isOpen={isAIChatOpen}
           onOpenChange={(open) => {

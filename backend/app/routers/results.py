@@ -3,8 +3,8 @@ from app.core.database import get_db, supabase
 from supabase import Client
 from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
-from app.core.auth import verify_auth_token, is_admin_user
-from app.routers.tests.utils import exam_window_still_open, strip_answer_key
+from app.core.auth import verify_auth_token, get_optional_user_id, is_admin_user
+from app.routers.tests.utils import exam_window_still_open, strip_answer_key, candidate_may_see_key, result_view_allows
 from app.services.scoring import multi_partial_score
 
 import logging
@@ -44,8 +44,11 @@ async def get_test_result(
             raise HTTPException(status_code=404, detail="Result not found")
 
         # While a scheduled exam is still running, a candidate who already submitted
-        # sees their score but not the answer key.
-        if test and not (is_test_creator or is_admin) and exam_window_still_open(test.get("settings")):
+        # sees their score but not the answer key. Same when the creator hid the key.
+        settings = (test or {}).get("settings")
+        if test and not (is_test_creator or is_admin) and (
+            exam_window_still_open(settings) or not candidate_may_see_key(settings)
+        ):
             test = strip_answer_key(test, False)
             result = {**result, "tests": test}
         
@@ -100,7 +103,7 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
         return None
     import uuid as _uuid
 
-    cols = "id, title, questions, sections, enable_section_mode, section_marking_model, settings, total_max_marks"
+    cols = "id, title, created_by, questions, sections, enable_section_mode, section_marking_model, settings, total_max_marks"
     try:
         try:
             _uuid.UUID(str(test_id))
@@ -116,7 +119,7 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
 
 
 @router.post("/analyze")
-async def analyze_test_results(payload: AnalyzeRequest):
+async def analyze_test_results(payload: AnalyzeRequest, request: Request):
     # C4: the questions the browser holds no longer carry correctAnswer, so the answer
     # key is reloaded server-side. The client copy stays as a fallback for callers that
     # still pass a full test object (e.g. the creator analysis view, which is allowed it).
@@ -445,8 +448,13 @@ async def analyze_test_results(payload: AnalyzeRequest):
             
     # The browser's copy of the test has no correctAnswer (C4), so the solution key reads
     # it from here. Held back while a scheduled exam is still running, like GET /{attempt_id}.
+    # A creator who turned the solution key off still sees it in their own student reports.
     answer_key = {}
-    if not exam_window_still_open(test.get("settings")):
+    key_allowed = not exam_window_still_open(test.get("settings"))
+    if key_allowed and not result_view_allows(test.get("settings"), "solution_key"):
+        requester = get_optional_user_id(request)
+        key_allowed = bool(requester) and (requester == test.get("created_by") or is_admin_user(requester))
+    if key_allowed:
         for q in questions:
             if isinstance(q, dict) and q.get("correctAnswer") is not None:
                 answer_key[str(q.get("id"))] = q.get("correctAnswer")

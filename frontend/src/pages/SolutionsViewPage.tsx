@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { Navigate, useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { resultViewOn } from '@/lib/resultView';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle, XCircle, MinusCircle, Timer } from 'lucide-react';
 import { fetchTestById, fetchSolutions } from '@/lib/testsApi';
@@ -61,6 +62,11 @@ export default function SolutionsViewPage() {
                 <p className="text-slate-500">Loading solutions...</p>
             </div>
         );
+    }
+
+    // The creator turned solutions off for candidates.
+    if (test && !resultViewOn(test.settings, 'solutions')) {
+        return <Navigate to="/results" state={outletCtx.stateData} replace />;
     }
 
     if (!test || Object.keys(solutions).length === 0) {

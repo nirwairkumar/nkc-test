@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Test, TestSettings, updateTest, generateTopics, Question, fetchTestById } from '@/lib/testsApi';
+import React, { useState, useEffect, useRef } from 'react';
+import { Test, TestSettings, updateTest, generateTopics, Question, fetchTestById, fetchSolutions } from '@/lib/testsApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ResultViewPart, resolveResultView } from '@/lib/resultView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,6 +64,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
     const [showConductPrompt, setShowConductPrompt] = useState(false);
     const [openSection, setOpenSection] = useState<'proctoring' | 'access' | 'results' | 'ai' | null>('proctoring');
+    // null while checking; the Solutions checkbox stays faded until something is uploaded.
+    const [hasSolutions, setHasSolutions] = useState<boolean | null>(null);
+    const [confirmLeave, setConfirmLeave] = useState(false);
+    // Set by the creator's own edits, so leaving for the solutions editor can warn first.
+    const dirtyRef = useRef(false);
 
     // Premium status check
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
@@ -98,6 +105,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         }
 
         loadFullTest();
+        // Tests never carry `solutions`; this endpoint says whether any are written.
+        fetchSolutions(test.id).then(({ data }) => setHasSolutions(!!data?.has_solutions));
     }, [test.id]);
 
     const formatForDateTimeLocal = (dateStr?: string) => {
@@ -210,6 +219,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     };
 
     const updateSetting = (key: string, value: any) => {
+        dirtyRef.current = true;
         setSettings(prev => {
             const updated = { ...prev, [key]: value };
             if (onSettingsChange) {
@@ -220,6 +230,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     };
 
     const updateSettings = (fn: (prev: TestSettings) => TestSettings) => {
+        dirtyRef.current = true;
         setSettings(prev => {
             const updated = fn(prev);
             if (onSettingsChange) {
@@ -227,6 +238,17 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             }
             return updated;
         });
+    };
+
+    // The first change stores every part, so a later change of defaults can't flip a saved choice.
+    const setResultView = (part: ResultViewPart, on: boolean) => {
+        updateSettings(prev => ({ ...prev, result_view: { ...resolveResultView(prev), [part]: on } }));
+    };
+
+    const goToSolutionsEditor = () => {
+        const userId = new URLSearchParams(window.location.search).get('userId');
+        onClose();
+        navigate(`/solutions-editor/${test.id}${userId ? `?userId=${userId}` : ''}`);
     };
 
     const handleAutoAssignTopics = async () => {
@@ -631,30 +653,100 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         </div>
     );
 
+    const renderResultView = (mode: string) => {
+        const view = resolveResultView(settings);
+        const rows: { part: ResultViewPart; title: string; body: string }[] = [
+            { part: 'solution_key', title: 'Solution key', body: 'Each question with their answer, the correct answer and time taken.' },
+            {
+                part: 'time_matrix', title: 'Time & cognitive matrix',
+                body: view.solution_key
+                    ? 'Where their time went, plus topic strengths.'
+                    : 'Compact view only: question numbers and time, no answers.',
+            },
+            { part: 'ai_analysis', title: 'Analysis with AI', body: 'An AI chat that explains their result.' },
+            { part: 'feedback', title: 'Exam feedback', body: 'Asks for stars and a short note. You get it in Reports & feedback.' },
+            { part: 'solutions', title: 'Solutions', body: 'Your step-by-step solutions.' },
+        ];
+        const solutionsReady = hasSolutions === true;
+        const allOff = rows.every(r => !(r.part === 'solutions' ? view.solutions && solutionsReady : view[r.part]));
+
+        return (
+            <div className="border-t px-4 pb-4 pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Candidates can see</p>
+                <div className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
+                    {rows.map(({ part, title, body }) => {
+                        const isSolutions = part === 'solutions';
+                        const locked = isSolutions && !solutionsReady;
+                        const id = `${mode}-result-view-${part}`;
+                        return (
+                            <div key={part} className={`flex items-start gap-3 py-3 ${locked ? 'opacity-50' : ''}`}>
+                                <Checkbox
+                                    id={id}
+                                    className="mt-0.5"
+                                    checked={locked ? false : view[part]}
+                                    disabled={locked}
+                                    onCheckedChange={(c) => setResultView(part, c === true)}
+                                />
+                                <div className="min-w-0 flex-1 space-y-0.5">
+                                    <label htmlFor={id} className={`block text-sm font-medium leading-tight ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                        {title}
+                                    </label>
+                                    <p className="text-xs text-muted-foreground">
+                                        {locked ? (hasSolutions === null ? 'Checking for solutions…' : 'No solutions uploaded yet.') : body}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {/* Outside the faded row so the link stays readable */}
+                <button
+                    type="button"
+                    onClick={() => (dirtyRef.current ? setConfirmLeave(true) : goToSolutionsEditor())}
+                    className="ml-7 -mt-1 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                    {solutionsReady ? 'Edit solutions' : 'Upload solutions'} <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+                <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-muted-foreground dark:bg-slate-900">
+                    {allOff
+                        ? 'Candidates will see only their marks (and section marks).'
+                        : 'Marks are always shown. Untick everything to show marks only.'}
+                </p>
+            </div>
+        );
+    };
+
     const renderResults = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between border p-4 rounded-lg">
-                    <div className="space-y-0.5">
-                        <Label className="flex items-center gap-2"><Eye className="w-4 h-4" /> Result Visibility</Label>
-                        <p className="text-sm text-muted-foreground">Show detailed analysis immediately after submit.</p>
+                <div className="border rounded-lg">
+                    <div className="flex items-center justify-between p-4">
+                        <div className="space-y-0.5">
+                            <Label className="flex items-center gap-2"><Eye className="w-4 h-4" /> Result Visibility</Label>
+                            <p className="text-sm text-muted-foreground">
+                                {settings.show_results_immediate !== false
+                                    ? 'Candidates see their result right after they submit.'
+                                    : 'Results are held. Candidates see a "submitted" page.'}
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings.show_results_immediate !== false}
+                            onCheckedChange={(c) => {
+                                updateSetting('show_results_immediate', c);
+                                if (!c) {
+                                    const currentFields = settings.start_form?.fields || [];
+                                    const hasName = currentFields.some(f => f.label.toLowerCase() === 'name');
+                                    const newFields = hasName ? currentFields : [{ label: 'Name', required: true }, ...currentFields];
+                                    updateSetting('start_form', {
+                                        enabled: true,
+                                        fields: newFields
+                                    });
+                                    toast.info(`${CANDIDATE_INPUTS_TITLE} turned on, so held results can be matched to names.`);
+                                }
+                            }}
+                        />
                     </div>
-                    <Switch
-                        checked={settings.show_results_immediate}
-                        onCheckedChange={(c) => {
-                            updateSetting('show_results_immediate', c);
-                            if (!c) {
-                                const currentFields = settings.start_form?.fields || [];
-                                const hasName = currentFields.some(f => f.label.toLowerCase() === 'name');
-                                const newFields = hasName ? currentFields : [{ label: 'Name', required: true }, ...currentFields];
-                                updateSetting('start_form', {
-                                    enabled: true,
-                                    fields: newFields
-                                });
-                                toast.info(`${CANDIDATE_INPUTS_TITLE} turned on, so held results can be matched to names.`);
-                            }
-                        }}
-                    />
+                    {settings.show_results_immediate !== false && renderResultView(mode)}
                 </div>
 
                 <div className="flex items-center justify-between border p-4 rounded-lg">
@@ -1179,6 +1271,23 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             handleSave(true);
                         }} className="bg-indigo-600 hover:bg-indigo-700">
                             Save & Move to Conduct Exam
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+                <AlertDialogContent className="max-w-[min(420px,calc(100vw-32px))] rounded-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your settings changes aren't saved yet. Save first, or leave and lose them.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl">Stay</AlertDialogCancel>
+                        <AlertDialogAction onClick={goToSolutionsEditor} className="rounded-xl bg-red-600 hover:bg-red-700">
+                            Leave
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

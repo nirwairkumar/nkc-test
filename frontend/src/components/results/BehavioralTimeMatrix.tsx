@@ -41,6 +41,8 @@ interface BehavioralTimeMatrixProps {
   testDurationMinutes?: number;
   questionStatus?: Record<string | number, { status: string; score: number; time_spent?: number }>;
   onSelectQuestion?: (questionIndex: number) => void;
+  /** Solution key turned off by the creator: question numbers and time only, no question or answers. */
+  compactOnly?: boolean;
 }
 
 interface MatrixItem {
@@ -59,10 +61,12 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
   questionTimes,
   testDurationMinutes = 60,
   questionStatus = {},
-  onSelectQuestion
+  onSelectQuestion,
+  compactOnly = false
 }) => {
   const [selectedQuadrant, setSelectedQuadrant] = useState<QuadrantId>('time_traps');
-  const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
+  const [chosenViewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
+  const viewMode = compactOnly ? 'compact' : chosenViewMode;
   const [selectedQuestionItem, setSelectedQuestionItem] = useState<MatrixItem | null>(null);
 
   // Format seconds to clean mm:ss or seconds format
@@ -390,32 +394,34 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
             </div>
 
             {/* iOS Segmented Control: Questions view vs Compact view */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setViewMode('cards')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  viewMode === 'cards'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span>Questions</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('compact')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  viewMode === 'compact'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Compact</span>
-              </button>
-            </div>
+            {!compactOnly && (
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    viewMode === 'cards'
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Questions</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('compact')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    viewMode === 'compact'
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Compact</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {currentQuadrantConfig.items.length === 0 ? (
@@ -551,10 +557,10 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
                 return (
                   <motion.div
                     key={item.index}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedQuestionItem(item)}
-                    className="p-3 rounded-2xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between gap-1.5 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors shadow-2xs group"
+                    whileHover={compactOnly ? undefined : { y: -2 }}
+                    whileTap={compactOnly ? undefined : { scale: 0.98 }}
+                    onClick={compactOnly ? undefined : () => setSelectedQuestionItem(item)}
+                    className={`p-3 rounded-2xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between gap-1.5 shadow-2xs group ${compactOnly ? '' : 'cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors'}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 transition-colors">

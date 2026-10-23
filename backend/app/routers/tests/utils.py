@@ -56,6 +56,19 @@ def exam_window_still_open(settings: Optional[Dict[str, Any]]) -> bool:
     except Exception:
         return False
 
+def result_view_allows(settings: Optional[Dict[str, Any]], part: str) -> bool:
+    """
+    Whether the creator lets candidates see a part of the result page that is on by
+    default (settings.result_view.solution_key / .solutions; mirrors lib/resultView.ts).
+    Only an explicit False hides it, so tests saved before result_view keep their answer key.
+    """
+    result_view = (settings or {}).get("result_view") or {}
+    return result_view.get(part) is not False
+
+def candidate_may_see_key(settings: Optional[Dict[str, Any]]) -> bool:
+    """The answer key reaches a candidate through the solution key or the solutions page."""
+    return result_view_allows(settings, "solution_key") or result_view_allows(settings, "solutions")
+
 def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
     """
     Enriches test objects with creator information and assigned categories.

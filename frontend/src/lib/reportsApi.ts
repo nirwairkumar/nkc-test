@@ -43,6 +43,33 @@ export async function fetchCreatorReports(creatorId: string): Promise<{ data: Re
     }
 }
 
+/** Exam feedback a candidate left on the result page (when the creator asked for it). */
+export interface ExamFeedback {
+    id: string;
+    created_at: string;
+    test_id: string;
+    rating: number;
+    comment: string | null;
+    // Only on feedback from the old platform form
+    improvements?: string | null;
+    dislikes?: string | null;
+    sender_name: string | null;
+    tests: {
+        title: string;
+        custom_id?: string;
+    } | null;
+}
+
+// 2b. Fetch exam feedback on the creator's tests
+export async function fetchCreatorFeedback(creatorId: string): Promise<{ data: ExamFeedback[] | null; error: any }> {
+    try {
+        const response = await apiClient.get(`/reports/creator/${creatorId}/feedback`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message || 'Failed to fetch feedback' };
+    }
+}
+
 // 3. Update report status
 export async function updateReportStatus(reportId: string, status: 'open' | 'solved') {
     try {

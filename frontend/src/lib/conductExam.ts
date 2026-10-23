@@ -76,6 +76,8 @@ export function buildStopConductPayload(test: any) {
         slug: `unlisted-${test.custom_id || test.id}`,
         settings: {
             ...DEFAULT_ENVIRONMENT_SETTINGS,
+            // Candidates reopen results after the exam ends; keep what the creator let them see.
+            ...(s.result_view ? { result_view: s.result_view } : {}),
             conduct_exam: {
                 ...(s.conduct_exam || {}),
                 enabled: false,

@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid, NotepadText, PanelBottomClose } from 'lucide-react';
+import { Trophy, Target, BookOpen, Menu, Share2, MessageCircle, Download, Facebook, Disc as Reddit, Sparkles, RotateCcw, NotepadText, PanelBottomClose } from 'lucide-react';
 import { useTest } from '@/contexts/TestContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { shareWithFriends, shareResultWhatsApp, shareResultImage, shareToFacebook, shareToReddit } from '@/utils/shareUtils';
 import PoweredByTestoZa from '@/components/PoweredByTestoZa';
+import { fetchSolutions } from '@/lib/testsApi';
+import { allowsRetake, resolveResultView } from '@/lib/resultView';
+import { ExamFeedbackPrompt, candidateName, examinerName } from '@/components/results/ExamFeedback';
 
 const CustomFeedbackIcon = ({ className }: { className?: string }) => (
     <svg
@@ -77,8 +79,36 @@ export default function ResultsLayout() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { resetTest } = useTest();
-    
-    const isSingleAttempt = stateData?.test?.settings?.attempt_limit === 1;
+
+    // Only what the creator lets candidates see (Settings → Results & Timing → Result visibility).
+    const testSettings = stateData?.test?.settings;
+    const view = useMemo(() => resolveResultView(testSettings), [testSettings]);
+    const canRetake = allowsRetake(testSettings);
+
+    // Tests never carry `solutions`; this says whether this candidate may read any yet.
+    const [hasSolutions, setHasSolutions] = useState(false);
+    useEffect(() => {
+        setHasSolutions(false);
+        if (!currentTestId || !view.solutions || stateData?.isCombined) return;
+        let alive = true;
+        fetchSolutions(currentTestId).then(({ data }) => {
+            if (alive) setHasSolutions(!!data?.has_solutions);
+        });
+        return () => { alive = false; };
+    }, [currentTestId, view.solutions, stateData?.isCombined]);
+    const showSolutions = view.solutions && hasSolutions;
+
+    // A live exam is unlisted and only opens by its slug, never by id.
+    const retake = () => {
+        const target = stateData?.test?.slug || currentTestId;
+        if (target) {
+            resetTest();
+            navigate(`/test/${target}`);
+        }
+    };
+
+    // The phone tab bar only earns its place with something besides "Hub".
+    const showTabBar = view.time_matrix || view.solution_key || (canRetake && !!currentTestId);
 
     const isConductMode = useMemo(() => {
         return !!(
@@ -127,29 +157,35 @@ export default function ResultsLayout() {
                     Overview
                 </NavLink>
 
-                <NavLink
-                    to={`${basePath}?tab=topics`}
-                    state={stateData}
-                    className={getLinkStyle(currentTab === 'topics' && location.pathname === basePath)}
-                    onClick={onItemClick}
-                >
-                    <BookOpen className="h-5 w-5" />
-                    Topic Analysis
-                </NavLink>
+                {view.time_matrix && (
+                    <NavLink
+                        to={`${basePath}?tab=topics`}
+                        state={stateData}
+                        className={getLinkStyle(currentTab === 'topics' && location.pathname === basePath)}
+                        onClick={onItemClick}
+                    >
+                        <BookOpen className="h-5 w-5" />
+                        Topic Analysis
+                    </NavLink>
+                )}
 
-                <NavLink
-                    to={`${basePath}?tab=solution-key`}
-                    state={stateData}
-                    className={getLinkStyle(currentTab === 'solution-key' && location.pathname === basePath)}
-                    onClick={onItemClick}
-                >
-                    <PanelBottomClose className="h-5 w-5" />
-                    Solution Key
-                </NavLink>
+                {view.solution_key && (
+                    <NavLink
+                        to={`${basePath}?tab=solution-key`}
+                        state={stateData}
+                        className={getLinkStyle(currentTab === 'solution-key' && location.pathname === basePath)}
+                        onClick={onItemClick}
+                    >
+                        <PanelBottomClose className="h-5 w-5" />
+                        Solution Key
+                    </NavLink>
+                )}
 
-                <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+                {(showSolutions || view.ai_analysis || (canRetake && currentTestId)) && (
+                    <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+                )}
 
-                {currentTestId && (
+                {showSolutions && currentTestId && (
                     <NavLink
                         to={`${basePath}/solutions/${currentTestId}`}
                         state={stateData}
@@ -161,44 +197,41 @@ export default function ResultsLayout() {
                     </NavLink>
                 )}
 
-                <NavLink
-                    to={`${basePath}?tab=${currentTab}&ai_chat=true`}
-                    state={stateData}
-                    className={({ isActive }) => getLinkStyle(searchParams.get('ai_chat') === 'true')}
-                    onClick={onItemClick}
-                >
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-3">
-                            <Sparkles className="h-5 w-5 text-indigo-500" />
-                            Analysis with AI
+                {view.ai_analysis && (
+                    <NavLink
+                        to={`${basePath}?tab=${currentTab}&ai_chat=true`}
+                        state={stateData}
+                        className={() => getLinkStyle(searchParams.get('ai_chat') === 'true')}
+                        onClick={onItemClick}
+                    >
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="h-5 w-5 text-indigo-500" />
+                                Analysis with AI
+                            </div>
+                            <span className="text-[10px] font-black bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md animate-pulse">
+                                NEW
+                            </span>
                         </div>
-                        <span className="text-[10px] font-black bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md animate-pulse">
-                            NEW
-                        </span>
-                    </div>
-                </NavLink>
+                    </NavLink>
+                )}
 
-                {!isSingleAttempt && (
+                {canRetake && currentTestId && (
                     <Button
                         variant="ghost"
                         className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400 w-full"
-                        onClick={() => {
-                            if (currentTestId) {
-                                resetTest();
-                                navigate(`/test/${currentTestId}`);
-                            } else {
-                                navigate('/');
-                            }
-                        }}
+                        onClick={retake}
                     >
                         <RotateCcw className="mr-3 h-5 w-5" />
                         Retake Test
                     </Button>
                 )}
 
-                <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+                {((view.feedback && currentTestId) || !isConductMode) && (
+                    <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+                )}
 
-                {currentTestId && (
+                {view.feedback && currentTestId && (
                     <NavLink
                         to={`${basePath}/feedback/${currentTestId}`}
                         state={stateData}
@@ -285,15 +318,6 @@ export default function ResultsLayout() {
                         </Button>
                     </>
                 )}
-
-                <NavLink
-                    to="/"
-                    className={({ isActive }) => getLinkStyle(isActive)}
-                    onClick={onItemClick}
-                >
-                    <Home className="h-5 w-5" />
-                    Home
-                </NavLink>
             </div>
         );
     };
@@ -367,72 +391,63 @@ export default function ResultsLayout() {
                 <main className="flex-1 w-full bg-slate-50 dark:bg-slate-950 flex flex-col justify-between">
                     {/* We pass stateData through Outlet context just in case child routes need it */}
                     <Outlet context={{ stateData }} />
-                    <PoweredByTestoZa className="pb-20 md:pb-3 pt-3" />
+                    <PoweredByTestoZa className={`${showTabBar ? 'pb-20' : 'pb-3'} md:pb-3 pt-3`} />
                 </main>
 
                 {/* Mobile Sticky Bottom Navigation */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-                    <div className="flex justify-around items-center h-16">
-                        {/* 
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
-                        >
-                            <LayoutGrid className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Dashboard</span>
-                        </button>
-                        */}
+                {showTabBar && (
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+                        <div className="flex justify-around items-center h-16">
+                            <button
+                                onClick={() => setIsDrawerOpen(true)}
+                                className={`flex-1 flex flex-col items-center gap-1 transition-colors ${isDrawerOpen ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                            >
+                                <Trophy className="w-5 h-5" />
+                                <span className="text-[10px] font-bold uppercase tracking-tighter">Hub</span>
+                            </button>
 
-                        <button
-                            onClick={() => setIsDrawerOpen(true)}
-                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${isDrawerOpen ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
-                        >
-                            <Trophy className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Hub</span>
-                        </button>
+                            {view.time_matrix && (
+                                <button
+                                    onClick={() => navigate(`${basePath}?tab=topics`, { state: stateData })}
+                                    className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'topics' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                                >
+                                    <Target className="w-5 h-5" />
+                                    <span className="text-[10px] font-bold uppercase tracking-tighter">Topics</span>
+                                </button>
+                            )}
 
-                        <button
-                            onClick={() => navigate(`${basePath}?tab=topics`, { state: stateData })}
-                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'topics' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
-                        >
-                            <Target className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Topics</span>
-                        </button>
+                            {view.solution_key && (
+                                <button
+                                    onClick={() => navigate(`${basePath}?tab=solution-key`, { state: stateData })}
+                                    className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'solution-key' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                                >
+                                    <PanelBottomClose className="w-5 h-5" />
+                                    <span className="text-[10px] font-bold uppercase tracking-tighter">Solution Key</span>
+                                </button>
+                            )}
 
-                        <button
-                            onClick={() => navigate(`${basePath}?tab=solution-key`, { state: stateData })}
-                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'solution-key' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
-                        >
-                            <PanelBottomClose className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Solution Key</span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                if (isSingleAttempt) {
-                                    toast.error('Only one attempt allowed', {
-                                        description: 'The creator has restricted this test to a single attempt.',
-                                    });
-                                    return;
-                                }
-                                if (currentTestId) {
-                                    resetTest();
-                                    navigate(`/test/${currentTestId}`);
-                                } else {
-                                    navigate('/');
-                                }
-                            }}
-                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${
-                                isSingleAttempt 
-                                ? 'text-slate-300 opacity-50 cursor-not-allowed dark:text-slate-600' 
-                                : 'text-slate-500 hover:text-indigo-600'
-                            }`}
-                        >
-                            <RotateCcw className="w-5 h-5" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Retake</span>
-                        </button>
+                            {canRetake && currentTestId && (
+                                <button
+                                    onClick={retake}
+                                    className="flex-1 flex flex-col items-center gap-1 transition-colors text-slate-500 hover:text-indigo-600"
+                                >
+                                    <RotateCcw className="w-5 h-5" />
+                                    <span className="text-[10px] font-bold uppercase tracking-tighter">Retake</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {view.feedback && currentTestId && stateData?.justSubmitted && !stateData?.isCombined && (
+                    <ExamFeedbackPrompt
+                        testId={currentTestId}
+                        testCustomId={stateData?.test?.custom_id}
+                        examiner={examinerName(stateData?.test)}
+                        senderName={candidateName(stateData, user)}
+                        aboveTabBar={showTabBar}
+                    />
+                )}
             </div>
         </div>
     );

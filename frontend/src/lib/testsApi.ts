@@ -1,5 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import { safeSessionStorage, safeLocalStorage } from '@/utils/safeStorage';
+import type { ResultView } from '@/lib/resultView';
 
 export interface TestSection {
     id: string;
@@ -80,6 +81,7 @@ export interface TestSettings {
     force_fullscreen?: boolean;
     shuffle_questions?: boolean;
     show_results_immediate?: boolean;
+    result_view?: ResultView; // what the result page shows candidates (lib/resultView.ts)
     violation_limit?: number | null; // null = warn only, number = auto-submit after N violations
     schedule?: {
         enabled: boolean;

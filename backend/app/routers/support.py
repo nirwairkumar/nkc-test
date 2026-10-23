@@ -31,14 +31,45 @@ class FeedbackCreate(BaseModel):
     dislikes: Optional[str] = None
 
 @router.post("/feedback", dependencies=[Depends(check_support_rate_limit)])
-async def submit_feedback(payload: FeedbackCreate, db: Client = Depends(get_db)):
+async def submit_feedback(payload: FeedbackCreate, request: Request, db: Client = Depends(get_db)):
+    if not 1 <= payload.rating <= 5:
+        raise HTTPException(status_code=400, detail="Rating must be 1 to 5 stars")
     try:
         data = payload.dict(exclude_unset=True)
+        if data.get("comment"):
+            data["comment"] = data["comment"][:2000]
+        user_id = get_optional_user_id(request, db)
+        if user_id:
+            data["user_id"] = user_id
         response = db.table("feedback").insert(data).execute()
+        _notify_creator_of_feedback(payload)
         return response.data
     except Exception as e:
         logger.error(f"Error submitting feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _notify_creator_of_feedback(payload: FeedbackCreate) -> None:
+    """Exam feedback belongs to the creator: it lands in My Tests → Reports & feedback."""
+    try:
+        from app.utils.notifications import send_notification
+        test_res = admin_db.table("tests").select("created_by, title").eq("id", payload.test_id).limit(1).execute()
+        if not test_res.data:
+            return
+        test = test_res.data[0]
+        who = payload.sender_name or "A candidate"
+        send_notification(
+            user_id=test.get("created_by"),
+            title="New exam feedback",
+            message=f"{who} rated \"{test.get('title') or 'your test'}\" {payload.rating}/5.",
+            link="/my-tests?tab=reports&view=feedback",
+            custom_test_id=payload.test_id,
+            sender_name=payload.sender_name,
+            sender_email=payload.sender_email,
+            db=admin_db,
+        )
+    except Exception as e:
+        logger.error(f"Failed to notify creator of feedback: {e}")
 
 # ── Help messages ─────────────────────────────────────────────────────────────
 # app.testoza.com/help (signed in) and testoza.com/support (public) both post here.
