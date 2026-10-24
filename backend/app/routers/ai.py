@@ -42,12 +42,14 @@ try:
             logger.debug("Initialized google-genai client with Vertex AI Express Mode.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
+        # gemini-3.5-flash is served on the global endpoint only (us-central1 returns 404).
+        gcp_location = os.environ.get("GOOGLE_CLOUD_LOCATION") or "global"
         client = genai.Client(
             vertexai=True,
             project=gcp_project,
-            location="us-central1"
+            location=gcp_location
         )
-        logger.debug(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
+        logger.debug(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: {gcp_location}")
 except Exception as e:
     logger.error(f"Error initializing Gemini client: {e}")
 
