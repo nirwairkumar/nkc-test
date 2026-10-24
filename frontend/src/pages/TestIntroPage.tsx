@@ -13,7 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
-import { inputFields } from '@/lib/candidateInputs';
+import { inputFields, inputsOn } from '@/lib/candidateInputs';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
@@ -366,7 +366,7 @@ export default function TestIntroPage() {
         }
 
         // 2. Validate Candidate Start Form (if enabled)
-        if (test.settings?.start_form?.enabled) {
+        if (inputsOn(test.settings)) {
             const fields = inputFields(test.settings);
             const missing = fields.filter((f: any) => f.required && !startFormValues[f.label]?.trim());
             if (missing.length > 0) {
@@ -412,7 +412,7 @@ export default function TestIntroPage() {
 
         // Not awaited: recording the start (so the examiner sees this candidate writing)
         // must never hold up the exam, and the fullscreen request below wants the click.
-        const startForm = test.settings?.start_form?.enabled ? startFormValues : undefined;
+        const startForm = inputsOn(test.settings) ? startFormValues : undefined;
         import('@/lib/attemptsApi')
             .then(({ registerTestStart }) => registerTestStart(effectiveUserId, test.id, startForm))
             .catch(err => console.error("Error registering start:", err));
@@ -706,7 +706,7 @@ export default function TestIntroPage() {
                         </div>
 
                         {/* Candidate Identity Summary if filled */}
-                        {test.settings?.start_form?.enabled && Object.keys(startFormValues).length > 0 && (
+                        {inputsOn(test.settings) && Object.keys(startFormValues).length > 0 && (
                             <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                                 <p className="font-bold text-slate-700 dark:text-slate-300 mb-1">Candidate Profile Confirmed:</p>
                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600 dark:text-slate-400">
@@ -880,7 +880,7 @@ export default function TestIntroPage() {
                         )}
 
                         {/* Candidate Information Form (if enabled by Creator in Test Settings) */}
-                        {test.settings?.start_form?.enabled && (
+                        {inputsOn(test.settings) && (
                             <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
                                 <div className="flex items-center gap-2 text-xs font-bold text-indigo-950 dark:text-indigo-300">
                                     <UserCheck className="w-4 h-4 text-indigo-600" />

@@ -7,6 +7,7 @@ import {
 } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
+import { inputsOn } from '@/lib/candidateInputs';
 import { getExamUrl, examWhatsAppUrl } from '@/lib/conductExam';
 import { isLiveTest, WRITING_WINDOW_MS } from '@/lib/teacherDashboardApi';
 import StudentDetailedResultModal from './StudentDetailedResultModal';
@@ -455,7 +456,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const avgScore = scores.length > 0 ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
     const topScore = scores.length > 0 ? Math.max(...scores) : 0;
     const lowScore = scores.length > 0 ? Math.min(...scores) : 0;
-    const isStartFormEnabled = !!currentTest?.settings?.start_form?.enabled;
+    const isStartFormEnabled = inputsOn(currentTest?.settings);
     const fields = currentTest?.settings?.start_form?.fields && currentTest.settings.start_form.fields.length > 0
         ? currentTest.settings.start_form.fields
         : (isStartFormEnabled ? [{ label: 'Name', required: true }] : []);

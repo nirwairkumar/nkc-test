@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import { fetchAttemptById } from '@/lib/attemptsApi';
+import { inputsOn } from '@/lib/candidateInputs';
 import {
     Dialog,
     DialogContent,
@@ -148,7 +149,7 @@ export default function StudentDetailedResultModal({
 
     if (!isOpen || !attempt) return null;
 
-    const isStartFormEnabled = !!test?.settings?.start_form?.enabled;
+    const isStartFormEnabled = inputsOn(test?.settings);
     const fields = test?.settings?.start_form?.fields && test.settings.start_form.fields.length > 0
         ? test.settings.start_form.fields
         : (isStartFormEnabled ? [{ label: 'Name', required: true }] : []);

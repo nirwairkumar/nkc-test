@@ -14,8 +14,12 @@ const NAME: CandidateInput = { label: 'Name', required: true };
 
 const SUGGESTIONS = ['Roll No', 'Batch', 'Phone', 'Email', 'School', 'City'];
 
+/**
+ * A test that never saved candidate inputs asks for Name: that is what the Settings panel
+ * shows it as, and public tests shared by link used to collect results nobody could name.
+ */
 export function inputsOn(settings?: TestSettings | null): boolean {
-    return !!settings?.start_form?.enabled;
+    return settings?.start_form ? !!settings.start_form.enabled : true;
 }
 
 /** The fields candidates see. Blank labels are skipped; none left means just Name. */
