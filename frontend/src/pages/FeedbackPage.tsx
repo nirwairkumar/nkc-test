@@ -13,9 +13,6 @@ export default function FeedbackPage() {
             <SEO title="Feedback - TestoZa" description="Tell the TestoZa team what works and what doesn't." noindex />
             <header className="mb-5 px-1">
                 <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-slate-900 dark:text-slate-100 sm:text-[30px]">Feedback</h1>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-slate-500">
-                    A line or two is plenty. Fill any part you like.
-                </p>
             </header>
             <FeedbackCard origin={{ source: 'sidebar' }} autoFocus={false} />
         </div>

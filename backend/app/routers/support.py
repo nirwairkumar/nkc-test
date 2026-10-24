@@ -484,7 +484,7 @@ async def admin_set_support_status(
 
 # ── Platform feedback (20261024150000_platform_feedback.sql) ──────────────────
 # The sidebar's Feedback page and the card that comes up after a creator stops a live exam
-# both send here: up to three short notes (Generate with AI, Conduct online exam, Other).
+# both send here: up to three short notes (Online exam, Generate with AI, Other).
 # Admins read them in admin → Support → Feedback.
 
 FEEDBACK_SOURCES = {"sidebar", "exam_ended"}

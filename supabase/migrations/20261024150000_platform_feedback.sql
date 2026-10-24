@@ -2,8 +2,8 @@
 -- and from the card that comes up when a creator stops a live exam.
 --
 -- One row = one send: up to three short notes, one per part of the card
---   ai       "For: Generate with AI"
---   conduct  "For: Conduct online exam"
+--   conduct  "Online exam"
+--   ai       "Generate with AI"
 --   other    "Other"
 -- At least one of them has text (the backend checks it too).
 --

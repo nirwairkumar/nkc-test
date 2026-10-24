@@ -1,7 +1,7 @@
 /**
- * The feedback card: one text area in three parts (Generate with AI, Conduct online exam,
- * Other), two lines each, split by hairlines like an iOS grouped list, and a Submit button.
- * Each part's label sits at the start of its first line ("For: Generate with AI  ___"),
+ * The feedback card: one text area in three parts (Online exam, Generate with AI, Other),
+ * two lines each, split by hairlines like an iOS grouped list, and a Submit button.
+ * Each part's label sits at the start of its first line ("Online exam  ___"),
  * the text runs on after it (text-indent) and wraps to the full width below.
  *
  * Shared by the Feedback page and the pop-up after stopping an exam (FeedbackDock); the
@@ -48,7 +48,6 @@ function PartField({ part, value, onChange, autoFocus }: {
                 htmlFor={id}
                 className="pointer-events-none absolute left-4 top-3 select-none whitespace-nowrap pr-2 text-[15px] leading-6 tracking-[-0.01em]"
             >
-                {part.forLabel && <span className="text-slate-400 dark:text-slate-500">For: </span>}
                 <span className="font-semibold text-slate-500 dark:text-slate-400">{part.name}</span>
             </label>
             <textarea

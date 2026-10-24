@@ -1,7 +1,7 @@
 /**
  * Admin → Support → Feedback: what creators say about TestoZa itself, from the app's
  * Feedback page (sidebar) and from the card that comes up after they stop a live exam.
- * Each send has up to three parts: Generate with AI, Conduct online exam, Other.
+ * Each send has up to three parts: Online exam, Generate with AI, Other.
  *
  * Nobody waits for an answer here, so there is no reply box: tap a card to mark it read.
  * If it needs a conversation, the writer's email is one tap away.
@@ -152,7 +152,7 @@ function FeedbackRow({ f, focused, onToggleRead }: { f: PlatformFeedback; focuse
                 {parts.map((p) => (
                     <div key={p.key} className="px-3.5 py-2.5">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
-                            {p.key === 'other' ? 'Other' : `For: ${p.label}`}
+                            {p.label}
                         </dt>
                         <dd className="mt-0.5 whitespace-pre-line text-[14px] leading-relaxed text-slate-800">{f[p.key]}</dd>
                     </div>

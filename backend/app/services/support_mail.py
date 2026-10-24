@@ -224,7 +224,7 @@ def on_user_followup_in_background(db, msg: Dict[str, Any], text: str) -> None:
 
 # ── Platform feedback (sidebar Feedback page / card after stopping an exam) ─────
 
-FEEDBACK_PARTS = (("ai", "Generate with AI"), ("conduct", "Conduct online exam"), ("other", "Other"))
+FEEDBACK_PARTS = (("conduct", "Online exam"), ("ai", "Generate with AI"), ("other", "Other"))
 
 
 def feedback_admin_link(feedback_id: str) -> str:

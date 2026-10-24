@@ -94,9 +94,10 @@ export interface FeedbackList {
     counts: Record<FeedbackView, number>;
 }
 
+/** Same order and names as the app's card (frontend lib/platformFeedback.ts). */
 export const FEEDBACK_PART_LABEL = [
+    { key: 'conduct', label: 'Online exam' },
     { key: 'ai', label: 'Generate with AI' },
-    { key: 'conduct', label: 'Conduct online exam' },
     { key: 'other', label: 'Other' },
 ] as const;
 

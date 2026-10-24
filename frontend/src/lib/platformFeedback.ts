@@ -12,11 +12,11 @@ import apiClient from '@/lib/apiClient';
 export type FeedbackPart = 'ai' | 'conduct' | 'other';
 export type FeedbackDraft = Record<FeedbackPart, string>;
 
-/** `forLabel` parts read "For: <name>"; the last one is just "Other". */
-export const FEEDBACK_PARTS: { key: FeedbackPart; name: string; forLabel: boolean; placeholder: string }[] = [
-    { key: 'ai', name: 'Generate with AI', forLabel: true, placeholder: 'What worked, what didn’t' },
-    { key: 'conduct', name: 'Conduct online exam', forLabel: true, placeholder: 'How did the exam go?' },
-    { key: 'other', name: 'Other', forLabel: false, placeholder: 'Anything else' },
+/** In the order the card shows them. The keys stay as stored (`conduct` = Online exam). */
+export const FEEDBACK_PARTS: { key: FeedbackPart; name: string; placeholder: string }[] = [
+    { key: 'conduct', name: 'Online exam', placeholder: 'How did the exam go?' },
+    { key: 'ai', name: 'Generate with AI', placeholder: 'What worked, what didn’t' },
+    { key: 'other', name: 'Other', placeholder: 'Anything else' },
 ];
 
 /** The pop-up after stopping an exam asks again only after this long once feedback is sent. */

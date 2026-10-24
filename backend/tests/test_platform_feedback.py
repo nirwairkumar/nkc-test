@@ -59,7 +59,7 @@ def test_feedback_after_an_exam_is_saved_and_tells_admins(env):
     notes = env["db"].tables["notifications"]
     assert [n["user_id"] for n in notes] == [env["admin"]]
     assert notes[0]["title"] == "New platform feedback"
-    assert "Asha Verma" in notes[0]["message"] and "Conduct online exam: Timer worked well" in notes[0]["message"]
+    assert "Asha Verma" in notes[0]["message"] and "Online exam: Timer worked well" in notes[0]["message"]
     assert notes[0]["link"].endswith(f"tab=support&section=feedback&id={row['id']}")
 
 
