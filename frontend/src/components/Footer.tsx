@@ -57,6 +57,7 @@ interface FooterLink {
 
 /** Short labels: a footer column is ~180px wide, and long names wrap to three lines. */
 const GUIDE_LABELS: Record<string, string> = {
+    'best-online-exam-software-india': 'Best exam software, India',
     'mercer-mettl-alternative': 'Mettl alternative',
     'proprofs-alternative': 'ProProfs alternative',
     'socrative-alternative': 'Socrative alternative',

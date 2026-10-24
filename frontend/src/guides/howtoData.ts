@@ -4,6 +4,10 @@
  *   /mobile-friendly-online-exam      /embed-test-on-website
  *   /full-length-online-test-maker    /share-test-on-whatsapp
  *
+ * plus /best-online-exam-software-india (25 October 2026), a comparison page that reuses
+ * the shell and two of the widgets (hw-scenarios, hw-compare) as they are; its `steps`
+ * are shown as a plain numbered list (stepsFallback), which fits a phone better.
+ *
  * One HowtoPage here is one page. The React widgets (pages/guides/howto/HowToWidgets.tsx)
  * and the crawler text (the fallbackHtml in each guide file) are both built from it,
  * so what a reader clicks and what Google reads can never drift apart.
@@ -30,7 +34,7 @@
  *     inviteText / rankListText / parentText. The WhatsApp messages below mirror them.
  */
 
-export type HowtoKey = 'mobile' | 'embed' | 'fullLength' | 'whatsapp';
+export type HowtoKey = 'mobile' | 'embed' | 'fullLength' | 'whatsapp' | 'bestIndia';
 
 /** A row in a grouped list (hero card, widget lists). */
 export interface HwRow {
@@ -1034,11 +1038,209 @@ const WHATSAPP: HowtoPage = {
     },
 };
 
+// ── /best-online-exam-software-india ────────────────────────────────────────
+// A comparison page on the same shell. Rival facts are the ones checked for the
+// alternative guides (2–15 October 2026) plus Eklavvya, TCS iON and Testpress from their
+// own sites and SpeedExam / ProProfs prices re-checked on 25 October 2026; see the header
+// of guides/bestOnlineExamSoftwareIndia.ts.
+
+const BEST_INDIA: HowtoPage = {
+    key: 'bestIndia',
+    hero: {
+        title: 'Pick by what the exam decides',
+        tag: 'India 2026',
+        groups: [
+            {
+                label: 'A quick check in class',
+                icon: 'mouse-pointer-click',
+                rows: [
+                    { icon: 'message-circle', label: 'Kahoot or Wayground: a live game in the room' },
+                    { icon: 'file-text', label: 'Google Forms: a ten-question recap' },
+                ],
+            },
+            {
+                label: 'Weekly tests and mocks for your own batch',
+                icon: 'sparkles',
+                us: true,
+                rows: [
+                    { icon: 'smartphone', label: 'TestoZa: NTA-style mocks on students’ phones' },
+                    { icon: 'layout-grid', label: 'Classplus or Testpress: tests inside your own app' },
+                    { icon: 'layers', label: 'Moodle: if your college already runs it' },
+                ],
+            },
+            {
+                label: 'Exams that decide a job, a degree or a licence',
+                icon: 'shield-check',
+                rows: [
+                    { icon: 'id-card', label: 'Mercer Mettl: webcam proctoring and ID checks' },
+                    { icon: 'copy-check', label: 'Eklavvya: descriptive answers marked on screen' },
+                    { icon: 'users', label: 'TCS iON: exams at national scale, in centres' },
+                ],
+            },
+        ],
+        foot: 'The higher the stakes, the heavier the tool. We make TestoZa; every other name is described from its own pages.',
+    },
+    stats: [
+        { dt: 'Platforms compared', dd: '13' },
+        { dt: 'Checks for an Indian paper', dd: '8' },
+        { dt: 'Indian phones on Android', dd: '93.9', small: '%' },
+        { dt: 'TestoZa for a whole year', dd: '₹799' },
+    ],
+    checked: 'Facts from each product’s own pages, checked 2–25 October 2026',
+    compare: {
+        title: 'Enterprise exam suites and a self-serve platform',
+        themLabel: 'Enterprise exam suites',
+        usLabel: 'TestoZa',
+        themes: [
+            {
+                id: 'buying',
+                label: 'Buying',
+                question: 'How do you get started?',
+                them: [
+                    'A demo call, a requirements form and a quote. Mercer Mettl, TCS iON, Classplus, Teachmint and Eklavvya’s paid plans all start this way.',
+                    'Contracts usually run for a year.',
+                ],
+                us: [
+                    'Sign up and build a test the same evening. The price is on the pricing page: ₹49 for 7 days, ₹149 for 30 days, ₹799 a year.',
+                    'A pass for exam season only is fine.',
+                ],
+                takeaway: 'If you need the paper this week, a sales cycle is the first thing that fails.',
+            },
+            {
+                id: 'device',
+                label: 'The device',
+                question: 'What does a candidate sit the exam on?',
+                them: [
+                    'Often a laptop or desktop with a webcam: Mettl’s help centre says its proctored tests don’t run on phones or tablets.',
+                    'Sometimes a secure browser to install, or a seat at a test centre.',
+                ],
+                us: ['The phone they already have, in its ordinary browser. A whole batch joins at testoza.com/join with one six-digit code.'],
+                takeaway: 'Most Indian students own a phone, not a laptop. A laptop rule decides who sits the test.',
+            },
+            {
+                id: 'marking',
+                label: 'Marking',
+                question: 'Does it mark the way Indian papers mark?',
+                them: [
+                    'Negative marks are usually there: Mettl has an Incorrect Marks field, SpeedExam a setting.',
+                    'JEE Advanced partial marks, numerical ranges and locked section clocks: test them in the demo.',
+                ],
+                us: [
+                    'Marks and Wrong on every question, any decimal.',
+                    'JEE Advanced or proportional partial marks, numerical ranges, timed sections, an NTA-style screen.',
+                ],
+                takeaway: 'Bring last year’s paper to every demo and ask them to mark three wrong answers in front of you.',
+            },
+            {
+                id: 'meter',
+                label: 'The meter',
+                question: 'What does the price count?',
+                them: [
+                    'Candidates, attempts or exam credits. SpeedExam counts attempts a month, retakes included; Eklavvya counts one credit per candidate per exam.',
+                ],
+                us: ['Time. A pass covers the period, however many candidates sit, and there is no cap on a paper.'],
+                takeaway: 'Practice tests are where your volume is. A per-candidate meter is cheap for one hiring drive and expensive for a weekly test.',
+            },
+        ],
+        caption:
+            'The left column describes Mercer Mettl, Eklavvya, TCS iON, SpeedExam and similar products from their own pages, checked in October 2026. Where they win outright (proctoring, identity checks, descriptive answers) is set out in the reviews.',
+    },
+    scenarios: {
+        title: 'Which one fits you?',
+        sub: 'Pick the situation closest to yours.',
+        columns: ['What matters most', 'Shortlist', 'First step'],
+        items: [
+            {
+                id: 'coaching',
+                label: 'Coaching',
+                icon: 'users',
+                title: 'A coaching institute with weekly tests and monthly mocks',
+                lines: [
+                    'Phones, not laptops. Marking that copies JEE, NEET, SSC or bank papers. A rank list the same evening, at a price that doesn’t grow with each admission.',
+                    'TestoZa for the tests. Classplus or Testpress if you also want your own app for courses and fees. SpeedExam if you need certificates.',
+                    'Run one Sunday mock on TestoZa. Count who sat it from home and how long the rank list took.',
+                ],
+            },
+            {
+                id: 'school',
+                label: 'School',
+                icon: 'layout-grid',
+                title: 'A school exam cell setting unit tests and pre-boards',
+                lines: [
+                    'Teachers who aren’t technical, a paper from the textbook in one evening, Hindi or bilingual papers, report cards parents can read.',
+                    'TestoZa for papers and report cards. Teachmint if the school is buying classroom panels. Google Forms for a short recap.',
+                    'Ask one teacher to turn last term’s paper into a test with the AI import, and time it.',
+                ],
+            },
+            {
+                id: 'college',
+                label: 'College',
+                icon: 'layers',
+                title: 'A college or university running internal and semester exams',
+                lines: [
+                    'Proctored sittings, descriptive answers, an audit trail, and often a course system already running.',
+                    'Eklavvya for descriptive answers, Mercer Mettl for proctoring, Moodle if your IT team runs it. TestoZa for practice in between.',
+                    'Split the year: high-stakes sittings on a proctored suite, weekly practice on something lighter.',
+                ],
+            },
+            {
+                id: 'hiring',
+                label: 'Hiring',
+                icon: 'id-card',
+                title: 'A company screening candidates or certifying staff',
+                lines: [
+                    'Strangers with a reason to cheat: identity checks, webcam proctoring, aptitude, coding and psychometric tests.',
+                    'Mercer Mettl, Eklavvya, SpeedExam or Testportal. For recruitment at national scale in test centres, TCS iON.',
+                    'Not TestoZa: it has no identity checks, camera proctoring or psychometric tests.',
+                ],
+            },
+            {
+                id: 'self',
+                label: 'Self-study',
+                icon: 'smartphone',
+                title: 'A student practising on their own',
+                lines: [
+                    'Tests from your own books and old papers, timed and marked like the real exam, with weak topics named.',
+                    'TestoZa: photograph a page or upload a PDF, choose Extract or Generate, keep the test private.',
+                    'Make 20 questions from your hardest chapter and sit them with the timer on.',
+                ],
+            },
+            {
+                id: 'class',
+                label: 'In class',
+                icon: 'mouse-pointer-click',
+                title: 'A teacher checking a lesson in the room',
+                lines: [
+                    'Two minutes, every hand up, a bit of noise. Nothing goes on a record.',
+                    'Kahoot or Wayground for a game, Socrative for an exit ticket, Google Forms for a quiet recap.',
+                    'Keep the game for the room. When the test counts, use software that marks like the exam.',
+                ],
+            },
+        ],
+        caption: 'Names come from the reviews below. We make TestoZa, so the Hiring card says plainly where it is the wrong tool.',
+    },
+    steps: {
+        title: 'Trial any platform in one week',
+        sub: 'Use your own paper, not the vendor’s sample. Tick each check as you go.',
+        items: [
+            { id: 'paper', title: 'Bring a real paper', detail: 'Last month’s mock as a PDF, with its answer key and at least one multi-correct and one numerical question.', minutes: 10 },
+            { id: 'build', title: 'Build it with your marking', detail: '+4/−1 or whatever your exam uses, its sections and their timing. Note every step that needed a workaround.', minutes: 25 },
+            { id: 'phone', title: 'Sit ten questions on the cheapest phone', detail: 'On mobile data. Switch apps once and turn the data off for thirty seconds in the middle.', minutes: 15 },
+            { id: 'wrong', title: 'Get three answers wrong on purpose', detail: 'Check the score to the decimal, including the multi-correct question and a blank.', minutes: 10 },
+            { id: 'batch', title: 'Run it for one real batch', detail: 'Count how many actually sat it from home, and how long it took until the rank list was out.', minutes: 60 },
+            { id: 'price', title: 'Price the year at your real size', detail: 'Students × tests a month × 12. Ask what retakes and unfinished attempts count as.', minutes: 10 },
+        ],
+        caption: 'Minutes are for one paper of about 30 questions plus one real sitting. A demo call can’t tell you any of this; your own paper can.',
+        doneText: 'You know more than any list.',
+    },
+};
+
 export const HOWTO_PAGES: Record<HowtoKey, HowtoPage> = {
     mobile: MOBILE,
     embed: EMBED,
     fullLength: FULL_LENGTH,
     whatsapp: WHATSAPP,
+    bestIndia: BEST_INDIA,
 };
 
 // ── The messages on /share-test-on-whatsapp ─────────────────────────────────

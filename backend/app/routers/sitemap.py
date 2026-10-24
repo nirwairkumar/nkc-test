@@ -75,6 +75,7 @@ STATIC_PAGES = [
     {"loc": "/socrative-alternative", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/speedexam-alternative", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/canvas-quizzes-alternative", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/best-online-exam-software-india", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/guides", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},

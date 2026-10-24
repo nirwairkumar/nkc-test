@@ -989,8 +989,48 @@ export const WHATSAPP_META: GuideMeta = {
     cta: { label: 'Make a test to share, free', href: '/create-test' },
 };
 
+/*
+ * A comparison page on the "how to" shell (pages/guides/howto): thirteen platforms sorted
+ * by what the exam decides. Not the same search as /best-online-test-platform, which is
+ * about what any test platform has to do; this one is the "best … in India" list.
+ */
+export const BEST_EXAM_INDIA_META: GuideMeta = {
+    slug: 'best-online-exam-software-india',
+    path: '/best-online-exam-software-india',
+    title: 'Best online exam software in India: 13 platforms, compared honestly',
+    seoTitle: 'Best Online Exam Software in India (2026): 13 Compared',
+    description:
+        'Compare 13 online exam platforms used in India, from TestoZa and Mettl to Eklavvya, TCS iON and Classplus: phones, negative marking, proctoring and real prices.',
+    dek:
+        'There is no single best online exam software. There is the right one for what your exam decides: a quick quiz in class, a Sunday mock for a coaching batch, or a recruitment test that needs a webcam and an ID check. This guide sorts thirteen platforms used in India by that job, checks each against eight things an Indian paper needs, and works out what a year costs at a real batch size.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-25T12:00:00+05:30',
+    dateModified: '2026-10-25T12:00:00+05:30',
+    readMinutes: 24,
+    cover: {
+        src: '/guides/best-online-exam-software-india/cover.png',
+        alt: 'Best online exam software in India: a quick class quiz, weekly mocks on students’ phones and proctored exams, each with the platforms built for it',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'best online exam software in India',
+        'online exam software India',
+        'top online exam platforms in India',
+        'online examination software',
+        'online exam software for coaching institutes',
+        'online exam software for schools',
+        'online exam software with negative marking',
+        'online exam software price India',
+        'Mettl vs Eklavvya vs TestoZa',
+        'mock test platform India',
+        'TestoZa',
+    ],
+    cta: { label: 'Build your first test, free', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [BEST_EXAM_INDIA_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

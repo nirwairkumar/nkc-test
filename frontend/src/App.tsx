@@ -14,7 +14,7 @@ import SubdomainGuard from "@/components/SubdomainGuard";
 import CandidateBackGuard from "@/components/CandidateBackGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
 import { isBlogHost } from "@/lib/blog";
-import { AI_TEST_GENERATOR_META, BANK_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
+import { AI_TEST_GENERATOR_META, BANK_META, BEST_EXAM_INDIA_META,CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -172,6 +172,7 @@ const MobileFriendlyOnlineExam = safeLazy(() => import("./pages/guides/howto/Mob
 const EmbedTestOnWebsite = safeLazy(() => import("./pages/guides/howto/EmbedTestOnWebsite"));
 const FullLengthOnlineTestMaker = safeLazy(() => import("./pages/guides/howto/FullLengthOnlineTestMaker"));
 const ShareTestOnWhatsapp = safeLazy(() => import("./pages/guides/howto/ShareTestOnWhatsapp"));
+const BestOnlineExamSoftwareIndia = safeLazy(() => import("./pages/guides/howto/BestOnlineExamSoftwareIndia"));
 const GuidesIndex = safeLazy(() => import("./pages/GuidesIndex"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
@@ -352,6 +353,7 @@ const App = () => (
                     <Route path={EMBED_META.path} element={<EmbedTestOnWebsite />} />
                     <Route path={FULL_LENGTH_META.path} element={<FullLengthOnlineTestMaker />} />
                     <Route path={WHATSAPP_META.path} element={<ShareTestOnWhatsapp />} />
+                    <Route path={BEST_EXAM_INDIA_META.path} element={<BestOnlineExamSoftwareIndia />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />
