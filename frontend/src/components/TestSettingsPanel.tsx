@@ -673,40 +673,45 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         return (
             <div className="border-t px-4 pb-4 pt-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Candidates can see</p>
-                <div className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
+                {/* Two columns on wide screens; the top border is dropped on the first row of each layout */}
+                <div className="mt-1 grid gap-x-6 md:grid-cols-2">
                     {rows.map(({ part, title, body }) => {
                         const isSolutions = part === 'solutions';
                         const locked = isSolutions && !solutionsReady;
                         const id = `${mode}-result-view-${part}`;
                         return (
-                            <div key={part} className={`flex items-start gap-3 py-3 ${locked ? 'opacity-50' : ''}`}>
-                                <Checkbox
-                                    id={id}
-                                    className="mt-0.5"
-                                    checked={locked ? false : view[part]}
-                                    disabled={locked}
-                                    onCheckedChange={(c) => setResultView(part, c === true)}
-                                />
-                                <div className="min-w-0 flex-1 space-y-0.5">
-                                    <label htmlFor={id} className={`block text-sm font-medium leading-tight ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                                        {title}
-                                    </label>
-                                    <p className="text-xs text-muted-foreground">
-                                        {locked ? (hasSolutions === null ? 'Checking for solutions…' : 'No solutions uploaded yet.') : body}
-                                    </p>
+                            <div key={part} className="border-t border-slate-100 py-3 first:border-t-0 dark:border-slate-800 md:[&:nth-child(2)]:border-t-0">
+                                <div className={`flex items-start gap-3 ${locked ? 'opacity-50' : ''}`}>
+                                    <Checkbox
+                                        id={id}
+                                        className="mt-0.5"
+                                        checked={locked ? false : view[part]}
+                                        disabled={locked}
+                                        onCheckedChange={(c) => setResultView(part, c === true)}
+                                    />
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                        <label htmlFor={id} className={`block text-sm font-medium leading-tight ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            {title}
+                                        </label>
+                                        <p className="text-xs text-muted-foreground">
+                                            {locked ? (hasSolutions === null ? 'Checking for solutions…' : 'No solutions uploaded yet.') : body}
+                                        </p>
+                                    </div>
                                 </div>
+                                {/* Outside the faded row so the link stays readable */}
+                                {isSolutions && (
+                                    <button
+                                        type="button"
+                                        onClick={() => (dirtyRef.current ? setConfirmLeave(true) : goToSolutionsEditor())}
+                                        className="ml-7 mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    >
+                                        {solutionsReady ? 'Edit solutions' : 'Upload solutions'} <ChevronRight className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
                 </div>
-                {/* Outside the faded row so the link stays readable */}
-                <button
-                    type="button"
-                    onClick={() => (dirtyRef.current ? setConfirmLeave(true) : goToSolutionsEditor())}
-                    className="ml-7 -mt-1 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-                >
-                    {solutionsReady ? 'Edit solutions' : 'Upload solutions'} <ChevronRight className="h-3.5 w-3.5" />
-                </button>
                 <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-muted-foreground dark:bg-slate-900">
                     {allOff
                         ? 'Candidates will see only their marks (and section marks).'
