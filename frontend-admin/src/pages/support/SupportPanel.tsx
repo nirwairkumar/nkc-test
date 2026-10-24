@@ -6,7 +6,7 @@
  * Reply here and the writer gets it on their Help page, as a notification, and by email
  * once SMTP is set. WhatsApp and email buttons are there for a faster personal answer.
  */
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, ChevronRight, ImageIcon, Inbox, Mail, MessageSquare, Phone } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -14,23 +14,54 @@ import { cn } from '@/lib/utils';
 import { initials, num, relative } from '../analytics/format';
 import { ErrorState, usePersisted } from '../analytics/shared';
 import { CARD, Chip, Empty, GroupedList, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
-import { supportApi, TOPIC_LABEL, type SupportMessage, type SupportView } from './api';
+import { feedbackApi, supportApi, TOPIC_LABEL, type SupportMessage, type SupportView } from './api';
 import ConversationSheet, { STATUS_CHIP } from './ConversationSheet';
+import FeedbackPanel, { CountLabel } from './FeedbackPanel';
 
 const VIEWS: readonly SupportView[] = ['open', 'replied', 'resolved', 'all'];
 const PAGE = 30;
+/** Messages = Help page conversations; Feedback = notes about TestoZa itself (FeedbackPanel). */
+type Section = 'messages' | 'feedback';
+const SECTIONS: readonly Section[] = ['messages', 'feedback'];
 
 
 
 export default function SupportPanel() {
     const [view, setView] = usePersisted<SupportView>('tz_admin_support_view', 'open', VIEWS);
     const [params, setParams] = useSearchParams();
-    const deepId = params.get('id');
+    const [savedSection, setSavedSection] = usePersisted<Section>('tz_admin_support_section', 'messages', SECTIONS);
+    // A feedback notification links ?tab=support&section=feedback&id=…
+    const linkedFeedback = params.get('section') === 'feedback';
+    const section: Section = linkedFeedback ? 'feedback' : savedSection;
+    const setSection = (s: Section) => {
+        setSavedSection(s);
+        if (params.has('section') || params.has('id')) {
+            params.delete('section');
+            params.delete('id');
+            setParams(params, { replace: true });
+        }
+    };
+    const deepId = linkedFeedback ? null : params.get('id');
     const [openId, setOpenId] = useState<string | null>(deepId);
+
+    // Same keys as the Support badge in AdminDashboard, so the counts share one request.
+    const { data: waiting } = useQuery({
+        queryKey: ['support', 'waiting'],
+        queryFn: async () => (await supportApi.list({ view: 'open', limit: 1 })).counts.open,
+        staleTime: 30_000,
+        refetchInterval: 60_000,
+    });
+    const { data: unreadFeedback } = useQuery({
+        queryKey: ['support', 'feedback', 'unread-count'],
+        queryFn: async () => (await feedbackApi.list({ view: 'unread', limit: 1 })).counts.unread,
+        staleTime: 30_000,
+        refetchInterval: 60_000,
+    });
 
     const list = useInfiniteQuery({
         queryKey: ['support', 'list', view],
         queryFn: ({ pageParam }) => supportApi.list({ view, limit: PAGE, offset: pageParam as number }),
+        enabled: section === 'messages',
         initialPageParam: 0,
         getNextPageParam: (last, pages) => {
             const loaded = pages.reduce((a, pg) => a + pg.rows.length, 0);
@@ -65,9 +96,25 @@ export default function SupportPanel() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">Inbox</p>
                 <h1 className="mt-1.5 !text-[28px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 sm:!text-[34px]">Support</h1>
                 <p className="mt-2 hidden text-[15px] text-slate-600 sm:block">
-                    Messages from the Help page. Answer fast: a reply within hours is what keeps a new teacher.
+                    {section === 'messages'
+                        ? 'Messages from the Help page. Answer fast: a reply within hours is what keeps a new teacher.'
+                        : 'What creators think of TestoZa: from the Feedback page in the app menu and right after they stop an exam.'}
                 </p>
             </header>
+
+            <Segmented<Section>
+                ariaLabel="Support section"
+                value={section}
+                onChange={setSection}
+                options={[
+                    { value: 'messages', label: <CountLabel text="Messages" n={waiting} accent /> },
+                    { value: 'feedback', label: <CountLabel text="Feedback" n={unreadFeedback} accent /> },
+                ]}
+            />
+
+            {section === 'feedback' ? (
+                <FeedbackPanel focusId={linkedFeedback ? params.get('id') : null} />
+            ) : (<>
 
             {first && !first.emails_on && (
                 <div className="flex items-start gap-3 rounded-2xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-600/20">
@@ -117,6 +164,8 @@ export default function SupportPanel() {
                     )}
                 </>
             )}
+
+            </>)}
 
             <ConversationSheet messageId={openId} preview={open} onClose={close} />
         </div>

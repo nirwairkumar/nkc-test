@@ -11,6 +11,7 @@ import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
 import { GUIDE_METAS } from '@/guides/meta';
 import { AI_IMPORT_STEP_EVENT } from '@/lib/aiImportStep';
+import FeedbackDock from '@/components/feedback/FeedbackDock';
 
 /** Guides and their index (pages/GuidesIndex.tsx) are reading pages: no app sidebar. */
 const GUIDE_PATHS = new Set(['/guides', ...GUIDE_METAS.map((g) => g.path)]);
@@ -202,6 +203,9 @@ export default function Layout() {
 
             {/* Global Popup Authentication & Onboarding Modal */}
             <AuthModal />
+
+            {/* "How did TestoZa do?" after a creator stops an exam; minimises into the menu's Feedback. */}
+            {user && <FeedbackDock />}
         </div>
     );
 }

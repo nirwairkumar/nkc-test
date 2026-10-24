@@ -10,6 +10,7 @@ import { fetchCreatorReports } from '@/lib/reportsApi';
 import { toggleCreatorMode as apiToggleCreatorMode } from '@/lib/socialApi';
 import { shareTest } from '@/utils/shareUtils';
 import { buildStartConductPayload, buildStopConductPayload } from '@/lib/conductExam';
+import { askForFeedback } from '@/lib/platformFeedback';
 import {
     AttemptRow, HISTORY_DAYS, RegistrationRow, buildDashboardModel, buildSampleData, fetchActiveRegistrations,
     fetchAttempts, isSampleUser,
@@ -298,6 +299,7 @@ export default function TeacherDashboard() {
             return;
         }
         toast.success('Exam stopped. Its results stay saved.');
+        askForFeedback({ examId: test.id, examTitle: test.title });
     };
 
     const confirmDelete = async () => {

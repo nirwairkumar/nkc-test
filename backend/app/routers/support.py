@@ -482,6 +482,130 @@ async def admin_set_support_status(
         _mark_team_notifications_read(db, message_id)
     return {"success": True, "status": payload.status}
 
+# ── Platform feedback (20261024150000_platform_feedback.sql) ──────────────────
+# The sidebar's Feedback page and the card that comes up after a creator stops a live exam
+# both send here: up to three short notes (Generate with AI, Conduct online exam, Other).
+# Admins read them in admin → Support → Feedback.
+
+FEEDBACK_SOURCES = {"sidebar", "exam_ended"}
+FEEDBACK_MAX = 2000
+_UUID_RE = re.compile(r"^[0-9a-fA-F-]{36}$")
+
+
+class PlatformFeedback(BaseModel):
+    ai: Optional[str] = None
+    conduct: Optional[str] = None
+    other: Optional[str] = None
+    source: Optional[str] = None
+    exam_id: Optional[str] = None
+    exam_title: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+def _part(text: Optional[str]) -> Optional[str]:
+    text = (text or "").strip()
+    return text[:FEEDBACK_MAX] if text else None
+
+
+@router.post("/platform-feedback", dependencies=[Depends(check_support_rate_limit)])
+async def send_platform_feedback(payload: PlatformFeedback, request: Request, db: Client = Depends(get_db)):
+    parts = {"ai": _part(payload.ai), "conduct": _part(payload.conduct), "other": _part(payload.other)}
+    if not any(parts.values()):
+        raise HTTPException(status_code=400, detail="Write a few words in any part first.")
+
+    user_id = get_optional_user_id(request, db)
+    source = payload.source if payload.source in FEEDBACK_SOURCES else "sidebar"
+    after_exam = source == "exam_ended"
+    exam_id = payload.exam_id if after_exam and payload.exam_id and _UUID_RE.match(payload.exam_id) else None
+    exam_title = (payload.exam_title or "").strip()[:200] if after_exam else ""
+    record: Dict[str, Any] = {
+        **parts,
+        "user_id": user_id,
+        "source": source,
+        "exam_id": exam_id,
+        "exam_title": exam_title or None,
+        "context": _clean_context(payload.context),
+        "user_agent": (request.headers.get("user-agent") or "")[:300] or None,
+    }
+    try:
+        res = db.table("platform_feedback").insert(record).execute()
+    except Exception as err:
+        logger.error("platform feedback not saved (run 20261024150000_platform_feedback.sql?): %s", err)
+        raise HTTPException(status_code=503, detail="We couldn't send your feedback. Please try again.")
+
+    saved = {**record, **((res.data or [{}])[0])}
+    who = "Someone signed out"
+    if user_id:
+        try:
+            prof = db.table("profiles").select("full_name, email").eq("id", user_id).limit(1).execute()
+            row = (prof.data or [{}])[0]
+            who = (row.get("full_name") or "").strip() or (row.get("email") or "").split("@")[0] or "A creator"
+        except Exception as err:
+            logger.debug("platform feedback: profile lookup failed: %s", err)
+    support_mail.on_platform_feedback_in_background(db, saved, who)
+    return {"success": True, "id": saved.get("id")}
+
+
+FEEDBACK_VIEWS = ("unread", "all")
+
+
+@router.get("/admin/feedback")
+async def admin_platform_feedback(
+    request: Request, view: str = "all", limit: int = 30, offset: int = 0, db: Client = Depends(get_db),
+):
+    verify_is_admin(request, db)
+    view = view if view in FEEDBACK_VIEWS else "all"
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+
+    def scoped(query, v: str):
+        return query.is_("read_at", "null") if v == "unread" else query
+
+    try:
+        res = (scoped(db.table("platform_feedback").select("*", count="exact"), view)
+               .order("created_at", desc=True).range(offset, offset + limit - 1).execute())
+    except Exception as err:
+        logger.error("platform_feedback unavailable (run 20261024150000_platform_feedback.sql): %s", err)
+        raise HTTPException(status_code=503, detail="Run supabase/migrations/20261024150000_platform_feedback.sql first.")
+    rows = res.data or []
+    counts = {
+        v: int(scoped(db.table("platform_feedback").select("id", count="exact", head=True), v).execute().count or 0)
+        for v in FEEDBACK_VIEWS
+    }
+
+    user_ids = list({r["user_id"] for r in rows if r.get("user_id")})
+    if user_ids:
+        prof = (db.table("profiles").select("id, full_name, email, avatar_url, designation")
+                .in_("id", user_ids).execute())
+        profiles = {p["id"]: p for p in (prof.data or [])}
+        for r in rows:
+            p = profiles.get(r.get("user_id")) or {}
+            if p:
+                r["account"] = {k: p.get(k) for k in ("full_name", "email", "avatar_url", "designation")}
+    return {"rows": rows, "total": int(res.count or 0), "counts": counts}
+
+
+class FeedbackRead(BaseModel):
+    read: bool = True
+
+
+@router.patch("/admin/feedback/{feedback_id}")
+async def admin_mark_platform_feedback(
+    feedback_id: str, payload: FeedbackRead, request: Request, db: Client = Depends(get_db),
+):
+    verify_is_admin(request, db)
+    stamp = datetime.now(timezone.utc).isoformat() if payload.read else None
+    res = db.table("platform_feedback").update({"read_at": stamp}).eq("id", feedback_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Feedback not found.")
+    if payload.read:
+        try:
+            db.table("notifications").update({"read": True, "is_read": True}).like("link", f"%id={feedback_id}%").execute()
+        except Exception as err:
+            logger.debug("could not mark feedback notifications read: %s", err)
+    return {"success": True, "read_at": stamp}
+
+
 class ExitFeedbackCreate(BaseModel):
     test_id: str
     experience: str

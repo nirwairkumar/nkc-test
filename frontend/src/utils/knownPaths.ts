@@ -21,7 +21,7 @@ export const APP_SECTIONS: readonly string[] = [
   'about', 'ai-question-generator', 'all-submissions', 'analysis', 'analytics', 'assessment-platform',
   'auth', 'auth-error', 'auto-grading-software', 'batches', 'blog', 'combined-break', 'combined-intro',
   'compare', 'convert', 'create-combined-test', 'create-mock-test-online', 'create-test', 'creator',
-  'dashboard', 'edit-test', 'exam-software-for-schools', 'exams', 'explore', 'generate-with-ai', 'guides',
+  'dashboard', 'edit-test', 'exam-software-for-schools', 'exams', 'explore', 'feedback', 'generate-with-ai', 'guides',
   'help', 'history', 'j', 'join', 'live', 'login', 'materials', 'mcq-test-maker', 'more-tests', 'my-posts',
   'my-tests', 'news', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
   'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf', 'pdf-to-quiz', 'posts',

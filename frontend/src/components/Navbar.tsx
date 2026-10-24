@@ -17,6 +17,7 @@ import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crow
 import { Badge } from '@/components/ui/badge';
 import { CreatorBadgeIcon } from '@/components/CreatorBadgeIcon';
 import TestoZaLogo from './TestoZaLogo';
+import FeedbackLanding from './feedback/FeedbackLanding';
 import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 
 // Lazy load heavy components to keep them out of the main bundle
@@ -132,7 +133,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                             className="md:hidden text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shrink-0 h-9 w-9"
                             aria-label="Toggle Sidebar Menu"
                         >
-                            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+                            {/* With the menu shut, the minimised feedback pop-up lands here. */}
+                            <FeedbackLanding>
+                                <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+                            </FeedbackLanding>
                         </Button>
                     )}
                     

@@ -79,6 +79,7 @@ class Query:
         self.payload: Any = None
         self._order: List[tuple] = []
         self._limit: Optional[int] = None
+        self._range: Optional[tuple] = None
         self._count = False
         self._single = False
 
@@ -142,6 +143,16 @@ class Query:
         self._limit = n
         return self
 
+    def range(self, start, end):
+        self._range = (start, end)
+        return self
+
+    def like(self, col, pattern):
+        # Only the %…% patterns the routers use.
+        needle = pattern.strip("%")
+        self.filters.append(lambda r: needle in str(r.get(col) or ""))
+        return self
+
     def single(self):
         self._single = True
         return self
@@ -178,6 +189,11 @@ class Query:
         found = self._matches()
         for col, desc in reversed(self._order):
             found.sort(key=lambda r: _cmp_value(r.get(col)), reverse=desc)
+        total = len(found)
+        if self._range is not None:
+            # Like PostgREST: count is every match, the page is the range.
+            found = found[self._range[0]: self._range[1] + 1]
+            return SimpleNamespace(data=copy.deepcopy(found), count=total if self._count else None)
         if self._limit is not None:
             found = found[: self._limit]
         if self._single:

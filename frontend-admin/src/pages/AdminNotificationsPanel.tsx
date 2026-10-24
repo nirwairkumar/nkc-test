@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import ConversationSheet, { STATUS_CHIP } from './support/ConversationSheet';
 import { supportApi } from './support/api';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
@@ -60,6 +61,7 @@ const supportMessageId = (n: Notification): string | null => {
 };
 
 export default function AdminNotificationsPanel() {
+    const [, setSearchParams] = useSearchParams();
     const {
         notifications,
         unreadCount,
@@ -196,6 +198,13 @@ export default function AdminNotificationsPanel() {
         const messageId = supportMessageId(n);
         if (messageId) {
             openConversation(messageId);
+            return;
+        }
+
+        // Platform feedback opens admin → Support → Feedback at that card.
+        if (n.link && n.link.includes('section=feedback')) {
+            const id = new URL(n.link, window.location.origin).searchParams.get('id');
+            setSearchParams({ tab: 'support', section: 'feedback', ...(id ? { id } : {}) });
             return;
         }
 

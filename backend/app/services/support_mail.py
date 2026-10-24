@@ -222,6 +222,44 @@ def on_user_followup_in_background(db, msg: Dict[str, Any], text: str) -> None:
     threading.Thread(target=_tell_team, args=(db, msg, text), daemon=True, name="help-followup").start()
 
 
+# ── Platform feedback (sidebar Feedback page / card after stopping an exam) ─────
+
+FEEDBACK_PARTS = (("ai", "Generate with AI"), ("conduct", "Conduct online exam"), ("other", "Other"))
+
+
+def feedback_admin_link(feedback_id: str) -> str:
+    return f"{ADMIN_ORIGIN}/admin?tab=support&section=feedback&id={feedback_id}"
+
+
+def _tell_team_feedback(db, row: Dict[str, Any], who: str) -> None:
+    """One in-app notification per admin. No email: feedback asks nothing back."""
+    try:
+        targets = _admin_targets(db)
+    except Exception as err:
+        logger.warning("Feedback %s: could not load admins: %s", row.get("id"), err)
+        return
+    if not targets["ids"]:
+        return
+    first = next(((label, row[key]) for key, label in FEEDBACK_PARTS if (row.get(key) or "").strip()), None)
+    preview = f"{first[0]}: {first[1][:120]}" if first else ""
+    try:
+        db.table("notifications").insert([
+            {
+                "user_id": aid,
+                "title": "New platform feedback",
+                "message": f"{who} · {preview}",
+                "link": feedback_admin_link(row.get("id") or ""),
+                "sender_name": who,
+            } for aid in targets["ids"]
+        ]).execute()
+    except Exception as err:
+        logger.warning("Feedback %s: admin notification failed: %s", row.get("id"), err)
+
+
+def on_platform_feedback_in_background(db, row: Dict[str, Any], who: str) -> None:
+    threading.Thread(target=_tell_team_feedback, args=(db, row, who), daemon=True, name="platform-feedback").start()
+
+
 def _send_reply(to: str, name: Optional[str], original: str, reply: str) -> None:
     try:
         mail = build_reply(name, original, reply)

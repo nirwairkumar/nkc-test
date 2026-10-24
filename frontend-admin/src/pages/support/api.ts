@@ -66,6 +66,47 @@ export const supportApi = {
         (await apiClient.patch(`/support/admin/messages/${id}`, { status })).data,
 };
 
+// ── Platform feedback (sidebar Feedback page + the card after stopping an exam) ──
+// Backend: `/support/platform-feedback`, `/support/admin/feedback`;
+// SQL: supabase/migrations/20261024150000_platform_feedback.sql.
+
+export type FeedbackView = 'unread' | 'all';
+
+export interface PlatformFeedback {
+    id: string;
+    created_at: string;
+    user_id?: string | null;
+    ai?: string | null;
+    conduct?: string | null;
+    other?: string | null;
+    source: 'sidebar' | 'exam_ended';
+    exam_id?: string | null;
+    exam_title?: string | null;
+    context?: { from?: string; viewport?: string } | null;
+    user_agent?: string | null;
+    read_at?: string | null;
+    account?: { full_name?: string | null; email?: string | null; avatar_url?: string | null; designation?: string | null };
+}
+
+export interface FeedbackList {
+    rows: PlatformFeedback[];
+    total: number;
+    counts: Record<FeedbackView, number>;
+}
+
+export const FEEDBACK_PART_LABEL = [
+    { key: 'ai', label: 'Generate with AI' },
+    { key: 'conduct', label: 'Conduct online exam' },
+    { key: 'other', label: 'Other' },
+] as const;
+
+export const feedbackApi = {
+    list: async (p: { view: FeedbackView; limit?: number; offset?: number }): Promise<FeedbackList> =>
+        (await apiClient.get('/support/admin/feedback', { params: p })).data,
+    setRead: async (id: string, read: boolean) =>
+        (await apiClient.patch(`/support/admin/feedback/${id}`, { read })).data as { read_at: string | null },
+};
+
 export const TOPIC_LABEL: Record<string, string> = {
     create: 'Making a test',
     ai: 'AI import',

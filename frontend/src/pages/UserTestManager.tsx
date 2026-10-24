@@ -50,6 +50,7 @@ import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
 import {
     DEFAULT_ENVIRONMENT_SETTINGS, buildStartConductPayload, buildStopConductPayload, isProctoringEnabled,
 } from '@/lib/conductExam';
+import { askForFeedback } from '@/lib/platformFeedback';
 import { examSessionsApi, problemOf } from '@/lib/examSessionsApi';
 import JoinCodeLine from '@/components/exams/JoinCodeLine';
 import CandidateInputsLine from '@/components/exams/CandidateInputsLine';
@@ -691,6 +692,7 @@ export default function UserTestManager() {
             const { error } = await updateTest(testId, payload, isAdmin);
             if (error) throw error;
             toast.success('Exam stopped. Its results are under Ended exams.');
+            askForFeedback({ examId: test.id, examTitle: test.title });
         } catch (error: any) {
             toast.error('Failed to stop exam: ' + error.message);
             mapAllTests(t => t.id === testId ? { ...t, ...test } : t);

@@ -22,6 +22,7 @@ import ResultsPanel from '@/components/exams/ResultsPanel';
 import SessionSettingsPanel from '@/components/exams/SessionSettingsPanel';
 import RetestSheet from '@/components/exams/RetestSheet';
 import { PhaseBadge } from './ExamsPage';
+import { askForFeedback } from '@/lib/platformFeedback';
 
 type Tab = 'students' | 'results' | 'settings';
 
@@ -59,6 +60,7 @@ export default function ExamSessionPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data?.phase]);
 
+    /** True when the action went through. */
     const run = async (label: string, fn: () => Promise<unknown>, success?: string) => {
         setBusy(label);
         try {
@@ -66,8 +68,10 @@ export default function ExamSessionPage() {
             if (success) toast.success(success);
             await load();
             setResultsVersion(v => v + 1);
+            return true;
         } catch (err) {
             toast.error(problemOf(err).message);
+            return false;
         } finally {
             setBusy(null);
         }
@@ -190,7 +194,10 @@ export default function ExamSessionPage() {
                     <div className="mt-2 grid grid-cols-2 gap-2">
                         <AlertDialogCancel className="m-0 h-11 rounded-xl border-0 bg-slate-100 text-[15px] font-semibold text-slate-700 hover:bg-slate-200">Keep going</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => run('end', () => examSessionsApi.end(id, true), 'Exam ended. Results are ready.').then(() => setTab('results'))}
+                            onClick={() => run('end', () => examSessionsApi.end(id, true), 'Exam ended. Results are ready.').then((ended) => {
+                                setTab('results');
+                                if (ended) askForFeedback({ examId: id, examTitle: data.test.title });
+                            })}
                             className="h-11 rounded-xl bg-red-600 text-[15px] font-semibold text-white hover:bg-red-700"
                         >
                             End exam

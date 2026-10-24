@@ -23,7 +23,9 @@ import {
     Copy,
     KeyRound,
     GraduationCap,
+    MessageSquareHeart,
 } from 'lucide-react';
+import FeedbackLanding from '@/components/feedback/FeedbackLanding';
 import {
     Tooltip,
     TooltipContent,
@@ -258,6 +260,13 @@ Item 2 & Value B & 200 \\\\
             icon: LifeBuoy,
             matchPaths: ['/help'],
         },
+        // About TestoZa itself (pages/FeedbackPage.tsx); the pop-up after stopping an exam minimises here.
+        {
+            title: 'Feedback',
+            path: '/feedback',
+            icon: MessageSquareHeart,
+            matchPaths: ['/feedback'],
+        },
     ];
 
     const isActive = (item: typeof navItems[0]) => {
@@ -385,13 +394,18 @@ Item 2 & Value B & 200 \\\\
                                                 ${(isVisiblyCollapsed && !mobileOpen) ? 'justify-center px-0 h-10 w-10 mx-auto' : ''}
                                             `}
                                         >
-                                            <Icon className={`
-                                                h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110
-                                                ${active 
-                                                    ? 'text-white dark:text-slate-900' 
-                                                    : item.iconColor || 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
-                                                }
-                                            `} />
+                                            {(() => {
+                                                const icon = (
+                                                    <Icon className={`
+                                                        h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110
+                                                        ${active
+                                                            ? 'text-white dark:text-slate-900'
+                                                            : item.iconColor || 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                                                        }
+                                                    `} />
+                                                );
+                                                return item.path === '/feedback' ? <FeedbackLanding>{icon}</FeedbackLanding> : icon;
+                                            })()}
 
                                             {(!isVisiblyCollapsed || mobileOpen) && (
                                                 <div className="flex items-center justify-between flex-1 min-w-0">
