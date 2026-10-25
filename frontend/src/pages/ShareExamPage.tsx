@@ -8,14 +8,14 @@ import { shareLink } from '@/utils/canonicalUrl';
 import { analytics } from '@/lib/analytics/tracker';
 import { copyText } from '@/components/dashboard/format';
 import {
-    SHARE_APPS, type ShareApp, appShareHref, discordText, shareAppById, withoutBold,
+    SHARE_APPS, type ShareApp, appShareHref, shareAppById, withoutBold,
 } from '@/components/exams/shareApps';
 
 /**
- * /share-exam/<exam>?to=<wa|tg|dc|em> — where the "Scan to share" QR on a live exam card lands,
+ * /share-exam/<exam>?to=<wa|tg|em> — where the "Scan to share" QR on a live exam card lands,
  * on the examiner's own phone. Apps that take a ready message (WhatsApp, Telegram, email)
  * open straight away; "any app" needs one tap, because a phone only shows its share
- * sheet after a tap. Discord has no share link, so its button copies the message first.
+ * sheet after a tap.
  */
 export default function ShareExamPage() {
     const { key = '' } = useParams();
@@ -62,8 +62,8 @@ export default function ShareExamPage() {
         window.location.href = href;
     }, [state, picked.id, text, link, title, key]);
 
-    const copyMessage = async (forDiscord = false) => {
-        const ok = await copyText(forDiscord ? discordText(text) : text);
+    const copyMessage = async () => {
+        const ok = await copyText(text);
         if (!ok) {
             toast.error('Could not copy the message');
             return false;
@@ -85,13 +85,6 @@ export default function ShareExamPage() {
             } catch { /* closed the sheet */ }
             return;
         }
-        if (app.id === 'discord') {
-            if (await copyMessage(true)) {
-                toast.success('Message copied. Paste it in your Discord channel.');
-                window.setTimeout(() => { window.location.href = 'https://discord.com/app'; }, 600);
-            }
-            return;
-        }
         const href = appShareHref(app.id, text, link, title);
         if (href) window.location.href = href;
     };
@@ -100,7 +93,6 @@ export default function ShareExamPage() {
         any: canShareSheet ? 'Share' : 'Copy message',
         whatsapp: 'Open WhatsApp',
         telegram: 'Open Telegram',
-        discord: 'Copy and open Discord',
         email: 'Open email',
     };
     const others = SHARE_APPS.filter(a => a.id !== picked.id && a.id !== 'any');
