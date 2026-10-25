@@ -25,7 +25,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import DashboardHeader from './DashboardHeader';
-import FirstExamChecklist from './FirstExamChecklist';
+import NextStepCard from './NextStepCard';
+import WatchFilmCard from './WatchFilmCard';
+import ClassroomShowcase from './ClassroomShowcase';
+import WaysToRunCard from './WaysToRunCard';
+import DoubtsCard from './DoubtsCard';
 import LiveNowSection, { type LiveCoach } from './LiveNowSection';
 import LatestResultCard from './LatestResultCard';
 import RecentResultsCard from './RecentResultsCard';
@@ -43,14 +47,18 @@ import { CARD, PRIMARY_BTN, Skeleton } from './dashboardUi';
 import { dayAndTime, greeting, plural, timeAgo, untilText } from './format';
 
 const LIVE_REFRESH_MS = 30_000;
-const checklistKey = (userId?: string) => `testoza_dashboard_checklist_hidden_${userId || 'anon'}`;
+/** Below this many candidate results the page is in "getting started" mode. */
+const GETTING_STARTED_RESULTS = 5;
 
 /**
  * /dashboard for Teacher and Institution accounts.
  *
- * Built around what a teacher does on exam day and the morning after: is my exam running,
- * who is writing, who submitted, how did the class do, who needs help, and what do I send
- * to the batch group. Everything shown is real data; failures say so instead of showing 0.
+ * Two shapes. Getting started (fewer than 5 candidate results ever): one next step, the
+ * walkthrough film, then what an online exam looks like in a real class and the worries
+ * that hold educators back, because most of them make a test and never send it.
+ * Established: exam day and the morning after: is my exam running, who submitted, how did
+ * the class do, who needs help. Everything shown is real data; failures say so instead of
+ * showing 0.
  */
 export default function TeacherDashboard() {
     const { user, profile, isAdmin, loading: authLoading } = useAuth();
@@ -86,14 +94,8 @@ export default function TeacherDashboard() {
     // Exam sittings with a join code (null until loaded; stays null if the API is unavailable)
     const [examSessions, setExamSessions] = useState<ExamSession[] | null>(null);
     const [newExam, setNewExam] = useState<{ testId?: string } | null>(null);
-
-    const [checklistHidden, setChecklistHidden] = useState(() => {
-        try {
-            return localStorage.getItem(checklistKey(user?.id)) === 'true';
-        } catch {
-            return false;
-        }
-    });
+    // Set once the first tests + results load finishes, so later reloads don't flip the layout.
+    const settledRef = useRef(false);
 
     const profileForRole = isImpersonating ? targetProfile : profile;
     const designation = profileForRole?.designation || (!isImpersonating ? user?.user_metadata?.designation : undefined);
@@ -349,13 +351,6 @@ export default function TeacherDashboard() {
         }
     };
 
-    const hideChecklist = () => {
-        setChecklistHidden(true);
-        try {
-            localStorage.setItem(checklistKey(user?.id), 'true');
-        } catch { /* hiding for this visit is enough */ }
-    };
-
     /* ── Render ──────────────────────────────────────────────────────────── */
 
     if (authLoading) return <SplashLoader text="Loading your dashboard..." />;
@@ -396,13 +391,18 @@ export default function TeacherDashboard() {
     const eyebrow = isInstitution ? 'Institute dashboard' : 'Educator dashboard';
     const { live, upcoming, latest } = model;
     // A sitting with a join code counts as running an exam, and its submissions as results.
+    const sessionResults = examSessions?.reduce((n, s) => n + s.counts.submitted, 0) || 0;
     const checklist = {
         ...model.checklist,
         hasConducted: model.checklist.hasConducted || !!examSessions?.length,
-        hasResult: model.checklist.hasResult || !!examSessions?.some(s => s.counts.submitted > 0),
+        hasResult: model.checklist.hasResult || sessionResults > 0,
+        resultCount: model.checklist.resultCount + sessionResults,
     };
-    const showChecklist = !isDemo && !checklistHidden && !testsLoading && attemptsState === 'ready'
-        && !(checklist.hasTest && checklist.hasConducted && checklist.hasResult);
+
+    if (!testsLoading && attemptsState !== 'loading') settledRef.current = true;
+    const settled = settledRef.current;
+    // Demo accounts show a busy week of sample results, so they always get the established page.
+    const gettingStarted = settled && !isDemo && attemptsState === 'ready' && checklist.resultCount < GETTING_STARTED_RESULTS;
 
     const liveSitting = examSessions?.find(s => s.phase === 'live');
     const summary = (() => {
@@ -424,16 +424,54 @@ export default function TeacherDashboard() {
             return <>{plural(latest.count, 'candidate')} took “<strong className="font-semibold text-slate-900">{latest.test.title}</strong>” — last result {timeAgo(latest.lastAt, now)}.</>;
         }
         if (!checklist.hasTest) return "Let's get your first online exam running.";
+        if (gettingStarted && !checklist.hasConducted) return 'Your test is ready. Next, start it as an online exam.';
+        if (gettingStarted && checklist.resultCount === 0) return 'Your class hasn’t written an exam here yet. One message in the class group changes that.';
         return 'No exam is running right now.';
     })();
 
-    const resultsLoading = attemptsState === 'loading' && attempts.length === 0;
     const hasNumbers = model.numbers.results + model.numbers.resultsPrev > 0;
     const showStudents = model.students.total >= 3;
     const showBatches = isInstitution || model.batches.length > 0;
+    const rowGrid = 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]';
+
+    const createCard = (
+        <CreateCard
+            onUploadPaper={goUpload}
+            onTypeQuestions={goCreate}
+            onCombine={goCombine}
+            onJoinCode={examSessions ? () => setNewExam({}) : undefined}
+        />
+    );
+    const testsCard = (
+        <ContinueWorking
+            tests={model.workingOn}
+            loading={testsLoading}
+            classes={classes}
+            now={now}
+            onEdit={openEditor}
+            onConduct={setConductTarget}
+            onSettings={openSettings}
+            onResults={openResults}
+            onShare={shareTest}
+            onSolutions={openSolutions}
+            onDelete={setDeleteTarget}
+            onBatchChange={changeBatch}
+            onSchedule={(test) => setNewExam({ testId: test.id })}
+            onViewAll={() => navigate(withUser('/my-tests'))}
+        />
+    );
+    const batchesCard = showBatches && (
+        <BatchesCard
+            batches={model.batches}
+            isInstitution={isInstitution}
+            onCreate={createBatch}
+            onAssignTests={() => navigate(withUser('/my-tests'))}
+            onOpen={(batchId) => navigate(batchId.startsWith('sample-') ? '/batches' : `/batches/${batchId}`)}
+        />
+    );
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-16 pt-5 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl space-y-5 px-4 pb-16 pt-5 sm:px-6 sm:pt-7 lg:px-8">
             {isImpersonating && (
                 <div className="flex items-center gap-2.5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500 motion-safe:animate-pulse" />
@@ -445,9 +483,6 @@ export default function TeacherDashboard() {
                 eyebrow={eyebrow}
                 title={callName ? `${greeting(now)}, ${callName}` : greeting(now)}
                 summary={summary}
-                avatarUrl={profileForRole?.avatar_url || (!isImpersonating ? user?.user_metadata?.avatar_url : null)}
-                displayName={fullName}
-                isInstitution={isInstitution}
                 openReports={openReports}
                 onOpenReports={() => navigate(withUser('/my-tests?tab=reports'))}
                 onOpenSearch={() => setIsSearchOpen(true)}
@@ -455,15 +490,13 @@ export default function TeacherDashboard() {
                 onCreate={goCreate}
             />
 
-            {showChecklist && (
-                <FirstExamChecklist
-                    checklist={checklist}
-                    liveExam={live[0] || null}
-                    onUploadPaper={goUpload}
-                    onTypeQuestions={goCreate}
-                    onConduct={setConductTarget}
-                    onHide={hideChecklist}
-                />
+            {attemptsState === 'error' && (
+                <div className="flex flex-col gap-3 rounded-2xl bg-amber-50 px-4 py-3.5 text-[14px] text-amber-900 ring-1 ring-inset ring-amber-600/20 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> Could not load your candidates' results, so they are not shown below.</span>
+                    <button type="button" onClick={loadAttempts} className="inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white px-3.5 text-[13px] font-semibold text-amber-900 ring-1 ring-amber-600/20 hover:bg-amber-100 sm:self-auto cursor-pointer">
+                        <RefreshCw className="h-3.5 w-3.5" /> Try again
+                    </button>
+                </div>
             )}
 
             <LiveNowSection
@@ -482,7 +515,7 @@ export default function TeacherDashboard() {
                 onCoachChange={setLiveCoach}
             />
 
-            {examSessions && (checklist.hasTest || examSessions.length > 0) && (
+            {examSessions && (
                 <ExamRoomsCard
                     sessions={examSessions}
                     onOpen={(sid) => navigate(`/exams/${sid}`)}
@@ -491,65 +524,61 @@ export default function TeacherDashboard() {
                 />
             )}
 
-            {attemptsState === 'error' && (
-                <div className="flex flex-col gap-3 rounded-2xl bg-amber-50 px-4 py-3.5 text-[14px] text-amber-900 ring-1 ring-inset ring-amber-600/20 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> Could not load your candidates' results, so they are not shown below.</span>
-                    <button type="button" onClick={loadAttempts} className="inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white px-3.5 text-[13px] font-semibold text-amber-900 ring-1 ring-amber-600/20 hover:bg-amber-100 sm:self-auto cursor-pointer">
-                        <RefreshCw className="h-3.5 w-3.5" /> Try again
-                    </button>
+            {!settled ? (
+                <div className={rowGrid}>
+                    <div className={`${CARD} space-y-4 p-5`}>
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-6 w-2/3" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-5/6" />
+                        <div className="flex gap-2 pt-2"><Skeleton className="h-10 w-36" /><Skeleton className="h-10 w-28" /></div>
+                    </div>
+                    <WatchFilmCard />
+                </div>
+            ) : gettingStarted ? (
+                <>
+                    <div className={rowGrid}>
+                        <NextStepCard
+                            className="min-w-0"
+                            checklist={checklist}
+                            liveExam={live[0] || null}
+                            onUploadPaper={goUpload}
+                            onTypeQuestions={goCreate}
+                            onConduct={setConductTarget}
+                        />
+                        <WatchFilmCard />
+                    </div>
+
+                    <ClassroomShowcase />
+                    <WaysToRunCard />
+
+                    <div className={rowGrid}>
+                        <div className="flex min-w-0 flex-col [&>section]:flex-1">{testsCard}</div>
+                        <div className="min-w-0 space-y-5">
+                            {createCard}
+                            {batchesCard}
+                        </div>
+                    </div>
+
+                    <DoubtsCard signedBy={fullName} />
+                </>
+            ) : (
+                <div className={`${rowGrid} items-start`}>
+                    <div className="min-w-0 space-y-5">
+                        {latest && <LatestResultCard summary={latest} now={now} onOpenResults={openResults} onOpenAnalysis={openAnalysis} />}
+                        <RecentResultsCard summaries={model.recent} now={now} onOpen={openResults} onSeeAll={() => navigate('/all-submissions')} />
+                        {testsCard}
+                    </div>
+
+                    <aside className="min-w-0 space-y-5" aria-label="Overview">
+                        <WatchFilmCard />
+                        {createCard}
+                        {hasNumbers && <NumbersCard numbers={model.numbers} />}
+                        {showStudents && <StudentsCard {...model.students} />}
+                        {batchesCard}
+                    </aside>
                 </div>
             )}
-
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="min-w-0 space-y-6">
-                    {resultsLoading ? (
-                        <div className={`${CARD} space-y-4 p-5`}>
-                            <Skeleton className="h-3 w-24" />
-                            <Skeleton className="h-6 w-2/3" />
-                            <div className="grid grid-cols-3 gap-2.5">
-                                <Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" />
-                            </div>
-                            <Skeleton className="h-3 w-full" />
-                        </div>
-                    ) : latest ? (
-                        <LatestResultCard summary={latest} now={now} onOpenResults={openResults} onOpenAnalysis={openAnalysis} />
-                    ) : null}
-
-                    <RecentResultsCard summaries={model.recent} now={now} onOpen={openResults} onSeeAll={() => navigate('/all-submissions')} />
-
-                    <ContinueWorking
-                        tests={model.workingOn}
-                        loading={testsLoading}
-                        classes={classes}
-                        now={now}
-                        onEdit={openEditor}
-                        onConduct={setConductTarget}
-                        onSettings={openSettings}
-                        onResults={openResults}
-                        onShare={shareTest}
-                        onSolutions={openSolutions}
-                        onDelete={setDeleteTarget}
-                        onBatchChange={changeBatch}
-                        onSchedule={(test) => setNewExam({ testId: test.id })}
-                        onViewAll={() => navigate(withUser('/my-tests'))}
-                    />
-                </div>
-
-                <aside className="min-w-0 space-y-6" aria-label="Overview">
-                    <CreateCard onUploadPaper={goUpload} onTypeQuestions={goCreate} onCombine={goCombine} />
-                    {hasNumbers && <NumbersCard numbers={model.numbers} />}
-                    {showStudents && <StudentsCard {...model.students} />}
-                    {showBatches && (
-                        <BatchesCard
-                            batches={model.batches}
-                            isInstitution={isInstitution}
-                            onCreate={createBatch}
-                            onAssignTests={() => navigate(withUser('/my-tests'))}
-                            onOpen={(batchId) => navigate(batchId.startsWith('sample-') ? '/batches' : `/batches/${batchId}`)}
-                        />
-                    )}
-                </aside>
-            </div>
 
             <GlobalSearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} userTests={tests} />
             <NewExamSheet

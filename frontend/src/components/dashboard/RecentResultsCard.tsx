@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { TestResultSummary } from '@/lib/teacherDashboardApi';
 import { WEAK_PCT } from '@/lib/teacherDashboardApi';
-import { CARD, SectionTitle, TEXT_BTN } from './dashboardUi';
+import { Panel, TEXT_BTN } from './dashboardUi';
 import { pctText, plural, timeAgo } from './format';
 
 interface RecentResultsCardProps {
@@ -17,19 +17,18 @@ export default function RecentResultsCard({ summaries, now, onOpen, onSeeAll }: 
     if (summaries.length === 0) return null;
 
     return (
-        <section aria-labelledby="recent-results-heading">
-            <SectionTitle
-                id="recent-results-heading"
-                title="Earlier results"
-                action={<button type="button" onClick={onSeeAll} className={TEXT_BTN}>See all</button>}
-            />
-            <ul className={`${CARD} divide-y divide-slate-100 overflow-hidden`}>
+        <Panel
+            id="recent-results-heading"
+            title="Earlier results"
+            action={<button type="button" onClick={onSeeAll} className={TEXT_BTN}>See all</button>}
+        >
+            <ul className="divide-y divide-slate-100">
                 {summaries.map(s => (
                     <li key={s.test.id}>
                         <button
                             type="button"
                             onClick={() => onOpen(s.test)}
-                            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 sm:px-5 cursor-pointer"
+                            className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 cursor-pointer"
                         >
                             <AverageBadge pct={s.avgPct} />
                             <div className="min-w-0 flex-1">
@@ -45,7 +44,7 @@ export default function RecentResultsCard({ summaries, now, onOpen, onSeeAll }: 
                     </li>
                 ))}
             </ul>
-        </section>
+        </Panel>
     );
 }
 

@@ -34,11 +34,11 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
 
     return (
         <section aria-labelledby="latest-result-heading" className={`${CARD} overflow-hidden`}>
-            <div className="px-4 pt-4 sm:px-5 sm:pt-5">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Latest results</p>
+            <div className="px-5 pt-4">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-sky-700">Latest results</p>
                 <div className="mt-1 flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <h2 id="latest-result-heading" className="truncate text-xl font-semibold tracking-[-0.015em] text-slate-900" title={test.title}>
+                        <h2 id="latest-result-heading" className="truncate text-[18px] font-semibold tracking-[-0.015em] text-slate-900" title={test.title}>
                             {test.title}
                         </h2>
                         <p className="mt-0.5 text-[13px] text-slate-600">
@@ -83,7 +83,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
 
             {/* Top 3 and who needs help */}
             <div className="mt-4 grid border-t border-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-slate-100">
-                <div className="px-4 py-3.5 sm:px-5">
+                <div className="px-5 py-3.5">
                     <h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-900">
                         <ListOrdered className="h-4 w-4 text-sky-600" /> Top of the class
                     </h3>
@@ -91,7 +91,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
                         {top.map((a, i) => <RankRow key={a.id} rank={i + 1} attempt={a} />)}
                     </ol>
                 </div>
-                <div className="border-t border-slate-100 px-4 py-3.5 sm:border-t-0 sm:px-5">
+                <div className="border-t border-slate-100 px-5 py-3.5 sm:border-t-0">
                     <h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-900">
                         <TriangleAlert className="h-4 w-4 text-rose-500" /> Needs help <span className="font-normal text-slate-500">(below {WEAK_PCT}%)</span>
                     </h3>
@@ -112,7 +112,7 @@ export default function LatestResultCard({ summary, now, onOpenResults, onOpenAn
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
                 <button type="button" onClick={() => onOpenResults(test)} className={`${PRIMARY_BTN} h-9 px-3.5 text-[13px]`}>
                     <BarChart3 className="h-4 w-4" /> All results
                 </button>

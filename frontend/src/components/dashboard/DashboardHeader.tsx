@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, Plus, Building2, Inbox } from 'lucide-react';
+import { Search, Bell, Plus, Inbox } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { PRIMARY_BTN } from './dashboardUi';
 import { plural } from './format';
@@ -8,10 +8,6 @@ interface DashboardHeaderProps {
     eyebrow: string;
     title: string;
     summary: React.ReactNode;
-    /** The account's own profile photo; initials are shown when there is none. */
-    avatarUrl?: string | null;
-    displayName: string;
-    isInstitution: boolean;
     openReports: number;
     onOpenReports: () => void;
     onOpenSearch: () => void;
@@ -19,14 +15,11 @@ interface DashboardHeaderProps {
     onCreate: () => void;
 }
 
-/** Large title, a one-line "what's happening" sentence, and the few actions a teacher reaches for. */
+/** Title, a one-line "what's happening" sentence, and the few actions an educator reaches for. */
 export default function DashboardHeader({
     eyebrow,
     title,
     summary,
-    avatarUrl,
-    displayName,
-    isInstitution,
     openReports,
     onOpenReports,
     onOpenSearch,
@@ -34,43 +27,25 @@ export default function DashboardHeader({
     onCreate,
 }: DashboardHeaderProps) {
     const { unreadCount } = useNotifications();
-    const [photoFailed, setPhotoFailed] = React.useState(false);
-    const words = displayName.trim().split(/\s+/).filter(Boolean);
-    const initials = words.length ? (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() : '';
 
     return (
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3.5">
-                {avatarUrl && !photoFailed ? (
-                    <img
-                        src={avatarUrl}
-                        alt=""
-                        referrerPolicy="no-referrer"
-                        onError={() => setPhotoFailed(true)}
-                        className="mt-1 hidden h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm sm:block"
-                    />
-                ) : (
-                    <span className="mt-1 hidden h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-[17px] font-semibold text-white shadow-sm sm:flex">
-                        {initials || (isInstitution ? <Building2 className="h-6 w-6" /> : null)}
-                    </span>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold uppercase tracking-[0.12em] text-sky-700">{eyebrow}</p>
+                <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-[28px]">
+                    {title}
+                </h1>
+                <div className="mt-1 text-[14px] leading-relaxed text-slate-600">{summary}</div>
+                {openReports > 0 && (
+                    <button
+                        type="button"
+                        onClick={onOpenReports}
+                        className="mt-2.5 inline-flex h-8 items-center gap-1.5 rounded-full bg-red-50 px-3 text-[13px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/15 transition-colors hover:bg-red-100 cursor-pointer"
+                    >
+                        <Inbox className="h-3.5 w-3.5" />
+                        {plural(openReports, 'question')} flagged by candidates
+                    </button>
                 )}
-                <div className="min-w-0">
-                    <p className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">{eyebrow}</p>
-                    <h1 className="mt-1.5 text-[28px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 sm:text-[34px]">
-                        {title}
-                    </h1>
-                    <div className="mt-2 text-[15px] leading-relaxed text-slate-600">{summary}</div>
-                    {openReports > 0 && (
-                        <button
-                            type="button"
-                            onClick={onOpenReports}
-                            className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-full bg-red-50 px-3 text-[13px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/15 transition-colors hover:bg-red-100 cursor-pointer"
-                        >
-                            <Inbox className="h-3.5 w-3.5" />
-                            {plural(openReports, 'question')} flagged by candidates
-                        </button>
-                    )}
-                </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -78,7 +53,7 @@ export default function DashboardHeader({
                     type="button"
                     onClick={onOpenSearch}
                     aria-label="Search your tests"
-                    className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-200/60 px-3.5 text-[15px] text-slate-600 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-200/60 px-3.5 text-[14px] text-slate-600 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer"
                 >
                     <Search className="h-[18px] w-[18px]" />
                     <span className="hidden md:inline">Search</span>
@@ -90,14 +65,14 @@ export default function DashboardHeader({
                     type="button"
                     onClick={onOpenNotifications}
                     aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-                    className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200/60 text-slate-600 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200/60 text-slate-600 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer"
                 >
                     <Bell className="h-[18px] w-[18px]" />
                     {unreadCount > 0 && (
                         <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-slate-100" />
                     )}
                 </button>
-                <button type="button" onClick={onCreate} className={`${PRIMARY_BTN} h-11 flex-1 px-4 sm:flex-none sm:px-5`}>
+                <button type="button" onClick={onCreate} className={`${PRIMARY_BTN} h-10 flex-1 px-4 text-[14px] sm:flex-none sm:px-5`}>
                     <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} />
                     <span>Create test</span>
                 </button>

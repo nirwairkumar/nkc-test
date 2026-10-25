@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { StatusPill } from '@/components/UserTestCard';
 import { isExampleTest } from '@/lib/teacherDashboardApi';
-import { CARD, MENU_ITEM, MENU_TRIGGER, PILL_BTN, SectionTitle, Skeleton, TEXT_BTN } from './dashboardUi';
+import { MENU_ITEM, MENU_TRIGGER, PILL_BTN, Panel, Skeleton, TEXT_BTN } from './dashboardUi';
 import { plural, timeAgo } from './format';
 
 interface ContinueWorkingProps {
@@ -27,6 +27,7 @@ interface ContinueWorkingProps {
     /** Give this paper to a batch with a join code (an exam session). */
     onSchedule?: (test: any) => void;
     onViewAll: () => void;
+    className?: string;
 }
 
 const statusOf = (t: any): 'public' | 'private' | 'ended' => {
@@ -36,19 +37,19 @@ const statusOf = (t: any): 'public' | 'private' | 'ended' => {
 
 /** The newest tests that aren't live: pick up a draft, or start it as an exam. */
 export default function ContinueWorking({
-    tests, loading, classes, now, onEdit, onConduct, onSettings, onResults, onShare, onSolutions, onDelete, onBatchChange, onSchedule, onViewAll,
+    tests, loading, classes, now, onEdit, onConduct, onSettings, onResults, onShare, onSolutions, onDelete, onBatchChange, onSchedule, onViewAll, className = '',
 }: ContinueWorkingProps) {
     return (
-        <section aria-labelledby="continue-heading">
-            <SectionTitle
-                id="continue-heading"
-                title="Your tests"
-                action={<button type="button" onClick={onViewAll} className={TEXT_BTN}>All tests</button>}
-            />
-            <ul className={`${CARD} divide-y divide-slate-100 overflow-hidden`}>
+        <Panel
+            id="continue-heading"
+            title="Your tests"
+            className={className}
+            action={<button type="button" onClick={onViewAll} className={TEXT_BTN}>All tests</button>}
+        >
+            <ul className="divide-y divide-slate-100">
                 {loading && tests.length === 0 ? (
                     [0, 1, 2].map(i => (
-                        <li key={i} className="flex items-center gap-3 px-4 py-4 sm:px-5">
+                        <li key={i} className="flex items-center gap-3 px-5 py-4">
                             <Skeleton className="h-10 w-10 rounded-[11px]" />
                             <div className="flex-1 space-y-2">
                                 <Skeleton className="h-4 w-2/3" />
@@ -57,7 +58,7 @@ export default function ContinueWorking({
                         </li>
                     ))
                 ) : tests.length === 0 ? (
-                    <li className="px-4 py-8 text-center sm:px-5">
+                    <li className="px-5 py-8 text-center">
                         <p className="text-[15px] font-semibold text-slate-900">No tests yet</p>
                         <p className="mt-1 text-[13px] text-slate-600">Your tests will show here once you make one.</p>
                     </li>
@@ -68,7 +69,7 @@ export default function ContinueWorking({
                         const batch = classes.find(c => c.id === test.class_id);
                         const example = isExampleTest(test);
                         return (
-                            <li key={test.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+                            <li key={test.id} className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-center">
                                 <button
                                     type="button"
                                     onClick={() => onEdit(test)}
@@ -178,6 +179,6 @@ export default function ContinueWorking({
                     })
                 )}
             </ul>
-        </section>
+        </Panel>
     );
 }

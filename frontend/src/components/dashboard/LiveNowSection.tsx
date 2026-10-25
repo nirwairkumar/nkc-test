@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { LiveExam, UpcomingExam } from '@/lib/teacherDashboardApi';
 import { examWhatsAppUrl, getExamUrl } from '@/lib/conductExam';
-import { CARD, LiveDot, MENU_ITEM, MENU_TRIGGER, PILL_BTN, SectionTitle, WhatsAppIcon } from './dashboardUi';
+import { LiveDot, MENU_ITEM, MENU_TRIGGER, PILL_BTN, Panel, SectionTitle, WhatsAppIcon } from './dashboardUi';
 import { copyText, dayAndTime, plural, timeOfDay, untilText } from './format';
 
 interface LiveNowSectionProps {
@@ -81,11 +81,10 @@ export default function LiveNowSection({
             )}
 
             {upcoming.length > 0 && (
-                <div>
-                    <SectionTitle id={live.length ? undefined : 'live-now-heading'} title="Coming up" count={upcoming.length} />
-                    <ul className={`${CARD} divide-y divide-slate-100 overflow-hidden`}>
+                <Panel id={live.length ? 'coming-up-heading' : 'live-now-heading'} title="Coming up" count={upcoming.length}>
+                    <ul className="divide-y divide-slate-100">
                         {upcoming.slice(0, 4).map(({ test, startsAt }) => (
-                            <li key={test.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                            <li key={test.id} className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-w-0 items-start gap-3">
                                     <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-violet-50 text-violet-600 ring-1 ring-inset ring-violet-500/15">
                                         <CalendarClock className="h-[18px] w-[18px]" />
@@ -119,7 +118,7 @@ export default function LiveNowSection({
                             </li>
                         ))}
                     </ul>
-                </div>
+                </Panel>
             )}
         </section>
     );

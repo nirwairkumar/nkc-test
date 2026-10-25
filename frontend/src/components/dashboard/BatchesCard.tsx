@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { BatchRow } from '@/lib/teacherDashboardApi';
-import { CARD, PRIMARY_BTN, TEXT_BTN } from './dashboardUi';
+import { PRIMARY_BTN, Panel, TEXT_BTN } from './dashboardUi';
 import { pctText, plural } from './format';
 
 interface BatchesCardProps {
@@ -39,16 +39,18 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
     const hasUnassignedBatches = batches.some(b => b.tests === 0);
 
     return (
-        <section aria-labelledby="batches-heading" className={`${CARD} overflow-hidden`}>
-            <div className="flex items-center justify-between gap-3 px-4 pt-4 sm:px-5">
-                <h2 id="batches-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Batches</h2>
+        <Panel
+            id="batches-heading"
+            title="Batches"
+            action={(
                 <button type="button" onClick={() => setOpen(true)} className={TEXT_BTN}>
                     <Plus className="h-4 w-4" /> New batch
                 </button>
-            </div>
+            )}
+        >
 
             {batches.length === 0 ? (
-                <div className="px-4 pb-4 pt-2 sm:px-5">
+                <div className="px-5 pb-4 pt-3">
                     <p className="text-[13px] leading-relaxed text-slate-600">
                         {isInstitution
                             ? 'Make one batch per class or timing, like "JEE 2027 – Morning". Put each test in a batch to see how every batch is doing here.'
@@ -60,12 +62,12 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                 </div>
             ) : (
                 <>
-                    <ul className="mt-2 divide-y divide-slate-100">
+                    <ul className="divide-y divide-slate-100">
                         {batches.map(b => (
                             <li
                                 key={b.id}
                                 onClick={onOpen ? () => onOpen(b.id) : undefined}
-                                className={`flex items-center gap-3 px-4 py-2.5 sm:px-5 ${onOpen ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                                className={`flex items-center gap-3 px-5 py-2.5 ${onOpen ? 'cursor-pointer hover:bg-slate-50' : ''}`}
                             >
                                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-500/15">
                                     <GraduationCap className="h-4 w-4" />
@@ -84,7 +86,7 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                             </li>
                         ))}
                     </ul>
-                    <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5 sm:px-5">
+                    <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-2.5">
                         <p className="text-[12px] text-slate-500">Last 60 days</p>
                         {hasUnassignedBatches && (
                             <button type="button" onClick={onAssignTests} className={TEXT_BTN}>Add tests to a batch</button>
@@ -124,6 +126,6 @@ export default function BatchesCard({ batches, isInstitution, onCreate, onAssign
                     </form>
                 </DialogContent>
             </Dialog>
-        </section>
+        </Panel>
     );
 }

@@ -26,13 +26,47 @@ export const MENU_TRIGGER =
 
 export const MENU_ITEM = 'rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer';
 
+/**
+ * Every dashboard card uses this one header: title (and an optional note) on the left,
+ * one action on the right, a hairline under it. The body is whatever comes next.
+ */
+export function Panel({
+    id, title, note, count, action, children, className = '',
+}: {
+    id: string;
+    title: string;
+    note?: React.ReactNode;
+    count?: number;
+    action?: React.ReactNode;
+    children: React.ReactNode;
+    className?: string;
+}) {
+    return (
+        <section aria-labelledby={id} className={`${CARD} flex flex-col overflow-hidden ${className}`}>
+            <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-slate-100 py-2.5 pl-5 pr-3">
+                <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <h2 id={id} className="truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-900">{title}</h2>
+                        {count !== undefined && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 tabular-nums">{count}</span>
+                        )}
+                    </div>
+                    {note && <p className="truncate text-[12px] text-slate-500">{note}</p>}
+                </div>
+                {action}
+            </div>
+            {children}
+        </section>
+    );
+}
+
 export function SectionTitle({
     id, title, count, action, className = '',
 }: { id?: string; title: string; count?: number; action?: React.ReactNode; className?: string }) {
     return (
-        <div className={`mb-3 flex items-center justify-between gap-3 px-1 ${className}`}>
+        <div className={`mb-2.5 flex items-center justify-between gap-3 px-1 ${className}`}>
             <div className="flex min-w-0 items-center gap-2">
-                <h2 id={id} className="truncate text-lg font-semibold tracking-[-0.01em] text-slate-900">
+                <h2 id={id} className="truncate text-[16px] font-semibold tracking-[-0.01em] text-slate-900">
                     {title}
                 </h2>
                 {count !== undefined && (

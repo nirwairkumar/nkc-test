@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import type { PeriodNumbers } from '@/lib/teacherDashboardApi';
-import { CARD } from './dashboardUi';
+import { Panel } from './dashboardUi';
 import { pctText } from './format';
 
 /** Last 30 days in four honest numbers, plus results per day for two weeks. */
@@ -9,12 +9,9 @@ export default function NumbersCard({ numbers }: { numbers: PeriodNumbers }) {
     const delta = numbers.results - numbers.resultsPrev;
 
     return (
-        <section aria-labelledby="numbers-heading" className={`${CARD} p-4 sm:p-5`}>
-            <div className="flex items-baseline justify-between gap-3">
-                <h2 id="numbers-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Last 30 days</h2>
-            </div>
-
-            <dl className="mt-3 grid grid-cols-2 gap-2.5">
+        <Panel id="numbers-heading" title="Last 30 days">
+            <div className="p-5 pt-4">
+            <dl className="grid grid-cols-2 gap-2.5">
                 <Tile label="Results" value={numbers.results.toLocaleString()}>
                     {(numbers.results > 0 || numbers.resultsPrev > 0) && (
                         <span className={`mt-1 inline-flex items-center gap-0.5 text-[12px] font-medium ${delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-rose-700' : 'text-slate-500'}`}>
@@ -29,7 +26,8 @@ export default function NumbersCard({ numbers }: { numbers: PeriodNumbers }) {
             </dl>
 
             <DailyBars daily={numbers.daily} />
-        </section>
+            </div>
+        </Panel>
     );
 }
 

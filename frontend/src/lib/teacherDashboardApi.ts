@@ -205,6 +205,10 @@ export interface Checklist {
     hasTest: boolean;
     hasConducted: boolean;
     hasResult: boolean;
+    /** Candidate results so far (the creator's own attempts don't count). */
+    resultCount: number;
+    /** The creator has taken one of their own tests. */
+    selfTried: boolean;
     /** The test step 2 should conduct: the newest real test that isn't live. */
     nextToConduct: any | null;
 }
@@ -313,10 +317,14 @@ export function buildDashboardModel(input: {
 
     // Attempts that count: not the creator's own, on a known test, conduct-only for conducted tests.
     const scored: ScoredAttempt[] = [];
+    let selfTried = false;
     for (const row of input.attempts) {
-        if (input.creatorId && row.user_id === input.creatorId) continue;
         const test = testById.get(row.test_id);
         if (!test) continue;
+        if (input.creatorId && row.user_id === input.creatorId) {
+            selfTried = true;
+            continue;
+        }
         if (test.settings?.conduct_exam && row.conduct !== true) continue;
         scored.push(scoreAttempt(row, test));
     }
@@ -446,6 +454,8 @@ export function buildDashboardModel(input: {
         hasTest: realTests.length > 0,
         hasConducted: realTests.some(t => t.settings?.conduct_exam || t.settings?.schedule?.enabled),
         hasResult: scored.length > 0,
+        resultCount: scored.length,
+        selfTried,
         nextToConduct: [...realTests]
             .filter(t => !isLiveTest(t, now))
             .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))[0] || null,

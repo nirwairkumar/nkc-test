@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import type { StudentRow } from '@/lib/teacherDashboardApi';
 import { WEAK_PCT } from '@/lib/teacherDashboardApi';
-import { CARD } from './dashboardUi';
+import { Panel } from './dashboardUi';
 import { pctText, plural } from './format';
 
 interface StudentsCardProps {
@@ -17,13 +17,9 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
     const rows = tab === 'help' ? needsHelp : top;
 
     return (
-        <section aria-labelledby="students-heading" className={`${CARD} overflow-hidden`}>
-            <div className="px-4 pt-4 sm:px-5">
-                <div className="flex items-baseline justify-between gap-3">
-                    <h2 id="students-heading" className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Candidates to watch</h2>
-                    <span className="text-[12px] text-slate-500">{plural(total, 'candidate')} · 60 days</span>
-                </div>
-                <div role="tablist" aria-label="Candidate groups" className="mt-3 grid grid-cols-2 rounded-[10px] bg-slate-200/60 p-0.5">
+        <Panel id="students-heading" title="Candidates to watch" note={`${plural(total, 'candidate')} · last 60 days`}>
+            <div className="px-5 pt-3">
+                <div role="tablist" aria-label="Candidate groups" className="grid grid-cols-2 rounded-[10px] bg-slate-200/60 p-0.5">
                     {([['help', `Needs help (${needsHelp.length})`], ['top', 'Doing well']] as const).map(([key, label]) => (
                         <button
                             key={key}
@@ -40,13 +36,13 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
             </div>
 
             {rows.length === 0 ? (
-                <p className="px-4 py-5 text-[13px] text-slate-600 sm:px-5">
+                <p className="px-5 py-5 text-[13px] text-slate-600">
                     {tab === 'help' ? `No candidate is averaging below ${WEAK_PCT}%.` : `No candidate is averaging ${WEAK_PCT}% or more yet.`}
                 </p>
             ) : (
                 <ul className="mt-2 divide-y divide-slate-100">
                     {rows.map(s => (
-                        <li key={s.key} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
+                        <li key={s.key} className="flex items-center gap-3 px-5 py-2.5">
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[12px] font-bold text-slate-600">
                                 {initials(s.displayName)}
                             </span>
@@ -64,10 +60,10 @@ export default function StudentsCard({ needsHelp, top, total }: StudentsCardProp
                     ))}
                 </ul>
             )}
-            <p className="border-t border-slate-100 px-4 py-2.5 text-[12px] leading-snug text-slate-500 sm:px-5">
+            <p className="border-t border-slate-100 px-5 py-2.5 text-[12px] leading-snug text-slate-500">
                 Average score per candidate. Candidates are matched by the roll number or name they typed.
             </p>
-        </section>
+        </Panel>
     );
 }
 
