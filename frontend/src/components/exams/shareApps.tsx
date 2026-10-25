@@ -65,6 +65,24 @@ export const shareQrUrl = (test: any, app: ShareAppId): string => {
 export const withoutBold = (text: string) => text.replace(/\*/g, '');
 
 /**
+ * The invitation for Telegram, which shows plain text: no *bold*, so the title, the
+ * examiner and the link each get an icon and a line of their own.
+ */
+export function telegramText(text: string): string {
+    return text.split('\n').map((line, i) => {
+        const bold = i === 0 ? line.match(/^\*(.+)\*$/) : null;
+        if (bold) {
+            // "Title — Institute": the examiner's name never has a dash, the title might.
+            const cut = bold[1].lastIndexOf(' — ');
+            return cut > 0 ? `📝 ${bold[1].slice(0, cut)}\n👤 ${bold[1].slice(cut + 3)}` : `📝 ${bold[1]}`;
+        }
+        if (line === 'Exam link:') return '▶️ Start the exam:';
+        if (line.startsWith('Or open testoza.com/join')) return `🔑 ${line}`;
+        return withoutBold(line);
+    }).join('\n');
+}
+
+/**
  * Where to send the phone for an app that takes a ready-made message, or null for
  * "any" (the share sheet).
  */
@@ -73,13 +91,11 @@ export function appShareHref(app: ShareAppId, text: string, link: string, title:
     switch (app) {
         case 'whatsapp':
             return `https://wa.me/?text=${enc(text)}`;
-        case 'telegram': {
-            // tg:// opens the Telegram app itself. The t.me/share website is blocked on some
-            // Indian networks ("can't provide a secure connection"). The link goes first, so
-            // it is left out of the text below it.
-            const rest = withoutBold(text).split('\n').filter(l => l.trim() !== link && l.trim() !== 'Exam link:').join('\n').replace(/\n{3,}/g, '\n\n').trim();
-            return `tg://msg_url?url=${enc(link)}&text=${enc(rest)}`;
-        }
+        case 'telegram':
+            // tg:// opens the Telegram app itself; the t.me/share website is blocked on some
+            // Indian networks ("can't provide a secure connection"). Telegram always puts its
+            // url first, so the whole message goes in url, keeping the title on top.
+            return `tg://msg_url?url=${enc(telegramText(text))}`;
         case 'email':
             return `mailto:?subject=${enc(title)}&body=${enc(withoutBold(text))}`;
         default:

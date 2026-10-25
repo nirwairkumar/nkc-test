@@ -8,7 +8,7 @@ import { shareLink } from '@/utils/canonicalUrl';
 import { analytics } from '@/lib/analytics/tracker';
 import { copyText } from '@/components/dashboard/format';
 import {
-    SHARE_APPS, type ShareApp, appShareHref, shareAppById, withoutBold,
+    SHARE_APPS, type ShareApp, appShareHref, shareAppById, telegramText, withoutBold,
 } from '@/components/exams/shareApps';
 
 /**
@@ -97,7 +97,8 @@ export default function ShareExamPage() {
     };
     const others = SHARE_APPS.filter(a => a.id !== picked.id && a.id !== 'any');
     const AnyAppIcon = SHARE_APPS[0].Icon;
-    const lines = text.split('\n');
+    // The preview matches what the picked app will send.
+    const lines = (picked.id === 'telegram' ? telegramText(text) : text).split('\n');
 
     return (
         <div className="min-h-[100svh] bg-[radial-gradient(120%_60%_at_50%_0%,#e0f2fe_0%,#f8fafc_55%,#ffffff_100%)] px-4 pb-10 pt-6">
