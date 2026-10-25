@@ -57,8 +57,8 @@ const GETTING_STARTED_RESULTS = 5;
  * walkthrough film, then what an online exam looks like in a real class and the worries
  * that hold educators back, because most of them make a test and never send it.
  * Established: exam day and the morning after: is my exam running, who submitted, how did
- * the class do, who needs help. Everything shown is real data; failures say so instead of
- * showing 0.
+ * the class do, who needs help, with the same class story further down the page.
+ * Everything shown is real data; failures say so instead of showing 0.
  */
 export default function TeacherDashboard() {
     const { user, profile, isAdmin, loading: authLoading } = useAuth();
@@ -568,16 +568,26 @@ export default function TeacherDashboard() {
                         {latest && <LatestResultCard summary={latest} now={now} onOpenResults={openResults} onOpenAnalysis={openAnalysis} />}
                         <RecentResultsCard summaries={model.recent} now={now} onOpen={openResults} onSeeAll={() => navigate('/all-submissions')} />
                         {testsCard}
+                        {showStudents && <StudentsCard {...model.students} />}
                     </div>
 
+                    {/* Kept to about the main column's height, so neither side leaves a gap. */}
                     <aside className="min-w-0 space-y-5" aria-label="Overview">
                         <WatchFilmCard />
                         {createCard}
                         {hasNumbers && <NumbersCard numbers={model.numbers} />}
-                        {showStudents && <StudentsCard {...model.students} />}
                         {batchesCard}
                     </aside>
                 </div>
+            )}
+
+            {/* Established educators still get the class story, below their own results. */}
+            {settled && !gettingStarted && (
+                <>
+                    <ClassroomShowcase />
+                    <WaysToRunCard />
+                    <DoubtsCard signedBy={fullName} />
+                </>
             )}
 
             <GlobalSearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} userTests={tests} />
