@@ -18,7 +18,6 @@ import TestsPanel from './tests/TestsPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
 import AITestImporter from './AITestImporter';
-import MaterialsManager from './MaterialsManager';
 import NewsFeed from './NewsFeed';
 import AdminFeatureControlPanel from './AdminFeatureControlPanel';
 import AdminPricingPanel from './AdminPricingPanel';
@@ -35,7 +34,7 @@ import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
+type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
@@ -112,7 +111,6 @@ export default function AdminDashboard() {
         {
             title: "Content & Resources",
             items: [
-                { id: 'materials' as const, label: 'Class Materials', icon: GraduationCap },
                 { id: 'posts' as const, label: 'News & Announcements', icon: Newspaper },
                 { id: 'email_broadcast' as const, label: 'Email Broadcast', icon: Mail },
             ]
@@ -290,7 +288,6 @@ export default function AdminDashboard() {
                     {activeTab === 'builder' && <CreateTestPage />}
                     {activeTab === 'importer' && <AITestImporter />}
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
-                    {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
                     {activeTab === 'email_broadcast' && <EmailPanel />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}

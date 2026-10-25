@@ -204,7 +204,7 @@ async def get_sitemap_index():
 # =============================================================================
 
 @router.get("/static.xml", response_class=XMLResponse)
-async def get_static_sitemap():
+def get_static_sitemap():
     cache_key = "sitemap:static"
     cached = cache_manager.get(cache_key)
     if cached:
@@ -228,7 +228,7 @@ async def get_static_sitemap():
 
 
 @router.get("/tests.xml", response_class=XMLResponse)
-async def get_tests_sitemap(db: Client = Depends(get_db)):
+def get_tests_sitemap(db: Client = Depends(get_db)):
     cache_key = "sitemap:tests"
     cached = cache_manager.get(cache_key)
     if cached:
@@ -279,7 +279,7 @@ async def get_tests_sitemap(db: Client = Depends(get_db)):
 
 
 @router.get("/categories.xml", response_class=XMLResponse)
-async def get_categories_sitemap(db: Client = Depends(get_db)):
+def get_categories_sitemap(db: Client = Depends(get_db)):
     cache_key = "sitemap:categories"
     cached = cache_manager.get(cache_key)
     if cached:
@@ -338,7 +338,7 @@ async def get_categories_sitemap(db: Client = Depends(get_db)):
 
 
 @router.get("/posts.xml", response_class=XMLResponse)
-async def get_posts_sitemap(db: Client = Depends(get_db)):
+def get_posts_sitemap(db: Client = Depends(get_db)):
     cache_key = "sitemap:posts"
     cached = cache_manager.get(cache_key)
     if cached:
@@ -383,7 +383,7 @@ async def get_posts_sitemap(db: Client = Depends(get_db)):
 
 
 @router.get("/creators.xml", response_class=XMLResponse)
-async def get_creators_sitemap(db: Client = Depends(get_db)):
+def get_creators_sitemap(db: Client = Depends(get_db)):
     cache_key = "sitemap:creators"
     cached = cache_manager.get(cache_key)
     if cached:

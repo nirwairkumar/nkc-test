@@ -26,7 +26,7 @@ class ClassCreate(BaseModel):
     user_id: str
 
 @router.get("/all")
-async def get_all_classes(request: Request, db: Client = Depends(get_db)):
+def get_all_classes(request: Request, db: Client = Depends(get_db)):
     # Every teacher's class and batch names, read with the service role: admins only.
     # RLS (C2) already keeps `classes` from the anon key; this route skipped it.
     from app.core.auth import verify_is_admin
@@ -47,7 +47,7 @@ async def get_all_classes(request: Request, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/user/{user_id}")
-async def get_user_classes(user_id: str, request: Request, db: Client = Depends(get_db)):
+def get_user_classes(user_id: str, request: Request, db: Client = Depends(get_db)):
     # A teacher's own classes (My Tests, dashboard, settings) or an admin looking.
     verify_owner_or_admin(user_id, request, db)
     cache_key = f"user:{user_id}"
@@ -67,7 +67,7 @@ async def get_user_classes(user_id: str, request: Request, db: Client = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/")
-async def create_class(payload: ClassCreate, request: Request, db: Client = Depends(get_db)):
+def create_class(payload: ClassCreate, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded and took user_id straight from the body, so anyone could create
     # classes attributed to any creator. Bind the row to the caller's own id.
     verify_owner_or_admin(payload.user_id, request, db)
@@ -82,7 +82,7 @@ async def create_class(payload: ClassCreate, request: Request, db: Client = Depe
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{class_id}")
-async def delete_class(class_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_class(class_id: str, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anyone could delete any creator's class.
     requesting_user_id = verify_auth_token(request, db)
     owner_res = db.table("classes").select("user_id").eq("id", class_id).limit(1).execute()

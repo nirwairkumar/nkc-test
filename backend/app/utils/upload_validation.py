@@ -21,7 +21,6 @@ MAX_SIZES: Dict[str, int] = {
     "avatars": 5 * 1024 * 1024,        # 5 MB
     "post-images": 10 * 1024 * 1024,   # 10 MB
     "test-images": 10 * 1024 * 1024,   # 10 MB
-    "materials": 50 * 1024 * 1024,     # 50 MB (PDFs / study material)
     "ai-user-uploads": 50 * 1024 * 1024,
 }
 DEFAULT_MAX_SIZE = 10 * 1024 * 1024
@@ -34,7 +33,6 @@ BUCKET_ALLOWED: Dict[str, set] = {
     "avatars": IMAGE_TYPES,
     "post-images": IMAGE_TYPES,
     "test-images": IMAGE_TYPES,
-    "materials": IMAGE_TYPES | DOC_TYPES,
     "ai-user-uploads": IMAGE_TYPES | DOC_TYPES,
 }
 

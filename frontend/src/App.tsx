@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
-import { MATERIALS_ENABLED } from "@/lib/materialsFlag";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { TestProvider } from "@/contexts/TestContext";
@@ -83,7 +82,6 @@ const NotificationsPage = safeLazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = safeLazy(() => import("./pages/UserTestManager"));
 const AllSubmissionsPage = safeLazy(() => import("./pages/AllSubmissionsPage"));
 const RewardsPage = safeLazy(() => import("./pages/RewardsPage"));
-const MaterialsManager = safeLazy(() => import("./pages/MaterialsManager"));
 const SupportPage = safeLazy(() => import("./pages/SupportPage"));
 const HelpPage = safeLazy(() => import("./pages/HelpPage"));
 const FeedbackPage = safeLazy(() => import("./pages/FeedbackPage"));
@@ -386,18 +384,6 @@ const App = () => (
                         <PrivateRoute>
                           <RewardsPage />
                         </PrivateRoute>
-                      }
-                    />
-                    <Route
-                      path="/materials"
-                      element={
-                        MATERIALS_ENABLED ? (
-                          <PrivateRoute>
-                            <MaterialsManager />
-                          </PrivateRoute>
-                        ) : (
-                          <Navigate to="/dashboard" replace />
-                        )
                       }
                     />
 

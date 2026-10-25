@@ -38,8 +38,6 @@ Disallow: /profile
 Disallow: /settings
 Disallow: /notifications
 Disallow: /edit-test/
-Disallow: /materials
-Disallow: /upload-materials
 Disallow: /update-password
 Disallow: /onboarding
 Disallow: /test-submitted

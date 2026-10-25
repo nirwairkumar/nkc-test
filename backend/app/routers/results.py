@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/{attempt_id}")
-async def get_test_result(
+def get_test_result(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -119,7 +119,7 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
 
 
 @router.post("/analyze")
-async def analyze_test_results(payload: AnalyzeRequest, request: Request):
+def analyze_test_results(payload: AnalyzeRequest, request: Request):
     # C4: the questions the browser holds no longer carry correctAnswer, so the answer
     # key is reloaded server-side. The client copy stays as a fallback for callers that
     # still pass a full test object (e.g. the creator analysis view, which is allowed it).

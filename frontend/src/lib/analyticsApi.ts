@@ -60,11 +60,6 @@ export const analyticsApi = {
         return response.data;
     },
 
-    getUploadLogs: async (days: number = 30, limit: number = 100) => {
-        const response = await apiClient.get('analytics/stats/uploads/logs', { params: { days, limit } });
-        return response.data;
-    },
-
     getDetailedVisitors: async (days: number = 30, limit: number = 100) => {
         const response = await apiClient.get('analytics/stats/visitors/detailed', { params: { days, limit } });
         return response.data;

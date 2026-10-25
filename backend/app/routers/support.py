@@ -31,7 +31,7 @@ class FeedbackCreate(BaseModel):
     dislikes: Optional[str] = None
 
 @router.post("/feedback", dependencies=[Depends(check_support_rate_limit)])
-async def submit_feedback(payload: FeedbackCreate, request: Request, db: Client = Depends(get_db)):
+def submit_feedback(payload: FeedbackCreate, request: Request, db: Client = Depends(get_db)):
     if not 1 <= payload.rating <= 5:
         raise HTTPException(status_code=400, detail="Rating must be 1 to 5 stars")
     try:
@@ -142,7 +142,7 @@ def _signed_url(db: Client, path: Optional[str]) -> Optional[str]:
 
 
 @router.post("/message", dependencies=[Depends(check_support_rate_limit)])
-async def send_support_message(payload: SupportMessage, request: Request, db: Client = Depends(get_db)):
+def send_support_message(payload: SupportMessage, request: Request, db: Client = Depends(get_db)):
     message = (payload.message or "").strip()
     if len(message) < 3:
         raise HTTPException(status_code=400, detail="Please describe the problem in a few words.")
@@ -266,7 +266,7 @@ def _mark_team_notifications_read(db: Client, message_id: str) -> None:
 
 
 @router.get("/mine")
-async def my_support_messages(request: Request, db: Client = Depends(get_db)):
+def my_support_messages(request: Request, db: Client = Depends(get_db)):
     """The signed-in user's own conversations, newest first."""
     user_id = verify_auth_token(request, db)
     table = db.table("support_messages")
@@ -288,7 +288,7 @@ class SupportFollowup(BaseModel):
 
 
 @router.post("/messages/{message_id}/reply")
-async def user_followup(message_id: str, payload: SupportFollowup, request: Request, db: Client = Depends(get_db)):
+def user_followup(message_id: str, payload: SupportFollowup, request: Request, db: Client = Depends(get_db)):
     """The writer answers back from their Help page; the message goes back to "waiting"."""
     user_id = verify_auth_token(request, db)
     check_support_reply_limit(user_id)
@@ -327,7 +327,7 @@ def _apply_view(query, view: str):
 
 
 @router.get("/admin/messages")
-async def admin_support_messages(
+def admin_support_messages(
     request: Request, view: str = "open", limit: int = 30, offset: int = 0, db: Client = Depends(get_db),
 ):
     verify_is_admin(request, db)
@@ -357,7 +357,7 @@ async def admin_support_messages(
 
 
 @router.get("/admin/messages/{message_id}")
-async def admin_support_message(message_id: str, request: Request, db: Client = Depends(get_db)):
+def admin_support_message(message_id: str, request: Request, db: Client = Depends(get_db)):
     """One conversation, for a notification that opens it directly."""
     verify_is_admin(request, db)
     found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
@@ -403,7 +403,7 @@ class SupportReply(BaseModel):
 
 
 @router.post("/admin/messages/{message_id}/reply")
-async def admin_reply_support_message(
+def admin_reply_support_message(
     message_id: str, payload: SupportReply, request: Request, db: Client = Depends(get_db),
 ):
     admin_id = verify_is_admin(request, db)
@@ -463,7 +463,7 @@ class SupportStatus(BaseModel):
 
 
 @router.patch("/admin/messages/{message_id}")
-async def admin_set_support_status(
+def admin_set_support_status(
     message_id: str, payload: SupportStatus, request: Request, db: Client = Depends(get_db),
 ):
     admin_id = verify_is_admin(request, db)
@@ -508,7 +508,7 @@ def _part(text: Optional[str]) -> Optional[str]:
 
 
 @router.post("/platform-feedback", dependencies=[Depends(check_support_rate_limit)])
-async def send_platform_feedback(payload: PlatformFeedback, request: Request, db: Client = Depends(get_db)):
+def send_platform_feedback(payload: PlatformFeedback, request: Request, db: Client = Depends(get_db)):
     parts = {"ai": _part(payload.ai), "conduct": _part(payload.conduct), "other": _part(payload.other)}
     if not any(parts.values()):
         raise HTTPException(status_code=400, detail="Write a few words in any part first.")
@@ -550,7 +550,7 @@ FEEDBACK_VIEWS = ("unread", "all")
 
 
 @router.get("/admin/feedback")
-async def admin_platform_feedback(
+def admin_platform_feedback(
     request: Request, view: str = "all", limit: int = 30, offset: int = 0, db: Client = Depends(get_db),
 ):
     verify_is_admin(request, db)
@@ -590,7 +590,7 @@ class FeedbackRead(BaseModel):
 
 
 @router.patch("/admin/feedback/{feedback_id}")
-async def admin_mark_platform_feedback(
+def admin_mark_platform_feedback(
     feedback_id: str, payload: FeedbackRead, request: Request, db: Client = Depends(get_db),
 ):
     verify_is_admin(request, db)
@@ -612,7 +612,7 @@ class ExitFeedbackCreate(BaseModel):
     user_id: Optional[str] = None
 
 @router.post("/exit-feedback", dependencies=[Depends(check_support_rate_limit)])
-async def submit_exit_feedback(payload: ExitFeedbackCreate, db: Client = Depends(get_db)):
+def submit_exit_feedback(payload: ExitFeedbackCreate, db: Client = Depends(get_db)):
     try:
         data_to_insert = {
             "test_id": payload.test_id,

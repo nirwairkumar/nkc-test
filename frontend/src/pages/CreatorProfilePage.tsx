@@ -4,13 +4,10 @@ import { SEO } from '@/components/SEO';
 import apiClient from '@/lib/apiClient';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, BookOpen, Clock, FileText, ExternalLink, Youtube, GraduationCap, Download } from 'lucide-react';
+import { Loader2, User, BookOpen, GraduationCap } from 'lucide-react';
 import TestCard from '@/components/TestCard';
 import { Test } from '@/lib/testsApi';
-import { Material } from '@/lib/materialsApi';
 import { ClassItem } from '@/lib/classesApi';
 import { fetchCategories } from '@/lib/categoriesApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
@@ -52,7 +49,6 @@ export default function CreatorProfilePage() {
     const navigate = useNavigate();
     const [creator, setCreator] = useState<CreatorProfile | null>(null);
     const [tests, setTests] = useState<Test[]>([]);
-    const [materials, setMaterials] = useState<Material[]>([]);
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -73,12 +69,11 @@ export default function CreatorProfilePage() {
             console.log("loadCreatorData: Fetching creators data...", creatorId);
             const response = await apiClient.get(`/creators/${creatorId}`);
             console.log("loadCreatorData: API response received!", response.data);
-            const { profile, tests, classes, materials } = response.data;
+            const { profile, tests, classes } = response.data;
 
             if (profile) setCreator(profile);
             setTests(tests || []);
             setClasses(classes || []);
-            setMaterials(materials || []);
 
             // Categories might still need to be fetched globally or added to the backend endpoint
             // For now, let's keep fetchCategories as is or fetch it separately if it's not in the response
@@ -114,20 +109,11 @@ export default function CreatorProfilePage() {
     if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
     if (!creator) return <div className="container py-10 text-center">Creator not found</div>;
 
-    const filteredMaterials = selectedClassId === 'all'
-        ? materials
-        : materials.filter(m => m.class_id === selectedClassId);
-
-    const publicMaterials = filteredMaterials; // Assuming all fetched are public for now
-
-    const files = publicMaterials.filter(m => m.type === 'file');
-    const links = publicMaterials.filter(m => m.type === 'link');
-
     return (
         <div className="container mx-auto max-w-6xl py-8 px-4">
             <SEO
                 title={`${creator.full_name} - Test Creator Profile | TestoZa`}
-                description={`View tests and materials created by ${creator.full_name} on TestoZa. ${creator.bio ? creator.bio.substring(0, 150) + "..." : "Explore their educational content."}`}
+                description={`View tests created by ${creator.full_name} on TestoZa. ${creator.bio ? creator.bio.substring(0, 150) + "..." : "Explore their educational content."}`}
                 keywords={[creator.full_name, "test creator", "online teacher", "testoza profile"]}
             />
             {/* Header */}
@@ -149,8 +135,6 @@ export default function CreatorProfilePage() {
                             {roleLabel(creator.designation) || 'Student'}
                         </Badge>
                         <Badge variant="outline" className="gap-1"><BookOpen className="h-3 w-3" /> {tests.length} Tests</Badge>
-                        <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" /> {files.length} Files</Badge>
-                        <Badge variant="outline" className="gap-1"><Youtube className="h-3 w-3" /> {links.length} Links</Badge>
                     </div>
                 </div>
             </div>
@@ -181,15 +165,8 @@ export default function CreatorProfilePage() {
                 </div>
             )}
 
-            <Tabs defaultValue="tests" className="w-full">
-                <TabsList className="w-full max-w-lg grid grid-cols-4 mb-8 mx-auto md:mx-0">
-                    <TabsTrigger value="tests">Tests ({filteredTests.length})</TabsTrigger>
-                    <TabsTrigger value="files">Files ({files.length})</TabsTrigger>
-                    <TabsTrigger value="links">Videos ({links.length})</TabsTrigger>
-                    <TabsTrigger value="external">Links ({publicMaterials.filter(m => m.type === 'external').length})</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="tests" className="space-y-6">
+            <section className="w-full space-y-6">
+                <h2 className="text-lg font-semibold">Tests ({filteredTests.length})</h2>
                     {filteredTests.length === 0 ? (
                         <div className="text-center py-10 opacity-60">No tests found for this selection.</div>
                     ) : (
@@ -228,122 +205,7 @@ export default function CreatorProfilePage() {
                             )}
                         </div>
                     )}
-                </TabsContent>
-
-                <TabsContent value="files" className="space-y-6">
-                    {files.length === 0 ? (
-                        <div className="text-center py-10 opacity-60">No files found for this selection.</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {files.map(mat => (
-                                <Card key={mat.id} className="group hover:shadow-md transition-all">
-                                    <CardContent className="p-4 flex items-start gap-4">
-                                        <div className="h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-lg flex-shrink-0">
-                                            <FileText className="h-6 w-6" />
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate pr-2">{mat.title}</h4>
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                <a href={mat.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-xs font-medium text-primary hover:underline">
-                                                    Download File
-                                                    <ExternalLink className="h-3 w-3 ml-1" />
-                                                </a>
-                                                {/* @ts-ignore */}
-                                                {mat.classes?.name && (
-                                                    <Badge variant="outline" className="text-[10px] h-5 px-1 bg-purple-50 text-purple-700 border-purple-200">
-                                                        {/* @ts-ignore */}
-                                                        {mat.classes.name}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-
-                <TabsContent value="links" className="space-y-6">
-                    {links.length === 0 ? (
-                        <div className="text-center py-10 opacity-60">No video links found for this selection.</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {links.map(mat => (
-                                <Card
-                                    key={mat.id}
-                                    className="group hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
-                                    onClick={() => window.open(mat.url, '_blank')}
-                                >
-                                    <CardContent className="p-4 flex items-start gap-4">
-                                        <div className="relative h-20 w-32 flex-shrink-0 bg-slate-100 rounded overflow-hidden">
-                                            {mat.thumbnail_url ? (
-                                                <img src={mat.thumbnail_url} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-slate-100"><Youtube className="h-8 w-8 text-slate-300" /></div>
-                                            )}
-                                            {/* Play Icon Overlay */}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
-                                                <div className="bg-white/80 p-1.5 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
-                                                    <ExternalLink className="h-4 w-4 text-slate-900" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate pr-2 group-hover:text-primary transition-colors">{mat.title}</h4>
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {/* @ts-ignore */}
-                                                {mat.classes?.name && (
-                                                    <Badge variant="outline" className="text-[10px] h-5 px-1 bg-purple-50 text-purple-700 border-purple-200">
-                                                        {/* @ts-ignore */}
-                                                        {mat.classes.name}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-
-                <TabsContent value="external" className="space-y-6">
-                    {publicMaterials.filter(m => m.type === 'external').length === 0 ? (
-                        <div className="text-center py-10 opacity-60">No external links found for this selection.</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {publicMaterials.filter(m => m.type === 'external').map(mat => (
-                                <Card key={mat.id} className="group hover:shadow-md transition-all border-l-4 border-l-pink-500">
-                                    <CardContent className="p-4 flex items-start gap-4">
-                                        <div className="h-12 w-12 flex items-center justify-center bg-pink-100 text-pink-600 rounded-lg flex-shrink-0">
-                                            <ExternalLink className="h-6 w-6" />
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate pr-2">{mat.title}</h4>
-                                            {/* @ts-ignore */}
-                                            {mat.classes?.name && (
-                                                <Badge variant="outline" className="text-[10px] h-5 px-1 bg-purple-50 text-purple-700 border-purple-200 mt-1 mb-1">
-                                                    {/* @ts-ignore */}
-                                                    {mat.classes.name}
-                                                </Badge>
-                                            )}
-                                            <p className="text-xs text-muted-foreground truncate mb-2">{mat.url}</p>
-                                            <a href={mat.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-xs font-medium text-pink-600 hover:underline">
-                                                Visit Resource
-                                                <ExternalLink className="h-3 w-3 ml-1" />
-                                            </a>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
+            </section>
         </div>
     );
 }

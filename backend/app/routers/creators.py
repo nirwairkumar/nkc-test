@@ -8,10 +8,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/{creator_id}")
-async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
+def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
     try:
-        # 1. Fetch Profile
-        profile_res = db.table("profiles").select("*").eq("id", creator_id).single().execute()
+        # 1. Fetch Profile: public fields only (the public_profiles columns). This was
+        # select("*"), which gave anyone a creator's email and plan.
+        profile_res = db.table("profiles")\
+            .select("id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator, verified_role, following_visibility, created_at")\
+            .eq("id", creator_id).single().execute()
         if not profile_res.data:
             raise HTTPException(status_code=404, detail="Creator not found")
         
@@ -28,15 +31,10 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
         # Frontend: fetchClasses(creatorId) -> db.from('classes').select('*').eq('user_id', creatorId)
         classes_res = db.table("classes").select("*").eq("user_id", creator_id).execute()
 
-        # 4. Fetch Materials
-        # Frontend: fetchMaterials(creatorId) -> db.from('materials').select('*, classes(name)').eq('user_id', creatorId)
-        materials_res = db.table("materials").select("*, classes(name)").eq("user_id", creator_id).execute()
-        
         return {
             "profile": profile_res.data,
             "tests": tests_res.data,
             "classes": classes_res.data,
-            "materials": materials_res.data
         }
 
     except Exception as e:
@@ -44,7 +42,7 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{creator_id}/rewards")
-async def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
+def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
     try:
         # 1. Fetch Creator's Tests (all created tests, including private/unlisted to count creator's efforts)
         tests_res = db.table("tests").select("id, title, created_at, custom_id, visibility, is_public, settings").eq("created_by", creator_id).execute()

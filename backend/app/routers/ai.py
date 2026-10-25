@@ -927,7 +927,7 @@ async def read_question_from_photo(
 
 
 @router.post("/generate/topics")
-async def generate_topics(
+def generate_topics(
     payload: GenerateTopicsRequest,
     request: Request,
     db: Client = Depends(get_db)

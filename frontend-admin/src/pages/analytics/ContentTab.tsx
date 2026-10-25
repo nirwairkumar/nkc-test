@@ -1,12 +1,12 @@
 /**
- * Analytics → Content: every test created, study material uploaded and file uploaded to
- * AI import — what it is, who made it and when (IST), newest first.
+ * Analytics → Content: every test created and file uploaded to AI import — what it is,
+ * who made it and when (IST), newest first.
  *
  * Egress: one page of ~30 small rows per request (SQL analytics_report_content). Question
- * JSON and file contents never leave the database; opening a test or a file is a tap away.
+ * JSON and file contents never leave the database; opening a test is a tap away.
  */
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { ArrowUpRight, ClipboardList, Database, FileText, Layers, Link2, Paperclip, Search, Sparkles } from 'lucide-react';
+import { ArrowUpRight, ClipboardList, Database, Layers, Paperclip, Search, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { getUserAppUrl } from '@/utils/subdomain';
@@ -42,7 +42,8 @@ export default function ContentTab({ period, kind, onKind, nav }: {
     });
 
     const totals = query.data?.pages[0]?.totals ?? null;
-    const rows = useMemo(() => query.data?.pages.flatMap((p) => p.rows) ?? [], [query.data]);
+    // Only kinds this page can draw (Study Materials rows came back until its SQL was replaced).
+    const rows = useMemo(() => query.data?.pages.flatMap((p) => p.rows).filter((r) => r.kind in KIND_STYLE) ?? [], [query.data]);
     const days = useMemo(() => groupByDay(rows), [rows]);
     const left = totals ? totals.matched - rows.length : 0;
     const toggle = (k: ContentKind) => onKind(kind === k ? 'all' : k);
@@ -51,19 +52,13 @@ export default function ContentTab({ period, kind, onKind, nav }: {
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {totals ? (
                     <>
                         <StatTile label="Tests created" value={num(totals.tests)}
                             sub={`by ${num(totals.test_creators)} ${totals.test_creators === 1 ? 'person' : 'people'}`}
                             selected={kind === 'test'} onClick={() => toggle('test')} actionLabel="Show only tests"
                             info="Tests people made or copied in this period. The example test every new account gets automatically isn't counted." />
-                        <StatTile label="Materials uploaded" value={num(totals.materials)}
-                            sub={totals.materials
-                                ? `${plural(totals.material_files, 'file')} · ${plural(totals.materials - totals.material_files, 'link')}`
-                                : 'files and links'}
-                            selected={kind === 'material'} onClick={() => toggle('material')} actionLabel="Show only materials"
-                            info="Notes, PDFs and links educators add to their Materials library." />
                         <StatTile label="AI uploads" value={num(totals.ai_uploads)}
                             sub={`${compact(totals.ai_questions)} questions made`}
                             selected={kind === 'ai_upload'} onClick={() => toggle('ai_upload')} actionLabel="Show only AI uploads"
@@ -72,7 +67,7 @@ export default function ContentTab({ period, kind, onKind, nav }: {
                             sub={totals.team_items ? `${plural(totals.team_items, 'item')} by your team` : 'made or uploaded something'}
                             info="Different people behind everything in this period, your team included." />
                     </>
-                ) : <TileSkeletons count={4} />}
+                ) : <TileSkeletons count={3} />}
             </div>
 
             {/* ── Filters ── */}
@@ -81,7 +76,6 @@ export default function ContentTab({ period, kind, onKind, nav }: {
                     <Segmented<ContentKind> value={kind} onChange={onKind} ariaLabel="Show" options={[
                         { value: 'all', label: 'All' },
                         { value: 'test', label: 'Tests' },
-                        { value: 'material', label: 'Materials' },
                         { value: 'ai_upload', label: 'AI uploads', title: 'Files uploaded to Generate with AI' },
                     ]} />
                 </div>
@@ -137,24 +131,20 @@ export default function ContentTab({ period, kind, onKind, nav }: {
 const EMPTY_TITLE: Record<ContentKind, string> = {
     all: 'Nothing created in this period',
     test: 'No tests created in this period',
-    material: 'No materials uploaded in this period',
     ai_upload: 'No AI uploads in this period',
 };
 
 // ── One row ───────────────────────────────────────────────────────────────────
 const KIND_STYLE = {
     test: { icon: ClipboardList, tint: 'bg-sky-50 text-sky-600 ring-sky-600/15', label: 'Test' },
-    material: { icon: FileText, tint: 'bg-amber-50 text-amber-600 ring-amber-600/20', label: 'Material' },
-    link: { icon: Link2, tint: 'bg-amber-50 text-amber-600 ring-amber-600/20', label: 'Link' },
     ai_upload: { icon: Sparkles, tint: 'bg-violet-50 text-violet-600 ring-violet-600/15', label: 'AI upload' },
 } as const;
 
 function Item({ r, onPerson }: { r: ContentRow; onPerson: () => void }) {
-    const isLink = r.kind === 'material' && r.material_type !== 'file';
-    const style = KIND_STYLE[isLink ? 'link' : r.kind];
+    const style = KIND_STYLE[r.kind];
     const Icon = style.icon;
     const title = (r.kind === 'ai_upload' ? r.made_title || uploadLabel(r.title) : r.title) || 'Untitled';
-    const href = r.kind === 'test' ? getUserAppUrl(`/test-intro/${r.id}`) : r.kind === 'material' ? r.url : undefined;
+    const href = r.kind === 'test' ? getUserAppUrl(`/test-intro/${r.id}`) : undefined;
 
     return (
         <li className="flex items-start gap-3 px-4 py-3">
@@ -180,7 +170,7 @@ function Item({ r, onPerson }: { r: ContentRow; onPerson: () => void }) {
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title={r.kind === 'test' ? 'Open the test' : isLink ? 'Open the link' : 'Open the file'}
+                        title="Open the test"
                         aria-label={`Open ${title}`}
                         className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
                     >
@@ -218,14 +208,6 @@ function Facts({ r }: { r: ContentRow }) {
         facts.push(r.results
             ? <span className="font-medium text-slate-700">{num(r.results)} {r.results === 1 ? 'result' : 'results'}</span>
             : <span className="text-slate-400">No results yet</span>);
-    } else if (r.kind === 'material') {
-        if (r.material_type === 'file') {
-            facts.push(fileType(r));
-            if (r.size) facts.push(fileSize(r.size));
-        } else {
-            facts.push(linkLabel(r.url));
-        }
-        if (r.class_name) facts.push(r.class_name);
     } else {
         // Inline glyph + plain text, so the fact's own ellipsis cuts the file name, not the whole fact.
         facts.push(
@@ -315,34 +297,6 @@ function uploadLabel(names?: string): string {
     if (exts.length <= 1) return names;
     const photos = exts.every((e) => /jpe?g|png|webp|heic|gif/i.test(e));
     return `${exts.length} ${photos ? 'photos' : 'files'}`;
-}
-
-function fileType(r: ContentRow): string {
-    const m = r.mime || '';
-    if (m === 'application/pdf') return 'PDF';
-    if (m.startsWith('image/')) return 'Image';
-    if (m.startsWith('video/')) return 'Video';
-    if (m.includes('word')) return 'Word';
-    if (m.includes('presentation') || m.includes('powerpoint')) return 'Slides';
-    const ext = (r.url || '').split('?')[0].split('.').pop()?.toLowerCase();
-    return ext && ext.length <= 4 ? ext.toUpperCase() : 'File';
-}
-
-function fileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    const mb = bytes / (1024 * 1024);
-    return `${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB`;
-}
-
-function linkLabel(url?: string): string {
-    try {
-        const host = new URL(url || '').hostname.replace(/^www\./, '');
-        if (/(^|\.)youtube\.com$|^youtu\.be$/.test(host)) return 'YouTube link';
-        return `Link · ${host}`;
-    } catch {
-        return 'Link';
-    }
 }
 
 function SetupStep() {

@@ -5,6 +5,7 @@ from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
+import threading
 import time
 import random
 import os
@@ -25,6 +26,8 @@ BOT_REGEX = re.compile(
 # In-memory deduplication cooldown cache: key = f"{post_id}:{ident}", value = timestamp
 VIEW_COOLDOWN_SECONDS = 86400  # 24 hours
 _post_view_cache: dict[str, float] = {}
+# Handlers run in FastAPI's thread pool; the cleanup below iterates the dict.
+_post_view_lock = threading.Lock()
 
 def _is_view_eligible(post_id: str, client_ip: str, user_agent: str, user_id: Optional[str] = None) -> bool:
     # 1. Discard bots and crawlers
@@ -32,23 +35,24 @@ def _is_view_eligible(post_id: str, client_ip: str, user_agent: str, user_id: Op
         return False
 
     now = time.time()
-    
-    # 2. Occasional cleanup if cache grows large
-    if len(_post_view_cache) > 5000:
-        expired_keys = [k for k, ts in _post_view_cache.items() if now - ts > VIEW_COOLDOWN_SECONDS]
-        for k in expired_keys:
-            _post_view_cache.pop(k, None)
 
     # 3. Deduplication key (per user if logged in, otherwise per IP)
     ident = f"u:{user_id}" if user_id else f"ip:{client_ip}"
     cache_key = f"{post_id}:{ident}"
 
-    last_view = _post_view_cache.get(cache_key)
-    if last_view and (now - last_view < VIEW_COOLDOWN_SECONDS):
-        return False  # Cooldown active, deduplicated
+    with _post_view_lock:
+        # 2. Occasional cleanup if cache grows large
+        if len(_post_view_cache) > 5000:
+            expired_keys = [k for k, ts in _post_view_cache.items() if now - ts > VIEW_COOLDOWN_SECONDS]
+            for k in expired_keys:
+                _post_view_cache.pop(k, None)
 
-    _post_view_cache[cache_key] = now
-    return True
+        last_view = _post_view_cache.get(cache_key)
+        if last_view and (now - last_view < VIEW_COOLDOWN_SECONDS):
+            return False  # Cooldown active, deduplicated
+
+        _post_view_cache[cache_key] = now
+        return True
 
 
 # --- Pydantic Models ---
@@ -171,7 +175,7 @@ def _attach_author_profiles(posts: List[Dict[str, Any]], db: Client) -> List[Dic
 # --- Endpoints ---
 
 @router.get("/feed")
-async def get_posts_feed(
+def get_posts_feed(
     page: int = 1,
     limit: int = 12,
     category: Optional[str] = Query(None),
@@ -208,7 +212,7 @@ async def get_posts_feed(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my")
-async def get_my_posts(
+def get_my_posts(
     request: Request,
     user_id: str = Query(...), # Passed by frontend or auth middleware
     db: Client = Depends(get_db)
@@ -230,7 +234,7 @@ async def get_my_posts(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/id/{post_id}")
-async def get_post_by_id(
+def get_post_by_id(
     post_id: str,
     db: Client = Depends(get_db)
 ):
@@ -247,7 +251,7 @@ async def get_post_by_id(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sitemap.xml")
-async def get_blog_sitemap(db: Client = Depends(get_db)):
+def get_blog_sitemap(db: Client = Depends(get_db)):
     """Generate XML sitemap of all published blog posts for Google Search Console."""
     try:
         response = db.table("posts").select("slug, updated_at, published_at").eq("status", "published").order("published_at", desc=True).execute()
@@ -296,7 +300,7 @@ def _is_uuid(value: str) -> bool:
         return False
 
 @router.get("/{slug}")
-async def get_post_by_slug(
+def get_post_by_slug(
     slug: str,
     db: Client = Depends(get_db)
 ):
@@ -322,7 +326,7 @@ async def get_post_by_slug(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{post_id}/view")
-async def record_post_view(
+def record_post_view(
     post_id: str,
     request: Request,
     user_id: Optional[str] = Query(None),
@@ -357,7 +361,7 @@ async def record_post_view(
         return {"recorded": False, "error": str(e)}
 
 @router.post("")
-async def create_post(
+def create_post(
     payload: PostCreate,
     request: Request,
     user_id: str = Query(...), 
@@ -386,7 +390,7 @@ async def create_post(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{post_id}")
-async def update_post(
+def update_post(
     post_id: str,
     payload: PostUpdate,
     request: Request,
@@ -430,7 +434,7 @@ async def update_post(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{post_id}")
-async def delete_post(
+def delete_post(
     post_id: str,
     request: Request,
     user_id: str = Query(...),
@@ -511,7 +515,7 @@ async def upload_post_image(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{post_id}/like")
-async def toggle_like(
+def toggle_like(
     post_id: str,
     request: Request,
     user_id: str = Query(...),
@@ -549,7 +553,7 @@ async def toggle_like(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{post_id}/liked")
-async def check_liked(
+def check_liked(
     post_id: str,
     request: Request,
     user_id: str = Query(...),

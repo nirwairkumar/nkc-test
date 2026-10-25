@@ -42,7 +42,7 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 @router.post("/login", dependencies=[Depends(check_login_rate_limit)])
-async def login(payload: LoginRequest):
+def login(payload: LoginRequest):
     try:
         # A fresh client per sign-in: the session must never land on the shared one.
         response = auth_client().sign_in_with_password({
@@ -69,7 +69,7 @@ async def login(payload: LoginRequest):
         raise HTTPException(status_code=400, detail=detail)
 
 @router.post("/register", dependencies=[Depends(check_register_rate_limit)])
-async def register(payload: RegisterRequest):
+def register(payload: RegisterRequest):
     try:
         signup_data = {
             "email": payload.email,
@@ -94,11 +94,11 @@ async def register(payload: RegisterRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/logout")
-async def logout():
+def logout():
     return {"status": "success", "message": "Logged out"}
 
 @router.post("/refresh")
-async def refresh_token(payload: RefreshRequest):
+def refresh_token(payload: RefreshRequest):
     try:
         response = auth_client().refresh_session(payload.refresh_token)
         if hasattr(response, "session") and response.session:
@@ -115,7 +115,7 @@ async def refresh_token(payload: RefreshRequest):
         raise HTTPException(status_code=401, detail=f"Refresh failed: {detail}")
 
 @router.get("/me")
-async def get_me(
+def get_me(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Client = Depends(get_db)
 ):
@@ -134,7 +134,7 @@ async def get_me(
         raise HTTPException(status_code=401, detail=str(e))
 
 @router.post("/password-reset", dependencies=[Depends(check_password_reset_rate_limit)])
-async def password_reset(payload: PasswordResetRequest, request: Request):
+def password_reset(payload: PasswordResetRequest, request: Request):
     try:
         # The Origin header is attacker-controlled on a direct (non-browser) request,
         # and it becomes the target of the reset link we ask Supabase to email. Without
@@ -152,7 +152,7 @@ async def password_reset(payload: PasswordResetRequest, request: Request):
         return {"data": None, "error": None}
 
 @router.post("/password-update")
-async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+def password_update(payload: PasswordUpdateRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         # 1. Get user from token to verify authenticity
         token = credentials.credentials
@@ -218,7 +218,7 @@ async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAutho
         logger.error("password_update failed: %s", e)
         raise HTTPException(status_code=400, detail="Could not update password")
 @router.post("/update-user")
-async def update_user(
+def update_user(
     payload: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -264,7 +264,7 @@ async def update_user(
         raise HTTPException(status_code=400, detail="Failed to update user")
 
 @router.get("/google")
-async def get_google_login_url(request: Request):
+def get_google_login_url(request: Request):
     try:
         # Ensure we have a valid protocol and no trailing slash
         frontend_url = settings.FRONTEND_URL.rstrip('/')
@@ -288,7 +288,7 @@ async def get_google_login_url(request: Request):
         raise HTTPException(status_code=400, detail="Google authentication failed")
 
 @router.post("/callback")
-async def exchange_code_for_session(payload: Dict[str, Any]):
+def exchange_code_for_session(payload: Dict[str, Any]):
     """Exchange a PKCE authorization code for a session (used by AuthCallback page)."""
     try:
         code = payload.get("code")

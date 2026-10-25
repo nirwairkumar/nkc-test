@@ -12,7 +12,12 @@ from fastapi import Request
 key_to_use = settings.SUPABASE_SERVICE_KEY if settings.SUPABASE_SERVICE_KEY else settings.SUPABASE_KEY
 
 # Set higher timeout values (e.g. 60 seconds) to prevent read timeouts on auth/SMTP calls and long queries.
-_http = httpx.Client(timeout=60.0)
+# Up to 100 request threads share this client (see lifespan in main.py), so the pool is
+# wider than httpx's default of 100 connections / 20 kept alive.
+_http = httpx.Client(
+    timeout=60.0,
+    limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+)
 
 options = ClientOptions(
     httpx_client=_http,

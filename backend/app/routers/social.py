@@ -28,7 +28,7 @@ class NotificationCreate(BaseModel):
 # --- Follows ---
 
 @router.post("/follows/follow")
-async def follow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
+def follow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anyone could make any user follow anyone.
     verify_owner_or_admin(payload.follower_id, request, db)
     try:
@@ -38,7 +38,7 @@ async def follow_user(payload: FollowRequest, request: Request, db: Client = Dep
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/follows/unfollow")
-async def unfollow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
+def unfollow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
     verify_owner_or_admin(payload.follower_id, request, db)
     try:
         response = db.table("follows").delete()\
@@ -50,7 +50,7 @@ async def unfollow_user(payload: FollowRequest, request: Request, db: Client = D
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/check")
-async def check_follow(follower_id: str, following_id: str, db: Client = Depends(get_db)):
+def check_follow(follower_id: str, following_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("follows").select("*")\
             .eq("follower_id", follower_id)\
@@ -61,7 +61,7 @@ async def check_follow(follower_id: str, following_id: str, db: Client = Depends
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/stats/{user_id}")
-async def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
+def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
     try:
         followers = db.table("follows").select("*", count="exact").eq("following_id", user_id).execute()
         following = db.table("follows").select("*", count="exact").eq("follower_id", user_id).execute()
@@ -73,7 +73,7 @@ async def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/followers/{user_id}")
-async def get_followers(user_id: str, db: Client = Depends(get_db)):
+def get_followers(user_id: str, db: Client = Depends(get_db)):
     try:
         # Fetch followers of user_id
         response = db.table("follows").select("follower_id, created_at, follower:profiles!follows_follower_id_fkey(id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator)")\
@@ -86,7 +86,7 @@ async def get_followers(user_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/following/{user_id}")
-async def get_following(user_id: str, db: Client = Depends(get_db)):
+def get_following(user_id: str, db: Client = Depends(get_db)):
     try:
         # Fetch who user_id is following
         response = db.table("follows").select("following_id, created_at, following:profiles!follows_following_id_fkey(id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator)")\
@@ -99,7 +99,7 @@ async def get_following(user_id: str, db: Client = Depends(get_db)):
 # --- Notifications ---
 
 @router.get("/notifications/{user_id}")
-async def get_notifications(user_id: str, request: Request, limit: int = 50, db: Client = Depends(get_db)):
+def get_notifications(user_id: str, request: Request, limit: int = 50, db: Client = Depends(get_db)):
     # C5: was unguarded — /notifications/{user_id} let anyone read any user's inbox.
     verify_owner_or_admin(user_id, request, db)
     try:
@@ -113,7 +113,7 @@ async def get_notifications(user_id: str, request: Request, limit: int = 50, db:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/notifications/create")
-async def create_notification(payload: NotificationCreate, request: Request, db: Client = Depends(get_db)):
+def create_notification(payload: NotificationCreate, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anonymous callers could push arbitrary notifications to any
     # user, with any sender name/email. Require a login and stamp the real sender.
     sender_id = verify_auth_token(request, db)
@@ -133,7 +133,7 @@ async def create_notification(payload: NotificationCreate, request: Request, db:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/notifications/{id}/read")
-async def mark_read(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
+def mark_read(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
     verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").update({"read": True, "is_read": True})\
@@ -145,7 +145,7 @@ async def mark_read(id: str, user_id: str, request: Request, db: Client = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/notifications/mark-all-read/{user_id}")
-async def mark_all_read(user_id: str, request: Request, db: Client = Depends(get_db)):
+def mark_all_read(user_id: str, request: Request, db: Client = Depends(get_db)):
     verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").update({"read": True, "is_read": True})\
@@ -156,7 +156,7 @@ async def mark_all_read(user_id: str, request: Request, db: Client = Depends(get
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/notifications/{id}")
-async def delete_notification(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_notification(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
     verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").delete()\
@@ -168,7 +168,7 @@ async def delete_notification(id: str, user_id: str, request: Request, db: Clien
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/notifications/clear/{user_id}")
-async def clear_all_notifications(user_id: str, request: Request, db: Client = Depends(get_db)):
+def clear_all_notifications(user_id: str, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anyone could wipe any user's notifications.
     verify_owner_or_admin(user_id, request, db)
     try:

@@ -60,7 +60,7 @@ def _enrich_session(session: dict) -> dict:
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @router.post("")
-async def create_combined_session(
+def create_combined_session(
     payload: CreateCombinedSessionRequest,
     request: Request,
     db: Client = Depends(get_db)
@@ -105,7 +105,7 @@ async def create_combined_session(
 
 
 @router.get("/public")
-async def get_public_combined_sessions(db: Client = Depends(get_db)):
+def get_public_combined_sessions(db: Client = Depends(get_db)):
     """List all publicly visible combined sessions (for dashboard)."""
     try:
         res = supabase.table("combined_sessions")\
@@ -124,7 +124,7 @@ async def get_public_combined_sessions(db: Client = Depends(get_db)):
 
 
 @router.get("/user/{user_id}")
-async def get_user_combined_sessions(
+def get_user_combined_sessions(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -153,7 +153,7 @@ async def get_user_combined_sessions(
 
 
 @router.get("/admin/all")
-async def get_all_combined_sessions_admin(
+def get_all_combined_sessions_admin(
     request: Request,
     db: Client = Depends(get_db)
 ):
@@ -176,7 +176,7 @@ async def get_all_combined_sessions_admin(
 
 @router.get("/{session_id}")
 
-async def get_combined_session(
+def get_combined_session(
     session_id: str,
     db: Client = Depends(get_db)
 ):
@@ -201,7 +201,7 @@ async def get_combined_session(
 
 
 @router.delete("/{session_id}")
-async def delete_combined_session(
+def delete_combined_session(
     session_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -236,7 +236,7 @@ async def delete_combined_session(
 # ── Combined Attempts ────────────────────────────────────────────────────────
 
 @router.post("/attempts/save")
-async def save_combined_attempt(
+def save_combined_attempt(
     payload: SaveCombinedAttemptRequest,
     request: Request,
     db: Client = Depends(get_db)
@@ -273,7 +273,7 @@ async def save_combined_attempt(
 
 
 @router.get("/attempts/user/{user_id}")
-async def get_user_combined_attempts(
+def get_user_combined_attempts(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -326,7 +326,7 @@ async def get_user_combined_attempts(
 
 
 @router.get("/attempts/{attempt_id}")
-async def get_combined_attempt(
+def get_combined_attempt(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -402,7 +402,7 @@ async def get_combined_attempt(
 
 
 @router.delete("/attempts/{attempt_id}")
-async def delete_combined_attempt(
+def delete_combined_attempt(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)

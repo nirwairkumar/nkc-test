@@ -220,6 +220,9 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     /** Attaches profiles (names for admins); each id is looked up once per panel. */
     const withUsers = async <T extends { user_id?: string; user?: Person }>(attempts: T[]) => {
+        // Profiles are shown to admins only, and /users is admin-only: for anyone else
+        // the lookup is a wasted round trip that ends in a 403.
+        if (!isAdmin) return attempts;
         const missing = Array.from(new Set(attempts.map(d => d.user_id)))
             .filter(id => id && !usersRef.current.has(id)) as string[];
         if (missing.length > 0) {
@@ -594,7 +597,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     if (attemptsData) {
                         // Re-enrich with user data
                         const userIds = Array.from(new Set(attemptsData.map((d: any) => d.user_id))) as string[];
-                        if (userIds.length > 0) {
+                        if (isAdmin && userIds.length > 0) {
                             const { data: users } = await fetchUsersByIds(userIds);
                             if (users) {
                                 const userMap = new Map(users.map((u: any) => [u.id, u]));

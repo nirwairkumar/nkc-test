@@ -7,6 +7,7 @@ from app.routers.tests.schemas import *
 import uuid
 from app.utils.google_indexing import notify_test_created, notify_test_updated
 from app.routers.tests.cache_config import bust_test_cache
+from app.services.question_images import externalize_images
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ VALID_TEST_COLUMNS = {
 
 
 @router.post("/")
-async def create_test(
+def create_test(
     payload: CreateTestRequest,
     request: Request,
     background_tasks: BackgroundTasks,
@@ -75,7 +76,9 @@ async def create_test(
         data = payload.dict(exclude_unset=True)
         # Filter to valid DB columns to prevent column not found errors
         data = {k: v for k, v in data.items() if k in VALID_TEST_COLUMNS}
-        
+        # Pasted pictures go to Storage; the row keeps only their URLs.
+        externalize_images(db, data)
+
         # Enforce private visibility for example template, user example, or cloned tests
         sett = data.get("settings") or {}
         if sett.get("is_example_template") == True or sett.get("is_user_example") == True or data.get("is_cloned") == True:
@@ -142,7 +145,7 @@ async def create_test(
 
 
 @router.put("/{test_id}")
-async def update_test(
+def update_test(
     test_id: str,
     payload: Dict[str, Any],
     request: Request,
@@ -159,6 +162,7 @@ async def update_test(
 
         # Filter payload to only valid columns to avoid PostgREST column errors
         payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
+        externalize_images(db, payload)
 
         # Enforce private visibility for example template, user example, or cloned tests on update
         try:
@@ -275,7 +279,7 @@ async def update_test(
 
 
 @router.delete("/{test_id}")
-async def delete_test(
+def delete_test(
     test_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -407,7 +411,7 @@ async def import_json(
 
 
 @router.post("/{test_id}/clone")
-async def clone_test(
+def clone_test(
     test_id: str,
     payload: CloneTestRequest,
     request: Request,

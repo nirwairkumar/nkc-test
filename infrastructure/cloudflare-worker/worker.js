@@ -2292,7 +2292,6 @@ Disallow: /history
 Disallow: /results
 Disallow: /edit-test/
 Disallow: /settings
-Disallow: /materials
 Disallow: /notifications
 Disallow: /update-password
 Disallow: /onboarding

@@ -24,7 +24,7 @@ import { CARD, CountryCode, IosSheet, PILL_BTN, Segmented } from './ui';
 const TABS = ['overview', 'traffic', 'growth', 'tests', 'content', 'video', 'people'] as const;
 type Tab = (typeof TABS)[number];
 const SITES: readonly Site[] = ['all', 'main', 'pdf', 'blog'];
-const CONTENT_KINDS: readonly ContentKind[] = ['all', 'test', 'material', 'ai_upload'];
+const CONTENT_KINDS: readonly ContentKind[] = ['all', 'test', 'ai_upload'];
 
 export interface Nav {
     openSession: (visit: SessionMeta) => void;
@@ -128,7 +128,7 @@ export default function AnalyticsPanel() {
                                 { value: 'traffic', label: 'Traffic' },
                                 { value: 'growth', label: 'Growth' },
                                 { value: 'tests', label: 'Tests' },
-                                { value: 'content', label: 'Content', title: 'Tests created and materials uploaded — who and when' },
+                                { value: 'content', label: 'Content', title: 'Tests created and AI uploads — who and when' },
                                 { value: 'video', label: 'Video', title: 'Plays of the walkthrough video at each place it sits' },
                                 { value: 'people', label: 'People' },
                             ]}

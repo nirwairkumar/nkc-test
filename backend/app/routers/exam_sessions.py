@@ -216,7 +216,7 @@ def _insert_with_code(db: Client, row: Dict[str, Any]) -> Dict[str, Any]:
 # ── A code for a live exam link ─────────────────────────────────────────────
 
 @router.post("/link-code")
-async def link_code(payload: LinkCodeRequest, request: Request, db: Client = Depends(get_db)):
+def link_code(payload: LinkCodeRequest, request: Request, db: Client = Depends(get_db)):
     """
     The simple way: an exam already live through "Conduct exam" gets a 6-digit code.
     testoza.com/join + the code opens the same exam link, with the same settings and the
@@ -256,7 +256,7 @@ async def link_code(payload: LinkCodeRequest, request: Request, db: Client = Dep
 # ── Sittings ────────────────────────────────────────────────────────────────
 
 @router.get("")
-async def list_sessions(
+def list_sessions(
     request: Request,
     test_id: Optional[str] = Query(default=None),
     as_user: Optional[str] = Query(default=None),
@@ -330,13 +330,13 @@ async def create_session(payload: SessionCreate, request: Request, db: Client = 
 
 
 @router.get("/{session_id}")
-async def get_session(session_id: str, request: Request, db: Client = Depends(get_db)):
+def get_session(session_id: str, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     return _full_out(db, session)
 
 
 @router.patch("/{session_id}")
-async def update_session(session_id: str, payload: SessionUpdate, request: Request, db: Client = Depends(get_db)):
+def update_session(session_id: str, payload: SessionUpdate, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     if rules.session_phase(session) == "ended":
         raise SessionError(409, "ended", "This sitting has ended and can no longer be changed.")
@@ -368,14 +368,14 @@ async def update_session(session_id: str, payload: SessionUpdate, request: Reque
 
 
 @router.delete("/{session_id}")
-async def delete_session(session_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_session(session_id: str, request: Request, db: Client = Depends(get_db)):
     _owned_session(request, db, session_id)
     db.table("exam_sessions").delete().eq("id", session_id).execute()
     return {"deleted": True}
 
 
 @router.post("/{session_id}/start")
-async def start_session(session_id: str, request: Request, db: Client = Depends(get_db)):
+def start_session(session_id: str, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     phase = rules.session_phase(session)
     if phase == "ended":
@@ -387,7 +387,7 @@ async def start_session(session_id: str, request: Request, db: Client = Depends(
 
 
 @router.post("/{session_id}/end")
-async def end_session(session_id: str, payload: EndRequest, request: Request, db: Client = Depends(get_db)):
+def end_session(session_id: str, payload: EndRequest, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     if not session.get("ended_at"):
         session = {**session, "ended_at": rules.iso(rules.now_utc())}
@@ -397,20 +397,20 @@ async def end_session(session_id: str, payload: EndRequest, request: Request, db
 
 
 @router.post("/{session_id}/release")
-async def release_results(session_id: str, request: Request, db: Client = Depends(get_db)):
+def release_results(session_id: str, request: Request, db: Client = Depends(get_db)):
     _owned_session(request, db, session_id)
     db.table("exam_sessions").update({"results_released_at": rules.iso(rules.now_utc())}).eq("id", session_id).execute()
     return _full_out(db, store.load_session(db, session_id))
 
 
 @router.post("/{session_id}/collect")
-async def collect(session_id: str, request: Request, db: Client = Depends(get_db)):
+def collect(session_id: str, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     return {"collected": store.collect_unsubmitted(db, session)}
 
 
 @router.post("/{session_id}/extra-time")
-async def extra_time_all(session_id: str, payload: ExtraTime, request: Request, db: Client = Depends(get_db)):
+def extra_time_all(session_id: str, payload: ExtraTime, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     rows = (
         db.table("session_participants").select("id, extra_minutes")
@@ -429,7 +429,7 @@ async def extra_time_all(session_id: str, payload: ExtraTime, request: Request, 
 # ── Live monitor ────────────────────────────────────────────────────────────
 
 @router.get("/{session_id}/monitor")
-async def monitor(session_id: str, request: Request, db: Client = Depends(get_db)):
+def monitor(session_id: str, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     out = _full_out(db, session)
     test = store.load_test_summary(db, session["test_id"]) or {}
@@ -478,7 +478,7 @@ async def monitor(session_id: str, request: Request, db: Client = Depends(get_db
 
 
 @router.post("/{session_id}/participants/{participant_id}/{action}")
-async def participant_action(
+def participant_action(
     session_id: str,
     participant_id: str,
     action: Literal["extra-time", "force-submit", "allow-retake", "remove"],
@@ -518,7 +518,7 @@ async def participant_action(
 # ── Results ─────────────────────────────────────────────────────────────────
 
 @router.get("/{session_id}/results")
-async def results(session_id: str, request: Request, db: Client = Depends(get_db)):
+def results(session_id: str, request: Request, db: Client = Depends(get_db)):
     session = _owned_session(request, db, session_id)
     paper = store.load_paper(db, session["test_id"])
     if rules.session_phase(session) == "ended":

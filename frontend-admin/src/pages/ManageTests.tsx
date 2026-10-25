@@ -2546,17 +2546,6 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="h-8 text-[11px] flex items-center gap-1 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-300"
-                                            onClick={() => {
-                                                setViewingUser(null);
-                                                window.open(getUserAppUrl(`/materials?userId=${viewingUser.id}`), '_blank');
-                                            }}
-                                        >
-                                            <Layers className="w-3 h-3" /> Materials
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
                                             className="h-8 text-[11px] flex items-center gap-1 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:border-emerald-900 dark:text-emerald-300"
                                             onClick={() => {
                                                 handleOpenCloneDialogForUser(viewingUser);

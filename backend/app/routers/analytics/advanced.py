@@ -12,7 +12,7 @@ router = APIRouter()
 
 # ─── Test Funnel Stats ─────────────────────────────────────────
 @router.get("/tests/funnel")
-async def get_test_funnel(
+def get_test_funnel(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -93,7 +93,7 @@ async def get_test_funnel(
 
 # ─── Abandonment Breakdown ─────────────────────────────────────
 @router.get("/tests/abandonment")
-async def get_abandonment_analysis(
+def get_abandonment_analysis(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -144,7 +144,7 @@ async def get_abandonment_analysis(
 
 # ─── Test Matrix (detailed per-test stats) ─────────────────────
 @router.get("/tests/matrix")
-async def get_test_matrix(
+def get_test_matrix(
     days: int = 30,
     limit: int = 50,
     db: Client = Depends(get_db)
@@ -246,7 +246,7 @@ async def get_test_matrix(
 
 # ─── User Matrix (detailed per-user stats) ─────────────────────
 @router.get("/users/matrix")
-async def get_user_matrix(
+def get_user_matrix(
     days: int = 30,
     limit: int = 50,
     db: Client = Depends(get_db)
@@ -349,7 +349,7 @@ async def get_user_matrix(
 
 # ─── Test Creation Stats ───────────────────────────────────────
 @router.get("/tests/creation")
-async def get_test_creation_stats(
+def get_test_creation_stats(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -385,75 +385,9 @@ async def get_test_creation_stats(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ─── Upload Logs (Materials) ──────────────────────────────────
-@router.get("/uploads/logs")
-async def get_upload_logs(
-    days: int = 30,
-    limit: int = 100,
-    db: Client = Depends(get_db)
-):
-    """
-    Returns recent file/link uploads from the materials table,
-    enriched with uploader profile info.
-    """
-    try:
-        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
-
-        mats = supabase.table("materials")\
-            .select("id, user_id, title, type, url, file_path, created_at")\
-            .gte("created_at", start_date)\
-            .order("created_at", desc=True)\
-            .limit(limit)\
-            .execute()
-
-        data = mats.data or []
-
-        # Enrich with uploader profiles
-        user_ids = list(set(m.get("user_id") for m in data if m.get("user_id")))
-        profiles_map = {}
-        if user_ids:
-            p_res = supabase.table("profiles")\
-                .select("id, full_name, email")\
-                .in_("id", user_ids)\
-                .execute()
-            for p in (p_res.data or []):
-                profiles_map[p["id"]] = p
-
-        result = []
-        for m in data:
-            profile = profiles_map.get(m.get("user_id"), {})
-            # Estimate file size from URL path info (not available directly)
-            file_ext = ""
-            if m.get("file_path"):
-                parts = m["file_path"].rsplit(".", 1)
-                file_ext = parts[-1].upper() if len(parts) > 1 else ""
-            elif m.get("url"):
-                file_ext = "LINK"
-
-            result.append({
-                "id": m["id"],
-                "title": m.get("title", "Untitled"),
-                "type": m.get("type", "file"),
-                "url": m.get("url", ""),
-                "file_ext": file_ext,
-                "uploader_name": profile.get("full_name", "Unknown"),
-                "uploader_email": profile.get("email", ""),
-                "uploaded_at": m.get("created_at"),
-            })
-
-        return {
-            "total": len(result),
-            "uploads": result
-        }
-
-    except Exception as e:
-        logger.error(f"Error in upload logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 # ─── Visitor Location Stats ───────────────────────────────────
 @router.get("/visitors/locations")
-async def get_visitor_locations(
+def get_visitor_locations(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -505,7 +439,7 @@ async def get_visitor_locations(
 
 # ─── Anonymous Summary ─────────────────────────────────────────
 @router.get("/anon/summary")
-async def get_anon_summary(
+def get_anon_summary(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -596,7 +530,7 @@ async def get_anon_summary(
 
 # ─── Detailed Attempt Logs ─────────────────────────────────────
 @router.get("/attempts/logs")
-async def get_attempt_logs(
+def get_attempt_logs(
     days: int = 30,
     limit: int = 200,
     db: Client = Depends(get_db)
@@ -755,7 +689,7 @@ async def get_attempt_logs(
 
 # ─── Detailed Visitor Stats ────────────────────────────────────
 @router.get("/visitors/detailed")
-async def get_detailed_visitors(
+def get_detailed_visitors(
     days: int = 30,
     limit: int = 100,
     db: Client = Depends(get_db)
@@ -913,7 +847,7 @@ async def get_detailed_visitors(
 
 
 @router.get("/visitors/{visitor_id}/pages")
-async def get_visitor_pages(
+def get_visitor_pages(
     visitor_id: str,
     db: Client = Depends(get_db)
 ):

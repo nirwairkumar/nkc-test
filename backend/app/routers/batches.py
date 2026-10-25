@@ -89,7 +89,7 @@ def _bust_classes_cache():
 
 
 @router.get("")
-async def list_batches(request: Request, as_user: Optional[str] = Query(default=None), db: Client = Depends(get_db)):
+def list_batches(request: Request, as_user: Optional[str] = Query(default=None), db: Client = Depends(get_db)):
     uid = verify_auth_token(request, db)
     owner = as_user if (as_user and is_admin_user(uid, db)) else uid
     batches = (db.table("classes").select("id, name, created_at").eq("user_id", owner).order("name").execute()).data or []
@@ -105,7 +105,7 @@ async def list_batches(request: Request, as_user: Optional[str] = Query(default=
 
 
 @router.get("/{class_id}")
-async def get_batch(class_id: str, request: Request, db: Client = Depends(get_db)):
+def get_batch(class_id: str, request: Request, db: Client = Depends(get_db)):
     batch = _owned_batch(request, db, class_id)
     students = (
         db.table("roster_students").select(STUDENT_COLS).eq("class_id", class_id).order("roll_key").limit(MAX_IMPORT * 2).execute()
@@ -114,7 +114,7 @@ async def get_batch(class_id: str, request: Request, db: Client = Depends(get_db
 
 
 @router.patch("/{class_id}")
-async def rename_batch(class_id: str, payload: RenameRequest, request: Request, db: Client = Depends(get_db)):
+def rename_batch(class_id: str, payload: RenameRequest, request: Request, db: Client = Depends(get_db)):
     _owned_batch(request, db, class_id, writing=True)
     name = rules.clean_name(payload.name)[:80]
     db.table("classes").update({"name": name}).eq("id", class_id).execute()
@@ -123,7 +123,7 @@ async def rename_batch(class_id: str, payload: RenameRequest, request: Request, 
 
 
 @router.post("/{class_id}/students")
-async def import_students(class_id: str, payload: ImportRequest, request: Request, db: Client = Depends(get_db)):
+def import_students(class_id: str, payload: ImportRequest, request: Request, db: Client = Depends(get_db)):
     """Add new roll numbers and update names / phones of existing ones. Nothing is deleted."""
     batch = _owned_batch(request, db, class_id, writing=True)
     existing = {
@@ -170,7 +170,7 @@ async def import_students(class_id: str, payload: ImportRequest, request: Reques
 
 
 @router.patch("/{class_id}/students/{student_id}")
-async def edit_student(class_id: str, student_id: str, payload: StudentPatch, request: Request, db: Client = Depends(get_db)):
+def edit_student(class_id: str, student_id: str, payload: StudentPatch, request: Request, db: Client = Depends(get_db)):
     _owned_batch(request, db, class_id, writing=True)
     patch: Dict[str, Any] = {}
     if payload.full_name is not None:
@@ -200,14 +200,14 @@ async def edit_student(class_id: str, student_id: str, payload: StudentPatch, re
 
 
 @router.delete("/{class_id}/students/{student_id}")
-async def remove_student(class_id: str, student_id: str, request: Request, db: Client = Depends(get_db)):
+def remove_student(class_id: str, student_id: str, request: Request, db: Client = Depends(get_db)):
     _owned_batch(request, db, class_id, writing=True)
     db.table("roster_students").delete().eq("id", student_id).eq("class_id", class_id).execute()
     return {"deleted": True}
 
 
 @router.post("/{class_id}/pins")
-async def make_pins(class_id: str, payload: PinRequest, request: Request, db: Client = Depends(get_db)):
+def make_pins(class_id: str, payload: PinRequest, request: Request, db: Client = Depends(get_db)):
     """
     New 4-digit PINs. The clear PINs are in this response only — print or share them
     now. Asking again makes NEW PINs (the old ones stop working), which is how a lost

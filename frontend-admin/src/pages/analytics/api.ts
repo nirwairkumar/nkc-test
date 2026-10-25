@@ -325,14 +325,14 @@ export interface PeopleReport {
     rows: PeopleRow[];
 }
 
-export type ContentKind = 'all' | 'test' | 'material' | 'ai_upload';
+export type ContentKind = 'all' | 'test' | 'ai_upload';
 
 /** One thing someone made. Absent keys mean "not set" (the server strips nulls to save bytes). */
 export interface ContentRow {
     kind: Exclude<ContentKind, 'all'>;
     id: string;
     at: string;
-    /** Test title, material title, or the uploaded file name(s) for AI uploads. */
+    /** Test title, or the uploaded file name(s) for AI uploads. */
     title?: string;
     user_id?: string;
     user_name?: string;
@@ -349,11 +349,6 @@ export interface ContentRow {
     class_name?: string;
     /** Papers submitted by anyone but the creator. */
     results?: number;
-    // materials
-    material_type?: string;
-    url?: string;
-    size?: number;
-    mime?: string;
     // AI uploads
     mode?: string;
     made_title?: string;
@@ -362,9 +357,6 @@ export interface ContentRow {
 export interface ContentTotals {
     tests: number;
     test_creators: number;
-    materials: number;
-    material_files: number;
-    material_uploaders: number;
     ai_uploads: number;
     ai_questions: number;
     ai_uploaders: number;

@@ -422,7 +422,7 @@ def _template_values(t: TemplateFields, creating: bool) -> Dict[str, Any]:
 # ── Admin: overview, library, audiences ───────────────────────────────────────
 
 @router.get("/smtp-status")
-async def get_smtp_status(request: Request, db: Client = Depends(get_db)):
+def get_smtp_status(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     return {
         "configured": _smtp_ready(runtime_smtp_config),
@@ -435,7 +435,7 @@ async def get_smtp_status(request: Request, db: Client = Depends(get_db)):
 
 
 @router.post("/smtp-config")
-async def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: Client = Depends(get_db)):
+def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: Client = Depends(get_db)):
     """Replace the SMTP sign-in until the next restart (set SMTP_PASSWORD on the server to keep it)."""
     verify_is_admin(request, db)
     runtime_smtp_config.update(get_active_smtp(payload))
@@ -443,7 +443,7 @@ async def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: C
 
 
 @router.get("/overview")
-async def overview(request: Request, db: Client = Depends(get_db)):
+def overview(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     ensure_library(db)
     data = _rpc(db, "email_report_overview", _guard_params()) or {}
@@ -458,7 +458,7 @@ async def overview(request: Request, db: Client = Depends(get_db)):
 
 
 @router.get("/templates")
-async def list_templates(request: Request, db: Client = Depends(get_db)):
+def list_templates(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     ensure_library(db)
     rows = _table(db, "email_templates").select("*").order("sort").execute().data or []
@@ -470,7 +470,7 @@ async def list_templates(request: Request, db: Client = Depends(get_db)):
 
 
 @router.post("/templates")
-async def create_template(payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
+def create_template(payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
     admin_id = verify_is_admin(request, db)
     v = _template_values(payload, creating=True)
     _check_content(v["subject"], v["body"])
@@ -485,7 +485,7 @@ async def create_template(payload: TemplateFields, request: Request, db: Client 
 
 
 @router.patch("/templates/{key}")
-async def update_template(key: str, payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
+def update_template(key: str, payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
     admin_id = verify_is_admin(request, db)
     cur = _table(db, "email_templates").select("*").eq("key", key).limit(1).execute().data
     if not cur:
@@ -498,7 +498,7 @@ async def update_template(key: str, payload: TemplateFields, request: Request, d
 
 
 @router.post("/templates/{key}/duplicate")
-async def duplicate_template(key: str, request: Request, db: Client = Depends(get_db)):
+def duplicate_template(key: str, request: Request, db: Client = Depends(get_db)):
     """A copy is a one-off (no track), so it can never become a second step of the same track by accident."""
     admin_id = verify_is_admin(request, db)
     cur = _table(db, "email_templates").select("*").eq("key", key).limit(1).execute().data
@@ -519,7 +519,7 @@ async def duplicate_template(key: str, request: Request, db: Client = Depends(ge
 
 
 @router.post("/templates/{key}/restore")
-async def restore_template(key: str, request: Request, db: Client = Depends(get_db)):
+def restore_template(key: str, request: Request, db: Client = Depends(get_db)):
     admin_id = verify_is_admin(request, db)
     orig = email_library.BY_KEY.get(key)
     if not orig:
@@ -531,7 +531,7 @@ async def restore_template(key: str, request: Request, db: Client = Depends(get_
 
 
 @router.post("/audience")
-async def audience(payload: AudienceRequest, request: Request, db: Client = Depends(get_db)):
+def audience(payload: AudienceRequest, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     return _rpc(db, "email_report_audience", {
         "p_filter": payload.filter.as_json(), "p_limit": payload.limit, "p_offset": payload.offset, **_guard_params(),
@@ -539,7 +539,7 @@ async def audience(payload: AudienceRequest, request: Request, db: Client = Depe
 
 
 @router.post("/preview")
-async def preview(payload: PreviewRequest, request: Request, db: Client = Depends(get_db)):
+def preview(payload: PreviewRequest, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     person = _person(db, payload.user_id)
     out = email_render.render(payload.subject, payload.preheader, payload.body, person,
@@ -548,7 +548,7 @@ async def preview(payload: PreviewRequest, request: Request, db: Client = Depend
 
 
 @router.post("/test")
-async def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(get_db)):
+def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(get_db)):
     """Send the email to one address (yours), filled in with a real person's details if given."""
     verify_is_admin(request, db)
     if not _smtp_ready(runtime_smtp_config):
@@ -588,7 +588,7 @@ def _remaining(db: Client, camp: Dict[str, Any]) -> int:
 
 
 @router.post("/campaigns")
-async def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depends(get_db)):
+def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depends(get_db)):
     admin_id = verify_is_admin(request, db)
     _check_content(payload.subject, payload.body)
     from_email = (payload.from_email or senders()[0]).strip().lower()
@@ -631,13 +631,13 @@ async def create_campaign(payload: CampaignCreate, request: Request, db: Client 
 
 
 @router.get("/campaigns")
-async def list_campaigns(request: Request, limit: int = 30, offset: int = 0, db: Client = Depends(get_db)):
+def list_campaigns(request: Request, limit: int = 30, offset: int = 0, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     return _rpc(db, "email_report_campaigns", {"p_limit": max(1, min(limit, 100)), "p_offset": max(0, offset)})
 
 
 @router.get("/campaigns/{cid}")
-async def get_campaign(cid: uuid.UUID, request: Request, db: Client = Depends(get_db)):
+def get_campaign(cid: uuid.UUID, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     data = _rpc(db, "email_report_campaign", {"p_id": str(cid)})
     if not data:
@@ -646,7 +646,7 @@ async def get_campaign(cid: uuid.UUID, request: Request, db: Client = Depends(ge
 
 
 @router.patch("/campaigns/{cid}")
-async def set_campaign_status(cid: uuid.UUID, payload: CampaignPatch, request: Request, db: Client = Depends(get_db)):
+def set_campaign_status(cid: uuid.UUID, payload: CampaignPatch, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     camp = _campaign(db, str(cid))
     if camp["status"] == "done":
@@ -668,7 +668,7 @@ def _finish(db: Client, cid: str) -> None:
 
 
 @router.post("/campaigns/{cid}/send-next")
-async def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Client = Depends(get_db)):
+def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Client = Depends(get_db)):
     """Send the next few emails of a campaign. The admin page calls this until `status` is done."""
     verify_is_admin(request, db)
     cid_s = str(cid)
@@ -769,7 +769,7 @@ async def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, 
 # ── Admin: addresses we never email ───────────────────────────────────────────
 
 @router.get("/suppressions")
-async def list_suppressions(request: Request, q: Optional[str] = None, db: Client = Depends(get_db)):
+def list_suppressions(request: Request, q: Optional[str] = None, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     rows = _table(db, "email_suppressions").select("*").order("created_at", desc=True).limit(500).execute().data or []
     if q and q.strip():
@@ -779,14 +779,14 @@ async def list_suppressions(request: Request, q: Optional[str] = None, db: Clien
 
 
 @router.post("/suppressions")
-async def add_suppression(payload: SuppressRequest, request: Request, db: Client = Depends(get_db)):
+def add_suppression(payload: SuppressRequest, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     _suppress(db, str(payload.email), "stopped", note=payload.note or "Stopped by the team")
     return {"email": str(payload.email).lower(), "reason": "stopped"}
 
 
 @router.delete("/suppressions/{email}")
-async def remove_suppression(email: str, request: Request, db: Client = Depends(get_db)):
+def remove_suppression(email: str, request: Request, db: Client = Depends(get_db)):
     """Email this address again. Only when the person asked for it."""
     verify_is_admin(request, db)
     _table(db, "email_suppressions").delete().eq("email", email.strip().lower()).execute()
@@ -822,7 +822,7 @@ def _bad_link() -> HTMLResponse:
 
 
 @router.get("/u/{token}", response_class=HTMLResponse)
-async def unsubscribe_page(token: str):
+def unsubscribe_page(token: str):
     """Asks first: mail scanners open links on their own, and that must not unsubscribe anyone."""
     email = email_render.email_from_token(token)
     if not email:
@@ -836,7 +836,7 @@ async def unsubscribe_page(token: str):
 
 
 @router.post("/u/{token}", response_class=HTMLResponse)
-async def unsubscribe(token: str, db: Client = Depends(get_db)):
+def unsubscribe(token: str, db: Client = Depends(get_db)):
     """The page's button, and one-click unsubscribe from Gmail / Yahoo (RFC 8058)."""
     email = email_render.email_from_token(token)
     if not email:
@@ -857,7 +857,7 @@ async def unsubscribe(token: str, db: Client = Depends(get_db)):
 
 
 @router.post("/u/{token}/resubscribe", response_class=HTMLResponse)
-async def resubscribe(token: str, db: Client = Depends(get_db)):
+def resubscribe(token: str, db: Client = Depends(get_db)):
     email = email_render.email_from_token(token)
     if not email:
         return _bad_link()

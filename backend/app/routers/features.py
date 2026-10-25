@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/flags")
-async def get_feature_flags(db: Client = Depends(get_db)):
+def get_feature_flags(db: Client = Depends(get_db)):
     """Get global feature flags available to everyone"""
     try:
         response = db.table("app_settings").select(
@@ -42,7 +42,7 @@ class UpdateFeatureFlagsRequest(BaseModel):
     news_updates_notes: str = ""
 
 @router.put("/flags")
-async def update_feature_flags(payload: UpdateFeatureFlagsRequest, request: Request, db: Client = Depends(get_db)):
+def update_feature_flags(payload: UpdateFeatureFlagsRequest, request: Request, db: Client = Depends(get_db)):
     """Update global feature flags. Admin only."""
     # C5: the old comment claimed "admin only via RLS in supabase", but the backend
     # connects with the service-role key, which bypasses RLS — so this was wide open and

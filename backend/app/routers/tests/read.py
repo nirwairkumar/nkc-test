@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Response, Request
+from app.core.auth import verify_auth_claims, is_admin_email
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
@@ -68,7 +69,7 @@ def ensure_user_has_example_test(user_id: str, db: Client):
 
 
 @router.get("/batch")
-async def get_tests_batch(
+def get_tests_batch(
     ids: str = Query(..., description="Comma-separated list of test IDs"),
     response: Response = None,
     db: Client = Depends(get_db)
@@ -92,7 +93,7 @@ async def get_tests_batch(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/feed")
-async def get_tests_feed(
+def get_tests_feed(
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
     search_query: Optional[str] = None,
@@ -276,19 +277,10 @@ def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[
     if not auth_header.startswith("Bearer "):
         return None, False
     try:
-        token = auth_header[7:]
-        user_res = db.auth.get_user(token)
-        if not user_res or not user_res.user:
-            return None, False
-        user_id = user_res.user.id
-        profile_res = db.table("profiles").select("email").eq("id", user_id).execute()
-        if profile_res.data:
-            email = profile_res.data[0].get("email")
-            if email:
-                admin_res = db.table("admins").select("email").eq("email", email).execute()
-                if admin_res.data:
-                    return user_id, True
-        return user_id, False
+        # The token's verified email decides admin status (cached), so opening a test
+        # costs one auth round trip instead of three.
+        claims = verify_auth_claims(request, db)
+        return claims["sub"], is_admin_email(claims.get("email"), db)
     except Exception:
         return None, False
 
@@ -324,7 +316,7 @@ def _submission_counts(db: Client, test_ids: List[str]) -> Dict[str, int]:
 
 
 @router.get("/user/{user_id}/conducted")
-async def get_user_conducted_tests(
+def get_user_conducted_tests(
     user_id: str,
     request: Request,
     response: Response = None,
@@ -361,7 +353,7 @@ async def get_user_conducted_tests(
 
 
 @router.get("/user/{user_id}")
-async def get_user_tests(
+def get_user_tests(
     user_id: str,
     request: Request,
     search_query: str = None,
@@ -586,7 +578,7 @@ async def get_user_tests(
 
 
 @router.get("/{test_id}")
-async def get_test_by_id(
+def get_test_by_id(
     test_id: str,
     request: Request,
     exclude_questions: bool = Query(False),
@@ -755,7 +747,7 @@ async def get_test_by_id(
 
 
 @router.get("/slug/{slug}")
-async def get_test_by_slug(
+def get_test_by_slug(
     slug: str,
     request: Request,
     exclude_questions: bool = Query(False),

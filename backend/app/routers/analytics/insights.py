@@ -265,7 +265,7 @@ def tests(period: str = "30d", limit: int = Query(25, ge=1, le=200),
     return {"range": r, **data["report"], "summary": data["summary"], "previous": data["previous"]}
 
 
-CONTENT_KINDS = ("all", "test", "material", "ai_upload")
+CONTENT_KINDS = ("all", "test", "ai_upload")
 
 
 @router.get("/content")
@@ -273,7 +273,7 @@ def content(period: str = "30d", kind: str = "all", q: Optional[str] = None,
             before_at: Optional[str] = None, before_id: Optional[UUID] = None,
             limit: int = Query(30, ge=1, le=100), start: Optional[str] = None, end: Optional[str] = None):
     """
-    Tests created, study materials uploaded and files uploaded to AI import — what, who, when.
+    Tests created and files uploaded to AI import — what, who, when.
     One page of small rows per call (no question or file content leaves the database);
     period totals come with the first page only.
     """

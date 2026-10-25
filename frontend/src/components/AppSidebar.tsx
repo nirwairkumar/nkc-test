@@ -7,7 +7,6 @@ import {
     Sparkles,
     PlusCircle,
     BarChart2,
-    BookOpen,
     History,
     LifeBuoy,
     ClipboardList,
@@ -34,7 +33,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { MATERIALS_ENABLED } from '@/lib/materialsFlag';
 
 interface AppSidebarProps {
     isCollapsed: boolean;
@@ -186,7 +184,7 @@ Item 2 & Value B & 200 \\\\
         }
     };
 
-    // Filter nav items: hide Reports and Materials when on /generate-with-ai page
+    // Filter nav items: hide All Submissions on the AI and Create Test pages
     const navItems = [
         {
             title: 'Dashboard',
@@ -234,16 +232,6 @@ Item 2 & Value B & 200 \\\\
                 path: '/all-submissions',
                 icon: ClipboardList,
                 matchPaths: ['/all-submissions']
-            },
-            {
-                title: 'Materials',
-                path: '/materials',
-                icon: BookOpen,
-                ...(!MATERIALS_ENABLED ? {
-                    disabled: true,
-                    badge: 'SOON',
-                    badgeColor: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
-                } : {}),
             }
         ] : []),
         ...(!isCreateTestPage ? [

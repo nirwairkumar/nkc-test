@@ -38,6 +38,7 @@ import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
 import { multiPartialScore } from '@/utils/multiCorrect';
 import { formatSectionMinutes, openSection, sectionMinutes, sectionMinutesTotal, sectionRanges } from '@/utils/sectionTiming';
+import { preloadTestImages } from '@/utils/preloadTestImages';
 import { isCandidateVisit } from '@/lib/candidateExit';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
@@ -1048,6 +1049,7 @@ export default function TestPage() {
       }
 
       setTest(data);
+      preloadTestImages(data);
       // Initialize timer: timed sections add up their minutes; otherwise the test duration,
       // else a minute per question
       const durationMins = sectionMinutesTotal(data) || data.duration || (data.questions?.length || 0);

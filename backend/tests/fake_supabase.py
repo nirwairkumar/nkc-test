@@ -93,7 +93,7 @@ class Query:
         self.op, self.payload = "insert", payload
         return self
 
-    def update(self, payload: Dict[str, Any]):
+    def update(self, payload: Dict[str, Any], **_):
         self.op, self.payload = "update", payload
         return self
 
@@ -223,7 +223,8 @@ class FakeAuth:
         uid = self.db.tokens.get(token)
         if not uid:
             raise Exception("invalid token")
-        return {"claims": {"sub": uid}}
+        # Supabase access tokens carry the login's email (auth.users), not the profile copy.
+        return {"claims": {"sub": uid, "email": self.db.auth_users.get(uid, {}).get("email")}}
 
     def get_user(self, token: str):
         uid = self.db.tokens.get(token)
@@ -245,9 +246,10 @@ class FakeSupabase:
 
     def add_user(self, token: str, user_id: Optional[str] = None, email: Optional[str] = None) -> str:
         user_id = user_id or str(uuid.uuid4())
+        email = email or f"{user_id[:6]}@example.com"
         self.tokens[token] = user_id
-        self.auth_users[user_id] = {"id": user_id}
-        self.tables.setdefault("profiles", []).append({"id": user_id, "email": email or f"{user_id[:6]}@example.com"})
+        self.auth_users[user_id] = {"id": user_id, "email": email}
+        self.tables.setdefault("profiles", []).append({"id": user_id, "email": email})
         return user_id
 
     def _check_unique(self, table: str, row: Dict[str, Any], ignore: Optional[Dict[str, Any]] = None):

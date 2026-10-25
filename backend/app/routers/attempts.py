@@ -1,5 +1,10 @@
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+from cachetools import TTLCache
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from app.core.auth import verify_auth_claims, verify_auth_token, is_admin_email
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
 from app.utils.rate_limiter import anon_submit_per_ip, anon_start_per_ip, enforce_limit, client_ip
@@ -36,19 +41,7 @@ logger = logging.getLogger(__name__)
 
 def _verify_auth_token_attempts(request: Request, db: Client) -> str:
     """Verify JWT from Authorization header and return requesting user's ID."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
-    token = auth_header.replace("Bearer ", "")
-    try:
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_response.user.id
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+    return verify_auth_token(request, db)
 
 def _save_session_attempt(payload: SaveAttemptRequest, token: str):
     """
@@ -90,7 +83,7 @@ def _save_session_attempt(payload: SaveAttemptRequest, token: str):
 
 
 @router.post("/save")
-async def save_attempt(
+def save_attempt(
     payload: SaveAttemptRequest,
     request: Request,
     db: Client = Depends(get_db)
@@ -315,7 +308,7 @@ async def save_attempt(
         raise HTTPException(status_code=500, detail="Failed to save attempt")
 
 @router.get("/user/{user_id}")
-async def get_user_attempts(
+def get_user_attempts(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -425,7 +418,7 @@ async def get_user_attempts(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/batch-status")
-async def get_batch_status(
+def get_batch_status(
     payload: BatchStatusRequest,
     db: Client = Depends(get_db)
 ):
@@ -490,7 +483,7 @@ async def get_batch_status(
         return {}
 
 @router.get("/check/{user_id}/{test_id}")
-async def check_attempt_status(
+def check_attempt_status(
     user_id: str,
     test_id: str,
     db: Client = Depends(get_db)
@@ -584,7 +577,7 @@ def _ensure_registrant(user_id: str, test_id: str, start_form: Dict[str, str], r
 
 
 @router.post("/register")
-async def register_start(
+def register_start(
     payload: RegisterRequest,
     request: Request,
     db: Client = Depends(get_db)
@@ -654,23 +647,16 @@ async def register_start(
         return {"success": False}
 
 @router.get("/{attempt_id}")
-async def get_attempt_detail(
+def get_attempt_detail(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
 ):
     try:
         # Check authentication
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = auth_header.replace("Bearer ", "")
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user_id = user_response.user.id
-        
+        claims = verify_auth_claims(request, db)
+        user_id = claims["sub"]
+
         # Fetch attempt
         response = supabase.table("user_tests")\
             .select("*")\
@@ -689,8 +675,7 @@ async def get_attempt_detail(
             if test_res.data and test_res.data.get("created_by") == user_id:
                 is_creator = True
 
-        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-        is_admin = admin_res.data and len(admin_res.data) > 0
+        is_admin = is_admin_email(claims.get("email"), supabase)
 
         if attempt.get("user_id") != user_id:
             if not is_admin and not is_creator:
@@ -706,30 +691,52 @@ async def get_attempt_detail(
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
 
+# The results sheet asks on every open and every 30 s refresh; these site-wide
+# switches change rarely, so a minute of staleness is fine.
+_premium_for_all_cache: TTLCache = TTLCache(maxsize=1, ttl=60)
+_premium_for_all_lock = threading.Lock()
+
+
+def _premium_for_all() -> bool:
+    """True when every creator gets premium: the global unlock is on, or no plan is on sale."""
+    with _premium_for_all_lock:
+        cached = _premium_for_all_cache.get("value")
+    if cached is not None:
+        return cached
+
+    settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
+    unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
+
+    plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
+    has_active_plans = plans_res.data and len(plans_res.data) > 0
+
+    value = bool(unlock_all or not has_active_plans)
+    with _premium_for_all_lock:
+        _premium_for_all_cache["value"] = value
+    return value
+
+
 def _results_access(test_id: str, request: Request, db: Client):
     """
     Who may read a test's results: its creator or an admin.
     Returns (test row, is_admin, is_premium); a non-premium creator sees names hidden.
     """
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-    token = auth_header.replace("Bearer ", "")
-    user_response = db.auth.get_user(token)
-    if not user_response or not user_response.user:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    # The token check and the test lookup don't depend on each other, so they run
+    # together: each is a full round trip to the database.
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        test_future = pool.submit(
+            lambda: supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).limit(1).execute()
+        )
+        claims = verify_auth_claims(request, db)
+        test_rows = test_future.result().data
 
-    user_id = user_response.user.id
-
-    # Verify admin status
-    admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-    is_admin = bool(admin_res.data and len(admin_res.data) > 0)
+    user_id = claims["sub"]
+    is_admin = is_admin_email(claims.get("email"), supabase)
 
     # Retrieve test details to verify existence and check conduct mode settings
-    test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
-    if not test_ownership_res.data:
+    if not test_rows:
         raise HTTPException(status_code=404, detail="Test not found")
-    test_data = test_ownership_res.data
+    test_data = test_rows[0]
 
     if is_admin:
         return test_data, True, True
@@ -738,14 +745,7 @@ def _results_access(test_id: str, request: Request, db: Client):
     if user_id != test_data.get("created_by"):
         raise HTTPException(status_code=403, detail="Not authorized to view these results")
 
-    # Check global premium unlock and active plans
-    settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
-    unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
-
-    plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
-    has_active_plans = plans_res.data and len(plans_res.data) > 0
-
-    is_premium = bool(unlock_all or not has_active_plans)
+    is_premium = _premium_for_all()
 
     if not is_premium:
         profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
@@ -766,7 +766,7 @@ def _results_access(test_id: str, request: Request, db: Client):
 
 
 @router.get("/test/{test_id}/started")
-async def get_started_candidates(
+def get_started_candidates(
     test_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -787,10 +787,16 @@ async def get_started_candidates(
             .neq("status", "submitted")
         if conduct.get("started_at"):
             query = query.gte("started_at", conduct["started_at"])
-        regs = query.order("started_at", desc=True).limit(1000).execute().data or []
 
         # A submit that could not mark its registration still counts as submitted.
-        submitted_res = supabase.table("user_tests").select("user_id").eq("test_id", test_id).execute()
+        # Both reads are independent, so they run together.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            regs_future = pool.submit(lambda: query.order("started_at", desc=True).limit(1000).execute())
+            submitted_future = pool.submit(
+                lambda: supabase.table("user_tests").select("user_id").eq("test_id", test_id).execute()
+            )
+            regs = regs_future.result().data or []
+            submitted_res = submitted_future.result()
         submitted = {r.get("user_id") for r in (submitted_res.data or [])}
         creator = test_data.get("created_by")
 
@@ -823,7 +829,7 @@ async def get_started_candidates(
 
 
 @router.get("/test/{test_id}")
-async def get_test_attempts(
+def get_test_attempts(
     test_id: str,
     request: Request,
     exclude_answers: bool = False,
@@ -838,28 +844,37 @@ async def get_test_attempts(
         if not exclude_answers:
             select_cols += ", answers, violation_log"
 
-        response = supabase.table("user_tests")\
-            .select(select_cols)\
-            .eq("test_id", test_id)\
-            .order("score", desc=True)\
-            .execute()
-            
-        data = response.data or []
-
-        # Fetch registrations for this test to map user_id -> started_at fallback
-        reg_start_map = {}
-        try:
-            regs_res = supabase.table("test_registrations")\
-                .select("user_id, started_at")\
+        def _fetch_attempts():
+            return supabase.table("user_tests")\
+                .select(select_cols)\
                 .eq("test_id", test_id)\
+                .order("score", desc=True)\
                 .execute()
-            for r in (regs_res.data or []):
-                uid = r.get("user_id")
-                sat = r.get("started_at")
-                if uid and sat:
-                    reg_start_map[uid] = sat
-        except Exception as reg_err:
-            logger.error(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+
+        # Registrations map user_id -> started_at fallback; a failure there is not fatal.
+        def _fetch_registrations():
+            try:
+                return supabase.table("test_registrations")\
+                    .select("user_id, started_at")\
+                    .eq("test_id", test_id)\
+                    .execute().data or []
+            except Exception as reg_err:
+                logger.error(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+                return []
+
+        # Both reads are independent, so they run together.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            attempts_future = pool.submit(_fetch_attempts)
+            regs_future = pool.submit(_fetch_registrations)
+            data = attempts_future.result().data or []
+            regs = regs_future.result()
+
+        reg_start_map = {}
+        for r in regs:
+            uid = r.get("user_id")
+            sat = r.get("started_at")
+            if uid and sat:
+                reg_start_map[uid] = sat
 
         # Enrich metadata with startedAt if missing
         from datetime import datetime
@@ -922,14 +937,16 @@ async def get_test_attempts(
                 }
                 anonymized.append(anon_attempt)
             return anonymized
-            
+
         return data
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching test attempts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{attempt_id}")
-async def delete_attempt(
+def delete_attempt(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -983,7 +1000,7 @@ async def delete_attempt(
         raise HTTPException(status_code=500, detail="Failed to delete attempt")
 
 @router.delete("/registration/{test_id}/{user_id}")
-async def delete_registration(
+def delete_registration(
     test_id: str,
     user_id: str,
     request: Request,
@@ -1013,7 +1030,7 @@ async def delete_registration(
 
 # ─── Progress Tracking ─────────────────────────────────────────
 @router.post("/progress")
-async def update_progress(
+def update_progress(
     payload: ProgressUpdateRequest,
     background_tasks: BackgroundTasks
 ):
@@ -1024,7 +1041,7 @@ async def update_progress(
 
 # ─── Abandonment Tracking ──────────────────────────────────────
 @router.post("/abandon")
-async def mark_abandoned(
+def mark_abandoned(
     payload: AbandonRequest,
     background_tasks: BackgroundTasks
 ):
@@ -1035,7 +1052,7 @@ async def mark_abandoned(
 
 
 @router.post("/anon/start")
-async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
+def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
     """Register an anonymous user starting a test."""
     try:
         from datetime import datetime, timezone
@@ -1075,7 +1092,7 @@ async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
 
 
 @router.post("/anon/progress")
-async def anon_progress(
+def anon_progress(
     payload: AnonProgressRequest,
     background_tasks: BackgroundTasks
 ):
@@ -1085,7 +1102,7 @@ async def anon_progress(
 
 
 @router.post("/anon/submit")
-async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
+def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
     """Mark an anonymous test as submitted, storing answers and a server-computed score."""
     try:
         from datetime import datetime, timezone
@@ -1128,7 +1145,7 @@ async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
 
 
 @router.post("/anon/abandon")
-async def anon_abandon(
+def anon_abandon(
     payload: AnonAbandonRequest,
     background_tasks: BackgroundTasks
 ):

@@ -29,7 +29,7 @@ def _bust_subcategory_cache():
         _subcategories_cache.clear()
 
 @router.get("/")
-async def get_categories(db: Client = Depends(get_db)):
+def get_categories(db: Client = Depends(get_db)):
     with _cat_cache_lock:
         cached = _categories_cache.get("all")
         if cached is not None:
@@ -46,7 +46,7 @@ async def get_categories(db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/")
-async def create_category(payload: CategoryCreate, request: Request, db: Client = Depends(get_db)):
+def create_category(payload: CategoryCreate, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("categories").insert({"name": payload.name}).execute()
@@ -62,7 +62,7 @@ async def create_category(payload: CategoryCreate, request: Request, db: Client 
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{category_id}")
-async def update_category(category_id: str, payload: CategoryUpdate, request: Request, db: Client = Depends(get_db)):
+def update_category(category_id: str, payload: CategoryUpdate, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("categories").update({"name": payload.name}).eq("id", category_id).execute()
@@ -75,7 +75,7 @@ async def update_category(category_id: str, payload: CategoryUpdate, request: Re
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{category_id}")
-async def delete_category(category_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_category(category_id: str, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("categories").delete().eq("id", category_id).execute()
@@ -86,7 +86,7 @@ async def delete_category(category_id: str, request: Request, db: Client = Depen
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/stats")
-async def get_category_stats(db: Client = Depends(get_db)):
+def get_category_stats(db: Client = Depends(get_db)):
     try:
         # Fetch all categories
         cats_res = db.table("categories").select("id, name, created_at").order("name").execute()
@@ -122,7 +122,7 @@ async def get_category_stats(db: Client = Depends(get_db)):
          raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/test/{test_id}")
-async def get_test_categories(test_id: str, db: Client = Depends(get_db)):
+def get_test_categories(test_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("test_categories").select("category_id").eq("test_id", test_id).execute()
         # Return list of IDs
@@ -132,7 +132,7 @@ async def get_test_categories(test_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/assign/{test_id}")
-async def assign_categories(test_id: str, payload: TestCategoryAssignment, request: Request, db: Client = Depends(get_db)):
+def assign_categories(test_id: str, payload: TestCategoryAssignment, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anyone could re-categorise anyone else's test.
     verify_test_owner_or_admin(test_id, request, db)
     try:
@@ -150,7 +150,7 @@ async def assign_categories(test_id: str, payload: TestCategoryAssignment, reque
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/admin/assign/{test_id}")
-async def admin_assign_categories(test_id: str, payload: TestCategoryAssignment, request: Request):
+def admin_assign_categories(test_id: str, payload: TestCategoryAssignment, request: Request):
     verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
@@ -171,7 +171,7 @@ async def admin_assign_categories(test_id: str, payload: TestCategoryAssignment,
 # ─── Sub-Category Endpoints ───
 
 @router.get("/{category_id}/subcategories")
-async def get_subcategories(category_id: str, db: Client = Depends(get_db)):
+def get_subcategories(category_id: str, db: Client = Depends(get_db)):
     with _cat_cache_lock:
         cached = _subcategories_cache.get(f"cat:{category_id}")
         if cached is not None:
@@ -187,7 +187,7 @@ async def get_subcategories(category_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/subcategories/all")
-async def get_all_subcategories(db: Client = Depends(get_db)):
+def get_all_subcategories(db: Client = Depends(get_db)):
     with _cat_cache_lock:
         cached = _subcategories_cache.get("all")
         if cached is not None:
@@ -203,7 +203,7 @@ async def get_all_subcategories(db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{category_id}/subcategories")
-async def create_subcategory(category_id: str, payload: SubCategoryCreate, request: Request, db: Client = Depends(get_db)):
+def create_subcategory(category_id: str, payload: SubCategoryCreate, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("sub_categories").insert({
@@ -222,7 +222,7 @@ async def create_subcategory(category_id: str, payload: SubCategoryCreate, reque
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/subcategories/{sub_category_id}")
-async def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, request: Request, db: Client = Depends(get_db)):
+def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("sub_categories").update({"name": payload.name}).eq("id", sub_category_id).execute()
@@ -235,7 +235,7 @@ async def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, r
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/subcategories/{sub_category_id}")
-async def delete_subcategory(sub_category_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_subcategory(sub_category_id: str, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
     try:
         response = db.table("sub_categories").delete().eq("id", sub_category_id).execute()
@@ -246,7 +246,7 @@ async def delete_subcategory(sub_category_id: str, request: Request, db: Client 
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/admin/assign-subcategory/{test_id}")
-async def admin_assign_subcategory(test_id: str, payload: TestSubCategoryAssignment, request: Request):
+def admin_assign_subcategory(test_id: str, payload: TestSubCategoryAssignment, request: Request):
     verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
@@ -266,7 +266,7 @@ async def admin_assign_subcategory(test_id: str, payload: TestSubCategoryAssignm
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/test/{test_id}/subcategory")
-async def get_test_subcategory(test_id: str, db: Client = Depends(get_db)):
+def get_test_subcategory(test_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("test_categories").select("sub_category_id").eq("test_id", test_id).execute()
         if response.data:
@@ -280,7 +280,7 @@ async def get_test_subcategory(test_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{category_id}/test-subcategory-map")
-async def get_category_test_subcategory_map(category_id: str, db: Client = Depends(get_db)):
+def get_category_test_subcategory_map(category_id: str, db: Client = Depends(get_db)):
     """Returns a mapping of test_id -> sub_category_id for all tests in a category."""
     try:
         response = db.table("test_categories").select("test_id, sub_category_id").eq("category_id", category_id).execute()

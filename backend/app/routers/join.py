@@ -160,7 +160,7 @@ def _live_link_by_code(db: Client, code: str) -> Optional[Dict[str, Any]]:
 
 
 @router.get("/code/{code}")
-async def lookup_code(code: str, request: Request, db: Client = Depends(get_db)):
+def lookup_code(code: str, request: Request, db: Client = Depends(get_db)):
     enforce_limit(join_lookup_per_ip, client_ip(request), "Too many tries. Wait a minute and try again.")
     try:
         session = _open_session_by_code(db, code)
@@ -186,7 +186,7 @@ async def lookup_code(code: str, request: Request, db: Client = Depends(get_db))
 
 
 @router.post("/code/{code}/enter")
-async def enter(
+def enter(
     code: str,
     payload: EnterRequest,
     request: Request,
@@ -322,7 +322,7 @@ async def enter(
 
 
 @router.get("/me")
-async def me(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
+def me(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
     participant, session = store.participant_by_token(db, x_exam_token)
     # The lobby polls this, so it doubles as "still here" for the teacher's monitor.
     if participant.get("status") != "submitted":
@@ -344,7 +344,7 @@ async def me(x_exam_token: Optional[str] = Header(default=None), db: Client = De
 
 
 @router.post("/me/start")
-async def start(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
+def start(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
     participant, session = store.participant_by_token(db, x_exam_token)
     if participant.get("status") == "submitted":
         raise SessionError(409, "already_submitted", "You have already submitted this exam.")
@@ -387,7 +387,7 @@ async def start(x_exam_token: Optional[str] = Header(default=None), db: Client =
 
 
 @router.post("/me/heartbeat")
-async def heartbeat(
+def heartbeat(
     payload: HeartbeatRequest,
     x_exam_token: Optional[str] = Header(default=None),
     db: Client = Depends(get_db),
@@ -426,7 +426,7 @@ async def heartbeat(
 
 
 @router.get("/me/result")
-async def result(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
+def result(x_exam_token: Optional[str] = Header(default=None), db: Client = Depends(get_db)):
     participant, session = store.participant_by_token(db, x_exam_token)
     if participant.get("status") != "submitted" or not participant.get("attempt_id"):
         raise SessionError(409, "not_submitted", "You have not submitted this exam yet.")
@@ -666,7 +666,7 @@ def _link_lookup(db: Client, test: Dict[str, Any], payload: ResultRequest) -> Di
 
 
 @router.get("/result/{code}")
-async def result_form(code: str, request: Request, db: Client = Depends(get_db)):
+def result_form(code: str, request: Request, db: Client = Depends(get_db)):
     """Which details to ask for: the sitting's check-in rule, or the exam link's start form."""
     enforce_limit(join_lookup_per_ip, client_ip(request), "Too many tries. Wait a minute and try again.")
     kind, row = _code_owners(db, code)[0]
@@ -687,7 +687,7 @@ async def result_form(code: str, request: Request, db: Client = Depends(get_db))
 
 
 @router.post("/result/{code}")
-async def result_lookup(code: str, payload: ResultRequest, request: Request, db: Client = Depends(get_db)):
+def result_lookup(code: str, payload: ResultRequest, request: Request, db: Client = Depends(get_db)):
     enforce_limit(join_result_per_ip, client_ip(request), "Too many tries. Wait a few minutes and try again.")
     first_error: Optional[SessionError] = None
     for kind, row in _code_owners(db, code):

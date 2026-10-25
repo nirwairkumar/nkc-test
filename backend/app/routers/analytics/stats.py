@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/overview")
-async def get_analytics_overview(
+def get_analytics_overview(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -51,7 +51,7 @@ async def get_analytics_overview(
 
 
 @router.get("/daily")
-async def get_daily_trends(
+def get_daily_trends(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -112,7 +112,7 @@ async def get_daily_trends(
 
 
 @router.get("/pages")
-async def get_top_pages(
+def get_top_pages(
     days: int = 30,
     limit: int = 10,
     db: Client = Depends(get_db)
@@ -146,7 +146,7 @@ async def get_top_pages(
 
 
 @router.get("/referrers")
-async def get_top_referrers(
+def get_top_referrers(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -181,7 +181,7 @@ async def get_top_referrers(
 
 
 @router.get("/live")
-async def get_live_visitors(
+def get_live_visitors(
     db: Client = Depends(get_db)
 ):
     """

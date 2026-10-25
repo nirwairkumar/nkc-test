@@ -24,7 +24,7 @@ class ReportStatusUpdate(BaseModel):
 
 # 1. Submit a new report (Public/Anonymous allowed)
 @router.post("/", dependencies=[Depends(check_support_rate_limit)])
-async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
+def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
     try:
         data_to_insert = {
             "test_id": payload.test_id,
@@ -66,7 +66,7 @@ async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
 
 # 2. Get reports for a specific creator
 @router.get("/creator/{creator_id}")
-async def get_creator_reports(creator_id: str, request: Request, db: Client = Depends(get_db)):
+def get_creator_reports(creator_id: str, request: Request, db: Client = Depends(get_db)):
     # C5: was unguarded — anyone could read any creator's question reports.
     verify_owner_or_admin(creator_id, request, db)
     try:
@@ -84,7 +84,7 @@ async def get_creator_reports(creator_id: str, request: Request, db: Client = De
 
 # 2b. Exam feedback candidates left on the result page (stars + an optional note)
 @router.get("/creator/{creator_id}/feedback")
-async def get_creator_feedback(creator_id: str, request: Request, db: Client = Depends(get_db)):
+def get_creator_feedback(creator_id: str, request: Request, db: Client = Depends(get_db)):
     verify_owner_or_admin(creator_id, request, db)
     try:
         response = admin_db.table("feedback") \
@@ -100,7 +100,7 @@ async def get_creator_feedback(creator_id: str, request: Request, db: Client = D
 
 # 3. Mark report as solved (Creator or Admin)
 @router.put("/{report_id}/status")
-async def update_report_status(report_id: str, payload: ReportStatusUpdate, request: Request, db: Client = Depends(get_db)):
+def update_report_status(report_id: str, payload: ReportStatusUpdate, request: Request, db: Client = Depends(get_db)):
     # C5: the old comment relied on RLS, but this router talks to Supabase with the
     # service-role key, which bypasses RLS — so anyone could mark any report solved.
     requesting_user_id = verify_auth_token(request, db)
@@ -125,7 +125,7 @@ async def update_report_status(report_id: str, payload: ReportStatusUpdate, requ
 
 # 4. ADMIN ONLY: Get report stats for all users (For the Users Tab Red Dot)
 @router.get("/admin/users-stats")
-async def get_admin_users_report_stats(request: Request):
+def get_admin_users_report_stats(request: Request):
     verify_is_admin(request)
     try:
         # Use service role key to query all reports
@@ -153,7 +153,7 @@ async def get_admin_users_report_stats(request: Request):
 
 # 5. ADMIN ONLY: Get detailed reports for a specific users tests (For User Profile Dialog)
 @router.get("/admin/user/{user_id}")
-async def get_admin_user_reports(user_id: str, request: Request):
+def get_admin_user_reports(user_id: str, request: Request):
     verify_is_admin(request)
     try:
         response = admin_db.table("question_reports") \

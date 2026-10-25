@@ -12,6 +12,9 @@ from pydantic import BaseModel
 import logging
 import os
 import uuid as _uuid
+from contextlib import asynccontextmanager
+
+import anyio.to_thread
 
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -31,12 +34,24 @@ validate_runtime_config()
 # Disable API docs in production to prevent information disclosure
 _is_dev = os.getenv("ENVIRONMENT", "production").lower() in ("development", "dev", "local")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Route handlers are plain `def` because the Supabase client is synchronous, so
+    # FastAPI runs each request on a worker thread while it waits on the database.
+    # The default pool of 40 threads would cap an exam-hour burst below Cloud Run's
+    # 80 concurrent requests per instance.
+    anyio.to_thread.current_default_thread_limiter().total_tokens = 100
+    yield
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
     openapi_url="/api/openapi.json" if _is_dev else None,
     docs_url="/api/docs" if _is_dev else None,
     redoc_url="/api/redoc" if _is_dev else None,
+    lifespan=lifespan,
 )
 
 # GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
@@ -225,9 +240,6 @@ app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 
 from app.routers import classes
 app.include_router(classes.router, prefix="/api/classes", tags=["Classes"])
-
-from app.routers import materials
-app.include_router(materials.router, prefix="/api/materials", tags=["Materials"])
 
 from app.routers import pricing
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])

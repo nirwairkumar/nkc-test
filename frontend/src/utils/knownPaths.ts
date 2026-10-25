@@ -22,7 +22,7 @@ export const APP_SECTIONS: readonly string[] = [
   'auth', 'auth-error', 'auto-grading-software', 'batches', 'blog', 'combined-break', 'combined-intro',
   'compare', 'convert', 'create-combined-test', 'create-mock-test-online', 'create-test', 'creator',
   'dashboard', 'edit-test', 'exam-software-for-schools', 'exams', 'explore', 'feedback', 'generate-with-ai', 'guides',
-  'help', 'history', 'j', 'join', 'live', 'login', 'materials', 'mcq-test-maker', 'more-tests', 'my-posts',
+  'help', 'history', 'j', 'join', 'live', 'login', 'mcq-test-maker', 'more-tests', 'my-posts',
   'my-tests', 'news', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
   'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf', 'pdf-to-quiz', 'posts',
   'premium', 'pricing', 'privacy-policy', 'profile', 'quiz-creator', 'results', 'rewards', 'settings',
@@ -57,6 +57,8 @@ const ALIASES: Record<string, string> = {
   '/contact-us': '/support',
   '/faq': '/help',
   '/plans': '/pricing',
+  // Study Materials was removed on 2026-10-25; old bookmarks land on the dashboard.
+  '/materials': '/dashboard',
 };
 
 // File endings TestoZa never had: /pricing.php, /about.html, /join/index.aspx …

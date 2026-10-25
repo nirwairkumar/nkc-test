@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/all")
-async def get_all_tests(
+def get_all_tests(
     request: Request,
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
@@ -56,7 +56,7 @@ async def get_all_tests(
 
 
 @router.get("/next-id")
-async def get_next_test_id(
+def get_next_test_id(
     prefix: str = Query("M", pattern="^(M|YT)$"),
     db: Client = Depends(get_db)
 ):
@@ -92,7 +92,7 @@ async def get_next_test_id(
         return {"next_id": f"{prefix}001"}
 
 @router.put("/admin/{test_id}")
-async def admin_update_test(
+def admin_update_test(
     test_id: str,
     payload: Dict[str, Any],
     request: Request,
@@ -101,6 +101,8 @@ async def admin_update_test(
     verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
+        from app.services.question_images import externalize_images
+        externalize_images(admin_db, payload)
         # Update using Service Role Key (bypasses RLS)
         response = admin_db.table("tests").update(payload).eq("id", test_id).execute()
         if response.data:
@@ -112,7 +114,7 @@ async def admin_update_test(
 
 
 @router.delete("/admin/{test_id}")
-async def admin_delete_test(
+def admin_delete_test(
     test_id: str,
     request: Request,
 ):
@@ -129,7 +131,7 @@ async def admin_delete_test(
 
 
 @router.post("/admin/{test_id}/clone")
-async def admin_clone_test(
+def admin_clone_test(
     test_id: str,
     payload: dict, # Using dict directly to avoid import issues or schema complexity
     request: Request,
@@ -202,7 +204,7 @@ async def admin_clone_test(
 
 
 @router.get("/admin/conduct-mode-tests")
-async def get_conduct_mode_tests(request: Request):
+def get_conduct_mode_tests(request: Request):
     # Returns every live exam link and creator emails, so admins only.
     verify_is_admin(request)
     try:

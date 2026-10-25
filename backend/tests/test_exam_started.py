@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core import auth as auth_core
 from app.core.database import get_db
 from app.main import app
 from app.routers import attempts as attempts_router
@@ -50,6 +51,9 @@ def env(monkeypatch):
     monkeypatch.setattr(rate_limiter, "SHARED_ENABLED", False)
     monkeypatch.setattr(attempts_router, "supabase", db)
     monkeypatch.setattr(attempt_service, "supabase", db)
+    # Site-wide premium and admin lookups are cached per process; start each test cold.
+    attempts_router._premium_for_all_cache.clear()
+    auth_core._admin_cache.clear()
     app.dependency_overrides[get_db] = lambda: db
     yield {"db": db, "client": TestClient(app), "teacher": teacher}
     app.dependency_overrides.clear()

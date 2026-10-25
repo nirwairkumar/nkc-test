@@ -11,6 +11,7 @@ which is how users.py and email_broadcast.py ended up with an unsigned-JWT "fast
 (C1) that nobody noticed. One implementation, used everywhere, prevents a repeat.
 """
 
+import threading
 from typing import Optional
 
 from cachetools import TTLCache
@@ -20,12 +21,14 @@ from supabase import Client
 from app.core.database import supabase
 
 # email -> bool. Mirrors the per-router caches it replaces (5 minutes).
+# Route handlers run in FastAPI's thread pool, and TTLCache is not thread-safe.
 _admin_cache: TTLCache = TTLCache(maxsize=1000, ttl=300)
+_admin_cache_lock = threading.Lock()
 
 
-def verify_auth_token(request: Request, db: Optional[Client] = None) -> str:
+def verify_auth_claims(request: Request, db: Optional[Client] = None) -> dict:
     """
-    Validate the bearer token and return the caller's user id.
+    Validate the bearer token and return its verified claims (sub, email, ...).
 
     Uses db.auth.get_claims(), which verifies the JWT signature (locally via the cached
     JWKS for asymmetric keys, through Supabase Auth for HS256). Never decode the payload
@@ -45,10 +48,36 @@ def verify_auth_token(request: Request, db: Optional[Client] = None) -> str:
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    user_id = claims_response["claims"].get("sub") if claims_response else None
-    if not user_id:
+    claims = claims_response["claims"] if claims_response else None
+    if not claims or not claims.get("sub"):
         raise HTTPException(status_code=401, detail="Invalid token")
-    return user_id
+    return claims
+
+
+def verify_auth_token(request: Request, db: Optional[Client] = None) -> str:
+    """Validate the bearer token and return the caller's user id."""
+    return verify_auth_claims(request, db)["sub"]
+
+
+def is_admin_email(email: Optional[str], db: Optional[Client] = None) -> bool:
+    """True when `email` is listed in `admins`. Cached for 5 minutes."""
+    if not email:
+        return False
+    with _admin_cache_lock:
+        cached = _admin_cache.get(email)
+    if cached is not None:
+        return cached
+
+    client = db or supabase
+    try:
+        admin_res = client.table("admins").select("email").eq("email", email).execute()
+    except Exception:
+        return False
+
+    result = bool(admin_res.data)
+    with _admin_cache_lock:
+        _admin_cache[email] = result
+    return result
 
 
 def get_optional_user_id(request: Request, db: Optional[Client] = None) -> Optional[str]:
@@ -70,21 +99,7 @@ def is_admin_user(user_id: str, db: Optional[Client] = None) -> bool:
     if not profile_res.data:
         return False
 
-    email = profile_res.data[0].get("email")
-    if not email:
-        return False
-
-    if email in _admin_cache:
-        return _admin_cache[email]
-
-    try:
-        admin_res = client.table("admins").select("email").eq("email", email).execute()
-    except Exception:
-        return False
-
-    result = bool(admin_res.data)
-    _admin_cache[email] = result
-    return result
+    return is_admin_email(profile_res.data[0].get("email"), client)
 
 
 def verify_is_admin(request: Request, db: Optional[Client] = None) -> str:

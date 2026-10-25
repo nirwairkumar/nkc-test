@@ -36,7 +36,7 @@ async def upload_file(
     # Verify auth
     user_id = _verify_auth_token(request, db)
 
-    ALLOWED_BUCKETS = ["avatars", "materials", "post-images", "test-images"]
+    ALLOWED_BUCKETS = ["avatars", "post-images", "test-images"]
     if bucket not in ALLOWED_BUCKETS:
         raise HTTPException(status_code=400, detail="Forbidden bucket path")
 

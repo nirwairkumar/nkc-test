@@ -166,7 +166,7 @@ async def process_analytics_event(event: PageViewEvent, geo: dict, db: Client):
         logger.error(f"Error processing analytics event: {str(e)}")
 
 @router.post("/track", status_code=204, dependencies=[Depends(check_analytics_rate_limit)])
-async def track_event(
+def track_event(
     event: PageViewEvent, 
     request: Request, 
     background_tasks: BackgroundTasks,

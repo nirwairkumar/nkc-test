@@ -14,7 +14,7 @@ class UpdateSolutionsRequest(BaseModel):
     solutions: Dict[str, str]
 
 @router.put("/{test_id}/solutions")
-async def save_test_solutions(
+def save_test_solutions(
     test_id: str,
     payload: UpdateSolutionsRequest,
     request: Request,
@@ -63,7 +63,7 @@ async def save_test_solutions(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{test_id}/solutions")
-async def get_test_solutions(
+def get_test_solutions(
     test_id: str,
     request: Request,
     db: Client = Depends(get_db)

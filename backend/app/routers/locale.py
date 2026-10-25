@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("", dependencies=[Depends(check_analytics_rate_limit)])
-async def visitor_locale(request: Request, response: Response, tz: Optional[str] = None):
+def visitor_locale(request: Request, response: Response, tz: Optional[str] = None):
     geo = geo_from_headers(request.headers, tz)
     # The browser keeps it for a day; it is the visitor's own location, never shared.
     response.headers["Cache-Control"] = "private, max-age=86400"
