@@ -26,7 +26,7 @@ export const APP_SECTIONS: readonly string[] = [
   'my-tests', 'news', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
   'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf', 'pdf-to-quiz', 'posts',
   'premium', 'pricing', 'privacy-policy', 'profile', 'quiz-creator', 'results', 'rewards', 'settings',
-  'share', 'solutions', 'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test',
+  'share', 'share-exam', 'solutions', 'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test',
   'test-analysis', 'test-intro', 'test-submitted', 'tests', 'update-password', 'user-guide',
   'white-label-test-platform', 'youtube-to-quiz'
 ];

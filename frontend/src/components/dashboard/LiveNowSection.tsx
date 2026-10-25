@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import JoinCodeLine from '@/components/exams/JoinCodeLine';
 import LiveExamCoach from '@/components/exams/LiveExamCoach';
+import ShareQrPanel from '@/components/exams/ShareQrPanel';
 import { toast } from 'sonner';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -143,6 +144,32 @@ function LiveExamCard({
     }, [coachStep]);
     const doneSharing = () => { if (coachStep === 'share') onCoachChange?.(null); };
 
+    const menu = (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button type="button" aria-label="More options" className={MENU_TRIGGER}>
+                    <MoreHorizontal className="h-[18px] w-[18px]" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5">
+                {onGetCode && !joinCode && (
+                    <DropdownMenuItem className={MENU_ITEM} onClick={() => onGetCode(test)}>
+                        <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Get a join code
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem className={MENU_ITEM} onClick={() => onShare(test)}>
+                    <Share2 className="mr-2.5 h-4 w-4 text-slate-500" /> Share…
+                </DropdownMenuItem>
+                <DropdownMenuItem className={MENU_ITEM} onClick={() => onEdit(test)}>
+                    <Pencil className="mr-2.5 h-4 w-4 text-slate-500" /> Edit questions
+                </DropdownMenuItem>
+                <DropdownMenuItem className={MENU_ITEM} onClick={() => onSolutions(test)}>
+                    <FileText className="mr-2.5 h-4 w-4 text-slate-500" /> Upload solutions
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
     const timing = [
         startedAt ? `Started ${timeOfDay(startedAt)}` : null,
         endsAt ? `Ends ${timeOfDay(endsAt)} (${untilText(endsAt, now).replace(/^in /, '')} left)` : null,
@@ -150,142 +177,135 @@ function LiveExamCard({
 
     return (
         <article className="rounded-2xl bg-white ring-1 ring-emerald-600/20 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-18px_rgba(5,150,105,0.45)]">
-            <div className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <h3 className="truncate text-[17px] font-semibold tracking-[-0.01em] text-slate-900" title={test.title}>{test.title}</h3>
-                        <p className="mt-1 text-[13px] text-slate-600">
-                            {[questions ? plural(questions, 'question') : null, test.duration ? `${test.duration} min` : null, timing || null].filter(Boolean).join(' · ')}
-                        </p>
+            <div className="flex gap-6 p-4 sm:p-5">
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <h3 className="truncate text-[17px] font-semibold tracking-[-0.01em] text-slate-900" title={test.title}>{test.title}</h3>
+                            <p className="mt-1 text-[13px] text-slate-600">
+                                {[questions ? plural(questions, 'question') : null, test.duration ? `${test.duration} min` : null, timing || null].filter(Boolean).join(' · ')}
+                            </p>
+                        </div>
+                        <div className="lg:hidden">{menu}</div>
                     </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button type="button" aria-label="More options" className={MENU_TRIGGER}>
-                                <MoreHorizontal className="h-[18px] w-[18px]" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5">
-                            {onGetCode && !joinCode && (
-                                <DropdownMenuItem className={MENU_ITEM} onClick={() => onGetCode(test)}>
-                                    <KeyRound className="mr-2.5 h-4 w-4 text-sky-600" /> Get a join code
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem className={MENU_ITEM} onClick={() => onShare(test)}>
-                                <Share2 className="mr-2.5 h-4 w-4 text-slate-500" /> Share…
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className={MENU_ITEM} onClick={() => onEdit(test)}>
-                                <Pencil className="mr-2.5 h-4 w-4 text-slate-500" /> Edit questions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className={MENU_ITEM} onClick={() => onSolutions(test)}>
-                                <FileText className="mr-2.5 h-4 w-4 text-slate-500" /> Upload solutions
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
 
-                {/* The two numbers that matter mid-exam */}
-                <div className="mt-4 grid grid-cols-2 gap-2.5">
-                    <div
-                        className="rounded-xl bg-emerald-50/70 px-3.5 py-3 ring-1 ring-inset ring-emerald-600/10"
-                        title="Candidates whose exam screen checked in during the last 3 minutes"
-                    >
-                        <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{writingNow}</p>
-                        <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-emerald-800">
-                            <LiveDot /> Writing now
-                        </p>
+                    {/* The two numbers that matter mid-exam */}
+                    <div className="mt-4 grid grid-cols-2 gap-2.5">
+                        <div
+                            className="rounded-xl bg-emerald-50/70 px-3.5 py-3 ring-1 ring-inset ring-emerald-600/10"
+                            title="Candidates whose exam screen checked in during the last 3 minutes"
+                        >
+                            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{writingNow}</p>
+                            <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-emerald-800">
+                                <LiveDot /> Writing now
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => onResults(test)}
+                            className="rounded-xl bg-slate-50 px-3.5 py-3 text-left ring-1 ring-inset ring-slate-900/[0.05] transition-colors hover:bg-slate-100 cursor-pointer"
+                        >
+                            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{submitted}</p>
+                            <p className="mt-1.5 text-[13px] font-medium text-slate-600">Submitted →</p>
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => onResults(test)}
-                        className="rounded-xl bg-slate-50 px-3.5 py-3 text-left ring-1 ring-inset ring-slate-900/[0.05] transition-colors hover:bg-slate-100 cursor-pointer"
-                    >
-                        <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{submitted}</p>
-                        <p className="mt-1.5 text-[13px] font-medium text-slate-600">Submitted →</p>
-                    </button>
-                </div>
 
-                {/* Exam link */}
-                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
-                <div className="relative flex items-center gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
-                        <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
-                        <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={url}>
-                            {url.replace(/^https?:\/\//, '')}
-                        </span>
-                        <div className="relative shrink-0">
+                    {/* Exam link */}
+                    <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
+                    <div className="relative flex items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
+                            <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
+                            <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={url}>
+                                {url.replace(/^https?:\/\//, '')}
+                            </span>
+                            <div className="relative shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => { copyLink(test); doneSharing(); }}
+                                    className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
+                                >
+                                    <Copy className="h-3.5 w-3.5" /> Copy
+                                </button>
+                                {/* Points at Copy; the card's right edge lines up with WhatsApp's (6px pill padding + 8px gap + 44px button). */}
+                                {coachStep === 'share' && (
+                                    <LiveExamCoach
+                                        step={2}
+                                        icon={<Send className="h-[18px] w-[18px]" />}
+                                        title="Send it to your candidates"
+                                        body={`Copy the link or send it on WhatsApp to your class group. Candidates open it, ${test.settings?.login_required ? 'sign in' : 'type their name'} and start. No app to install.`}
+                                        placement="below"
+                                        cardClassName="left-auto -right-[58px]"
+                                        onDismiss={() => onCoachChange?.(null)}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                        <a
+                            href={examWhatsAppUrl(test)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Send on WhatsApp"
+                            title="Send on WhatsApp"
+                            onClick={doneSharing}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97] ${coachStep === 'share' ? 'ring-2 ring-sky-500/60 ring-offset-2' : ''}`}
+                        >
+                            <WhatsAppIcon className="h-5 w-5" />
+                        </a>
+                    </div>
+                    {joinCode && <JoinCodeLine code={joinCode} />}
+
+                    {/* Actions */}
+                    <div className="relative mt-3 flex flex-wrap items-center gap-2">
+                        <button type="button" className={PILL_BTN} onClick={() => onResults(test)}>
+                            <BarChart3 className="h-4 w-4 text-sky-600" /> Results
+                        </button>
+                        <div ref={settingsWrap} className="relative">
                             <button
                                 type="button"
-                                onClick={() => { copyLink(test); doneSharing(); }}
-                                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
+                                className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
+                                onClick={() => onSettings(test)}
                             >
-                                <Copy className="h-3.5 w-3.5" /> Copy
+                                <Settings className="h-4 w-4 text-sky-600" /> Settings
                             </button>
-                            {/* Points at Copy; the card's right edge lines up with WhatsApp's (6px pill padding + 8px gap + 44px button). */}
-                            {coachStep === 'share' && (
+                            {coachStep === 'settings' && (
                                 <LiveExamCoach
-                                    step={2}
-                                    icon={<Send className="h-[18px] w-[18px]" />}
-                                    title="Send it to your candidates"
-                                    body={`Copy the link or send it on WhatsApp to your class group. Candidates open it, ${test.settings?.login_required ? 'sign in' : 'type their name'} and start. No app to install.`}
-                                    placement="below"
-                                    cardClassName="left-auto -right-[58px]"
-                                    onDismiss={() => onCoachChange?.(null)}
+                                    step={1}
+                                    icon={<ShieldCheck className="h-[18px] w-[18px]" />}
+                                    title="Set up the exam room"
+                                    body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
+                                    placement="beside"
+                                    phoneShift={settingsShift}
+                                    onDismiss={() => onCoachChange?.({ testId: test.id, step: 'share' })}
                                 />
                             )}
                         </div>
-                    </div>
-                    <a
-                        href={examWhatsAppUrl(test)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Send on WhatsApp"
-                        title="Send on WhatsApp"
-                        onClick={doneSharing}
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white transition-[filter,transform] hover:brightness-95 motion-safe:active:scale-[0.97] ${coachStep === 'share' ? 'ring-2 ring-sky-500/60 ring-offset-2' : ''}`}
-                    >
-                        <WhatsAppIcon className="h-5 w-5" />
-                    </a>
-                </div>
-                {joinCode && <JoinCodeLine code={joinCode} />}
-
-                {/* Actions */}
-                <div className="relative mt-3 flex flex-wrap items-center gap-2">
-                    <button type="button" className={PILL_BTN} onClick={() => onResults(test)}>
-                        <BarChart3 className="h-4 w-4 text-sky-600" /> Results
-                    </button>
-                    <div ref={settingsWrap} className="relative">
-                        <button
-                            type="button"
-                            className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
-                            onClick={() => onSettings(test)}
-                        >
-                            <Settings className="h-4 w-4 text-sky-600" /> Settings
-                        </button>
-                        {coachStep === 'settings' && (
-                            <LiveExamCoach
-                                step={1}
-                                icon={<ShieldCheck className="h-[18px] w-[18px]" />}
-                                title="Set up the exam room"
-                                body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
-                                placement="beside"
-                                phoneShift={settingsShift}
-                                onDismiss={() => onCoachChange?.({ testId: test.id, step: 'share' })}
-                            />
+                        {proctoringOff && (
+                            <button
+                                type="button"
+                                onClick={() => onSettings(test)}
+                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100 cursor-pointer"
+                            >
+                                <AlertTriangle className="h-3.5 w-3.5" /> Anti-cheating is off
+                            </button>
                         )}
-                    </div>
-                    {proctoringOff && (
                         <button
                             type="button"
-                            onClick={() => onSettings(test)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100 cursor-pointer"
+                            onClick={() => onStop(test)}
+                            className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 lg:hidden cursor-pointer"
                         >
-                            <AlertTriangle className="h-3.5 w-3.5" /> Anti-cheating is off
+                            <Square className="h-3 w-3 fill-current" /> Stop exam
                         </button>
-                    )}
+                    </div>
+                </div>
+
+                {/* Wide screens: •••, the scan-to-share QR, then Stop exam, down the right edge. */}
+                <div className="hidden w-[168px] shrink-0 flex-col items-end lg:flex">
+                    {menu}
+                    <ShareQrPanel test={test} className="mt-0.5" />
                     <button
                         type="button"
                         onClick={() => onStop(test)}
-                        className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
+                        className="mt-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
                     >
                         <Square className="h-3 w-3 fill-current" /> Stop exam
                     </button>

@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchCreatorReports, fetchCreatorFeedback, updateReportStatus, Report, ExamFeedback } from "@/lib/reportsApi";
 import { shareTest, needsSignIn } from '@/utils/shareUtils';
 import LiveExamCoach from '@/components/exams/LiveExamCoach';
+import ShareQrPanel from '@/components/exams/ShareQrPanel';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import ConductExamDialog from '@/components/ConductExamDialog';
@@ -1146,125 +1147,140 @@ export default function UserTestManager() {
                                             ? liveCoach.step : null;
 
                                         return (
-                                            <li key={test.id} className="p-4 sm:p-5">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div className="min-w-0">
-                                                        <h3 className="truncate text-base font-semibold tracking-[-0.01em] text-slate-900" title={test.title}>
-                                                            {test.title}
-                                                        </h3>
-                                                        <p className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-slate-600">
-                                                            <span className="inline-flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5 text-slate-400" />{plural(questionCount, 'question')}</span>
-                                                            <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" />{test.duration || 0} min</span>
-                                                            <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-slate-400" />{submissionCount} submitted</span>
-                                                        </p>
+                                            <li key={test.id} className="flex gap-6 p-4 sm:p-5">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <h3 className="truncate text-base font-semibold tracking-[-0.01em] text-slate-900" title={test.title}>
+                                                                {test.title}
+                                                            </h3>
+                                                            <p className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-slate-600">
+                                                                <span className="inline-flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5 text-slate-400" />{plural(questionCount, 'question')}</span>
+                                                                <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" />{test.duration || 0} min</span>
+                                                                <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-slate-400" />{submissionCount} submitted</span>
+                                                            </p>
+                                                        </div>
+                                                        <div className="lg:hidden">{renderExamMenu(test, 'active')}</div>
                                                     </div>
-                                                    {renderExamMenu(test, 'active')}
-                                                </div>
 
-                                                {/* Exam link */}
-                                                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
-                                                <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
-                                                    <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
-                                                    <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={examUrl}>
-                                                        {examUrl.replace(/^https?:\/\//, '')}
-                                                    </span>
-                                                    <div className="flex shrink-0 items-center gap-2">
-                                                        <div className="relative shrink-0">
+                                                    {/* Exam link */}
+                                                    <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your candidates</p>
+                                                    <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
+                                                        <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
+                                                        <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={examUrl}>
+                                                            {examUrl.replace(/^https?:\/\//, '')}
+                                                        </span>
+                                                        <div className="flex shrink-0 items-center gap-2">
+                                                            <div className="relative shrink-0">
+                                                                <button
+                                                                    type="button"
+                                                                    id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
+                                                                    className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
+                                                                    onClick={async () => {
+                                                                        await navigator.clipboard.writeText(examUrl);
+                                                                        toast.success("Exam link copied!");
+                                                                        if (coachStep === 'share') setLiveCoach(null);
+                                                                    }}
+                                                                >
+                                                                    <Copy className="h-3.5 w-3.5" />
+                                                                    <span>Copy<span className="hidden sm:inline"> link</span></span>
+                                                                </button>
+                                                                {/* Points at Copy link and stops short of the row's right edge, so the
+                                                                    Candidate inputs switch below stays in view. */}
+                                                                {coachStep === 'share' && (
+                                                                    <LiveExamCoach
+                                                                        step={2}
+                                                                        icon={<Send className="h-[18px] w-[18px]" />}
+                                                                        title="Send it to your candidates"
+                                                                        body={`Copy the link or share it to your class group. Candidates open it, ${needsSignIn(test) ? 'sign in' : 'type their name'} and start. No app to install.`}
+                                                                        placement="below"
+                                                                        cardClassName="left-auto right-2.5 w-[min(320px,calc(100vw-104px))] sm:right-6 sm:w-[320px]"
+                                                                        onDismiss={() => setLiveCoach(null)}
+                                                                    />
+                                                                )}
+                                                            </div>
                                                             <button
                                                                 type="button"
-                                                                id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
-                                                                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
-                                                                onClick={async () => {
-                                                                    await navigator.clipboard.writeText(examUrl);
-                                                                    toast.success("Exam link copied!");
+                                                                aria-label="Share link"
+                                                                title="Share link"
+                                                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm transition-colors hover:bg-sky-50 hover:text-sky-700 cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
+                                                                onClick={() => {
+                                                                    handleShare(test);
                                                                     if (coachStep === 'share') setLiveCoach(null);
                                                                 }}
                                                             >
-                                                                <Copy className="h-3.5 w-3.5" />
-                                                                <span>Copy<span className="hidden sm:inline"> link</span></span>
+                                                                <Share2 className="h-3.5 w-3.5" />
                                                             </button>
-                                                            {/* Points at Copy link and stops short of the row's right edge, so the
-                                                                Candidate inputs switch below stays in view. */}
-                                                            {coachStep === 'share' && (
+                                                        </div>
+                                                    </div>
+                                                    {test.settings?.conduct_exam?.join_code && (
+                                                        <JoinCodeLine code={test.settings.conduct_exam.join_code} />
+                                                    )}
+
+                                                    <CandidateInputsLine
+                                                        settings={test.settings || {}}
+                                                        onChange={(next, notice) => saveCandidateInputs(test.id, next, notice)}
+                                                        locked={inputsLocked}
+                                                        onLocked={showInputsUpgrade}
+                                                    />
+
+                                                    {/* Actions */}
+                                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                        <div className="relative">
+                                                            <button
+                                                                type="button"
+                                                                id={test.settings?.is_user_example ? "tour-settings-btn-active" : undefined}
+                                                                className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
+                                                                onClick={() => setConfiguringTest(test)}
+                                                            >
+                                                                <Settings className="h-4 w-4 text-sky-600" /> Settings
+                                                            </button>
+                                                            {coachStep === 'settings' && (
                                                                 <LiveExamCoach
-                                                                    step={2}
-                                                                    icon={<Send className="h-[18px] w-[18px]" />}
-                                                                    title="Send it to your candidates"
-                                                                    body={`Copy the link or share it to your class group. Candidates open it, ${needsSignIn(test) ? 'sign in' : 'type their name'} and start. No app to install.`}
-                                                                    placement="below"
-                                                                    cardClassName="left-auto right-2.5 w-[min(320px,calc(100vw-104px))] sm:right-6 sm:w-[320px]"
-                                                                    onDismiss={() => setLiveCoach(null)}
+                                                                    step={1}
+                                                                    icon={<ShieldCheck className="h-[18px] w-[18px]" />}
+                                                                    title="Set up the exam room"
+                                                                    body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
+                                                                    placement="beside"
+                                                                    onDismiss={() => setLiveCoach({ testId: test.id, step: 'share' })}
                                                                 />
                                                             )}
                                                         </div>
+                                                        <button type="button" className={PILL_BTN} onClick={() => setViewingResultsTest(test)}>
+                                                            <BarChart3 className="h-4 w-4 text-sky-600" /> Results
+                                                            {submissionCount > 0 && (
+                                                                <span className="min-w-[20px] rounded-full bg-sky-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
+                                                                    {submissionCount > 99 ? '99+' : submissionCount}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                        {!isProctoringEnabled(test) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setConfiguringTest(test)}
+                                                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100 cursor-pointer"
+                                                            >
+                                                                <AlertTriangle className="h-3.5 w-3.5" /> Anti-cheating is off
+                                                            </button>
+                                                        )}
                                                         <button
                                                             type="button"
-                                                            aria-label="Share link"
-                                                            title="Share link"
-                                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm transition-colors hover:bg-sky-50 hover:text-sky-700 cursor-pointer ${coachStep === 'share' ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5'}`}
-                                                            onClick={() => {
-                                                                handleShare(test);
-                                                                if (coachStep === 'share') setLiveCoach(null);
-                                                            }}
+                                                            onClick={() => setStopExamTarget(test)}
+                                                            className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 lg:hidden cursor-pointer"
                                                         >
-                                                            <Share2 className="h-3.5 w-3.5" />
+                                                            <Square className="h-3 w-3 fill-current" /> Stop exam
                                                         </button>
                                                     </div>
                                                 </div>
-                                                {test.settings?.conduct_exam?.join_code && (
-                                                    <JoinCodeLine code={test.settings.conduct_exam.join_code} />
-                                                )}
 
-                                                <CandidateInputsLine
-                                                    settings={test.settings || {}}
-                                                    onChange={(next, notice) => saveCandidateInputs(test.id, next, notice)}
-                                                    locked={inputsLocked}
-                                                    onLocked={showInputsUpgrade}
-                                                />
-
-                                                {/* Actions */}
-                                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                    <div className="relative">
-                                                        <button
-                                                            type="button"
-                                                            id={test.settings?.is_user_example ? "tour-settings-btn-active" : undefined}
-                                                            className={`${PILL_BTN} ${coachStep === 'settings' ? 'ring-2 ring-sky-500/60' : ''}`}
-                                                            onClick={() => setConfiguringTest(test)}
-                                                        >
-                                                            <Settings className="h-4 w-4 text-sky-600" /> Settings
-                                                        </button>
-                                                        {coachStep === 'settings' && (
-                                                            <LiveExamCoach
-                                                                step={1}
-                                                                icon={<ShieldCheck className="h-[18px] w-[18px]" />}
-                                                                title="Set up the exam room"
-                                                                body="Before candidates join, turn on anti-cheating: full screen, tab-switch alerts and copy-paste block."
-                                                                placement="beside"
-                                                                onDismiss={() => setLiveCoach({ testId: test.id, step: 'share' })}
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <button type="button" className={PILL_BTN} onClick={() => setViewingResultsTest(test)}>
-                                                        <BarChart3 className="h-4 w-4 text-sky-600" /> Results
-                                                        {submissionCount > 0 && (
-                                                            <span className="min-w-[20px] rounded-full bg-sky-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
-                                                                {submissionCount > 99 ? '99+' : submissionCount}
-                                                            </span>
-                                                        )}
-                                                    </button>
-                                                    {!isProctoringEnabled(test) && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setConfiguringTest(test)}
-                                                            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100 cursor-pointer"
-                                                        >
-                                                            <AlertTriangle className="h-3.5 w-3.5" /> Anti-cheating is off
-                                                        </button>
-                                                    )}
+                                                {/* Wide screens: •••, the scan-to-share QR, then Stop exam, down the right edge. */}
+                                                <div className="hidden w-[168px] shrink-0 flex-col items-end lg:flex">
+                                                    {renderExamMenu(test, 'active')}
+                                                    <ShareQrPanel test={test} className="mt-0.5" />
                                                     <button
                                                         type="button"
                                                         onClick={() => setStopExamTarget(test)}
-                                                        className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
+                                                        className="mt-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
                                                     >
                                                         <Square className="h-3 w-3 fill-current" /> Stop exam
                                                     </button>

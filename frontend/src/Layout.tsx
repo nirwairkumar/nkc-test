@@ -127,6 +127,8 @@ export default function Layout() {
         location.pathname === '/join' ||
         location.pathname.startsWith('/join/') ||
         location.pathname.startsWith('/j/') ||
+        // The examiner's phone after scanning a live exam's share QR
+        location.pathname.startsWith('/share-exam/') ||
         /^\/exams\/[^/]+\/(present|report-cards)$/.test(location.pathname) ||
         /^\/batches\/[^/]+\/slips$/.test(location.pathname);
 
