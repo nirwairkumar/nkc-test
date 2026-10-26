@@ -1,258 +1,153 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Award, Crown, Key, Lock, Loader2, ShieldCheck, ChevronRight, Sparkles } from 'lucide-react';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
-import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
+import { Award, ChevronLeft, ChevronRight, Crown, Gift, KeyRound, Pencil } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { roleLabel } from '@/lib/roleLabel';
+import { CARD, IconTile, type Tone } from '@/components/dashboard/dashboardUi';
+import SecuritySettings from '@/components/settings/SecuritySettings';
+import BillingSettings from '@/components/settings/BillingSettings';
+import RewardsSettings from '@/components/settings/RewardsSettings';
+import ReferralsSettings from '@/components/referrals/ReferralsSettings';
 
-type SettingsTab = 'security' | 'billing' | 'rewards';
-const SETTINGS_TABS: SettingsTab[] = ['security', 'billing', 'rewards'];
+/**
+ * /settings — one list of sections, grouped. A computer shows the list on the left and
+ * the open section on the right; a phone shows the list first and each section on its
+ * own screen with a back button, like iOS Settings. ?tab=<id> opens a section directly
+ * (Rewards links back with ?tab=rewards, invite notifications with ?tab=referrals).
+ *
+ * A new section is one entry in SECTIONS plus its component.
+ */
+
+type SectionId = 'security' | 'billing' | 'referrals' | 'rewards';
+
+interface Section {
+    id: SectionId;
+    group: 'account' | 'grow';
+    label: string;
+    hint: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tone: Tone;
+    Body: React.ComponentType;
+}
+
+const GROUPS: { id: Section['group']; label: string }[] = [
+    { id: 'account', label: 'Account' },
+    { id: 'grow', label: 'Grow with TestoZa' },
+];
+
+const SECTIONS: Section[] = [
+    { id: 'security', group: 'account', label: 'Password & security', hint: 'Change your password', icon: KeyRound, tone: 'sky', Body: SecuritySettings },
+    { id: 'billing', group: 'account', label: 'Subscription', hint: 'Your plan and billing', icon: Crown, tone: 'amber', Body: BillingSettings },
+    { id: 'referrals', group: 'grow', label: 'Invite educators', hint: 'Your invite link and who joined', icon: Gift, tone: 'violet', Body: ReferralsSettings },
+    { id: 'rewards', group: 'grow', label: 'Rewards', hint: 'Badges for the exams you run', icon: Award, tone: 'emerald', Body: RewardsSettings },
+];
+
+/** What a computer opens on /settings with no tab. */
+const DEFAULT_SECTION: SectionId = 'security';
 
 export default function SettingsPage() {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const navigate = useNavigate();
-    const { isPremium, loading: premiumLoading } = usePremiumStatus();
-    const [loading, setLoading] = useState(false);
-    // ?tab=rewards opens straight on a tab (the full Rewards page links back here).
     const [searchParams, setSearchParams] = useSearchParams();
-    const tabParam = searchParams.get('tab') as SettingsTab | null;
-    const activeTab: SettingsTab = tabParam && SETTINGS_TABS.includes(tabParam) ? tabParam : 'security';
-    const setActiveTab = (tab: SettingsTab) => setSearchParams(tab === 'security' ? {} : { tab }, { replace: true });
+    const asked = SECTIONS.find(s => s.id === searchParams.get('tab'));
+    const active = asked || SECTIONS.find(s => s.id === DEFAULT_SECTION)!;
 
-    // Creator rewards (moved here from the sidebar) — fetched only once the tab is opened.
-    const [rewardsStats, setRewardsStats] = useState<CreatorRewardsStats | null>(null);
-    const [rewardsLoading, setRewardsLoading] = useState(true);
-    const [rewardsRequested, setRewardsRequested] = useState(false);
-
-    useEffect(() => {
-        if (activeTab !== 'rewards' || !user || rewardsRequested) return;
-        setRewardsRequested(true);
-        fetchCreatorRewards(user.id).then(({ data }) => {
-            setRewardsStats(data);
-            setRewardsLoading(false);
-        });
-    }, [activeTab, user, rewardsRequested]);
-
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-
-    const handlePasswordChange = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
-        if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
-
-        setLoading(true);
-        try {
-            const { updatePassword } = await import('@/lib/usersApi');
-            const { error } = await updatePassword(newPassword, currentPassword);
-            if (error) throw error;
-            toast.success("Password updated successfully!");
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-        } catch (error: any) {
-            toast.error("Failed to update password: " + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // From the phone's list: a real step, so Back returns to the list. On a computer: replace.
+    const open = (id: SectionId, push = false) => setSearchParams({ tab: id }, { replace: !push });
 
     if (!user) return null;
 
+    const name = profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Your account';
+    const avatar = profile?.avatar_url || user.user_metadata?.avatar_url;
+    const role = roleLabel(profile?.designation || user.user_metadata?.designation);
+
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            {/* Hero Header */}
-            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
-                <div className="max-w-2xl mx-auto">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Account</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">Settings</p>
+        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-5 sm:px-6 sm:pt-7 lg:px-8">
+            {/* Phone, inside a section: back to the list */}
+            {asked && (
+                <button
+                    type="button"
+                    onClick={() => setSearchParams({}, { replace: true })}
+                    className="-ml-2 mb-2 inline-flex h-9 items-center gap-0.5 rounded-full px-2 text-[15px] font-semibold text-sky-700 transition-colors hover:bg-sky-50 lg:hidden cursor-pointer"
+                >
+                    <ChevronLeft className="h-5 w-5" /> Settings
+                </button>
+            )}
+
+            <div className={asked ? 'hidden lg:block' : ''}>
+                <h1 className="text-[28px] font-bold tracking-[-0.02em] text-slate-900">Settings</h1>
+
+                {/* Who you are, with a way to change it */}
+                <div className={`${CARD} mt-4 flex items-center gap-3.5 px-4 py-3.5 sm:px-5`}>
+                    {avatar ? (
+                        <img src={avatar} alt="" referrerPolicy="no-referrer" className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-slate-900/[0.06]" />
+                    ) : (
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-[16px] font-bold text-white">
+                            {name.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase()).join('')}
+                        </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <p className="flex items-center gap-2 truncate text-[16px] font-semibold text-slate-900">
+                            <span className="truncate">{name}</span>
+                            {role && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">{role}</span>}
+                        </p>
+                        <p className="truncate text-[13px] text-slate-500">{user.email}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/profile')}
+                        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-200/80 cursor-pointer"
+                    >
+                        <Pencil className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Edit profile</span><span className="sm:hidden">Edit</span>
+                    </button>
                 </div>
             </div>
 
-            <div className="px-4 -mt-10 pb-8 max-w-2xl mx-auto space-y-4">
-
-                {/* Tab Selector */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-1 flex gap-1">
-                    <button
-                        onClick={() => setActiveTab('security')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                            activeTab === 'security'
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
-                    >
-                        <Key className="h-3.5 w-3.5" /> Security
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('billing')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                            activeTab === 'billing'
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
-                    >
-                        <Crown className="h-3.5 w-3.5" /> Subscription
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('rewards')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                            activeTab === 'rewards'
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
-                    >
-                        <Award className="h-3.5 w-3.5" /> Rewards
-                    </button>
-                </div>
-
-                {/* Security Tab */}
-                {activeTab === 'security' && (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                            <Lock className="h-4 w-4 text-indigo-500" />
-                            <div>
-                                <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">Change Password</p>
-                                <p className="text-xs text-slate-400 mt-0.5">Keep your account secure with a strong password.</p>
-                            </div>
+            <div className="mt-6 grid gap-6 lg:grid-cols-[264px_minmax(0,1fr)] lg:items-start">
+                {/* The list: always on a computer, on a phone only until a section is open */}
+                <nav aria-label="Settings" className={`space-y-5 lg:sticky lg:top-20 ${asked ? 'hidden lg:block' : ''}`}>
+                    {GROUPS.map(g => (
+                        <div key={g.id}>
+                            <p className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400">{g.label}</p>
+                            <ul className={`${CARD} divide-y divide-slate-100 overflow-hidden`}>
+                                {SECTIONS.filter(s => s.group === g.id).map(s => {
+                                    const on = s.id === active.id;
+                                    return (
+                                        <li key={s.id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => open(s.id, !asked)}
+                                                aria-current={on ? 'page' : undefined}
+                                                className={`flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500/50 cursor-pointer ${on ? 'lg:bg-sky-50/80' : 'hover:bg-slate-50'}`}
+                                            >
+                                                <IconTile icon={s.icon} tone={s.tone} size="sm" />
+                                                <span className="min-w-0 flex-1">
+                                                    <span className={`block truncate text-[14.5px] font-semibold ${on ? 'lg:text-sky-800' : ''} text-slate-900`}>{s.label}</span>
+                                                    <span className="block truncate text-[12px] text-slate-500">{s.hint}</span>
+                                                </span>
+                                                <ChevronRight className={`h-4 w-4 shrink-0 ${on ? 'lg:text-sky-600' : ''} text-slate-300`} />
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
-                        <form onSubmit={handlePasswordChange} className="p-4 space-y-4">
-                            {/* M5: re-authentication — a stolen access token alone must not
-                                be enough to change the password and lock the owner out. */}
-                            <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide" htmlFor="current-password">
-                                    Current Password
-                                </Label>
-                                <Input
-                                    id="current-password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    value={currentPassword}
-                                    onChange={e => setCurrentPassword(e.target.value)}
-                                    placeholder="Enter your current password"
-                                    required
-                                    className="h-10 text-sm"
-                                />
-                                <p className="text-[11px] text-slate-400">
-                                    Forgot it? <a href="/login" className="underline">Reset your password by email</a> instead.
-                                </p>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide" htmlFor="new-password">
-                                    New Password
-                                </Label>
-                                <Input
-                                    id="new-password"
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                    placeholder="Enter new password"
-                                    required
-                                    className="h-10 text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide" htmlFor="confirm-password">
-                                    Confirm Password
-                                </Label>
-                                <Input
-                                    id="confirm-password"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
-                                    placeholder="Confirm new password"
-                                    required
-                                    className="h-10 text-sm"
-                                />
-                            </div>
-                            <Button type="submit" disabled={loading} className="w-full h-10 text-sm font-semibold">
-                                {loading
-                                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>
-                                    : <><ShieldCheck className="mr-2 h-4 w-4" />Update Password</>
-                                }
-                            </Button>
-                        </form>
-                    </div>
-                )}
+                    ))}
+                </nav>
 
-                {/* Billing Tab */}
-                {activeTab === 'billing' && (
-                    <div className="space-y-3">
-                        {premiumLoading ? (
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-8 flex justify-center">
-                                <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-                            </div>
-                        ) : isPremium ? (
-                            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                        <Crown className="h-5 w-5 text-white" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-white">Pro Subscription Active</p>
-                                        <p className="text-[11px] text-emerald-100">Full access to all premium features</p>
-                                    </div>
-                                </div>
-                                <Button
-                                    onClick={() => navigate('/pricing')}
-                                    className="w-full bg-white text-emerald-700 hover:bg-emerald-50 font-semibold text-sm h-10"
-                                >
-                                    Manage / Extend Plan <ChevronRight className="ml-1 h-4 w-4" />
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="bg-gradient-to-br from-slate-800 to-indigo-900 rounded-2xl p-5">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                                        <Sparkles className="h-5 w-5 text-indigo-300" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-white">No Active Subscription</p>
-                                        <p className="text-[11px] text-slate-400">Unlock analytics, custom branding & more</p>
-                                    </div>
-                                </div>
-                                <Button
-                                    onClick={() => navigate('/pricing')}
-                                    className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm h-10"
-                                >
-                                    View Plans <ChevronRight className="ml-1 h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Billing support note */}
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 px-4 py-3">
-                            <p className="text-[11px] text-slate-400 text-center">
-                                For billing support or refunds, contact{' '}
-                                <a href="mailto:support@testoza.com" className="text-indigo-500 font-semibold hover:underline">
-                                    support@testoza.com
-                                </a>
-                            </p>
+                {/* The open section: on a phone only once one is picked */}
+                <section className={`min-w-0 ${asked ? '' : 'hidden lg:block'}`} aria-labelledby="settings-section-title">
+                    <div className="mb-3.5 flex items-center gap-3">
+                        <IconTile icon={active.icon} tone={active.tone} />
+                        <div className="min-w-0">
+                            <h2 id="settings-section-title" className="truncate text-[20px] font-bold tracking-[-0.02em] text-slate-900">{active.label}</h2>
+                            <p className="truncate text-[13px] text-slate-500">{active.hint}</p>
                         </div>
                     </div>
-                )}
-
-                {/* Rewards Tab — goal card opens the full badges page (/rewards) */}
-                {activeTab === 'rewards' && (
-                    <div className="space-y-3">
-                        <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} />
-                        <button
-                            type="button"
-                            onClick={() => navigate('/rewards')}
-                            className="w-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors cursor-pointer"
-                        >
-                            <span className="flex items-center gap-2">
-                                <Award className="h-4 w-4 text-amber-500" /> All badges & conducted tests
-                            </span>
-                            <ChevronRight className="h-4 w-4 text-slate-400" />
-                        </button>
+                    <div className="max-w-3xl">
+                        <active.Body />
                     </div>
-                )}
+                </section>
             </div>
         </div>
     );

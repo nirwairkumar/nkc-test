@@ -1,0 +1,191 @@
+[
+ {
+  "w": "आपका",
+  "r": "aapakaa",
+  "start": 0.06,
+  "end": 0.38,
+  "score": 0.986
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.441,
+  "end": 0.781,
+  "score": 0.372
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.841,
+  "end": 1.101,
+  "score": 0.599
+ },
+ {
+  "w": "PDF",
+  "r": "pdf",
+  "start": 1.201,
+  "end": 1.562,
+  "score": 0.667
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 1.642,
+  "end": 1.742,
+  "score": 0.989
+ },
+ {
+  "w": "है,",
+  "r": "hai",
+  "start": 1.782,
+  "end": 1.902,
+  "score": 0.965
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 2.123,
+  "end": 2.243,
+  "score": 0.902
+ },
+ {
+  "w": "बस",
+  "r": "bas",
+  "start": 2.243,
+  "end": 2.383,
+  "score": 0.99
+ },
+ {
+  "w": "फ़ोटो?",
+  "r": "fotto",
+  "start": 2.443,
+  "end": 2.703,
+  "score": 0.798
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 3.344,
+  "end": 3.765,
+  "score": 0.401
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 3.805,
+  "end": 3.965,
+  "score": 0.22
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 4.125,
+  "end": 4.245,
+  "score": 0.948
+ },
+ {
+  "w": "खोलिए,",
+  "r": "kholie",
+  "start": 4.305,
+  "end": 4.646,
+  "score": 0.977
+ },
+ {
+  "w": "फ़ाइल",
+  "r": "faail",
+  "start": 5.046,
+  "end": 5.307,
+  "score": 0.759
+ },
+ {
+  "w": "चुनिए",
+  "r": "cunie",
+  "start": 5.367,
+  "end": 5.647,
+  "score": 0.992
+ },
+ {
+  "w": "तीन",
+  "r": "tiin",
+  "start": 6.068,
+  "end": 6.268,
+  "score": 0.986
+ },
+ {
+  "w": "पेज",
+  "r": "pej",
+  "start": 6.348,
+  "end": 6.528,
+  "score": 0.926
+ },
+ {
+  "w": "की",
+  "r": "kii",
+  "start": 6.588,
+  "end": 6.708,
+  "score": 0.991
+ },
+ {
+  "w": "PDF,",
+  "r": "pdf",
+  "start": 6.748,
+  "end": 7.049,
+  "score": 0.667
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 7.189,
+  "end": 7.509,
+  "score": 0.514
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 7.569,
+  "end": 7.69,
+  "score": 0.332
+ },
+ {
+  "w": "के",
+  "r": "ke",
+  "start": 7.73,
+  "end": 7.79,
+  "score": 0.992
+ },
+ {
+  "w": "साथ",
+  "r": "saath",
+  "start": 7.87,
+  "end": 8.11,
+  "score": 0.98
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 8.25,
+  "end": 8.35,
+  "score": 0.997
+ },
+ {
+  "w": "Extract",
+  "r": "extract",
+  "start": 8.39,
+  "end": 8.791,
+  "score": 0.631
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 8.811,
+  "end": 9.191,
+  "score": 0.418
+ },
+ {
+  "w": "दबाइए।",
+  "r": "dabaaie",
+  "start": 9.232,
+  "end": 9.552,
+  "score": 0.906
+ }
+]

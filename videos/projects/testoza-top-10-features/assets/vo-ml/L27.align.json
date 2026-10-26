@@ -1,0 +1,44 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.081,
+  "end": 0.424,
+  "score": 0.615
+ },
+ {
+  "w": "nine:",
+  "r": "nine",
+  "start": 0.787,
+  "end": 1.614,
+  "score": 0.259
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.714,
+  "end": 1.936,
+  "score": 0.479
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 2.017,
+  "end": 2.299,
+  "score": 0.54
+ },
+ {
+  "w": "ആയി",
+  "r": "aayi",
+  "start": 2.319,
+  "end": 2.42,
+  "score": 0.461
+ },
+ {
+  "w": "കാണൂ.",
+  "r": "kaannuu",
+  "start": 2.44,
+  "end": 2.723,
+  "score": 0.364
+ }
+]

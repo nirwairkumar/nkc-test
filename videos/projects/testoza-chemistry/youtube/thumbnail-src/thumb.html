@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- YouTube thumbnail (1280×720) for the chemistry tutorial (English). Real UI crops from capture/rec
+     (reactions = take b @ 65.6 s, table = c @ 58.5 s, keys = b @ 19.8 s). Render: node shot.mjs -->
+<style>
+@font-face{font-family:Outfit;font-weight:800;src:url(../../assets/fonts/Outfit-800.woff2)}
+@font-face{font-family:Outfit;font-weight:900;src:url(../../assets/fonts/Outfit-900.woff2)}
+*{margin:0;box-sizing:border-box}
+body{width:1280px;height:720px;overflow:hidden;background:#0a1430;font-family:Outfit,sans-serif}
+.stage{position:relative;width:1280px;height:720px;overflow:hidden;
+  background:radial-gradient(720px 520px at 16% 26%,#16306a 0%,rgba(10,20,48,0) 70%),
+             radial-gradient(640px 560px at 86% 60%,rgba(20,184,166,.32) 0%,rgba(10,20,48,0) 65%),#0a1430}
+.grid{position:absolute;inset:0;opacity:.07;
+  background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%);mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%)}
+.copy{position:absolute;left:56px;top:40px}
+.kicker{display:inline-block;background:#22d3ee;color:#06203a;font-weight:800;font-size:30px;padding:6px 18px;border-radius:10px;letter-spacing:.5px}
+h1{color:#fff;font-weight:900;font-size:124px;line-height:.98;margin-top:16px;letter-spacing:-2px;text-shadow:0 6px 24px rgba(0,0,0,.45);white-space:nowrap}
+h1 em{font-style:normal;color:#facc15;display:block;font-size:88px;letter-spacing:-1px}
+.card{position:absolute;background:#f8fafb;border-radius:18px;overflow:hidden;box-shadow:0 0 0 5px #fff,0 26px 60px rgba(0,0,0,.6)}
+.card img{display:block}
+/* Hero: three reactions with conditions on the arrows, as the builder renders them. */
+.rx{left:40px;top:376px;padding:20px 26px;transform:rotate(-2deg);
+  box-shadow:0 0 0 6px #f97316,0 0 80px 14px rgba(249,115,22,.35),0 26px 60px rgba(0,0,0,.6)}
+.rx img{width:790px}
+/* Match List table with formulas in every cell. */
+.tb{left:912px;top:300px;padding:12px 16px;transform:rotate(4deg)}
+.tb img{width:300px}
+/* Sy Pad chemistry keys, with the pointer on Formula. */
+.keys{left:556px;top:552px;padding:8px;border-radius:16px;transform:rotate(3deg);background:#e6e6ed;
+  box-shadow:0 0 0 5px #22d3ee,0 22px 50px rgba(0,0,0,.6)}
+.keys img{width:360px;border-radius:10px}
+.ptr{position:absolute;left:54px;top:56px;width:46px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.tag{position:absolute;color:#fff;font-weight:800;font-size:30px;padding:5px 16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.45);white-space:nowrap}
+.t1{left:56px;top:338px;background:#f97316;transform:rotate(-3deg)}
+.t2{left:958px;top:262px;background:#7c3aed;transform:rotate(4deg)}
+.t3{left:62px;top:628px;background:#facc15;color:#1a1300;font-weight:900;font-size:34px;transform:rotate(-2deg)}
+.logo{position:absolute;right:44px;top:40px;height:58px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+  <img class="logo" src="../../assets/img/wordmark.png" alt="">
+  <div class="copy">
+    <span class="kicker">FOR CHEMISTRY TEACHERS</span>
+    <h1>Type ANY <em>Chemistry Equation</em></h1>
+  </div>
+  <div class="card tb"><img src="table.png" alt=""></div>
+  <div class="tag t2">MATCH LIST</div>
+  <div class="card rx"><img src="reactions.png" alt=""></div>
+  <div class="tag t1">CONDITIONS ON THE ARROW</div>
+  <div class="card keys"><img src="keys.png" alt="">
+    <svg class="ptr" viewBox="0 0 24 24"><path d="M4 2l15 11.5-6.6.9 3.9 7.4-3 1.5-3.8-7.5L4 20.4z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="tag t3">REAL JEE 2026 QUESTIONS</div>
+</div></body></html>

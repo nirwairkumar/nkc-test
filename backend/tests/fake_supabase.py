@@ -39,6 +39,9 @@ DEFAULTS: Dict[str, Callable[[], Dict[str, Any]]] = {
     "user_tests": lambda: {"created_at": _now(), "session_id": None, "participant_id": None, "violation_count": 0},
     "test_registrations": lambda: {"started_at": _now(), "last_active_at": None, "metadata": None},
     "classes": lambda: {"created_at": _now()},
+    "referral_codes": lambda: {"created_at": _now()},
+    "referral_visits": lambda: {"created_at": _now()},
+    "referrals": lambda: {"created_at": _now()},
 }
 
 # (table, constraint name, columns, condition on the row)
@@ -48,6 +51,11 @@ UNIQUES = [
     ("session_participants", "session_participants_token_uidx", ("device_token_hash",), lambda r: r.get("device_token_hash") is not None),
     ("user_tests", "user_tests_one_per_participant", ("participant_id",), lambda r: r.get("participant_id") is not None),
     ("roster_students", "roster_students_roll_unique", ("class_id", "roll_key"), lambda r: True),
+    # 20261026120000_referrals.sql
+    ("referral_codes", "referral_codes_pkey", ("user_id",), lambda r: True),
+    ("referral_codes", "referral_codes_code_key", ("code",), lambda r: True),
+    ("referral_visits", "referral_visits_pkey", ("referrer_id", "visitor_id"), lambda r: True),
+    ("referrals", "referrals_referred_id_key", ("referred_id",), lambda r: True),
 ]
 
 
@@ -207,7 +215,12 @@ class FakeAuthAdmin:
 
     def get_user_by_id(self, user_id: str):
         user = self.db.auth_users.get(user_id)
-        return SimpleNamespace(user=SimpleNamespace(id=user_id, user_metadata=user.get("user_metadata", {})) if user else None)
+        if not user:
+            return SimpleNamespace(user=None)
+        return SimpleNamespace(user=SimpleNamespace(
+            id=user_id, user_metadata=user.get("user_metadata", {}),
+            email=user.get("email"), created_at=user.get("created_at"),
+        ))
 
     def create_user(self, attrs: Dict[str, Any]):
         self.db.auth_users[attrs["id"]] = attrs
@@ -240,15 +253,23 @@ class FakeSupabase:
         self.tokens: Dict[str, str] = {}
         self.auth_users: Dict[str, Dict[str, Any]] = {}
         self.auth = FakeAuth(self)
+        # Postgres functions a test stands in for: name -> fn(db, params) -> rows
+        self.rpcs: Dict[str, Callable[["FakeSupabase", Dict[str, Any]], Any]] = {}
 
     def table(self, name: str) -> Query:
         return Query(self, name)
+
+    def rpc(self, name: str, params: Optional[Dict[str, Any]] = None):
+        fn = self.rpcs.get(name)
+        if fn is None:
+            raise Exception(f"function public.{name} does not exist")
+        return SimpleNamespace(execute=lambda: SimpleNamespace(data=fn(self, params or {}), count=None))
 
     def add_user(self, token: str, user_id: Optional[str] = None, email: Optional[str] = None) -> str:
         user_id = user_id or str(uuid.uuid4())
         email = email or f"{user_id[:6]}@example.com"
         self.tokens[token] = user_id
-        self.auth_users[user_id] = {"id": user_id, "email": email}
+        self.auth_users[user_id] = {"id": user_id, "email": email, "created_at": _now()}
         self.tables.setdefault("profiles", []).append({"id": user_id, "email": email})
         return user_id
 

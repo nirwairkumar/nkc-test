@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.262,
+  "score": 0.323
+ },
+ {
+  "w": "seven:",
+  "r": "seven",
+  "start": 0.323,
+  "end": 0.625,
+  "score": 0.37
+ },
+ {
+  "w": "தேவையான",
+  "r": "teevaiyaana",
+  "start": 1.069,
+  "end": 1.553,
+  "score": 0.909
+ },
+ {
+  "w": "details-ஐ",
+  "r": "detailsai",
+  "start": 1.654,
+  "end": 2.097,
+  "score": 0.41
+ },
+ {
+  "w": "வாங்குங்க.",
+  "r": "vaangkungka",
+  "start": 2.097,
+  "end": 2.501,
+  "score": 0.851
+ }
+]

@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.101,
+  "end": 0.443,
+  "score": 0.809
+ },
+ {
+  "w": "one:",
+  "r": "one",
+  "start": 0.604,
+  "end": 0.806,
+  "score": 0.499
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 1.269,
+  "end": 1.712,
+  "score": 0.986
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 1.732,
+  "end": 1.873,
+  "score": 0.973
+ },
+ {
+  "w": "AI.",
+  "r": "ai",
+  "start": 2.095,
+  "end": 2.417,
+  "score": 0.849
+ }
+]

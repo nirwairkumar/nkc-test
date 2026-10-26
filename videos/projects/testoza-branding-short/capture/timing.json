@@ -1,0 +1,146 @@
+{
+  "total": 47.72,
+  "voice": [
+    {
+      "id": "L01",
+      "start": 0.25,
+      "end": 5.54
+    },
+    {
+      "id": "L02",
+      "start": 6.53,
+      "end": 9.11
+    },
+    {
+      "id": "L03",
+      "start": 9.29,
+      "end": 15.01
+    },
+    {
+      "id": "L04",
+      "start": 15.19,
+      "end": 20.91
+    },
+    {
+      "id": "L05",
+      "start": 21.83,
+      "end": 26.46
+    },
+    {
+      "id": "L06",
+      "start": 27.19,
+      "end": 33.33
+    },
+    {
+      "id": "L07",
+      "start": 34.63,
+      "end": 40.53
+    },
+    {
+      "id": "L08",
+      "start": 41.17,
+      "end": 45.32
+    }
+  ],
+  "cues": {
+    "L01": {
+      "hook": 0.25,
+      "how": 3.61
+    },
+    "L02": {
+      "title": 6.53,
+      "branding": 7.33
+    },
+    "L03": {
+      "logo": 9.29,
+      "name": 10.33,
+      "color": 11.77,
+      "font": 12.65,
+      "branded": 13.53
+    },
+    "L04": {
+      "q1": 15.19,
+      "right1": 16.47,
+      "add3": 18.39,
+      "save": 20.07
+    },
+    "L05": {
+      "conduct": 21.83,
+      "start": 23.19,
+      "copy": 23.91,
+      "code": 24.71
+    },
+    "L06": {
+      "dopen": 27.19,
+      "cname": 28.55,
+      "dgo": 29.59,
+      "dbrand": 30.15
+    },
+    "L07": {
+      "typecode": 34.63,
+      "pgo": 36.11,
+      "pbrand": 37.03,
+      "ans1": 38.79
+    },
+    "L08": {
+      "endcard": 41.17,
+      "endurl": 43.09
+    }
+  },
+  "sections": [
+    {
+      "kind": "hook",
+      "lines": [
+        "L01"
+      ],
+      "start": 0,
+      "end": 5.89
+    },
+    {
+      "kind": "take",
+      "take": "build",
+      "lines": [
+        "L02",
+        "L03",
+        "L04"
+      ],
+      "start": 5.89,
+      "end": 21.22
+    },
+    {
+      "kind": "take",
+      "take": "conduct",
+      "lines": [
+        "L05"
+      ],
+      "start": 21.22,
+      "end": 26.76
+    },
+    {
+      "kind": "take",
+      "take": "desk",
+      "lines": [
+        "L06"
+      ],
+      "start": 26.76,
+      "end": 33.62
+    },
+    {
+      "kind": "take",
+      "take": "phone",
+      "lines": [
+        "L07"
+      ],
+      "start": 33.62,
+      "end": 40.82
+    },
+    {
+      "kind": "end",
+      "lines": [
+        "L08"
+      ],
+      "start": 40.82,
+      "end": 47.72
+    }
+  ]
+}

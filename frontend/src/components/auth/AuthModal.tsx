@@ -12,8 +12,9 @@ import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signUpWithEmail, signInWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { toast } from 'sonner';
-import { Lock, Mail, User, Loader2, Sparkles, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, User, Loader2, Sparkles, ArrowRight, ShieldCheck, ArrowLeft, Gift } from 'lucide-react';
 import { updateProfile } from '@/lib/usersApi';
+import { pendingReferral } from '@/lib/referral';
 
 const authFormSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address." }),
@@ -30,6 +31,7 @@ export default function AuthModal() {
     const [onboardingName, setOnboardingName] = useState('');
     const [onboardingDesignation, setOnboardingDesignation] = useState<'Teacher' | 'Institution' | 'Other' | undefined>(undefined);
     const [isOnboardingSaving, setIsOnboardingSaving] = useState(false);
+    const invite = isAuthModalOpen && !user ? pendingReferral() : null;
 
     const form = useForm<z.infer<typeof authFormSchema>>({
         resolver: zodResolver(authFormSchema),
@@ -223,6 +225,14 @@ export default function AuthModal() {
                             {authModalView === 'forgot' && 'Enter your registered email to receive a recovery link.'}
                             {authModalView === 'onboarding' && 'Tell us your role so we can personalize your experience.'}
                         </DialogDescription>
+                        {/* Came from someone's invite link (pages/InvitePage): show it's been kept. */}
+                        {authModalView === 'signup' && invite && (
+                            <div className="flex justify-center pt-1">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-[12px] font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
+                                    <Gift className="h-3.5 w-3.5" /> Invited by {invite.name || 'a colleague'}
+                                </span>
+                            </div>
+                        )}
                     </DialogHeader>
 
                     {/* View Switcher Tabs (Login / Signup) */}

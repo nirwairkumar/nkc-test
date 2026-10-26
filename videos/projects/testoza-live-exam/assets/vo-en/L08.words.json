@@ -1,0 +1,338 @@
+[
+  {
+    "id": "w0",
+    "text": "Now",
+    "start": 0.24,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "decide",
+    "start": 0.8,
+    "end": 1.36
+  },
+  {
+    "id": "w2",
+    "text": "what",
+    "start": 1.36,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "happens",
+    "start": 1.6,
+    "end": 2
+  },
+  {
+    "id": "w4",
+    "text": "when",
+    "start": 2,
+    "end": 2.24
+  },
+  {
+    "id": "w5",
+    "text": "they",
+    "start": 2.24,
+    "end": 2.48
+  },
+  {
+    "id": "w6",
+    "text": "do.",
+    "start": 2.48,
+    "end": 3.04
+  },
+  {
+    "id": "w7",
+    "text": "Warn",
+    "start": 3.04,
+    "end": 3.6
+  },
+  {
+    "id": "w8",
+    "text": "only,",
+    "start": 3.6,
+    "end": 4.16
+  },
+  {
+    "id": "w9",
+    "text": "fine",
+    "start": 4.16,
+    "end": 4.64
+  },
+  {
+    "id": "w10",
+    "text": "for",
+    "start": 4.72,
+    "end": 4.88
+  },
+  {
+    "id": "w11",
+    "text": "a",
+    "start": 4.88,
+    "end": 4.96
+  },
+  {
+    "id": "w12",
+    "text": "practice",
+    "start": 4.96,
+    "end": 5.44
+  },
+  {
+    "id": "w13",
+    "text": "test.",
+    "start": 5.44,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "Strict,",
+    "start": 6.08,
+    "end": 6.96
+  },
+  {
+    "id": "w15",
+    "text": "the",
+    "start": 6.96,
+    "end": 7.2
+  },
+  {
+    "id": "w16",
+    "text": "test",
+    "start": 7.2,
+    "end": 7.52
+  },
+  {
+    "id": "w17",
+    "text": "submits",
+    "start": 7.6,
+    "end": 8.08
+  },
+  {
+    "id": "w18",
+    "text": "on",
+    "start": 8.08,
+    "end": 8.24
+  },
+  {
+    "id": "w19",
+    "text": "the",
+    "start": 8.24,
+    "end": 8.4
+  },
+  {
+    "id": "w20",
+    "text": "very",
+    "start": 8.4,
+    "end": 8.64
+  },
+  {
+    "id": "w21",
+    "text": "first",
+    "start": 8.64,
+    "end": 8.96
+  },
+  {
+    "id": "w22",
+    "text": "switch.",
+    "start": 8.96,
+    "end": 9.68
+  },
+  {
+    "id": "w23",
+    "text": "Or",
+    "start": 9.68,
+    "end": 9.84
+  },
+  {
+    "id": "w24",
+    "text": "my",
+    "start": 10,
+    "end": 10.32
+  },
+  {
+    "id": "w25",
+    "text": "favorite.",
+    "start": 10.32,
+    "end": 11.2
+  },
+  {
+    "id": "w26",
+    "text": "Give",
+    "start": 11.2,
+    "end": 11.44
+  },
+  {
+    "id": "w27",
+    "text": "a",
+    "start": 11.44,
+    "end": 11.52
+  },
+  {
+    "id": "w28",
+    "text": "few",
+    "start": 11.52,
+    "end": 11.84
+  },
+  {
+    "id": "w29",
+    "text": "warnings,",
+    "start": 11.84,
+    "end": 12.64
+  },
+  {
+    "id": "w30",
+    "text": "then",
+    "start": 12.64,
+    "end": 12.8
+  },
+  {
+    "id": "w31",
+    "text": "submit.",
+    "start": 12.96,
+    "end": 13.76
+  },
+  {
+    "id": "w32",
+    "text": "Three",
+    "start": 13.76,
+    "end": 14.16
+  },
+  {
+    "id": "w33",
+    "text": "is",
+    "start": 14.16,
+    "end": 14.32
+  },
+  {
+    "id": "w34",
+    "text": "fair.",
+    "start": 14.32,
+    "end": 14.96
+  },
+  {
+    "id": "w35",
+    "text": "One",
+    "start": 14.96,
+    "end": 15.28
+  },
+  {
+    "id": "w36",
+    "text": "notification",
+    "start": 15.28,
+    "end": 15.92
+  },
+  {
+    "id": "w37",
+    "text": "can",
+    "start": 15.92,
+    "end": 16.16
+  },
+  {
+    "id": "w38",
+    "text": "pop",
+    "start": 16.16,
+    "end": 16.4
+  },
+  {
+    "id": "w39",
+    "text": "up",
+    "start": 16.4,
+    "end": 16.56
+  },
+  {
+    "id": "w40",
+    "text": "by",
+    "start": 16.56,
+    "end": 16.72
+  },
+  {
+    "id": "w41",
+    "text": "accident.",
+    "start": 16.72,
+    "end": 17.6
+  },
+  {
+    "id": "w42",
+    "text": "Three",
+    "start": 17.6,
+    "end": 17.92
+  },
+  {
+    "id": "w43",
+    "text": "times",
+    "start": 17.92,
+    "end": 18.32
+  },
+  {
+    "id": "w44",
+    "text": "is",
+    "start": 18.32,
+    "end": 18.48
+  },
+  {
+    "id": "w45",
+    "text": "a",
+    "start": 18.48,
+    "end": 18.56
+  },
+  {
+    "id": "w46",
+    "text": "habit",
+    "start": 18.56,
+    "end": 18.96
+  },
+  {
+    "id": "w47",
+    "text": "and",
+    "start": 19.12,
+    "end": 19.36
+  },
+  {
+    "id": "w48",
+    "text": "full",
+    "start": 19.36,
+    "end": 19.6
+  },
+  {
+    "id": "w49",
+    "text": "screen",
+    "start": 19.68,
+    "end": 20
+  },
+  {
+    "id": "w50",
+    "text": "exits",
+    "start": 20,
+    "end": 20.48
+  },
+  {
+    "id": "w51",
+    "text": "count",
+    "start": 20.48,
+    "end": 20.8
+  },
+  {
+    "id": "w52",
+    "text": "towards",
+    "start": 20.8,
+    "end": 21.2
+  },
+  {
+    "id": "w53",
+    "text": "the",
+    "start": 21.2,
+    "end": 21.28
+  },
+  {
+    "id": "w54",
+    "text": "same",
+    "start": 21.28,
+    "end": 21.52
+  },
+  {
+    "id": "w55",
+    "text": "limit.",
+    "start": 21.52,
+    "end": 21.92
+  }
+]

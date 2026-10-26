@@ -1,0 +1,86 @@
+[
+ {
+  "w": "ಅವಳ",
+  "r": "avalla",
+  "start": 0.0,
+  "end": 0.221,
+  "score": 0.959
+ },
+ {
+  "w": "score",
+  "r": "score",
+  "start": 0.281,
+  "end": 0.562,
+  "score": 0.598
+ },
+ {
+  "w": "ತಕ್ಷಣ",
+  "r": "takssanna",
+  "start": 0.602,
+  "end": 0.944,
+  "score": 0.92
+ },
+ {
+  "w": "ಕಾಣಿಸುತ್ತೆ",
+  "r": "kaannisutte",
+  "start": 0.984,
+  "end": 1.466,
+  "score": 0.987
+ },
+ {
+  "w": "ಎಪ್ಪತ್ತೈದು",
+  "r": "eppattaidu",
+  "start": 1.827,
+  "end": 2.289,
+  "score": 0.042
+ },
+ {
+  "w": "percent",
+  "r": "percent",
+  "start": 2.329,
+  "end": 2.65,
+  "score": 0.335
+ },
+ {
+  "w": "ನೀವು",
+  "r": "niivu",
+  "start": 2.831,
+  "end": 3.031,
+  "score": 0.986
+ },
+ {
+  "w": "allow",
+  "r": "allow",
+  "start": 3.132,
+  "end": 3.333,
+  "score": 0.467
+ },
+ {
+  "w": "ಮಾಡಿದರೆ,",
+  "r": "maaddidare",
+  "start": 3.393,
+  "end": 3.754,
+  "score": 0.993
+ },
+ {
+  "w": "solution",
+  "r": "solution",
+  "start": 4.035,
+  "end": 4.437,
+  "score": 0.592
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 4.477,
+  "end": 4.597,
+  "score": 0.337
+ },
+ {
+  "w": "ಜೊತೆ.",
+  "r": "jote",
+  "start": 4.617,
+  "end": 4.838,
+  "score": 0.884
+ }
+]

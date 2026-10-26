@@ -1,0 +1,21 @@
+{
+  "lang": "hi",
+  "voice": "Zephyr",
+  "out_dir": "assets/voice-hi",
+  "style": "You are a bright, friendly young Indian woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak natural Hinglish the way young urban Indians do: smooth, clear, warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy. English words stay English. Say Testoza as 'test-OH-za'.",
+  "lines": [
+    { "id": "e01", "text": "JEE, NEET, SSC, Banking... हर aspirant के पास DPPs का ढेर होता है।" },
+    { "id": "e02", "text": "पर paper पर, पीछे घड़ी रखकर? वो असली exam नहीं है।" },
+    { "id": "e03", "text": "तो Testoza खोलिए। PDF है? वो भी चलेगा। पर सबसे आसान... बस अपने DPP के pages की photo लीजिए।" },
+    { "id": "e04", "text": "फिर answer key की photo... और यहाँ डाल दीजिए।" },
+    { "id": "e05", "text": "Marking set कीजिए, plus four, minus one... और Extract दबाइए।" },
+    { "id": "e06", "text": "अब AI हर सवाल पढ़ता है... और आपकी key से हर सही answer लगा देता है।" },
+    { "id": "e07", "text": "बारह सवाल, सिर्फ़ बत्तीस सेकंड में तैयार!" },
+    { "id": "e08", "text": "एक नज़र डालिए, save कीजिए... और test आपके My Tests में।" },
+    { "id": "e09", "text": "Preview दबाइए, और start." },
+    { "id": "e10", "text": "अब घड़ी असली है। जवाब चुनिए, आगे बढ़िए, वापस आइए... बिल्कुल exam वाले दिन जैसा।" },
+    { "id": "e11", "text": "Submit..." },
+    { "id": "e12", "text": "और result तुरंत। आपका score, क्या गलत हुआ, और time कहाँ गया।" },
+    { "id": "e13", "text": "आज का DPP... आज ही online test. Testoza dot com." }
+  ]
+}

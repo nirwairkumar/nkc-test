@@ -1,0 +1,261 @@
+{
+  "lines": [
+    {
+      "id": "L01",
+      "tempo": 1,
+      "start": 0.15,
+      "end": 5.19,
+      "pauses": [
+        0.18
+      ]
+    },
+    {
+      "id": "L02",
+      "tempo": 1.06,
+      "start": 6.28,
+      "end": 9.24,
+      "pauses": []
+    },
+    {
+      "id": "L03",
+      "tempo": 1.15,
+      "start": 9.46,
+      "end": 14.89,
+      "pauses": []
+    },
+    {
+      "id": "L04",
+      "tempo": 1.09,
+      "start": 15.11,
+      "end": 21.3,
+      "pauses": [
+        0.4
+      ]
+    },
+    {
+      "id": "L05",
+      "tempo": 1,
+      "start": 21.63,
+      "end": 26.72,
+      "pauses": [
+        0.32,
+        0.39
+      ]
+    },
+    {
+      "id": "L06",
+      "tempo": 1,
+      "start": 27.11,
+      "end": 32.58,
+      "pauses": []
+    },
+    {
+      "id": "L07",
+      "tempo": 1,
+      "start": 33.99,
+      "end": 40.15,
+      "pauses": [
+        0.34,
+        0.32
+      ]
+    },
+    {
+      "id": "L08",
+      "tempo": 1,
+      "start": 41.21,
+      "end": 45.69,
+      "pauses": []
+    }
+  ],
+  "cues": [
+    {
+      "line": "L01",
+      "cue": "hook",
+      "action": 0,
+      "word": 0.21,
+      "lag": 0.21
+    },
+    {
+      "line": "L01",
+      "cue": "how",
+      "action": 3.49,
+      "word": 3.59,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "title",
+      "action": 6.2,
+      "word": 6.3,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "branding",
+      "action": 7.21,
+      "word": 7.51,
+      "lag": 0.3
+    },
+    {
+      "line": "L03",
+      "cue": "logo",
+      "action": 9.17,
+      "word": 9.53,
+      "lag": 0.36
+    },
+    {
+      "line": "L03",
+      "cue": "name",
+      "action": 9.78,
+      "word": 10.5,
+      "lag": 0.72
+    },
+    {
+      "line": "L03",
+      "cue": "color",
+      "action": 11.65,
+      "word": 12.17,
+      "lag": 0.52
+    },
+    {
+      "line": "L03",
+      "cue": "font",
+      "action": 12.53,
+      "word": 12.78,
+      "lag": 0.25
+    },
+    {
+      "line": "L03",
+      "cue": "branded",
+      "action": 13.41,
+      "word": 13.81,
+      "lag": 0.4
+    },
+    {
+      "line": "L04",
+      "cue": "q1",
+      "action": 14.39,
+      "word": 15.13,
+      "lag": 0.74
+    },
+    {
+      "line": "L04",
+      "cue": "right1",
+      "action": 15.64,
+      "word": 16.38,
+      "lag": 0.74
+    },
+    {
+      "line": "L04",
+      "cue": "add3",
+      "action": 17.82,
+      "word": 18.88,
+      "lag": 1.06
+    },
+    {
+      "line": "L04",
+      "cue": "save",
+      "action": 19.95,
+      "word": 20.05,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "conduct",
+      "action": 21.53,
+      "word": 21.63,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "start",
+      "action": 22.12,
+      "word": 22.37,
+      "lag": 0.25
+    },
+    {
+      "line": "L05",
+      "cue": "copy",
+      "action": 23.22,
+      "word": 23.32,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "code",
+      "action": 24.59,
+      "word": 24.69,
+      "lag": 0.1
+    },
+    {
+      "line": "L06",
+      "cue": "dopen",
+      "action": 27.07,
+      "word": 27.17,
+      "lag": 0.1
+    },
+    {
+      "line": "L06",
+      "cue": "cname",
+      "action": 28.24,
+      "word": 28.69,
+      "lag": 0.45
+    },
+    {
+      "line": "L06",
+      "cue": "dgo",
+      "action": 28.91,
+      "word": 29.76,
+      "lag": 0.85
+    },
+    {
+      "line": "L06",
+      "cue": "dbrand",
+      "action": 30.03,
+      "word": 30.9,
+      "lag": 0.87
+    },
+    {
+      "line": "L07",
+      "cue": "typecode",
+      "action": 33.93,
+      "word": 34.03,
+      "lag": 0.1
+    },
+    {
+      "line": "L07",
+      "cue": "pgo",
+      "action": 35.99,
+      "word": 36.09,
+      "lag": 0.1
+    },
+    {
+      "line": "L07",
+      "cue": "pbrand",
+      "action": 36.91,
+      "word": 37.17,
+      "lag": 0.26
+    },
+    {
+      "line": "L07",
+      "cue": "ans1",
+      "action": 38.67,
+      "word": 38.77,
+      "lag": 0.1
+    },
+    {
+      "line": "L08",
+      "cue": "endcard",
+      "action": 41.17,
+      "word": 41.27,
+      "lag": 0.1
+    },
+    {
+      "line": "L08",
+      "cue": "endurl",
+      "action": 43.09,
+      "word": 43.22,
+      "lag": 0.13
+    }
+  ]
+}

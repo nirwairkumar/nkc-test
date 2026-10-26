@@ -1,0 +1,93 @@
+[
+ {
+  "w": "പിന്നെ",
+  "r": "pinne",
+  "start": 0.0,
+  "end": 0.18,
+  "score": 0.961
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 0.22,
+  "end": 0.601,
+  "score": 0.335
+ },
+ {
+  "w": "exam,",
+  "r": "exam",
+  "start": 0.621,
+  "end": 0.881,
+  "score": 0.725
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 0.921,
+  "end": 1.182,
+  "score": 0.797
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 1.242,
+  "end": 1.542,
+  "score": 0.728
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 1.602,
+  "end": 1.783,
+  "score": 0.672
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 1.823,
+  "end": 2.083,
+  "score": 0.393
+ },
+ {
+  "w": "ചെയ്യൂ",
+  "r": "ceyyuu",
+  "start": 2.163,
+  "end": 2.444,
+  "score": 0.722
+ },
+ {
+  "w": "അല്ലെങ്കിൽ",
+  "r": "allengkila",
+  "start": 2.464,
+  "end": 2.804,
+  "score": 0.632
+ },
+ {
+  "w": "ആറക്ക",
+  "r": "aarrakka",
+  "start": 2.844,
+  "end": 3.185,
+  "score": 0.7
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 3.245,
+  "end": 3.525,
+  "score": 0.703
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 3.565,
+  "end": 3.745,
+  "score": 0.495
+ },
+ {
+  "w": "അയയ്ക്കൂ.",
+  "r": "ayaykkuu",
+  "start": 3.765,
+  "end": 4.086,
+  "score": 0.515
+ }
+]

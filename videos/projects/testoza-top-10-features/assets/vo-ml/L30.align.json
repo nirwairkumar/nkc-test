@@ -1,0 +1,79 @@
+[
+ {
+  "w": "അവളുടെ",
+  "r": "avallutte",
+  "start": 0.02,
+  "end": 0.361,
+  "score": 0.95
+ },
+ {
+  "w": "score",
+  "r": "score",
+  "start": 0.381,
+  "end": 0.722,
+  "score": 0.598
+ },
+ {
+  "w": "ഉടനെ",
+  "r": "uttane",
+  "start": 0.803,
+  "end": 1.064,
+  "score": 0.986
+ },
+ {
+  "w": "കാണാം",
+  "r": "kaannaam",
+  "start": 1.144,
+  "end": 1.465,
+  "score": 0.906
+ },
+ {
+  "w": "എഴുപത്തഞ്ച്",
+  "r": "elllupattanyc",
+  "start": 1.886,
+  "end": 2.448,
+  "score": 0.259
+ },
+ {
+  "w": "percent",
+  "r": "percent",
+  "start": 2.549,
+  "end": 2.95,
+  "score": 0.311
+ },
+ {
+  "w": "നിങ്ങൾ",
+  "r": "ningngalla",
+  "start": 3.331,
+  "end": 3.632,
+  "score": 0.977
+ },
+ {
+  "w": "allow",
+  "r": "allow",
+  "start": 3.693,
+  "end": 3.893,
+  "score": 0.471
+ },
+ {
+  "w": "ചെയ്താൽ,",
+  "r": "ceytaala",
+  "start": 3.954,
+  "end": 4.295,
+  "score": 0.997
+ },
+ {
+  "w": "solution",
+  "r": "solution",
+  "start": 4.355,
+  "end": 4.756,
+  "score": 0.641
+ },
+ {
+  "w": "key-യോടെ.",
+  "r": "keyyootte",
+  "start": 4.816,
+  "end": 5.158,
+  "score": 0.782
+ }
+]

@@ -1,0 +1,114 @@
+[
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 0.06,
+  "end": 0.24,
+  "score": 0.997
+ },
+ {
+  "w": "logo",
+  "r": "logo",
+  "start": 0.34,
+  "end": 0.581,
+  "score": 0.996
+ },
+ {
+  "w": "ಹಾಕಿ,",
+  "r": "haaki",
+  "start": 0.661,
+  "end": 0.941,
+  "score": 0.981
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 1.222,
+  "end": 1.682,
+  "score": 0.658
+ },
+ {
+  "w": "ಹೆಸರು",
+  "r": "hesaru",
+  "start": 1.682,
+  "end": 1.923,
+  "score": 0.976
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.003,
+  "end": 2.243,
+  "score": 0.249
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 2.283,
+  "end": 2.524,
+  "score": 0.958
+ },
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 2.824,
+  "end": 3.004,
+  "score": 0.996
+ },
+ {
+  "w": "colour,",
+  "r": "colour",
+  "start": 3.084,
+  "end": 3.385,
+  "score": 0.334
+ },
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 3.465,
+  "end": 3.645,
+  "score": 0.994
+ },
+ {
+  "w": "font",
+  "r": "font",
+  "start": 3.685,
+  "end": 3.945,
+  "score": 0.27
+ },
+ {
+  "w": "ಆರಿಸಿ.",
+  "r": "aarisi",
+  "start": 3.966,
+  "end": 4.206,
+  "score": 0.83
+ },
+ {
+  "w": "ಅಷ್ಟೇ",
+  "r": "assttee",
+  "start": 4.526,
+  "end": 4.867,
+  "score": 0.731
+ },
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 5.087,
+  "end": 5.267,
+  "score": 0.991
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 5.307,
+  "end": 5.568,
+  "score": 0.78
+ },
+ {
+  "w": "ready.",
+  "r": "ready",
+  "start": 5.588,
+  "end": 5.788,
+  "score": 0.592
+ }
+]

@@ -1,0 +1,79 @@
+[
+ {
+  "w": "அவங்க",
+  "r": "avangka",
+  "start": 0.02,
+  "end": 0.301,
+  "score": 0.873
+ },
+ {
+  "w": "score",
+  "r": "score",
+  "start": 0.361,
+  "end": 0.703,
+  "score": 0.572
+ },
+ {
+  "w": "உடனே",
+  "r": "udanee",
+  "start": 0.743,
+  "end": 1.105,
+  "score": 0.825
+ },
+ {
+  "w": "தெரியும்",
+  "r": "teriyum",
+  "start": 1.145,
+  "end": 1.506,
+  "score": 0.875
+ },
+ {
+  "w": "எழுபத்தஞ்சு",
+  "r": "elupattanycu",
+  "start": 1.868,
+  "end": 2.47,
+  "score": 0.619
+ },
+ {
+  "w": "percent",
+  "r": "percent",
+  "start": 2.53,
+  "end": 2.912,
+  "score": 0.31
+ },
+ {
+  "w": "நீங்க",
+  "r": "niingka",
+  "start": 3.575,
+  "end": 3.836,
+  "score": 0.861
+ },
+ {
+  "w": "allow",
+  "r": "allow",
+  "start": 3.896,
+  "end": 4.117,
+  "score": 0.549
+ },
+ {
+  "w": "பண்ணா,",
+  "r": "pannaa",
+  "start": 4.177,
+  "end": 4.539,
+  "score": 0.969
+ },
+ {
+  "w": "solution",
+  "r": "solution",
+  "start": 4.699,
+  "end": 5.161,
+  "score": 0.6
+ },
+ {
+  "w": "key-யோட.",
+  "r": "keyyooda",
+  "start": 5.242,
+  "end": 5.623,
+  "score": 0.596
+ }
+]

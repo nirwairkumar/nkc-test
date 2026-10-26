@@ -1,0 +1,122 @@
+[
+  {
+    "id": "w0",
+    "text": "On",
+    "start": 0,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "a",
+    "start": 0.24,
+    "end": 0.32
+  },
+  {
+    "id": "w2",
+    "text": "phone,",
+    "start": 0.32,
+    "end": 0.64
+  },
+  {
+    "id": "w3",
+    "text": "they",
+    "start": 0.64,
+    "end": 0.88
+  },
+  {
+    "id": "w4",
+    "text": "type",
+    "start": 0.88,
+    "end": 1.12
+  },
+  {
+    "id": "w5",
+    "text": "the",
+    "start": 1.12,
+    "end": 1.2
+  },
+  {
+    "id": "w6",
+    "text": "code",
+    "start": 1.2,
+    "end": 1.44
+  },
+  {
+    "id": "w7",
+    "text": "TapStart",
+    "start": 1.6,
+    "end": 2.32
+  },
+  {
+    "id": "w8",
+    "text": "and",
+    "start": 2.4,
+    "end": 2.56
+  },
+  {
+    "id": "w9",
+    "text": "your",
+    "start": 2.56,
+    "end": 2.8
+  },
+  {
+    "id": "w10",
+    "text": "brand",
+    "start": 2.8,
+    "end": 3.04
+  },
+  {
+    "id": "w11",
+    "text": "is",
+    "start": 3.04,
+    "end": 3.2
+  },
+  {
+    "id": "w12",
+    "text": "right",
+    "start": 3.2,
+    "end": 3.36
+  },
+  {
+    "id": "w13",
+    "text": "there",
+    "start": 3.36,
+    "end": 3.52
+  },
+  {
+    "id": "w14",
+    "text": "too.",
+    "start": 3.6,
+    "end": 4.16
+  },
+  {
+    "id": "w15",
+    "text": "Every",
+    "start": 4.16,
+    "end": 4.56
+  },
+  {
+    "id": "w16",
+    "text": "question",
+    "start": 4.56,
+    "end": 4.96
+  },
+  {
+    "id": "w17",
+    "text": "under",
+    "start": 4.96,
+    "end": 5.28
+  },
+  {
+    "id": "w18",
+    "text": "your",
+    "start": 5.28,
+    "end": 5.52
+  },
+  {
+    "id": "w19",
+    "text": "name.",
+    "start": 5.52,
+    "end": 5.84
+  }
+]

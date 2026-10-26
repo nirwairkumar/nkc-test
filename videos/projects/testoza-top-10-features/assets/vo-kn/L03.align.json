@@ -1,0 +1,191 @@
+[
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 0.06,
+  "end": 0.28,
+  "score": 0.984
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.38,
+  "end": 0.701,
+  "score": 0.295
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.761,
+  "end": 1.061,
+  "score": 0.598
+ },
+ {
+  "w": "PDF",
+  "r": "pdf",
+  "start": 1.141,
+  "end": 1.501,
+  "score": 0.666
+ },
+ {
+  "w": "ಆಗಿದೆಯಾ,",
+  "r": "aagideyaa",
+  "start": 1.541,
+  "end": 1.941,
+  "score": 0.861
+ },
+ {
+  "w": "ಅಥವಾ",
+  "r": "athavaa",
+  "start": 2.582,
+  "end": 2.922,
+  "score": 0.815
+ },
+ {
+  "w": "ಬರೀ",
+  "r": "barii",
+  "start": 3.042,
+  "end": 3.283,
+  "score": 0.896
+ },
+ {
+  "w": "photos?",
+  "r": "photos",
+  "start": 3.303,
+  "end": 3.783,
+  "score": 0.978
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 4.383,
+  "end": 4.804,
+  "score": 0.541
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 4.844,
+  "end": 4.964,
+  "score": 0.55
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 5.164,
+  "end": 5.284,
+  "score": 0.664
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 5.364,
+  "end": 5.604,
+  "score": 0.742
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 5.644,
+  "end": 5.885,
+  "score": 0.966
+ },
+ {
+  "w": "file",
+  "r": "file",
+  "start": 6.245,
+  "end": 6.505,
+  "score": 0.449
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 6.545,
+  "end": 6.825,
+  "score": 0.819
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 6.865,
+  "end": 7.085,
+  "score": 0.997
+ },
+ {
+  "w": "ಮೂರು",
+  "r": "muuru",
+  "start": 7.506,
+  "end": 7.766,
+  "score": 0.922
+ },
+ {
+  "w": "page",
+  "r": "page",
+  "start": 7.826,
+  "end": 8.086,
+  "score": 0.251
+ },
+ {
+  "w": "PDF,",
+  "r": "pdf",
+  "start": 8.086,
+  "end": 8.486,
+  "score": 0.665
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 8.807,
+  "end": 9.107,
+  "score": 0.552
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 9.147,
+  "end": 9.267,
+  "score": 0.333
+ },
+ {
+  "w": "ಜೊತೆ",
+  "r": "jote",
+  "start": 9.287,
+  "end": 9.527,
+  "score": 0.987
+ },
+ {
+  "w": "ಆಮೇಲೆ",
+  "r": "aameele",
+  "start": 10.108,
+  "end": 10.508,
+  "score": 0.828
+ },
+ {
+  "w": "Extract",
+  "r": "extract",
+  "start": 10.788,
+  "end": 11.149,
+  "score": 0.427
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 11.169,
+  "end": 11.489,
+  "score": 0.36
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 11.549,
+  "end": 11.749,
+  "score": 0.925
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 11.809,
+  "end": 12.029,
+  "score": 0.933
+ }
+]

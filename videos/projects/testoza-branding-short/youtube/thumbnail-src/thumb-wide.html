@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Wide thumbnail (1280x720), English only, same screens as thumb-vertical.html. -->
+<style>
+  @font-face { font-family: 'Outfit'; font-weight: 900; src: url('../../assets/fonts/Outfit-900.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 800; src: url('../../assets/fonts/Outfit-800.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 700; src: url('../../assets/fonts/Outfit-700.woff2'); }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; }
+  .bg { position: absolute; inset: 0; background:
+      radial-gradient(700px 520px at 22% 60%, rgba(14,165,233,.35), rgba(2,6,23,0) 70%),
+      radial-gradient(620px 460px at 85% 25%, rgba(99,102,241,.40), rgba(2,6,23,0) 70%),
+      linear-gradient(160deg, #071233, #020617 70%); }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(148,163,184,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.07) 1px, transparent 1px); background-size: 48px 48px; }
+  .wm { position: absolute; left: 56px; top: 44px; height: 58px; }
+  .h1 { position: absolute; left: 46px; top: 136px; font: 900 118px/0.9 'Outfit'; letter-spacing: -.045em; }
+  .h1 span { background: linear-gradient(135deg, #7dd3fc, #38bdf8 40%, #818cf8 72%, #facc15); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 18px 40px rgba(56,189,248,.45)); }
+  .h2 { position: absolute; left: 52px; top: 262px; font: 900 80px/1 'Outfit'; letter-spacing: -.02em; color: #fff; text-shadow: 0 10px 30px rgba(0,0,0,.6); }
+  .pill { position: absolute; left: 58px; top: 392px; padding: 14px 26px; border-radius: 18px; background: #facc15; color: #0b1220; font: 800 40px/1 'Outfit'; box-shadow: 0 16px 34px -10px rgba(250,204,21,.55); }
+  .sub { position: absolute; left: 60px; top: 490px; font: 700 34px/1.25 'Outfit'; color: #cbd5e1; }
+  .sub b { color: #fff; }
+  .logo { position: absolute; left: 60px; top: 560px; width: 120px; filter: drop-shadow(0 16px 30px rgba(37,99,235,.55)); }
+  .panel { position: absolute; left: 722px; top: 48px; width: 520px; border-radius: 16px; overflow: hidden; background: #fff; transform: rotate(-4deg); box-shadow: 0 40px 80px -20px rgba(0,0,0,.85); }
+  .panel img { width: 520px; display: block; }
+  .phone { position: absolute; left: 960px; top: 210px; width: 270px; padding: 10px; border-radius: 44px; background: #0b0f19; box-shadow: 0 0 0 2px #1e293b, 0 40px 70px -16px rgba(0,0,0,.9); transform: rotate(6deg); }
+  .phone .scr { width: 270px; height: 560px; border-radius: 36px; overflow: hidden; background: #fff; }
+  .phone img { width: 270px; display: block; }
+</style></head><body>
+<div class="bg"></div><div class="grid"></div>
+<img class="wm" src="wordmark.png" alt="TestoZa">
+<div class="h1"><span>YOUR LOGO</span></div>
+<div class="h2">ON EVERY TEST</div>
+<div class="pill">Add Institute Branding</div>
+<div class="sub">Laptop + Phone · <b>Step by step</b></div>
+<img class="logo" src="apex-academy-logo.png" alt="">
+<div class="panel"><img src="panel.png" alt=""></div>
+<div class="phone"><div class="scr"><img src="phone-exam.png" alt=""></div></div>
+</body></html>

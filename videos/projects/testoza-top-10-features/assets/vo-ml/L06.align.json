@@ -1,0 +1,51 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.301,
+  "score": 0.668
+ },
+ {
+  "w": "two:",
+  "r": "two",
+  "start": 0.381,
+  "end": 0.502,
+  "score": 0.026
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 0.843,
+  "end": 1.224,
+  "score": 0.562
+ },
+ {
+  "w": "science",
+  "r": "science",
+  "start": 1.505,
+  "end": 1.907,
+  "score": 0.456
+ },
+ {
+  "w": "ശരിയായി",
+  "r": "shariyaayi",
+  "start": 2.168,
+  "end": 2.529,
+  "score": 0.568
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.589,
+  "end": 2.79,
+  "score": 0.546
+ },
+ {
+  "w": "ചെയ്യാം.",
+  "r": "ceyyaam",
+  "start": 2.81,
+  "end": 3.031,
+  "score": 0.483
+ }
+]

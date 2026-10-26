@@ -1,0 +1,170 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-hi/L01.wav",
+    "duration": 13.683417,
+    "text": "रिएक्शन्स, arrow के ऊपर heat के साथ। Complex ions और उनके charges। Match-the-list टेबल्स। और स्ट्रक्चर्स, सीधे सवाल के अंदर।\nये है टेस्टोज़ा में केमिस्ट्री — और अगले कुछ मिनटों में, ये सब आप ख़ुद टाइप करेंगे।",
+    "raw": "{m1}रिएक्शन्स, arrow के ऊपर heat के साथ। {m2}Complex ions और उनके charges। {m3}Match-the-list टेबल्स। {m4}और स्ट्रक्चर्स, सीधे सवाल के अंदर।\n{title}ये है TestoZa में केमिस्ट्री — और अगले कुछ मिनटों में, ये सब आप ख़ुद टाइप करेंगे।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-hi/L02.wav",
+    "duration": 10.375458,
+    "text": "हम JEE Main और JEE Advanced ट्वेंटी-ट्वेंटी-सिक्स के असली सवाल लेंगे। Create Test खोलिए, टेस्ट का नाम दीजिए, JEE marking चुनिए, और सीधे सवालों पर चलते हैं।",
+    "raw": "हम JEE Main और JEE Advanced 2026 के असली सवाल लेंगे। {create}Create Test खोलिए, {name}टेस्ट का नाम दीजिए, {marking}JEE marking चुनिए, {questions}और सीधे सवालों पर चलते हैं।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-hi/L03.wav",
+    "duration": 11.006958,
+    "text": "पहला सवाल JEE Main से, complex ions पर। शब्द तो आप सीधे टाइप कर दीजिए।\nफ़ॉर्मूले के लिए, Maths ऐंड symbols खोलिए — ये है साई पैड — और Chemistry टैब पर जाइए।",
+    "raw": "पहला सवाल JEE Main से, complex ions पर। {q1text}शब्द तो आप सीधे टाइप कर दीजिए।\nफ़ॉर्मूले के लिए, {sypad}Maths & symbols खोलिए — ये है Sy Pad — {chem}और Chemistry टैब पर जाइए।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-hi/L04.wav",
+    "duration": 13.023042,
+    "text": "अब, हर केमिस्ट्री टीचर का सबसे काम का बटन — Formula।\nजैसे लिखते हैं, वैसे ही टाइप कीजिए। ब्रैकेट, एम-एन, बी-आर, फ़ोर। देखा? चार अपने-आप नीचे।\nCharge के लिए कैरेट टाइप कीजिए, फिर टू माइनस।",
+    "raw": "अब, हर केमिस्ट्री टीचर का सबसे काम का बटन — {formula}Formula।\nजैसे लिखते हैं, वैसे ही टाइप कीजिए। {mn}ब्रैकेट, M n, B r, फ़ोर। {sub}देखा? चार अपने-आप नीचे।\n{charge}Charge के लिए caret टाइप कीजिए, फिर टू माइनस।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-hi/L05.wav",
+    "duration": 19.563875,
+    "text": "फिर copper complex — छह एच-टू-ओ, टू प्लस। Insert, और दोनों nickel complexes के लिए फिर से Formula।\nहर नंबर अपने-आप नीचे, हर charge ऊपर।\nInsert, और पूरी लाइन सीधे सवाल में आ गई।\nOptions सादा टेक्स्ट, सही जवाब डी।",
+    "raw": "{rest}फिर copper complex — छह H2O, टू प्लस। {ins1a}Insert, {f1b}और दोनों nickel complexes के लिए फिर से Formula।\nहर नंबर अपने-आप नीचे, हर charge ऊपर।\n{ins1}Insert, {lands1}और पूरी लाइन सीधे सवाल में आ गई।\n{opts1}Options सादा टेक्स्ट, {correct1}सही जवाब D।"
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-hi/L06.wav",
+    "duration": 9.577667,
+    "text": "अब एक equilibrium। पहली लाइन टाइप कीजिए, फिर Formula, A, gas वाला बटन, reversible arrow, B, और फिर से gas।",
+    "raw": "{q2add}अब एक equilibrium। {q2text}पहली लाइन टाइप कीजिए, {formula2}फिर Formula, {a}A, {gas}gas वाला बटन, {rev}reversible arrow, {b}B, {gas2}और फिर से gas।"
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-hi/L07.wav",
+    "duration": 8.965083,
+    "text": "बाक़ी बटन भी ऐसे ही: gas given off, precipitate, heat, डिग्री सेल्सियस, aqueous, solid, liquid, के-ए, के-बी, pH और mol।",
+    "raw": "बाक़ी बटन भी ऐसे ही: {up}gas given off, {down}precipitate, {heat}heat, {deg}डिग्री सेल्सियस, {aq}aqueous, solid, liquid, {consts}K a, K b, pH और mol।"
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-hi/L08.wav",
+    "duration": 7.309292,
+    "text": "Insert। अब बाक़ी सवाल — concentrations, और ज़्यादा A डालने पर क्या होता है।\nफिर चारों options, और सही जवाब फिर से डी।",
+    "raw": "{ins2}Insert। {rest2}अब बाक़ी सवाल — concentrations, और ज़्यादा A डालने पर क्या होता है।\n{opts2}फिर चारों options, {correct2}और सही जवाब फिर से D।"
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-hi/L09.wav",
+    "duration": 16.381042,
+    "text": "अब तीन रिएक्शन्स, जिनके arrow पर conditions हैं। Formula, सोडियम टेट्राबोरेट, फिर वो arrow, जिसके ऊपर और नीचे box है।\nयहाँ आप चुनते हैं कि arrow के ऊपर और नीचे कितनी लाइनें होंगी। हमें बस एक चाहिए, ऊपर, तो नीचे वाली हटाइए, और Insert।",
+    "raw": "{q3add}अब तीन रिएक्शन्स, जिनके arrow पर conditions हैं। {formula3}Formula, सोडियम टेट्राबोरेट, {arrowkey}फिर वो arrow, जिसके ऊपर और नीचे box है।\n{rows}यहाँ आप चुनते हैं कि arrow के ऊपर और नीचे कितनी लाइनें होंगी। हमें बस एक चाहिए, ऊपर, {rowminus}तो नीचे वाली हटाइए, {rowins}और Insert।"
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-hi/L10.wav",
+    "duration": 7.529583,
+    "text": "Arrow के ऊपर वो question mark ही आपका blank है। Heat के लिए delta दबाइए, इस बटन से आगे बढ़िए, और रिएक्शन पूरा। Insert।",
+    "raw": "{qmark}Arrow के ऊपर वो question mark ही आपका blank है। {delta}Heat के लिए delta दबाइए, {step}इस बटन से आगे बढ़िए, {prod}और रिएक्शन पूरा। {ins3a}Insert।"
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-hi/L11.wav",
+    "duration": 11.916167,
+    "text": "दूसरा रिएक्शन: copper sulphate प्लस Y। वही arrow, पर अब Words दबाइए, और टाइप कीजिए non-luminous flame। Words में spaces वैसे ही रहते हैं, जैसे नॉर्मल टेक्स्ट में।\nInsert।",
+    "raw": "{line2}दूसरा रिएक्शन: copper sulphate प्लस Y। {arrow2}वही arrow, {words}पर अब Words दबाइए, {flame}और टाइप कीजिए non-luminous flame। Words में spaces वैसे ही रहते हैं, जैसे नॉर्मल टेक्स्ट में।\n{ins3b}Insert।"
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-hi/L12.wav",
+    "duration": 15.639292,
+    "text": "और तीसरा: बाईं तरफ़ two Z, two X और carbon, arrow के ऊपर luminous flame,\nऔर दाईं तरफ़ two Q, borax और carbon monoxide — बिल्कुल उसी तरह। Insert।\nसवाल टाइप कीजिए, चारों options — प्लस टू और प्लस टू, वग़ैरह — और सही है बी।",
+    "raw": "{line3}और तीसरा: बाईं तरफ़ two Z, two X और carbon, arrow के ऊपर luminous flame,\nऔर दाईं तरफ़ two Q, borax और carbon monoxide — बिल्कुल उसी तरह। {ins3c}Insert।\n{q3rest}सवाल टाइप कीजिए, {opts3}चारों options — प्लस टू और प्लस टू, वग़ैरह — {correct3}और सही है B।"
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-hi/L13.wav",
+    "duration": 12.539542,
+    "text": "Match the list — JEE Main को ये बहुत पसंद है। साई पैड में Tables खोलिए, और Match List चुनिए।\nलिस्ट वन और लिस्ट टू पहले से बने हुए हैं। Labels टाइप कीजिए — A, B, C, D और एक से चार — और Insert।",
+    "raw": "{q4add}Match the list — JEE Main को ये बहुत पसंद है। {tables}Sy Pad में Tables खोलिए, {match}और Match List चुनिए।\n{editor}List-I और List-II पहले से बने हुए हैं। {labels}Labels टाइप कीजिए — A, B, C, D और एक से चार — {tins}और Insert।"
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-hi/L14.wav",
+    "duration": 18.3575,
+    "text": "हर खाली cell अब blue box है। एक पर क्लिक, Formula, और टाइप कीजिए एक्स-ई-ओ-थ्री।\nअगला box, एक्स-ई-एफ़-टू, और ऐसे ही दोनों लिस्ट: एक्स-ई-ओ-टू-एफ़-टू, एक्स-ई-ओ-एफ़-फ़ोर, बी-आर-एफ़-फ़ाइव, एन-एच-थ्री, आई-थ्री माइनस, और एस-एफ़-फ़ोर।",
+    "raw": "{blue}हर खाली cell अब blue box है। {box1}एक पर क्लिक, {f1}Formula, {xe}और टाइप कीजिए XeO3।\n{box2}अगला box, XeF2, {fill}और ऐसे ही दोनों लिस्ट: XeO2F2, XeOF4, BrF5, NH3, I3 माइनस, और SF4।"
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-hi/L15.wav",
+    "duration": 12.173125,
+    "text": "Insert — और ये रहा: एक साफ़ दो-कॉलम टेबल, सीधे सवाल के अंदर, बिल्कुल पेपर जैसा।\nचारों options टाइप कीजिए — A टू, B वन, वग़ैरह — और जवाब है बी।",
+    "raw": "{tins2}Insert — {table}और ये रहा: एक साफ़ दो-कॉलम टेबल, सीधे सवाल के अंदर, बिल्कुल पेपर जैसा।\n{opts4}चारों options टाइप कीजिए — A टू, B वन, वग़ैरह — {correct4}और जवाब है B।"
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-hi/L16.wav",
+    "duration": 14.488042,
+    "text": "अब JEE Advanced, पेपर वन। यहाँ जवाब एक नंबर है, तो question type बदलिए, Numerical answer पर।\nऔर JEE Advanced में ग़लत नंबर पर कोई माइनस नहीं, तो Wrong को ज़ीरो कीजिए। किसी भी सवाल के marks आप ऐसे ही सेट कर सकते हैं।",
+    "raw": "{q5add}अब JEE Advanced, Paper 1। यहाँ जवाब एक नंबर है, {qtype}तो question type बदलिए, {numerical}Numerical answer पर।\nऔर JEE Advanced में ग़लत नंबर पर कोई माइनस नहीं, {wrong}तो Wrong को ज़ीरो कीजिए। किसी भी सवाल के marks आप ऐसे ही सेट कर सकते हैं।"
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-hi/L17.wav",
+    "duration": 13.400375,
+    "text": "सवाल टाइप कीजिए। अब पहला स्ट्रक्चर — Picture दबाइए, फिर ये cloud बटन।\nये पिक्चर को टेक्स्ट के अंदर डालता है, ठीक वहीं जहाँ आपका cursor है। Choose a picture दबाइए, फ़ाइल ढूँढिए, स्ट्रक्चर चुनिए, और ये रहा।",
+    "raw": "{q5text}सवाल टाइप कीजिए। अब पहला स्ट्रक्चर — {pic}Picture दबाइए, {cloud}फिर ये cloud बटन।\n{cloudwhy}ये पिक्चर को टेक्स्ट के अंदर डालता है, ठीक वहीं जहाँ आपका cursor है। {choose}Choose a picture दबाइए, फ़ाइल ढूँढिए, {pick}स्ट्रक्चर चुनिए, {placed}और ये रहा।"
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-hi/L18.wav",
+    "duration": 18.624625,
+    "text": "अब साई पैड खोलिए, और स्ट्रक्चर के ठीक बगल में, conditions वाला arrow। Words दबाइए, ऊपर heat लिखिए, X जोड़िए, और Insert।\nदूसरा स्ट्रक्चर भी बिल्कुल ऐसे ही: Picture, cloud बटन, फ़ाइल चुनिए।\nफिर दोबारा साई पैड — arrow, ऊपर heat, और Y। Insert।",
+    "raw": "अब Sy Pad खोलिए, और स्ट्रक्चर के ठीक बगल में, {arrow5}conditions वाला arrow। {heat5}Words दबाइए, ऊपर heat लिखिए, {x}X जोड़िए, और Insert।\n{second}दूसरा स्ट्रक्चर भी बिल्कुल ऐसे ही: Picture, cloud बटन, फ़ाइल चुनिए।\nफिर दोबारा Sy Pad — arrow, ऊपर heat, {y}और Y। {ins5}Insert।"
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-hi/L19.wav",
+    "duration": 5.656083,
+    "text": "बिल्कुल पेपर जैसा। जवाब के लिए Exact value चुनिए, और चार टाइप कीजिए।",
+    "raw": "{seen}बिल्कुल पेपर जैसा। जवाब के लिए {exact}Exact value चुनिए, {four}और चार टाइप कीजिए।"
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-hi/L20.wav",
+    "duration": 11.986667,
+    "text": "और जब सवाल लंबा हो, तो टाइप ही मत कीजिए। यहाँ एक से ज़्यादा जवाब सही हो सकते हैं, तो पहले चुनिए Multiple correct।\nअब Fill from photo, सवाल की फ़ोटो चुनिए, और टेस्टोज़ा उसे आपके लिए पढ़ लेता है।",
+    "raw": "और जब सवाल लंबा हो, {q6add}तो टाइप ही मत कीजिए। यहाँ एक से ज़्यादा जवाब सही हो सकते हैं, {qtype6}तो पहले चुनिए {multi}Multiple correct।\n{photo}अब Fill from photo, {choose6}सवाल की फ़ोटो चुनिए, {reading}और TestoZa उसे आपके लिए पढ़ लेता है।"
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-hi/L21.wav",
+    "duration": 9.068958,
+    "text": "तीनों रिएक्शन्स, gas वाले लेबल, पाँच सौ तिहत्तर केल्विन, यहाँ तक कि यूरेनियम दो सौ पैंतीस भी। और फ़ोटो में जवाब दिया था, इसलिए A और C पहले से टिक हैं।",
+    "raw": "{filled}तीनों रिएक्शन्स, gas वाले लेबल, 573 केल्विन, यहाँ तक कि U-235 भी। {ticked}और फ़ोटो में जवाब दिया था, इसलिए A और C पहले से टिक हैं।"
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-hi/L22.wav",
+    "duration": 10.327792,
+    "text": "बस एक बार ध्यान से पढ़ लीजिए।\nआख़िरी बात — partial marks। JEE Advanced चुनिए: हर सही option पर एक नंबर, और पूरे नंबर तभी, जब सारे सही चुने हों।",
+    "raw": "{check}बस एक बार ध्यान से पढ़ लीजिए।\n{partial}आख़िरी बात — partial marks। {jeeadv}JEE Advanced चुनिए: हर सही option पर एक नंबर, और पूरे नंबर तभी, जब सारे सही चुने हों।"
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-hi/L23.wav",
+    "duration": 5.913917,
+    "text": "Save test, और आपका केमिस्ट्री पेपर My Tests में आ गया — live exam की तरह conduct करने के लिए तैयार।",
+    "raw": "{save}Save test, {saved}और आपका केमिस्ट्री पेपर My Tests में आ गया — {ready}live exam की तरह conduct करने के लिए तैयार।"
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-hi/L24.wav",
+    "duration": 10.929292,
+    "text": "Formulas, रिएक्शन्स, टेबल्स और स्ट्रक्चर्स — सब एक ही जगह। अपना केमिस्ट्री टेस्ट बनाइए, टेस्टोज़ा डॉट कॉम पर।\nऐसे और वीडियो के लिए subscribe कीजिए, मिलते हैं अगले वीडियो में!",
+    "raw": "Formulas, रिएक्शन्स, टेबल्स और स्ट्रक्चर्स — सब एक ही जगह। {endurl}अपना केमिस्ट्री टेस्ट बनाइए, testoza.com पर।\n{thanks}ऐसे और वीडियो के लिए subscribe कीजिए, मिलते हैं अगले वीडियो में!"
+  }
+]

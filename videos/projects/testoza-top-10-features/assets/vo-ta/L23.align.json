@@ -1,0 +1,149 @@
+[
+ {
+  "w": "இதோ",
+  "r": "itoo",
+  "start": 0.02,
+  "end": 0.221,
+  "score": 0.695
+ },
+ {
+  "w": "ஒரு",
+  "r": "oru",
+  "start": 0.642,
+  "end": 0.762,
+  "score": 0.987
+ },
+ {
+  "w": "student,",
+  "r": "student",
+  "start": 0.802,
+  "end": 1.203,
+  "score": 0.795
+ },
+ {
+  "w": "அவங்க",
+  "r": "avangka",
+  "start": 1.324,
+  "end": 1.584,
+  "score": 0.65
+ },
+ {
+  "w": "phone-ல,",
+  "r": "phonela",
+  "start": 1.625,
+  "end": 1.946,
+  "score": 0.846
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 2.226,
+  "end": 2.668,
+  "score": 0.828
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 2.768,
+  "end": 2.908,
+  "score": 0.775
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 2.968,
+  "end": 3.089,
+  "score": 0.507
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 3.129,
+  "end": 3.39,
+  "score": 0.76
+ },
+ {
+  "w": "join-ல.",
+  "r": "joinla",
+  "start": 3.43,
+  "end": 3.771,
+  "score": 0.815
+ },
+ {
+  "w": "ஆறு",
+  "r": "aaru",
+  "start": 3.991,
+  "end": 4.212,
+  "score": 0.618
+ },
+ {
+  "w": "digits",
+  "r": "digits",
+  "start": 4.272,
+  "end": 4.513,
+  "score": 0.531
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 4.553,
+  "end": 4.753,
+  "score": 0.472
+ },
+ {
+  "w": "பண்றாங்க,",
+  "r": "panraangka",
+  "start": 4.774,
+  "end": 5.195,
+  "score": 0.622
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 5.576,
+  "end": 5.877,
+  "score": 0.735
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 5.937,
+  "end": 6.137,
+  "score": 0.697
+ },
+ {
+  "w": "ஆகிடுது.",
+  "r": "aakidutu",
+  "start": 6.157,
+  "end": 6.518,
+  "score": 0.515
+ },
+ {
+  "w": "Name,",
+  "r": "name",
+  "start": 7.04,
+  "end": 7.662,
+  "score": 0.484
+ },
+ {
+  "w": "roll",
+  "r": "roll",
+  "start": 7.662,
+  "end": 7.822,
+  "score": 0.723
+ },
+ {
+  "w": "number,",
+  "r": "number",
+  "start": 7.882,
+  "end": 8.163,
+  "score": 0.631
+ },
+ {
+  "w": "start.",
+  "r": "start",
+  "start": 8.384,
+  "end": 8.685,
+  "score": 0.757
+ }
+]

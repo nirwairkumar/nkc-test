@@ -1,0 +1,37 @@
+[
+ {
+  "w": "लास्ट",
+  "r": "laastta",
+  "start": 0.081,
+  "end": 0.465,
+  "score": 0.77
+ },
+ {
+  "w": "टैब:",
+  "r": "ttaib",
+  "start": 0.506,
+  "end": 0.728,
+  "score": 0.073
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 0.789,
+  "end": 1.194,
+  "score": 0.879
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 1.356,
+  "end": 1.477,
+  "score": 0.732
+ },
+ {
+  "w": "Timing.",
+  "r": "timing",
+  "start": 1.538,
+  "end": 1.861,
+  "score": 0.742
+ }
+]

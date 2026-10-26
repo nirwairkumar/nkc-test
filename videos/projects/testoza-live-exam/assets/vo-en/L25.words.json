@@ -1,0 +1,68 @@
+[
+  {
+    "id": "w0",
+    "text": "Write",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "it",
+    "start": 0.32,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "on",
+    "start": 0.48,
+    "end": 0.56
+  },
+  {
+    "id": "w3",
+    "text": "the",
+    "start": 0.56,
+    "end": 0.64
+  },
+  {
+    "id": "w4",
+    "text": "board",
+    "start": 0.64,
+    "end": 0.96
+  },
+  {
+    "id": "w5",
+    "text": "testosa.com",
+    "start": 1.12,
+    "end": 2.32
+  },
+  {
+    "id": "w6",
+    "text": "slash",
+    "start": 2.4,
+    "end": 2.8
+  },
+  {
+    "id": "w7",
+    "text": "join",
+    "start": 2.8,
+    "end": 3.2
+  },
+  {
+    "id": "w8",
+    "text": "and",
+    "start": 3.2,
+    "end": 3.44
+  },
+  {
+    "id": "w9",
+    "text": "the",
+    "start": 3.44,
+    "end": 3.52
+  },
+  {
+    "id": "w10",
+    "text": "code.",
+    "start": 3.52,
+    "end": 3.84
+  }
+]

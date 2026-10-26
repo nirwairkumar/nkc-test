@@ -1,0 +1,149 @@
+[
+ {
+  "w": "ഇതാ",
+  "r": "itaa",
+  "start": 0.04,
+  "end": 0.26,
+  "score": 0.748
+ },
+ {
+  "w": "ഒരു",
+  "r": "oru",
+  "start": 0.5,
+  "end": 0.66,
+  "score": 0.995
+ },
+ {
+  "w": "student,",
+  "r": "student",
+  "start": 0.68,
+  "end": 1.201,
+  "score": 0.572
+ },
+ {
+  "w": "അവളുടെ",
+  "r": "avallutte",
+  "start": 1.461,
+  "end": 1.821,
+  "score": 0.996
+ },
+ {
+  "w": "phone-ൽ,",
+  "r": "phonela",
+  "start": 1.901,
+  "end": 2.301,
+  "score": 0.826
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 2.801,
+  "end": 3.381,
+  "score": 0.558
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 3.722,
+  "end": 3.902,
+  "score": 0.909
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 3.922,
+  "end": 4.202,
+  "score": 0.629
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 4.322,
+  "end": 4.682,
+  "score": 0.791
+ },
+ {
+  "w": "join-ൽ.",
+  "r": "joinla",
+  "start": 4.882,
+  "end": 5.382,
+  "score": 0.932
+ },
+ {
+  "w": "ആറ്",
+  "r": "aarr",
+  "start": 5.843,
+  "end": 6.063,
+  "score": 0.851
+ },
+ {
+  "w": "digits",
+  "r": "digits",
+  "start": 6.183,
+  "end": 6.503,
+  "score": 0.404
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 6.823,
+  "end": 7.043,
+  "score": 0.484
+ },
+ {
+  "w": "ചെയ്യുന്നു,",
+  "r": "ceyyunnu",
+  "start": 7.083,
+  "end": 7.403,
+  "score": 0.958
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 7.883,
+  "end": 8.264,
+  "score": 0.741
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 8.524,
+  "end": 8.724,
+  "score": 0.761
+ },
+ {
+  "w": "ആകുന്നു.",
+  "r": "aakunnu",
+  "start": 8.784,
+  "end": 9.044,
+  "score": 0.995
+ },
+ {
+  "w": "Name,",
+  "r": "name",
+  "start": 9.624,
+  "end": 10.365,
+  "score": 0.501
+ },
+ {
+  "w": "roll",
+  "r": "roll",
+  "start": 10.405,
+  "end": 10.605,
+  "score": 0.933
+ },
+ {
+  "w": "number,",
+  "r": "number",
+  "start": 10.645,
+  "end": 10.925,
+  "score": 0.523
+ },
+ {
+  "w": "start.",
+  "r": "start",
+  "start": 11.205,
+  "end": 11.605,
+  "score": 0.359
+ }
+]

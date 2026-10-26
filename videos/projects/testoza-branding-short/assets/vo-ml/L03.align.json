@@ -1,0 +1,86 @@
+[
+ {
+  "w": "Logo",
+  "r": "logo",
+  "start": 0.06,
+  "end": 0.341,
+  "score": 0.749
+ },
+ {
+  "w": "ഇടൂ,",
+  "r": "ittuu",
+  "start": 0.441,
+  "end": 0.662,
+  "score": 0.777
+ },
+ {
+  "w": "institute-ന്റെ",
+  "r": "institutenrre",
+  "start": 1.042,
+  "end": 1.744,
+  "score": 0.592
+ },
+ {
+  "w": "പേര്",
+  "r": "peer",
+  "start": 1.764,
+  "end": 1.964,
+  "score": 0.992
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.025,
+  "end": 2.305,
+  "score": 0.541
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 2.345,
+  "end": 2.626,
+  "score": 0.764
+ },
+ {
+  "w": "colour,",
+  "r": "colour",
+  "start": 3.027,
+  "end": 3.388,
+  "score": 0.335
+ },
+ {
+  "w": "font",
+  "r": "font",
+  "start": 3.448,
+  "end": 3.769,
+  "score": 0.658
+ },
+ {
+  "w": "തിരഞ്ഞെടുക്കൂ.",
+  "r": "tiranynyettukkuu",
+  "start": 3.869,
+  "end": 4.43,
+  "score": 0.758
+ },
+ {
+  "w": "അത്രേയുള്ളൂ",
+  "r": "atreeyulllluu",
+  "start": 4.751,
+  "end": 5.272,
+  "score": 0.72
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 5.573,
+  "end": 5.893,
+  "score": 0.865
+ },
+ {
+  "w": "ready.",
+  "r": "ready",
+  "start": 5.954,
+  "end": 6.134,
+  "score": 0.439
+ }
+]

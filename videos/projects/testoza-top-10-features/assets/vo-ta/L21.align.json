@@ -1,0 +1,142 @@
+[
+ {
+  "w": "Name",
+  "r": "name",
+  "start": 0.08,
+  "end": 0.421,
+  "score": 0.497
+ },
+ {
+  "w": "default-ஆவே",
+  "r": "defaultaavee",
+  "start": 0.441,
+  "end": 1.121,
+  "score": 0.554
+ },
+ {
+  "w": "கேக்கும்.",
+  "r": "keekkum",
+  "start": 1.141,
+  "end": 1.442,
+  "score": 0.768
+ },
+ {
+  "w": "Roll",
+  "r": "roll",
+  "start": 1.722,
+  "end": 1.922,
+  "score": 0.745
+ },
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 1.962,
+  "end": 2.203,
+  "score": 0.652
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 2.263,
+  "end": 2.383,
+  "score": 0.423
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 2.423,
+  "end": 2.743,
+  "score": 0.542
+ },
+ {
+  "w": "இல்ல",
+  "r": "illa",
+  "start": 3.004,
+  "end": 3.204,
+  "score": 0.939
+ },
+ {
+  "w": "வேற",
+  "r": "veera",
+  "start": 3.404,
+  "end": 3.645,
+  "score": 0.759
+ },
+ {
+  "w": "எதுவும்",
+  "r": "etuvum",
+  "start": 3.725,
+  "end": 4.025,
+  "score": 0.254
+ },
+ {
+  "w": "batch,",
+  "r": "batch",
+  "start": 4.145,
+  "end": 4.486,
+  "score": 0.406
+ },
+ {
+  "w": "school,",
+  "r": "school",
+  "start": 4.546,
+  "end": 4.906,
+  "score": 0.334
+ },
+ {
+  "w": "phone.",
+  "r": "phone",
+  "start": 5.026,
+  "end": 5.327,
+  "score": 0.792
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 5.607,
+  "end": 5.907,
+  "score": 0.877
+ },
+ {
+  "w": "பண்றதுக்கு",
+  "r": "panratukku",
+  "start": 5.927,
+  "end": 6.308,
+  "score": 0.635
+ },
+ {
+  "w": "முன்னாடி",
+  "r": "munnaadi",
+  "start": 6.348,
+  "end": 6.728,
+  "score": 0.991
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 6.889,
+  "end": 7.429,
+  "score": 0.571
+ },
+ {
+  "w": "இதை",
+  "r": "itai",
+  "start": 7.489,
+  "end": 7.69,
+  "score": 0.498
+ },
+ {
+  "w": "fill",
+  "r": "fill",
+  "start": 7.69,
+  "end": 7.83,
+  "score": 0.515
+ },
+ {
+  "w": "பண்ணுவாங்க.",
+  "r": "pannuvaangka",
+  "start": 7.89,
+  "end": 8.33,
+  "score": 0.665
+ }
+]

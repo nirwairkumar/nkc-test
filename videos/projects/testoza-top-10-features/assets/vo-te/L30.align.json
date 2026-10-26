@@ -1,0 +1,93 @@
+[
+ {
+  "w": "తన",
+  "r": "tana",
+  "start": 0.0,
+  "end": 0.16,
+  "score": 0.98
+ },
+ {
+  "w": "score",
+  "r": "score",
+  "start": 0.221,
+  "end": 0.542,
+  "score": 0.586
+ },
+ {
+  "w": "వెంటనే",
+  "r": "vemttanee",
+  "start": 0.582,
+  "end": 0.943,
+  "score": 0.937
+ },
+ {
+  "w": "కనిపిస్తుంది",
+  "r": "kanipistumdi",
+  "start": 0.963,
+  "end": 1.525,
+  "score": 0.935
+ },
+ {
+  "w": "డెబ్బై",
+  "r": "ddebbai",
+  "start": 1.966,
+  "end": 2.347,
+  "score": 0.496
+ },
+ {
+  "w": "ఐదు",
+  "r": "aidu",
+  "start": 2.468,
+  "end": 2.708,
+  "score": 0.116
+ },
+ {
+  "w": "percent",
+  "r": "percent",
+  "start": 2.748,
+  "end": 3.089,
+  "score": 0.249
+ },
+ {
+  "w": "మీరు",
+  "r": "miiru",
+  "start": 3.571,
+  "end": 3.752,
+  "score": 0.996
+ },
+ {
+  "w": "allow",
+  "r": "allow",
+  "start": 3.852,
+  "end": 4.052,
+  "score": 0.201
+ },
+ {
+  "w": "చేస్తే,",
+  "r": "ceestee",
+  "start": 4.133,
+  "end": 4.494,
+  "score": 0.913
+ },
+ {
+  "w": "solution",
+  "r": "solution",
+  "start": 4.755,
+  "end": 5.136,
+  "score": 0.547
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 5.216,
+  "end": 5.356,
+  "score": 0.332
+ },
+ {
+  "w": "తో.",
+  "r": "too",
+  "start": 5.397,
+  "end": 5.517,
+  "score": 0.801
+ }
+]

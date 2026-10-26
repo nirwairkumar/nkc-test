@@ -1,0 +1,52 @@
+prebuild details
+prebuild q1
+prebuild q2
+  mark b:x-start @ 0.306
+record q3
+  mark b:q3add @ 1.766
+  mark b:x-q3text @ 3.772
+  mark b:x-sypad3 @ 6.046
+  mark b:x-chemtab @ 7.224
+  mark b:formula3 @ 7.764
+  mark b:x-na @ 8.202
+  mark b:arrowkey @ 10.443
+  mark b:rows @ 11.823
+  mark b:rowminus @ 13.767
+  mark b:rowins @ 14.68
+  mark b:qmark @ 15.653
+  mark b:delta @ 17.06
+  mark b:step @ 18.076
+  mark b:prod @ 18.372
+  mark b:ins3a @ 20.611
+  mark b:line2 @ 21.779
+  mark b:x-f2 @ 22.869
+  mark b:x-cu @ 23.213
+  mark b:arrow2 @ 25.711
+  mark b:x-rowminus @ 27.027
+  mark b:x-rowins @ 28.122
+  mark b:words @ 29.342
+  mark b:flame @ 29.705
+  mark b:x-r1 @ 32.925
+  mark b:x-r2 @ 33.806
+  mark b:x-zso3 @ 34.11
+  mark b:ins3b @ 36.306
+  mark b:line3 @ 37.638
+  mark b:x-f3 @ 38.722
+  mark b:x-2z @ 39.05
+  mark b:x-arrowkey @ 42.147
+  mark b:x-rowminus @ 43.377
+  mark b:x-rowins @ 44.425
+  mark b:x-lum @ 46.267
+  mark b:x-x-lum-t @ 46.612
+  mark b:x-r1 @ 49.267
+  mark b:x-r2 @ 50.16
+  mark b:x-2q @ 50.466
+  mark b:ins3c @ 53.943
+  mark b:x-done @ 55.254
+  mark b:q3rest @ 56.26
+  mark b:opts3 @ 59.609
+  mark b:x-opt1 @ 60.875
+  mark b:x-opt2 @ 62.134
+  mark b:x-opt3 @ 63.34
+  mark b:correct3 @ 64.528
+✓ b.mp4  659 frames  47 marks  sync {"lagMedian":-2.872,"lagMax":0.167,"unread":0}

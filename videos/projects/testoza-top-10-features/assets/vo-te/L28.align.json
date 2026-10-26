@@ -1,0 +1,184 @@
+[
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 0.04,
+  "end": 0.16,
+  "score": 0.998
+ },
+ {
+  "w": "dashboard",
+  "r": "dashboard",
+  "start": 0.2,
+  "end": 0.761,
+  "score": 0.677
+ },
+ {
+  "w": "లో:",
+  "r": "loo",
+  "start": 0.842,
+  "end": 0.942,
+  "score": 0.996
+ },
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 1.182,
+  "end": 1.463,
+  "score": 0.924
+ },
+ {
+  "w": "ముప్పై",
+  "r": "muppai",
+  "start": 1.483,
+  "end": 1.783,
+  "score": 0.873
+ },
+ {
+  "w": "మంది",
+  "r": "mamdi",
+  "start": 1.823,
+  "end": 2.024,
+  "score": 0.997
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 2.064,
+  "end": 2.504,
+  "score": 0.88
+ },
+ {
+  "w": "రాస్తున్నారు,",
+  "r": "raastunnaaru",
+  "start": 2.545,
+  "end": 3.126,
+  "score": 0.987
+ },
+ {
+  "w": "ఇద్దరు",
+  "r": "iddaru",
+  "start": 3.486,
+  "end": 3.767,
+  "score": 0.992
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 3.887,
+  "end": 4.228,
+  "score": 0.828
+ },
+ {
+  "w": "చేశారు.",
+  "r": "ceeshaaru",
+  "start": 4.288,
+  "end": 4.688,
+  "score": 0.991
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 5.049,
+  "end": 5.37,
+  "score": 0.451
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 5.55,
+  "end": 5.73,
+  "score": 0.528
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 5.79,
+  "end": 6.191,
+  "score": 0.992
+ },
+ {
+  "w": "started,",
+  "r": "started",
+  "start": 6.472,
+  "end": 6.993,
+  "score": 0.856
+ },
+ {
+  "w": "writing,",
+  "r": "writing",
+  "start": 7.033,
+  "end": 7.794,
+  "score": 0.713
+ },
+ {
+  "w": "submitted,",
+  "r": "submitted",
+  "start": 8.095,
+  "end": 8.956,
+  "score": 0.865
+ },
+ {
+  "w": "dropped.",
+  "r": "dropped",
+  "start": 8.976,
+  "end": 9.377,
+  "score": 0.511
+ },
+ {
+  "w": "ఏ",
+  "r": "ee",
+  "start": 9.858,
+  "end": 9.958,
+  "score": 0.977
+ },
+ {
+  "w": "tile",
+  "r": "tile",
+  "start": 10.038,
+  "end": 10.278,
+  "score": 0.676
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 10.339,
+  "end": 10.519,
+  "score": 0.981
+ },
+ {
+  "w": "చేసినా,",
+  "r": "ceesinaa",
+  "start": 10.599,
+  "end": 11.02,
+  "score": 0.876
+ },
+ {
+  "w": "ఎవరు,",
+  "r": "evaru",
+  "start": 11.441,
+  "end": 11.661,
+  "score": 0.915
+ },
+ {
+  "w": "ఎంతవరకు",
+  "r": "emtavaraku",
+  "start": 11.801,
+  "end": 12.282,
+  "score": 0.977
+ },
+ {
+  "w": "చేశారో",
+  "r": "ceeshaaroo",
+  "start": 12.342,
+  "end": 12.783,
+  "score": 0.971
+ },
+ {
+  "w": "తెలుస్తుంది.",
+  "r": "telustumdi",
+  "start": 12.823,
+  "end": 13.304,
+  "score": 0.998
+ }
+]

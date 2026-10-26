@@ -1,0 +1,198 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.14,
+  "end": 0.4,
+  "score": 0.992
+ },
+ {
+  "w": "ని",
+  "r": "ni",
+  "start": 0.48,
+  "end": 0.56,
+  "score": 0.987
+ },
+ {
+  "w": "builder",
+  "r": "builder",
+  "start": 0.881,
+  "end": 1.221,
+  "score": 0.718
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 1.261,
+  "end": 1.381,
+  "score": 0.991
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 1.501,
+  "end": 1.761,
+  "score": 0.504
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 1.802,
+  "end": 2.142,
+  "score": 0.982
+ },
+ {
+  "w": "పన్నెండు",
+  "r": "pannemddu",
+  "start": 2.642,
+  "end": 3.043,
+  "score": 0.75
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 3.083,
+  "end": 3.483,
+  "score": 0.26
+ },
+ {
+  "w": "ఇక్కడే",
+  "r": "ikkaddee",
+  "start": 3.603,
+  "end": 3.903,
+  "score": 0.974
+ },
+ {
+  "w": "ఉన్నాయి.",
+  "r": "unnaayi",
+  "start": 3.923,
+  "end": 4.204,
+  "score": 0.981
+ },
+ {
+  "w": "ఒక",
+  "r": "oka",
+  "start": 4.624,
+  "end": 4.784,
+  "score": 0.979
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 4.824,
+  "end": 5.164,
+  "score": 0.195
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 5.345,
+  "end": 5.465,
+  "score": 0.398
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 5.505,
+  "end": 5.885,
+  "score": 0.949
+ },
+ {
+  "w": "words",
+  "r": "words",
+  "start": 6.265,
+  "end": 6.586,
+  "score": 0.574
+ },
+ {
+  "w": "ఎప్పటిలాగే",
+  "r": "eppattilaagee",
+  "start": 6.726,
+  "end": 7.206,
+  "score": 0.791
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 7.266,
+  "end": 7.486,
+  "score": 0.496
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 7.486,
+  "end": 7.847,
+  "score": 0.981
+ },
+ {
+  "w": "Formula",
+  "r": "formula",
+  "start": 8.307,
+  "end": 8.727,
+  "score": 0.729
+ },
+ {
+  "w": "కోసం,",
+  "r": "koosam",
+  "start": 8.787,
+  "end": 9.108,
+  "score": 0.987
+ },
+ {
+  "w": "Maths",
+  "r": "maths",
+  "start": 9.448,
+  "end": 9.768,
+  "score": 0.745
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 9.808,
+  "end": 9.908,
+  "score": 0.352
+ },
+ {
+  "w": "symbols",
+  "r": "symbols",
+  "start": 9.948,
+  "end": 10.329,
+  "score": 0.704
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 10.449,
+  "end": 10.689,
+  "score": 0.501
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 10.749,
+  "end": 11.089,
+  "score": 0.903
+ },
+ {
+  "w": "ఇదే",
+  "r": "idee",
+  "start": 11.83,
+  "end": 12.11,
+  "score": 0.662
+ },
+ {
+  "w": "Sy",
+  "r": "sy",
+  "start": 12.571,
+  "end": 12.751,
+  "score": 0.331
+ },
+ {
+  "w": "Pad.",
+  "r": "pad",
+  "start": 12.811,
+  "end": 12.951,
+  "score": 0.347
+ }
+]

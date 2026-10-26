@@ -1,0 +1,100 @@
+[
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 0.06,
+  "end": 0.501,
+  "score": 0.896
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 0.541,
+  "end": 0.721,
+  "score": 0.747
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 0.802,
+  "end": 1.002,
+  "score": 0.591
+ },
+ {
+  "w": "చేస్తారు,",
+  "r": "ceestaaru",
+  "start": 1.022,
+  "end": 1.443,
+  "score": 0.968
+ },
+ {
+  "w": "పేరు",
+  "r": "peeru",
+  "start": 1.583,
+  "end": 1.803,
+  "score": 0.998
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.863,
+  "end": 2.084,
+  "score": 0.5
+ },
+ {
+  "w": "చేస్తారు,",
+  "r": "ceestaaru",
+  "start": 2.084,
+  "end": 2.505,
+  "score": 0.932
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 2.645,
+  "end": 2.966,
+  "score": 0.801
+ },
+ {
+  "w": "చేస్తారు…",
+  "r": "ceestaaru",
+  "start": 3.026,
+  "end": 3.466,
+  "score": 0.952
+ },
+ {
+  "w": "చూడండి",
+  "r": "cuuddamddi",
+  "start": 3.787,
+  "end": 4.208,
+  "score": 0.994
+ },
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 4.428,
+  "end": 4.549,
+  "score": 0.998
+ },
+ {
+  "w": "logo,",
+  "r": "logo",
+  "start": 4.609,
+  "end": 4.849,
+  "score": 0.99
+ },
+ {
+  "w": "పేరు,",
+  "r": "peeru",
+  "start": 4.909,
+  "end": 5.09,
+  "score": 0.986
+ },
+ {
+  "w": "పైనే.",
+  "r": "painee",
+  "start": 5.11,
+  "end": 5.43,
+  "score": 0.967
+ }
+]

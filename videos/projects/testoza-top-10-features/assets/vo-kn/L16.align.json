@@ -1,0 +1,205 @@
+[
+ {
+  "w": "ಮುಂದಿನ",
+  "r": "mumdina",
+  "start": 0.06,
+  "end": 0.4,
+  "score": 0.869
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 0.44,
+  "end": 0.661,
+  "score": 0.765
+ },
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 0.761,
+  "end": 1.181,
+  "score": 0.821
+ },
+ {
+  "w": "ನೇ",
+  "r": "nee",
+  "start": 1.261,
+  "end": 1.381,
+  "score": 0.55
+ },
+ {
+  "w": "ಹೇಳುತ್ತೆ:",
+  "r": "heellutte",
+  "start": 1.381,
+  "end": 1.702,
+  "score": 0.528
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.402,
+  "end": 2.763,
+  "score": 0.694
+ },
+ {
+  "w": "room",
+  "r": "room",
+  "start": 2.823,
+  "end": 2.963,
+  "score": 0.541
+ },
+ {
+  "w": "set",
+  "r": "set",
+  "start": 3.043,
+  "end": 3.183,
+  "score": 0.989
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 3.263,
+  "end": 3.483,
+  "score": 0.947
+ },
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 3.944,
+  "end": 4.124,
+  "score": 0.498
+ },
+ {
+  "w": "screen.",
+  "r": "screen",
+  "start": 4.184,
+  "end": 4.504,
+  "score": 0.496
+ },
+ {
+  "w": "Tab,",
+  "r": "tab",
+  "start": 5.065,
+  "end": 5.285,
+  "score": 0.945
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 5.525,
+  "end": 5.665,
+  "score": 0.622
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 5.746,
+  "end": 6.006,
+  "score": 0.519
+ },
+ {
+  "w": "ಸಿಕ್ಕಿಬೀಳುತ್ತೆ,",
+  "r": "sikkibiillutte",
+  "start": 6.206,
+  "end": 6.827,
+  "score": 0.589
+ },
+ {
+  "w": "limit",
+  "r": "limit",
+  "start": 7.427,
+  "end": 7.707,
+  "score": 0.949
+ },
+ {
+  "w": "set",
+  "r": "set",
+  "start": 7.748,
+  "end": 7.928,
+  "score": 0.99
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 7.968,
+  "end": 8.168,
+  "score": 0.99
+ },
+ {
+  "w": "ಮೂರು",
+  "r": "muuru",
+  "start": 8.608,
+  "end": 8.869,
+  "score": 0.72
+ },
+ {
+  "w": "warnings",
+  "r": "warnings",
+  "start": 8.929,
+  "end": 9.429,
+  "score": 0.688
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 9.769,
+  "end": 9.99,
+  "score": 0.99
+ },
+ {
+  "w": "ತಾನಾಗಿಯೇ",
+  "r": "taanaagiyee",
+  "start": 10.07,
+  "end": 10.59,
+  "score": 0.679
+ },
+ {
+  "w": "submit.",
+  "r": "submit",
+  "start": 10.59,
+  "end": 10.971,
+  "score": 0.83
+ },
+ {
+  "w": "Copy-paste,",
+  "r": "copypaste",
+  "start": 11.451,
+  "end": 12.152,
+  "score": 0.516
+ },
+ {
+  "w": "right-click,",
+  "r": "rightclick",
+  "start": 12.372,
+  "end": 12.852,
+  "score": 0.519
+ },
+ {
+  "w": "back",
+  "r": "back",
+  "start": 13.193,
+  "end": 13.393,
+  "score": 0.632
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 13.453,
+  "end": 13.733,
+  "score": 0.658
+ },
+ {
+  "w": "ಎಲ್ಲಾ",
+  "r": "ellaa",
+  "start": 13.974,
+  "end": 14.214,
+  "score": 0.807
+ },
+ {
+  "w": "block.",
+  "r": "block",
+  "start": 14.234,
+  "end": 14.454,
+  "score": 0.693
+ }
+]

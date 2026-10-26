@@ -1,0 +1,65 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  /* the study desk the DPP photos were taken on */
+  .desk { position: absolute; inset: 0; background: radial-gradient(130% 100% at 30% 20%, #d9c3a3 0%, #b89a74 55%, #8a6d4c 100%); }
+  .desk::before { content: ''; position: absolute; inset: 0; opacity: 0.22; mix-blend-mode: multiply;
+    background: repeating-linear-gradient(97deg, rgba(90, 60, 30, 0) 0 26px, rgba(90, 60, 30, 0.35) 27px 29px, rgba(90, 60, 30, 0) 30px 61px); }
+  .desk::after { content: ''; position: absolute; inset: 0; background: radial-gradient(90% 70% at 50% 45%, rgba(0, 0, 0, 0) 40%, rgba(30, 18, 8, 0.55) 100%); }
+  /* booklets: cover art on a paper block with page edges */
+  .bk { position: absolute; left: 340px; top: 600px; width: 400px; height: 566px; }
+  .bk i { position: absolute; inset: 0; border-radius: 6px 10px 10px 6px; background: center / cover; box-shadow: 0 30px 50px -10px rgba(40, 22, 6, 0.55), 0 4px 10px rgba(40, 22, 6, 0.35); }
+  .bk b { position: absolute; left: 6px; right: -8px; top: 6px; bottom: -9px; border-radius: 4px 10px 10px 4px; background: repeating-linear-gradient(180deg, #f4efe4 0 3px, #ddd5c4 3px 4px); }
+  .bk.jee i { background-image: url(assets/dpp/cover-jee.jpg); }
+  .bk.neet i { background-image: url(assets/dpp/cover-neet.jpg); }
+  .bk.ssc i { background-image: url(assets/dpp/cover-ssc.jpg); }
+  .bk.bank i { background-image: url(assets/dpp/cover-bank.jpg); }
+  /* the rest of the pile: plain booklet edges under the four */
+  .pile { position: absolute; left: 330px; top: 640px; width: 420px; height: 586px; border-radius: 8px; opacity: 0;
+    background: repeating-linear-gradient(180deg, #efe8d8 0 5px, #cbbfa8 5px 7px); box-shadow: 0 40px 60px -10px rgba(40, 22, 6, 0.5); }
+  .flash { position: absolute; inset: 0; background: #fff8ec; opacity: 0; }
+</style>
+<div data-hf-id="hf-8aag" id="root" data-composition-id="f01-hook" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-3tbf" class="desk"></div>
+    <div data-hf-id="hf-hibf" class="pile" id="h-pile"></div>
+    <div data-hf-id="hf-bw5a" class="bk jee" id="h-jee"><b data-hf-id="hf-xujp"></b><i data-hf-id="hf-wt6k"></i></div>
+    <div data-hf-id="hf-u8lo" class="bk ssc" id="h-ssc"><b data-hf-id="hf-ey49"></b><i data-hf-id="hf-zeb8"></i></div>
+    <div data-hf-id="hf-yhg8" class="bk bank" id="h-bank"><b data-hf-id="hf-g51c"></b><i data-hf-id="hf-y7e5"></i></div>
+    <div data-hf-id="hf-1u60" class="bk neet" id="h-neet"><b data-hf-id="hf-fqqb"></b><i data-hf-id="hf-ylp6"></i></div>
+    <div data-hf-id="hf-1i5d" class="flash" id="h-flash"></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f01-hook';
+  const { tl } = SF(ID);
+  // "JEE, NEET, SSC, Banking..." each booklet slams onto the desk on its word
+  const SLAM = [
+    ['#h-jee', 0.5, { x: -250, y: -330, rotation: -13 }],
+    ['#h-neet', 1.12, { x: 210, y: -250, rotation: 9 }],
+    ['#h-ssc', 2.08, { x: -210, y: 330, rotation: 7 }],
+    ['#h-bank', 2.78, { x: 240, y: 300, rotation: -10 }],
+  ];
+  SLAM.forEach(([el, t, to], i) => {
+    tl.fromTo(el, { x: to.x * 2.6, y: to.y * 2.6 - 300, rotation: to.rotation * 3, scale: 1.5, opacity: 0 },
+      { x: to.x, y: to.y, rotation: to.rotation, scale: 1, opacity: 1, duration: 0.42, ease: 'power4.in' }, t - 0.42);
+    tl.fromTo(el, { scale: 1 }, { scale: 0.97, duration: 0.06, yoyo: true, repeat: 1, ease: 'power1.out', immediateRender: false }, t);
+    tl.fromTo('#h-flash', { opacity: 0.18 }, { opacity: 0, duration: 0.3, ease: 'power2.out', immediateRender: false }, t);
+  });
+  // a slow push-in the whole time
+  tl.fromTo('.sf', { scale: 1.04 }, { scale: 1.12, duration: 6.2, ease: 'none' }, 0);
+  // "...every aspirant has a stack of DPPs." they gather into one pile
+  tl.to('#h-pile', { opacity: 1, duration: 0.3 }, 4.3);
+  SLAM.forEach(([el], i) => {
+    tl.to(el, { x: (i - 1.5) * 6, y: -i * 14, rotation: (i % 2 ? 2 : -2.5), duration: 0.65, ease: 'power3.inOut' }, 4.2 + i * 0.05);
+  });
+  // the NEET booklet comes off the top of the pile, towards us
+  tl.to('#h-neet', { y: -40, scale: 1.22, rotation: 0, duration: 0.8, ease: 'power3.inOut' }, 5.35);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

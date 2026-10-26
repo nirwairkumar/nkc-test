@@ -1,0 +1,2 @@
+Next, Tab and App Switch Detection.
+Opening another tab, jumping to WhatsApp, minimising the browser — Testoza catches all of it.

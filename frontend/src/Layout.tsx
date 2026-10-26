@@ -12,6 +12,7 @@ import { PanelLeft } from 'lucide-react';
 import { GUIDE_METAS } from '@/guides/meta';
 import { AI_IMPORT_STEP_EVENT } from '@/lib/aiImportStep';
 import FeedbackDock from '@/components/feedback/FeedbackDock';
+import { useReferralClaim } from '@/hooks/useReferralClaim';
 
 /** Guides and their index (pages/GuidesIndex.tsx) are reading pages: no app sidebar. */
 const GUIDE_PATHS = new Set(['/guides', ...GUIDE_METAS.map((g) => g.path)]);
@@ -94,6 +95,9 @@ export default function Layout() {
         if (!loading) analytics.identify(user?.id ?? null);
     }, [user?.id, loading]);
 
+    // Opened someone's invite link, then signed up: credit them (any sign-in path).
+    useReferralClaim(user?.id, loading);
+
     // If user is already onboarded and visits /onboarding, redirect to home
     React.useEffect(() => {
         if (loading) return;
@@ -129,6 +133,9 @@ export default function Layout() {
         location.pathname.startsWith('/j/') ||
         // The examiner's phone after scanning a live exam's share QR
         location.pathname.startsWith('/share-exam/') ||
+        // Invite links: the invited educator's landing page, and the inviter's phone after the QR
+        location.pathname.startsWith('/invite/') ||
+        location.pathname.startsWith('/share-invite/') ||
         /^\/exams\/[^/]+\/(present|report-cards)$/.test(location.pathname) ||
         /^\/batches\/[^/]+\/slips$/.test(location.pathname);
 

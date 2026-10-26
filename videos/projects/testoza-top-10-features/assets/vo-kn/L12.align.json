@@ -1,0 +1,170 @@
+[
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 0.0,
+  "end": 0.22,
+  "score": 0.912
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.28,
+  "end": 0.62,
+  "score": 0.26
+ },
+ {
+  "w": "ಗೆ",
+  "r": "ge",
+  "start": 0.68,
+  "end": 0.76,
+  "score": 0.964
+ },
+ {
+  "w": "plus",
+  "r": "plus",
+  "start": 0.941,
+  "end": 1.141,
+  "score": 0.449
+ },
+ {
+  "w": "four,",
+  "r": "four",
+  "start": 1.221,
+  "end": 1.421,
+  "score": 0.239
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 1.681,
+  "end": 2.021,
+  "score": 0.777
+ },
+ {
+  "w": "one.",
+  "r": "one",
+  "start": 2.121,
+  "end": 2.281,
+  "score": 0.314
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 2.822,
+  "end": 3.002,
+  "score": 0.714
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 3.062,
+  "end": 3.442,
+  "score": 0.503
+ },
+ {
+  "w": "style",
+  "r": "style",
+  "start": 3.442,
+  "end": 3.702,
+  "score": 0.436
+ },
+ {
+  "w": "ಬೇಕಾ?",
+  "r": "beekaa",
+  "start": 3.722,
+  "end": 4.022,
+  "score": 0.803
+ },
+ {
+  "w": "Multiple",
+  "r": "multiple",
+  "start": 4.603,
+  "end": 5.043,
+  "score": 0.753
+ },
+ {
+  "w": "correct",
+  "r": "correct",
+  "start": 5.063,
+  "end": 5.343,
+  "score": 0.266
+ },
+ {
+  "w": "ಆಗಿ",
+  "r": "aagi",
+  "start": 5.363,
+  "end": 5.523,
+  "score": 0.989
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 5.583,
+  "end": 5.844,
+  "score": 0.996
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 6.284,
+  "end": 6.464,
+  "score": 0.713
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 6.544,
+  "end": 7.004,
+  "score": 0.577
+ },
+ {
+  "w": "partial",
+  "r": "partial",
+  "start": 7.084,
+  "end": 7.444,
+  "score": 0.721
+ },
+ {
+  "w": "marks",
+  "r": "marks",
+  "start": 7.485,
+  "end": 7.705,
+  "score": 0.765
+ },
+ {
+  "w": "ಆರಿಸಿ,",
+  "r": "aarisi",
+  "start": 7.745,
+  "end": 8.065,
+  "score": 0.989
+ },
+ {
+  "w": "ಸರಿಯಾದ",
+  "r": "sariyaada",
+  "start": 8.425,
+  "end": 8.825,
+  "score": 0.985
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 8.905,
+  "end": 9.186,
+  "score": 0.553
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 9.226,
+  "end": 9.446,
+  "score": 0.969
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 9.506,
+  "end": 9.706,
+  "score": 0.997
+ }
+]

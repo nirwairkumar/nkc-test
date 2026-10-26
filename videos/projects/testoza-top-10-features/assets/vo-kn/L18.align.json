@@ -1,0 +1,44 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.081,
+  "end": 0.424,
+  "score": 0.595
+ },
+ {
+  "w": "six:",
+  "r": "six",
+  "start": 0.505,
+  "end": 0.666,
+  "score": 0.389
+ },
+ {
+  "w": "ಎಲ್ಲಿ",
+  "r": "elli",
+  "start": 1.353,
+  "end": 1.555,
+  "score": 0.933
+ },
+ {
+  "w": "ಬೇಕಾದರೂ",
+  "r": "beekaadaruu",
+  "start": 1.595,
+  "end": 2.079,
+  "score": 0.792
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 2.12,
+  "end": 2.342,
+  "score": 0.682
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 2.362,
+  "end": 2.584,
+  "score": 0.943
+ }
+]

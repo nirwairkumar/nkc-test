@@ -1,0 +1,212 @@
+[
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 0.02,
+  "end": 0.32,
+  "score": 0.999
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.54,
+  "end": 0.86,
+  "score": 0.6
+ },
+ {
+  "w": "ని",
+  "r": "ni",
+  "start": 0.94,
+  "end": 1.02,
+  "score": 0.996
+ },
+ {
+  "w": "sections",
+  "r": "sections",
+  "start": 1.481,
+  "end": 1.901,
+  "score": 0.385
+ },
+ {
+  "w": "గా",
+  "r": "gaa",
+  "start": 1.981,
+  "end": 2.101,
+  "score": 0.984
+ },
+ {
+  "w": "విభజించండి,",
+  "r": "vibhajimcamddi",
+  "start": 2.121,
+  "end": 2.841,
+  "score": 0.984
+ },
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 3.221,
+  "end": 3.441,
+  "score": 0.997
+ },
+ {
+  "w": "section",
+  "r": "section",
+  "start": 3.541,
+  "end": 3.882,
+  "score": 0.301
+ },
+ {
+  "w": "కి",
+  "r": "ki",
+  "start": 3.962,
+  "end": 4.062,
+  "score": 0.992
+ },
+ {
+  "w": "సొంత",
+  "r": "somta",
+  "start": 4.442,
+  "end": 4.702,
+  "score": 0.992
+ },
+ {
+  "w": "timer",
+  "r": "timer",
+  "start": 4.782,
+  "end": 5.122,
+  "score": 0.792
+ },
+ {
+  "w": "SSC",
+  "r": "ssc",
+  "start": 5.622,
+  "end": 5.882,
+  "score": 0.66
+ },
+ {
+  "w": "లాగే.",
+  "r": "laagee",
+  "start": 5.942,
+  "end": 6.283,
+  "score": 0.997
+ },
+ {
+  "w": "ఎక్కడైనా",
+  "r": "ekkaddainaa",
+  "start": 6.923,
+  "end": 7.403,
+  "score": 0.922
+ },
+ {
+  "w": "split",
+  "r": "split",
+  "start": 7.423,
+  "end": 7.703,
+  "score": 0.795
+ },
+ {
+  "w": "చేయొచ్చు:",
+  "r": "ceeyoccu",
+  "start": 7.743,
+  "end": 8.183,
+  "score": 0.896
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 8.744,
+  "end": 9.324,
+  "score": 0.298
+ },
+ {
+  "w": "ఏడు",
+  "r": "eeddu",
+  "start": 9.724,
+  "end": 9.924,
+  "score": 0.792
+ },
+ {
+  "w": "నుంచి",
+  "r": "numci",
+  "start": 9.944,
+  "end": 10.184,
+  "score": 0.849
+ },
+ {
+  "w": "పదమూడు",
+  "r": "padamuuddu",
+  "start": 10.244,
+  "end": 10.724,
+  "score": 0.884
+ },
+ {
+  "w": "Section",
+  "r": "section",
+  "start": 11.185,
+  "end": 11.525,
+  "score": 0.32
+ },
+ {
+  "w": "B",
+  "r": "b",
+  "start": 11.645,
+  "end": 11.665,
+  "score": 0.987
+ },
+ {
+  "w": "అయ్యాయి.",
+  "r": "ayyaayi",
+  "start": 11.945,
+  "end": 12.345,
+  "score": 0.986
+ },
+ {
+  "w": "ఇక్కడ",
+  "r": "ikkadda",
+  "start": 13.045,
+  "end": 13.366,
+  "score": 0.993
+ },
+ {
+  "w": "పది",
+  "r": "padi",
+  "start": 13.806,
+  "end": 13.966,
+  "score": 0.959
+ },
+ {
+  "w": "నిమిషాలు,",
+  "r": "nimissaalu",
+  "start": 14.006,
+  "end": 14.466,
+  "score": 0.797
+ },
+ {
+  "w": "అక్కడ",
+  "r": "akkadda",
+  "start": 14.746,
+  "end": 15.046,
+  "score": 0.998
+ },
+ {
+  "w": "పది",
+  "r": "padi",
+  "start": 15.066,
+  "end": 15.206,
+  "score": 0.893
+ },
+ {
+  "w": "నిమిషాలు…",
+  "r": "nimissaalu",
+  "start": 15.246,
+  "end": 15.707,
+  "score": 0.796
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 16.247,
+  "end": 16.687,
+  "score": 0.364
+ }
+]

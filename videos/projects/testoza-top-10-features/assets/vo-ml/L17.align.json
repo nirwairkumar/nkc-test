@@ -1,0 +1,121 @@
+[
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 0.04,
+  "end": 0.38,
+  "score": 0.437
+ },
+ {
+  "w": "tab-ൽ,",
+  "r": "tabla",
+  "start": 0.461,
+  "end": 0.841,
+  "score": 0.698
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 0.981,
+  "end": 1.342,
+  "score": 0.737
+ },
+ {
+  "w": "കഴിഞ്ഞ്",
+  "r": "kalllinyny",
+  "start": 1.362,
+  "end": 1.622,
+  "score": 0.965
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 1.682,
+  "end": 2.163,
+  "score": 0.579
+ },
+ {
+  "w": "എന്ത്",
+  "r": "ent",
+  "start": 2.263,
+  "end": 2.403,
+  "score": 0.996
+ },
+ {
+  "w": "കാണണമെന്ന്",
+  "r": "kaannannamenn",
+  "start": 2.463,
+  "end": 2.984,
+  "score": 0.876
+ },
+ {
+  "w": "നിങ്ങൾ",
+  "r": "ningngalla",
+  "start": 3.044,
+  "end": 3.304,
+  "score": 0.99
+ },
+ {
+  "w": "തീരുമാനിക്കും.",
+  "r": "tiirumaanikkum",
+  "start": 3.304,
+  "end": 3.865,
+  "score": 0.835
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 4.225,
+  "end": 4.666,
+  "score": 0.403
+ },
+ {
+  "w": "shuffle",
+  "r": "shuffle",
+  "start": 4.686,
+  "end": 4.946,
+  "score": 0.289
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 4.986,
+  "end": 5.247,
+  "score": 0.866
+ },
+ {
+  "w": "ആർക്കും",
+  "r": "aarrakkum",
+  "start": 5.587,
+  "end": 5.947,
+  "score": 0.93
+ },
+ {
+  "w": "ഒരേ",
+  "r": "oree",
+  "start": 6.028,
+  "end": 6.228,
+  "score": 0.745
+ },
+ {
+  "w": "order",
+  "r": "order",
+  "start": 6.248,
+  "end": 6.428,
+  "score": 0.376
+ },
+ {
+  "w": "കിട്ടില്ല.",
+  "r": "kittttilla",
+  "start": 6.448,
+  "end": 6.829,
+  "score": 0.855
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 7.429,
+  "end": 7.529,
+  "score": 0.066
+ }
+]

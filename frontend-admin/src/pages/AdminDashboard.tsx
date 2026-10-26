@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy, Gift
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import AdminLoginPanel from './AdminLoginPanel';
 import AnalyticsPanel from './analytics/AnalyticsPanel';
 import ExamOpsPanel from './activity/ExamOpsPanel';
 import UsersPanel from './users/UsersPanel';
+import ReferralsPanel from './referrals/ReferralsPanel';
 import TestsPanel from './tests/TestsPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
@@ -34,7 +35,7 @@ import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
+type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'referrals' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
@@ -100,6 +101,7 @@ export default function AdminDashboard() {
                 { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
                 { id: 'categories' as const, label: 'Categories', icon: BookOpen },
                 { id: 'users' as const, label: 'Users', icon: Users },
+                { id: 'referrals' as const, label: 'Referrals', icon: Gift },
                 { id: 'verified_creators' as const, label: 'Verified Creators', icon: GraduationCap },
                 { id: 'combined' as const, label: 'Combined Sessions', icon: Layers },
                 { id: 'activity' as const, label: 'Live Activity', icon: Radio },
@@ -278,6 +280,7 @@ export default function AdminDashboard() {
                 <div className="max-w-7xl mx-auto">
                     {activeTab === 'analytics' && <AnalyticsPanel />}
                     {activeTab === 'users' && <UsersPanel />}
+                    {activeTab === 'referrals' && <ReferralsPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
                     {activeTab === 'support' && <SupportPanel />}
                     {activeTab === 'activity' && <ExamOpsPanel />}

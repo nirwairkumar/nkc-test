@@ -1,0 +1,163 @@
+[
+ {
+  "w": "ಇವೇ",
+  "r": "ivee",
+  "start": 0.04,
+  "end": 0.261,
+  "score": 0.81
+ },
+ {
+  "w": "ಹತ್ತು",
+  "r": "hattu",
+  "start": 0.301,
+  "end": 0.541,
+  "score": 0.978
+ },
+ {
+  "w": "features",
+  "r": "features",
+  "start": 0.581,
+  "end": 0.982,
+  "score": 0.248
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 1.283,
+  "end": 1.623,
+  "score": 0.473
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 1.684,
+  "end": 1.944,
+  "score": 0.6
+ },
+ {
+  "w": "ಇಂದ",
+  "r": "imda",
+  "start": 1.964,
+  "end": 2.125,
+  "score": 0.993
+ },
+ {
+  "w": "ranked",
+  "r": "ranked",
+  "start": 2.225,
+  "end": 2.566,
+  "score": 0.657
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 2.586,
+  "end": 2.906,
+  "score": 0.561
+ },
+ {
+  "w": "ವರೆಗೂ,",
+  "r": "vareguu",
+  "start": 2.946,
+  "end": 3.247,
+  "score": 0.778
+ },
+ {
+  "w": "ಎಲ್ಲಾ",
+  "r": "ellaa",
+  "start": 3.648,
+  "end": 3.908,
+  "score": 0.99
+ },
+ {
+  "w": "ಒಂದೇ",
+  "r": "omdee",
+  "start": 3.969,
+  "end": 4.169,
+  "score": 0.617
+ },
+ {
+  "w": "ಕಡೆ.",
+  "r": "kadde",
+  "start": 4.169,
+  "end": 4.349,
+  "score": 0.927
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 4.83,
+  "end": 5.271,
+  "score": 0.849
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 5.372,
+  "end": 5.532,
+  "score": 0.574
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 5.572,
+  "end": 5.692,
+  "score": 0.371
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 5.732,
+  "end": 5.873,
+  "score": 0.956
+ },
+ {
+  "w": "try",
+  "r": "try",
+  "start": 5.953,
+  "end": 6.093,
+  "score": 0.649
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 6.133,
+  "end": 6.334,
+  "score": 0.998
+ },
+ {
+  "w": "ಇಂಥ",
+  "r": "imtha",
+  "start": 6.775,
+  "end": 6.995,
+  "score": 0.8
+ },
+ {
+  "w": "videos",
+  "r": "videos",
+  "start": 7.055,
+  "end": 7.356,
+  "score": 0.725
+ },
+ {
+  "w": "ಗೆ",
+  "r": "ge",
+  "start": 7.396,
+  "end": 7.456,
+  "score": 0.502
+ },
+ {
+  "w": "subscribe",
+  "r": "subscribe",
+  "start": 7.536,
+  "end": 7.957,
+  "score": 0.691
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 7.957,
+  "end": 8.137,
+  "score": 0.993
+ }
+]

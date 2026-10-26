@@ -22,11 +22,11 @@ export const APP_SECTIONS: readonly string[] = [
   'auth', 'auth-error', 'auto-grading-software', 'batches', 'blog', 'combined-break', 'combined-intro',
   'compare', 'convert', 'create-combined-test', 'create-mock-test-online', 'create-test', 'creator',
   'dashboard', 'edit-test', 'exam-software-for-schools', 'exams', 'explore', 'feedback', 'generate-with-ai', 'guides',
-  'help', 'history', 'j', 'join', 'live', 'login', 'mcq-test-maker', 'more-tests', 'my-posts',
+  'help', 'history', 'invite', 'j', 'join', 'live', 'login', 'mcq-test-maker', 'more-tests', 'my-posts',
   'my-tests', 'news', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
   'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf', 'pdf-to-quiz', 'posts',
   'premium', 'pricing', 'privacy-policy', 'profile', 'quiz-creator', 'results', 'rewards', 'settings',
-  'share', 'share-exam', 'solutions', 'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test',
+  'share', 'share-exam', 'share-invite', 'solutions', 'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test',
   'test-analysis', 'test-intro', 'test-submitted', 'tests', 'update-password', 'user-guide',
   'white-label-test-platform', 'youtube-to-quiz'
 ];

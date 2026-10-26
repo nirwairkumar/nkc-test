@@ -1,0 +1,53 @@
+prebuild details
+prebuild q1
+prebuild q2
+prebuild q3
+prebuild q4
+  mark d:x-start @ 0.365
+record q5
+  mark d:q5add @ 1.958
+  mark d:qtype @ 4.007
+  mark d:numerical @ 5.102
+  mark d:wrong @ 6.394
+  mark d:q5text @ 8.464
+  mark d:pic @ 13.36
+  mark d:cloud @ 14.44
+  mark d:cloudwhy @ 15.92
+  mark d:choose @ 17.952
+  mark d:pick @ 21.478
+  mark d:placed @ 24.044
+  mark d:x-sypad5 @ 25.774
+  mark d:x-chemtab @ 26.998
+  mark d:x-after1 @ 27.734
+  mark d:arrow5 @ 28.665
+  mark d:x-rowminus @ 29.777
+  mark d:x-rowins @ 30.613
+  mark d:heat5 @ 31.992
+  mark d:x-heat5-t @ 32.336
+  mark d:x-r1 @ 33.943
+  mark d:x-r2 @ 34.59
+  mark d:x @ 34.875
+  mark d:x-ins5a @ 36.101
+  mark d:x-done @ 37.223
+  mark d:second @ 38.196
+  mark d:x-cloud2 @ 39.652
+  mark d:x-choose2 @ 41.909
+  mark d:x-pick2 @ 45.43
+  mark d:x-placed2 @ 47.435
+  mark d:x-sypad5b @ 49.128
+  mark d:x-chemtab @ 50.305
+  mark d:x-after2 @ 51.042
+  mark d:x-arrowkey @ 51.887
+  mark d:x-rowminus @ 53.097
+  mark d:x-rowins @ 54.142
+  mark d:x-heat2 @ 55.123
+  mark d:x-x-heat2-t @ 55.473
+  mark d:x-r1 @ 56.827
+  mark d:x-r2 @ 57.375
+  mark d:y @ 57.655
+  mark d:ins5 @ 58.875
+  mark d:x-done @ 60.101
+  mark d:seen @ 62.803
+  mark d:exact @ 64.691
+  mark d:four @ 65.574
+✓ d.mp4  788 frames  46 marks  sync {"lagMedian":0.235,"lagMax":1.02,"unread":0}

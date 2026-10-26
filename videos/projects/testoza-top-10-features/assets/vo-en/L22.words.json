@@ -1,0 +1,80 @@
+[
+  {
+    "id": "w0",
+    "text": "Number",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "8.",
+    "start": 0.4,
+    "end": 0.72
+  },
+  {
+    "id": "w2",
+    "text": "An",
+    "start": 0.88,
+    "end": 1.04
+  },
+  {
+    "id": "w3",
+    "text": "exam",
+    "start": 1.04,
+    "end": 1.44
+  },
+  {
+    "id": "w4",
+    "text": "room",
+    "start": 1.44,
+    "end": 1.76
+  },
+  {
+    "id": "w5",
+    "text": "on",
+    "start": 1.76,
+    "end": 2
+  },
+  {
+    "id": "w6",
+    "text": "any",
+    "start": 2,
+    "end": 2.24
+  },
+  {
+    "id": "w7",
+    "text": "phone.",
+    "start": 2.24,
+    "end": 2.8
+  },
+  {
+    "id": "w8",
+    "text": "No",
+    "start": 2.8,
+    "end": 3.04
+  },
+  {
+    "id": "w9",
+    "text": "app,",
+    "start": 3.04,
+    "end": 3.52
+  },
+  {
+    "id": "w10",
+    "text": "no",
+    "start": 3.52,
+    "end": 3.76
+  },
+  {
+    "id": "w11",
+    "text": "sign",
+    "start": 3.76,
+    "end": 3.92
+  },
+  {
+    "id": "w12",
+    "text": "up.",
+    "start": 4.08,
+    "end": 4.32
+  }
+]

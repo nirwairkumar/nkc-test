@@ -1,0 +1,128 @@
+[
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 0.04,
+  "end": 0.22,
+  "score": 0.598
+ },
+ {
+  "w": "பாருங்க.",
+  "r": "paarungka",
+  "start": 0.26,
+  "end": 0.581,
+  "score": 0.969
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 1.121,
+  "end": 1.221,
+  "score": 0.152
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 1.461,
+  "end": 1.782,
+  "score": 0.964
+ },
+ {
+  "w": "page-ஐயும்",
+  "r": "pageaiyum",
+  "start": 1.822,
+  "end": 2.242,
+  "score": 0.636
+ },
+ {
+  "w": "படிக்குது,",
+  "r": "padikkutu",
+  "start": 2.282,
+  "end": 2.682,
+  "score": 0.919
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 2.943,
+  "end": 3.363,
+  "score": 0.401
+ },
+ {
+  "w": "ஒண்ணொண்ணா",
+  "r": "onnonnaa",
+  "start": 3.463,
+  "end": 3.863,
+  "score": 0.854
+ },
+ {
+  "w": "வர",
+  "r": "vara",
+  "start": 3.883,
+  "end": 4.044,
+  "score": 0.988
+ },
+ {
+  "w": "ஆரம்பிக்குது",
+  "r": "aarampikkutu",
+  "start": 4.104,
+  "end": 4.524,
+  "score": 0.843
+ },
+ {
+  "w": "options,",
+  "r": "options",
+  "start": 4.944,
+  "end": 5.465,
+  "score": 0.477
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 5.665,
+  "end": 6.025,
+  "score": 0.545
+ },
+ {
+  "w": "எல்லாமே.",
+  "r": "ellaamee",
+  "start": 6.265,
+  "end": 6.726,
+  "score": 0.906
+ },
+ {
+  "w": "அரை",
+  "r": "arai",
+  "start": 7.166,
+  "end": 7.366,
+  "score": 0.982
+ },
+ {
+  "w": "நிமிஷத்துல,",
+  "r": "nimissattula",
+  "start": 7.427,
+  "end": 7.927,
+  "score": 0.769
+ },
+ {
+  "w": "பன்னிரண்டு",
+  "r": "pannirandu",
+  "start": 8.067,
+  "end": 8.507,
+  "score": 0.963
+ },
+ {
+  "w": "questions-உம்",
+  "r": "questionsum",
+  "start": 8.527,
+  "end": 9.028,
+  "score": 0.432
+ },
+ {
+  "w": "ready.",
+  "r": "ready",
+  "start": 9.088,
+  "end": 9.288,
+  "score": 0.564
+ }
+]

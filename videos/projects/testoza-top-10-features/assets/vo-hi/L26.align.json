@@ -1,0 +1,65 @@
+[
+ {
+  "w": "चलिए,",
+  "r": "calie",
+  "start": 0.0,
+  "end": 0.221,
+  "score": 0.869
+ },
+ {
+  "w": "आख़िर",
+  "r": "aakhir",
+  "start": 0.282,
+  "end": 0.523,
+  "score": 0.938
+ },
+ {
+  "w": "तक",
+  "r": "tak",
+  "start": 0.564,
+  "end": 0.684,
+  "score": 0.988
+ },
+ {
+  "w": "fast-forward",
+  "r": "fastforward",
+  "start": 0.725,
+  "end": 1.188,
+  "score": 0.314
+ },
+ {
+  "w": "करते",
+  "r": "karate",
+  "start": 1.228,
+  "end": 1.49,
+  "score": 0.986
+ },
+ {
+  "w": "हैं।",
+  "r": "haim",
+  "start": 1.49,
+  "end": 1.57,
+  "score": 0.099
+ },
+ {
+  "w": "Submit,",
+  "r": "submit",
+  "start": 2.033,
+  "end": 2.436,
+  "score": 0.827
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 2.557,
+  "end": 2.698,
+  "score": 0.993
+ },
+ {
+  "w": "confirm।",
+  "r": "confirm",
+  "start": 2.778,
+  "end": 3.221,
+  "score": 0.345
+ }
+]

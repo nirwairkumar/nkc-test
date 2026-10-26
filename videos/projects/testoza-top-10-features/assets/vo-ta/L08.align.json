@@ -1,0 +1,205 @@
+[
+ {
+  "w": "h",
+  "r": "h",
+  "start": 0.02,
+  "end": 0.04,
+  "score": 0.991
+ },
+ {
+  "w": "equals",
+  "r": "equals",
+  "start": 0.08,
+  "end": 0.621,
+  "score": 0.361
+ },
+ {
+  "w": "u",
+  "r": "u",
+  "start": 0.801,
+  "end": 0.821,
+  "score": 0.967
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 0.941,
+  "end": 0.961,
+  "score": 0.988
+ },
+ {
+  "w": "minus-னு",
+  "r": "minusnu",
+  "start": 1.101,
+  "end": 1.542,
+  "score": 0.591
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.582,
+  "end": 1.782,
+  "score": 0.343
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 1.782,
+  "end": 2.062,
+  "score": 0.484
+ },
+ {
+  "w": "fraction",
+  "r": "fraction",
+  "start": 2.603,
+  "end": 3.023,
+  "score": 0.372
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 3.104,
+  "end": 3.224,
+  "score": 0.331
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 3.524,
+  "end": 3.764,
+  "score": 0.184
+ },
+ {
+  "w": "over",
+  "r": "over",
+  "start": 3.804,
+  "end": 4.005,
+  "score": 0.571
+ },
+ {
+  "w": "two,",
+  "r": "two",
+  "start": 4.065,
+  "end": 4.185,
+  "score": 0.283
+ },
+ {
+  "w": "அப்புறம்",
+  "r": "appuram",
+  "start": 4.545,
+  "end": 4.826,
+  "score": 0.759
+ },
+ {
+  "w": "power",
+  "r": "power",
+  "start": 5.126,
+  "end": 5.406,
+  "score": 0.405
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 5.466,
+  "end": 5.606,
+  "score": 0.335
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 5.727,
+  "end": 5.747,
+  "score": 0.985
+ },
+ {
+  "w": "square-க்கு.",
+  "r": "squarekku",
+  "start": 5.907,
+  "end": 6.347,
+  "score": 0.434
+ },
+ {
+  "w": "ஒரு",
+  "r": "oru",
+  "start": 6.928,
+  "end": 7.048,
+  "score": 0.979
+ },
+ {
+  "w": "proper",
+  "r": "proper",
+  "start": 7.108,
+  "end": 7.469,
+  "score": 0.689
+ },
+ {
+  "w": "formula",
+  "r": "formula",
+  "start": 7.529,
+  "end": 7.889,
+  "score": 0.441
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 8.309,
+  "end": 8.61,
+  "score": 0.727
+ },
+ {
+  "w": "எதுவும்",
+  "r": "etuvum",
+  "start": 8.63,
+  "end": 8.77,
+  "score": 0.338
+ },
+ {
+  "w": "கத்துக்க",
+  "r": "kattukka",
+  "start": 8.81,
+  "end": 9.07,
+  "score": 0.683
+ },
+ {
+  "w": "வேண்டாம்.",
+  "r": "veendaam",
+  "start": 9.09,
+  "end": 9.391,
+  "score": 0.61
+ },
+ {
+  "w": "Insert,",
+  "r": "insert",
+  "start": 9.831,
+  "end": 10.192,
+  "score": 0.499
+ },
+ {
+  "w": "அது",
+  "r": "atu",
+  "start": 10.472,
+  "end": 10.612,
+  "score": 0.364
+ },
+ {
+  "w": "நேரா",
+  "r": "neeraa",
+  "start": 10.632,
+  "end": 10.892,
+  "score": 0.96
+ },
+ {
+  "w": "question-க்குள்ள",
+  "r": "questionkkulla",
+  "start": 10.932,
+  "end": 11.453,
+  "score": 0.491
+ },
+ {
+  "w": "வந்துடும்.",
+  "r": "vantudum",
+  "start": 11.493,
+  "end": 11.793,
+  "score": 0.335
+ }
+]

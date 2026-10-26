@@ -1,0 +1,100 @@
+[
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 0.02,
+  "end": 0.441,
+  "score": 0.79
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 0.501,
+  "end": 0.682,
+  "score": 0.726
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 0.722,
+  "end": 0.922,
+  "score": 0.674
+ },
+ {
+  "w": "ಮಾಡ್ತಾರೆ,",
+  "r": "maaddtaare",
+  "start": 0.942,
+  "end": 1.303,
+  "score": 0.818
+ },
+ {
+  "w": "ಹೆಸರು",
+  "r": "hesaru",
+  "start": 1.504,
+  "end": 1.744,
+  "score": 0.848
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.824,
+  "end": 2.005,
+  "score": 0.5
+ },
+ {
+  "w": "ಮಾಡ್ತಾರೆ,",
+  "r": "maaddtaare",
+  "start": 2.005,
+  "end": 2.386,
+  "score": 0.792
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 2.566,
+  "end": 2.867,
+  "score": 0.741
+ },
+ {
+  "w": "ಮಾಡ್ತಾರೆ…",
+  "r": "maaddtaare",
+  "start": 2.907,
+  "end": 3.268,
+  "score": 0.814
+ },
+ {
+  "w": "ನೋಡಿ",
+  "r": "nooddi",
+  "start": 3.529,
+  "end": 3.729,
+  "score": 0.656
+ },
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 4.01,
+  "end": 4.15,
+  "score": 0.841
+ },
+ {
+  "w": "logo,",
+  "r": "logo",
+  "start": 4.27,
+  "end": 4.511,
+  "score": 0.993
+ },
+ {
+  "w": "ಹೆಸರು,",
+  "r": "hesaru",
+  "start": 4.631,
+  "end": 4.952,
+  "score": 0.853
+ },
+ {
+  "w": "ಮೇಲೆಯೇ.",
+  "r": "meeleyee",
+  "start": 5.133,
+  "end": 5.574,
+  "score": 0.616
+ }
+]

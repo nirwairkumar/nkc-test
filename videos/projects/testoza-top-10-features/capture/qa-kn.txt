@@ -1,0 +1,4 @@
+Here are the lines with issues:
+
+* **L16**: The speaker says "limited" instead of "limit ಇಡಿ".
+* **L21**: The speaker says "Rule Number" instead of "Roll Number".

@@ -1,0 +1,233 @@
+[
+ {
+  "w": "அடுத்த",
+  "r": "adutta",
+  "start": 0.02,
+  "end": 0.281,
+  "score": 0.672
+ },
+ {
+  "w": "tip:",
+  "r": "tip",
+  "start": 0.341,
+  "end": 0.521,
+  "score": 0.638
+ },
+ {
+  "w": "candidates-க்கு",
+  "r": "candidateskku",
+  "start": 0.781,
+  "end": 1.383,
+  "score": 0.446
+ },
+ {
+  "w": "அனுப்புங்க.",
+  "r": "anuppungka",
+  "start": 1.423,
+  "end": 1.763,
+  "score": 0.662
+ },
+ {
+  "w": "Link-ஐ",
+  "r": "linkai",
+  "start": 2.284,
+  "end": 2.605,
+  "score": 0.66
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 2.625,
+  "end": 2.865,
+  "score": 0.252
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 2.945,
+  "end": 3.246,
+  "score": 0.734
+ },
+ {
+  "w": "இல்ல",
+  "r": "illa",
+  "start": 3.627,
+  "end": 3.827,
+  "score": 0.981
+ },
+ {
+  "w": "நேரா",
+  "r": "neeraa",
+  "start": 4.067,
+  "end": 4.368,
+  "score": 0.939
+ },
+ {
+  "w": "class",
+  "r": "class",
+  "start": 4.388,
+  "end": 4.648,
+  "score": 0.596
+ },
+ {
+  "w": "WhatsApp",
+  "r": "whatsapp",
+  "start": 4.709,
+  "end": 5.029,
+  "score": 0.383
+ },
+ {
+  "w": "group-ல",
+  "r": "groupla",
+  "start": 5.069,
+  "end": 5.35,
+  "score": 0.785
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 5.41,
+  "end": 5.65,
+  "score": 0.732
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 5.65,
+  "end": 5.931,
+  "score": 0.698
+ },
+ {
+  "w": "Class-ல",
+  "r": "classla",
+  "start": 6.251,
+  "end": 6.612,
+  "score": 0.7
+ },
+ {
+  "w": "phone",
+  "r": "phone",
+  "start": 6.652,
+  "end": 6.892,
+  "score": 0.793
+ },
+ {
+  "w": "இல்லையா?",
+  "r": "illaiyaa",
+  "start": 6.892,
+  "end": 7.193,
+  "score": 0.709
+ },
+ {
+  "w": "Join",
+  "r": "join",
+  "start": 7.433,
+  "end": 7.694,
+  "score": 0.66
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 7.754,
+  "end": 7.994,
+  "score": 0.424
+ },
+ {
+  "w": "எடுங்க.",
+  "r": "edungka",
+  "start": 8.015,
+  "end": 8.195,
+  "score": 0.43
+ },
+ {
+  "w": "ஆறு",
+  "r": "aaru",
+  "start": 8.535,
+  "end": 8.756,
+  "score": 0.579
+ },
+ {
+  "w": "digits.",
+  "r": "digits",
+  "start": 8.836,
+  "end": 9.137,
+  "score": 0.428
+ },
+ {
+  "w": "Board-ல",
+  "r": "boardla",
+  "start": 9.537,
+  "end": 9.818,
+  "score": 0.708
+ },
+ {
+  "w": "எழுதுங்க,",
+  "r": "elutungka",
+  "start": 9.838,
+  "end": 10.158,
+  "score": 0.355
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 10.299,
+  "end": 10.659,
+  "score": 0.729
+ },
+ {
+  "w": "அதை",
+  "r": "atai",
+  "start": 10.699,
+  "end": 10.96,
+  "score": 0.477
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 10.98,
+  "end": 11.401,
+  "score": 0.845
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 11.501,
+  "end": 11.681,
+  "score": 0.653
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 11.701,
+  "end": 11.841,
+  "score": 0.318
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 11.902,
+  "end": 12.162,
+  "score": 0.756
+ },
+ {
+  "w": "join-ல",
+  "r": "joinla",
+  "start": 12.202,
+  "end": 12.603,
+  "score": 0.7
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 12.703,
+  "end": 12.903,
+  "score": 0.339
+ },
+ {
+  "w": "பண்ணுவாங்க.",
+  "r": "pannuvaangka",
+  "start": 12.903,
+  "end": 13.244,
+  "score": 0.608
+ }
+]

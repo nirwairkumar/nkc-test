@@ -1,0 +1,32 @@
+[
+  {
+    "id": "w0",
+    "text": "Second",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "tab.",
+    "start": 0.48,
+    "end": 1.12
+  },
+  {
+    "id": "w2",
+    "text": "Access",
+    "start": 1.12,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "and",
+    "start": 1.6,
+    "end": 1.76
+  },
+  {
+    "id": "w4",
+    "text": "control.",
+    "start": 1.76,
+    "end": 2.24
+  }
+]

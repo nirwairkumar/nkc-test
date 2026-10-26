@@ -1,0 +1,1 @@
+For a match-the-list question, you don't need to draw a table. In Sy Pad, open Tables and choose Match List. Reactants on the left, products on the right. Fill in the boxes, and press Insert. Correct answer: C.

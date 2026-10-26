@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.04,
+  "end": 0.201,
+  "score": 0.504
+ },
+ {
+  "w": "screen,",
+  "r": "screen",
+  "start": 0.281,
+  "end": 0.583,
+  "score": 0.494
+ },
+ {
+  "w": "clean,",
+  "r": "clean",
+  "start": 0.784,
+  "end": 1.105,
+  "score": 0.404
+ },
+ {
+  "w": "വായിക്കാൻ",
+  "r": "vaayikkaana",
+  "start": 1.346,
+  "end": 1.768,
+  "score": 0.538
+ },
+ {
+  "w": "easy.",
+  "r": "easy",
+  "start": 1.828,
+  "end": 2.049,
+  "score": 0.078
+ },
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 2.471,
+  "end": 2.793,
+  "score": 0.513
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.873,
+  "end": 3.074,
+  "score": 0.904
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 3.094,
+  "end": 3.335,
+  "score": 0.247
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 3.697,
+  "end": 3.958,
+  "score": 0.494
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 3.978,
+  "end": 4.058,
+  "score": 0.119
+ },
+ {
+  "w": "next.",
+  "r": "next",
+  "start": 4.078,
+  "end": 4.299,
+  "score": 0.508
+ }
+]

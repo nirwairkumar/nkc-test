@@ -1,0 +1,2 @@
+Every empty cell is now a blue box. Click one, tap Formula, and type X-e-O-three.
+Next box — X-e-F-two… and so on, down both lists: X-e-O-two-F-two, X-e-O-F-four, then B-r-F-five, N-H-three, the I-three minus ion, and S-F-four.

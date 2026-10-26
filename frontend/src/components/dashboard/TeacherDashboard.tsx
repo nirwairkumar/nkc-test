@@ -42,6 +42,7 @@ import GlobalSearchModal from './GlobalSearchModal';
 import NotificationCenter from './NotificationCenter';
 import ExamRoomsCard from './ExamRoomsCard';
 import NewExamSheet from '@/components/exams/NewExamSheet';
+import InviteCard from '@/components/referrals/InviteCard';
 import { ExamSession, examSessionsApi, problemOf } from '@/lib/examSessionsApi';
 import { CARD, PRIMARY_BTN, Skeleton } from './dashboardUi';
 import { dayAndTime, greeting, plural, timeAgo, untilText } from './format';
@@ -460,6 +461,8 @@ export default function TeacherDashboard() {
             onViewAll={() => navigate(withUser('/my-tests'))}
         />
     );
+    // Invite educators: the signed-in educator's own link, so not while an admin views someone else.
+    const inviteCard = !isImpersonating && <InviteCard />;
     const batchesCard = showBatches && (
         <BatchesCard
             batches={model.batches}
@@ -556,6 +559,7 @@ export default function TeacherDashboard() {
                         <div className="flex min-w-0 flex-col [&>section]:flex-1">{testsCard}</div>
                         <div className="min-w-0 space-y-5">
                             {createCard}
+                            {inviteCard}
                             {batchesCard}
                         </div>
                     </div>
@@ -575,6 +579,7 @@ export default function TeacherDashboard() {
                     <aside className="min-w-0 space-y-5" aria-label="Overview">
                         <WatchFilmCard />
                         {createCard}
+                        {inviteCard}
                         {hasNumbers && <NumbersCard numbers={model.numbers} />}
                         {batchesCard}
                     </aside>

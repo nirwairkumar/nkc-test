@@ -1,0 +1,205 @@
+[
+ {
+  "w": "h",
+  "r": "h",
+  "start": 0.02,
+  "end": 0.04,
+  "score": 0.01
+ },
+ {
+  "w": "equals",
+  "r": "equals",
+  "start": 0.04,
+  "end": 0.761,
+  "score": 0.59
+ },
+ {
+  "w": "u",
+  "r": "u",
+  "start": 1.002,
+  "end": 1.022,
+  "score": 0.985
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 1.182,
+  "end": 1.222,
+  "score": 0.866
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 1.382,
+  "end": 1.743,
+  "score": 0.768
+ },
+ {
+  "w": "എന്ന്",
+  "r": "enn",
+  "start": 1.863,
+  "end": 1.983,
+  "score": 0.995
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.084,
+  "end": 2.324,
+  "score": 0.541
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 2.324,
+  "end": 2.544,
+  "score": 0.431
+ },
+ {
+  "w": "fraction",
+  "r": "fraction",
+  "start": 2.985,
+  "end": 3.426,
+  "score": 0.434
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 3.506,
+  "end": 4.087,
+  "score": 0.326
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 4.127,
+  "end": 4.367,
+  "score": 0.333
+ },
+ {
+  "w": "over",
+  "r": "over",
+  "start": 4.387,
+  "end": 4.548,
+  "score": 0.52
+ },
+ {
+  "w": "two,",
+  "r": "two",
+  "start": 4.628,
+  "end": 4.728,
+  "score": 0.491
+ },
+ {
+  "w": "പിന്നെ",
+  "r": "pinne",
+  "start": 5.189,
+  "end": 5.409,
+  "score": 0.967
+ },
+ {
+  "w": "power",
+  "r": "power",
+  "start": 5.489,
+  "end": 5.73,
+  "score": 0.341
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 5.75,
+  "end": 5.89,
+  "score": 0.329
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 6.271,
+  "end": 6.291,
+  "score": 0.995
+ },
+ {
+  "w": "square-ന്.",
+  "r": "squaren",
+  "start": 6.471,
+  "end": 6.892,
+  "score": 0.516
+ },
+ {
+  "w": "ഒരു",
+  "r": "oru",
+  "start": 7.292,
+  "end": 7.433,
+  "score": 0.998
+ },
+ {
+  "w": "proper",
+  "r": "proper",
+  "start": 7.473,
+  "end": 7.793,
+  "score": 0.664
+ },
+ {
+  "w": "formula",
+  "r": "formula",
+  "start": 7.833,
+  "end": 8.174,
+  "score": 0.609
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 8.474,
+  "end": 8.735,
+  "score": 0.26
+ },
+ {
+  "w": "ഒന്നും",
+  "r": "onnum",
+  "start": 8.735,
+  "end": 8.895,
+  "score": 0.851
+ },
+ {
+  "w": "പഠിക്കേണ്ട.",
+  "r": "patthikkeenntta",
+  "start": 8.895,
+  "end": 9.356,
+  "score": 0.437
+ },
+ {
+  "w": "Insert,",
+  "r": "insert",
+  "start": 9.736,
+  "end": 10.157,
+  "score": 0.793
+ },
+ {
+  "w": "അത്",
+  "r": "at",
+  "start": 10.438,
+  "end": 10.518,
+  "score": 0.998
+ },
+ {
+  "w": "നേരെ",
+  "r": "neere",
+  "start": 10.638,
+  "end": 10.898,
+  "score": 0.676
+ },
+ {
+  "w": "question-ന്റെ",
+  "r": "questionnrre",
+  "start": 10.959,
+  "end": 11.419,
+  "score": 0.466
+ },
+ {
+  "w": "ഉള്ളിൽ.",
+  "r": "ullllila",
+  "start": 11.459,
+  "end": 11.68,
+  "score": 0.762
+ }
+]

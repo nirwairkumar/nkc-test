@@ -1,0 +1,51 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.321,
+  "score": 0.131
+ },
+ {
+  "w": "two:",
+  "r": "two",
+  "start": 0.421,
+  "end": 0.501,
+  "score": 0.06
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 1.043,
+  "end": 1.424,
+  "score": 0.719
+ },
+ {
+  "w": "science",
+  "r": "science",
+  "start": 1.785,
+  "end": 2.266,
+  "score": 0.228
+ },
+ {
+  "w": "సరిగ్గా",
+  "r": "sariggaa",
+  "start": 2.487,
+  "end": 2.948,
+  "score": 0.842
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.968,
+  "end": 3.188,
+  "score": 0.497
+ },
+ {
+  "w": "చేయొచ్చు.",
+  "r": "ceeyoccu",
+  "start": 3.208,
+  "end": 3.569,
+  "score": 0.66
+ }
+]

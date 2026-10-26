@@ -1,0 +1,107 @@
+[
+ {
+  "w": "Phone-லயா?",
+  "r": "phonelayaa",
+  "start": 0.04,
+  "end": 0.542,
+  "score": 0.823
+ },
+ {
+  "w": "Code-ஐ",
+  "r": "codeai",
+  "start": 1.044,
+  "end": 1.385,
+  "score": 0.355
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.405,
+  "end": 1.545,
+  "score": 0.272
+ },
+ {
+  "w": "பண்ணி,",
+  "r": "panni",
+  "start": 1.545,
+  "end": 1.766,
+  "score": 0.78
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 1.927,
+  "end": 2.248,
+  "score": 0.795
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.268,
+  "end": 2.408,
+  "score": 0.611
+ },
+ {
+  "w": "பண்ணா,",
+  "r": "pannaa",
+  "start": 2.428,
+  "end": 2.729,
+  "score": 0.774
+ },
+ {
+  "w": "அங்கயும்",
+  "r": "angkayum",
+  "start": 3.05,
+  "end": 3.472,
+  "score": 0.466
+ },
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 3.472,
+  "end": 3.632,
+  "score": 0.521
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 3.672,
+  "end": 3.913,
+  "score": 0.753
+ },
+ {
+  "w": "தான்.",
+  "r": "taan",
+  "start": 3.933,
+  "end": 4.074,
+  "score": 0.476
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 4.515,
+  "end": 4.857,
+  "score": 0.814
+ },
+ {
+  "w": "question-உம்,",
+  "r": "questionum",
+  "start": 4.897,
+  "end": 5.258,
+  "score": 0.407
+ },
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 5.519,
+  "end": 5.74,
+  "score": 0.56
+ },
+ {
+  "w": "பேர்ல.",
+  "r": "peerla",
+  "start": 5.78,
+  "end": 6.081,
+  "score": 0.866
+ }
+]

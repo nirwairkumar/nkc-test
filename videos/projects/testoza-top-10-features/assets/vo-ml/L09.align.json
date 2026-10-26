@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.02,
+  "end": 0.282,
+  "score": 0.456
+ },
+ {
+  "w": "three:",
+  "r": "three",
+  "start": 0.362,
+  "end": 0.945,
+  "score": 0.232
+ },
+ {
+  "w": "മലയാളം,",
+  "r": "malayaallam",
+  "start": 0.945,
+  "end": 1.428,
+  "score": 0.955
+ },
+ {
+  "w": "ഹിന്ദി",
+  "r": "hindi",
+  "start": 1.488,
+  "end": 1.75,
+  "score": 0.796
+ },
+ {
+  "w": "നൂറ്റിപ്പത്തൊൻപത്",
+  "r": "nuurrrrippattonapat",
+  "start": 2.051,
+  "end": 2.755,
+  "score": 0.137
+ },
+ {
+  "w": "ഭാഷകളിൽ",
+  "r": "bhaassakallila",
+  "start": 2.795,
+  "end": 3.278,
+  "score": 0.933
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 3.358,
+  "end": 3.58,
+  "score": 0.551
+ },
+ {
+  "w": "ചെയ്യാം.",
+  "r": "ceyyaam",
+  "start": 3.62,
+  "end": 3.881,
+  "score": 0.977
+ }
+]

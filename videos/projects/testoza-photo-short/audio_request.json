@@ -1,0 +1,45 @@
+{
+  "provider": "gemini",
+  "tts_model": "gemini-2.5-pro-preview-tts",
+  "voice": "Sulafat",
+  "lang": "hi",
+  "style": "A warm, friendly young Indian woman in her late twenties, a teacher talking to another teacher. Natural everyday Hinglish, relaxed, like talking to a friend, never a newsreader or an advert. Smooth flow with short natural breaths at commas and full stops. Say AI as ay-eye.",
+  "lines": [
+    {
+      "id": "f01",
+      "text": "रात के ग्यारह बजने वाले हैं... कल सुबह class test है, और paper अभी तक type नहीं हुआ।",
+      "style": "Late at night, a little tired and worried, quieter, a real teacher's small sigh of stress."
+    },
+    {
+      "id": "f02",
+      "text": "कोई बात नहीं... Testoza खोलिए, और page की बस एक photo लीजिए।",
+      "style": "Reassuring, a small smile, the mood lifts; quick and easy."
+    },
+    {
+      "id": "f03",
+      "text": "AI photo से हर सवाल खुद पढ़ लेता है... options और answer key के साथ।",
+      "style": "Genuinely impressed, light rhythm."
+    },
+    {
+      "id": "f04",
+      "text": "दस सवाल... सिर्फ़ सत्रह सेकंड में तैयार!",
+      "style": "The number lands, pleased and a little amazed."
+    },
+    {
+      "id": "f05",
+      "text": "Test live कीजिए, और बच्चों को बस छह अंकों का code भेज दीजिए।",
+      "style": "Quick and easy, matter-of-fact."
+    },
+    {
+      "id": "f06",
+      "text": "सुबह बच्चे phone पर code डालते हैं... और test शुरू।",
+      "style": "Fresh morning feel, light and calm."
+    },
+    {
+      "id": "f07",
+      "text": "रात का tension, एक photo में खत्म। Testoza.com पर, बिल्कुल free।",
+      "style": "Warm relieved payoff, then say the web address slowly and clearly: testoza dot com."
+    }
+  ],
+  "bgm": { "mode": "none" }
+}

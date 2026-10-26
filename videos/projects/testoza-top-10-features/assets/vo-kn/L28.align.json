@@ -1,0 +1,184 @@
+[
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 0.02,
+  "end": 0.2,
+  "score": 0.998
+ },
+ {
+  "w": "dashboard",
+  "r": "dashboard",
+  "start": 0.3,
+  "end": 0.701,
+  "score": 0.754
+ },
+ {
+  "w": "ನಲ್ಲಿ:",
+  "r": "nalli",
+  "start": 0.781,
+  "end": 1.021,
+  "score": 0.98
+ },
+ {
+  "w": "ಈಗ",
+  "r": "iiga",
+  "start": 1.422,
+  "end": 1.622,
+  "score": 0.997
+ },
+ {
+  "w": "ಮೂವತ್ತು",
+  "r": "muuvattu",
+  "start": 1.742,
+  "end": 2.082,
+  "score": 0.651
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 2.123,
+  "end": 2.483,
+  "score": 0.746
+ },
+ {
+  "w": "ಬರೀತಿದ್ದಾರೆ,",
+  "r": "bariitiddaare",
+  "start": 2.523,
+  "end": 3.084,
+  "score": 0.924
+ },
+ {
+  "w": "ಇಬ್ಬರು",
+  "r": "ibbaru",
+  "start": 3.464,
+  "end": 3.724,
+  "score": 0.985
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 3.784,
+  "end": 4.105,
+  "score": 0.785
+ },
+ {
+  "w": "ಮಾಡಿದ್ದಾರೆ.",
+  "r": "maaddiddaare",
+  "start": 4.125,
+  "end": 4.605,
+  "score": 0.935
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 5.126,
+  "end": 5.466,
+  "score": 0.428
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 5.486,
+  "end": 5.727,
+  "score": 0.737
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 5.767,
+  "end": 6.007,
+  "score": 0.999
+ },
+ {
+  "w": "started,",
+  "r": "started",
+  "start": 6.408,
+  "end": 6.888,
+  "score": 0.842
+ },
+ {
+  "w": "writing,",
+  "r": "writing",
+  "start": 6.908,
+  "end": 7.549,
+  "score": 0.712
+ },
+ {
+  "w": "submitted,",
+  "r": "submitted",
+  "start": 7.849,
+  "end": 8.65,
+  "score": 0.862
+ },
+ {
+  "w": "dropped.",
+  "r": "dropped",
+  "start": 8.67,
+  "end": 9.071,
+  "score": 0.595
+ },
+ {
+  "w": "ಯಾವ",
+  "r": "yaava",
+  "start": 9.571,
+  "end": 9.772,
+  "score": 0.966
+ },
+ {
+  "w": "tile",
+  "r": "tile",
+  "start": 9.832,
+  "end": 10.092,
+  "score": 0.489
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 10.112,
+  "end": 10.292,
+  "score": 0.984
+ },
+ {
+  "w": "ಮಾಡಿದರೂ,",
+  "r": "maaddidaruu",
+  "start": 10.352,
+  "end": 10.753,
+  "score": 0.8
+ },
+ {
+  "w": "ಯಾರು,",
+  "r": "yaaru",
+  "start": 11.153,
+  "end": 11.434,
+  "score": 0.993
+ },
+ {
+  "w": "ಎಷ್ಟು",
+  "r": "essttu",
+  "start": 11.674,
+  "end": 11.934,
+  "score": 0.992
+ },
+ {
+  "w": "ಮುಗಿಸಿದ್ದಾರೆ",
+  "r": "mugisiddaare",
+  "start": 11.954,
+  "end": 12.535,
+  "score": 0.946
+ },
+ {
+  "w": "ಅಂತ",
+  "r": "amta",
+  "start": 12.595,
+  "end": 12.795,
+  "score": 0.958
+ },
+ {
+  "w": "ಗೊತ್ತಾಗುತ್ತೆ.",
+  "r": "gottaagutte",
+  "start": 12.855,
+  "end": 13.356,
+  "score": 0.862
+ }
+]

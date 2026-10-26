@@ -1,0 +1,541 @@
+[
+  {
+    "line": "L02",
+    "cue": "card",
+    "click": 15.31,
+    "word": 15.43,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "conduct",
+    "click": 20.83,
+    "word": 20.95,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "link",
+    "click": 23.51,
+    "word": 23.63,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "start",
+    "click": 29.75,
+    "word": 29.87,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "live",
+    "click": 30.71,
+    "word": 30.83,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "coach",
+    "click": 33.67,
+    "word": 33.79,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "settings",
+    "click": 38.39,
+    "word": 38.51,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "t1",
+    "click": 42.44,
+    "word": 42.61,
+    "lead": 0.17
+  },
+  {
+    "line": "L05",
+    "cue": "t2",
+    "click": 43.19,
+    "word": 43.57,
+    "lead": 0.38
+  },
+  {
+    "line": "L05",
+    "cue": "t3",
+    "click": 43.85,
+    "word": 43.97,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "fs",
+    "click": 49.7,
+    "word": 49.82,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "tab",
+    "click": 60.11,
+    "word": 60.23,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "caught",
+    "click": 66.43,
+    "word": 66.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "warn",
+    "click": 71.57,
+    "word": 71.69,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "strict",
+    "click": 74.61,
+    "word": 74.73,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "count",
+    "click": 79.73,
+    "word": 79.85,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "three",
+    "click": 82.29,
+    "word": 82.41,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "copy",
+    "click": 90.82,
+    "word": 90.94,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "right",
+    "click": 96.02,
+    "word": 96.14,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "back",
+    "click": 100.69,
+    "word": 100.81,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "exit",
+    "click": 104.45,
+    "word": 104.57,
+    "lead": 0.12
+  },
+  {
+    "line": "L11",
+    "cue": "access",
+    "click": 109.7,
+    "word": 109.82,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "sched",
+    "click": 111.29,
+    "word": 111.41,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "pickers",
+    "click": 114.73,
+    "word": 114.85,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "schedoff",
+    "click": 117.29,
+    "word": 117.41,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "class",
+    "click": 119.75,
+    "word": 119.87,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "attempt",
+    "click": 123.19,
+    "word": 123.31,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "single",
+    "click": 125.99,
+    "word": 126.11,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "login",
+    "click": 128.63,
+    "word": 128.75,
+    "lead": 0.12
+  },
+  {
+    "line": "L14",
+    "cue": "results",
+    "click": 137.77,
+    "word": 137.89,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "vis",
+    "click": 139.26,
+    "word": 139.38,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "strictt",
+    "click": 147.62,
+    "word": 147.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "flex",
+    "click": 154.95,
+    "word": 155.07,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "flexwarn",
+    "click": 159.43,
+    "word": 159.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "flexoff",
+    "click": 161.43,
+    "word": 161.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L18",
+    "cue": "shuffle",
+    "click": 163.61,
+    "word": 163.73,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "layout",
+    "click": 170.9,
+    "word": 171.02,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "std",
+    "click": 172.74,
+    "word": 172.86,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "modern",
+    "click": 179.06,
+    "word": 179.18,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "stdpick",
+    "click": 182.34,
+    "word": 182.46,
+    "lead": 0.12
+  },
+  {
+    "line": "L20",
+    "cue": "save",
+    "click": 185.11,
+    "word": 185.23,
+    "lead": 0.12
+  },
+  {
+    "line": "L20",
+    "cue": "chip",
+    "click": 187.27,
+    "word": 187.39,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "inputs",
+    "click": 193.76,
+    "word": 193.88,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "roll",
+    "click": 197.04,
+    "word": 197.16,
+    "lead": 0.12
+  },
+  {
+    "line": "L22",
+    "cue": "coach2",
+    "click": 200.83,
+    "word": 200.95,
+    "lead": 0.12
+  },
+  {
+    "line": "L22",
+    "cue": "copy2",
+    "click": 202.31,
+    "word": 202.55,
+    "lead": 0.24
+  },
+  {
+    "line": "L22",
+    "cue": "share",
+    "click": 203.31,
+    "word": 203.43,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "menu",
+    "click": 220.1,
+    "word": 220.22,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "getcode",
+    "click": 221.22,
+    "word": 221.34,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "code",
+    "click": 222.66,
+    "word": 222.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L27",
+    "cue": "intro",
+    "click": 237.6,
+    "word": 237.72,
+    "lead": 0.12
+  },
+  {
+    "line": "L27",
+    "cue": "scrollp",
+    "click": 241.68,
+    "word": 241.8,
+    "lead": 0.12
+  },
+  {
+    "line": "L27",
+    "cue": "name",
+    "click": 242.68,
+    "word": 244.44,
+    "lead": 1.76
+  },
+  {
+    "line": "L27",
+    "cue": "go",
+    "click": 246,
+    "word": 246.12,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "join",
+    "click": 250.98,
+    "word": 251.1,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "typecode",
+    "click": 254.1,
+    "word": 254.22,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "cont",
+    "click": 255.86,
+    "word": 255.98,
+    "lead": 0.12
+  },
+  {
+    "line": "L29",
+    "cue": "fill",
+    "click": 258.38,
+    "word": 258.9,
+    "lead": 0.52
+  },
+  {
+    "line": "L29",
+    "cue": "start2",
+    "click": 260.22,
+    "word": 260.34,
+    "lead": 0.12
+  },
+  {
+    "line": "L29",
+    "cue": "fsgo",
+    "click": 261.1,
+    "word": 261.22,
+    "lead": 0.12
+  },
+  {
+    "line": "L29",
+    "cue": "answer",
+    "click": 263.5,
+    "word": 263.62,
+    "lead": 0.12
+  },
+  {
+    "line": "L30",
+    "cue": "violation",
+    "click": 268.05,
+    "word": 268.17,
+    "lead": 0.12
+  },
+  {
+    "line": "L31",
+    "cue": "submit",
+    "click": 271.76,
+    "word": 271.88,
+    "lead": 0.12
+  },
+  {
+    "line": "L31",
+    "cue": "score",
+    "click": 273.44,
+    "word": 273.56,
+    "lead": 0.12
+  },
+  {
+    "line": "L32",
+    "cue": "dash",
+    "click": 278.59,
+    "word": 278.71,
+    "lead": 0.12
+  },
+  {
+    "line": "L32",
+    "cue": "writing",
+    "click": 279.79,
+    "word": 279.91,
+    "lead": 0.12
+  },
+  {
+    "line": "L32",
+    "cue": "subm",
+    "click": 281.87,
+    "word": 281.99,
+    "lead": 0.12
+  },
+  {
+    "line": "L33",
+    "cue": "panel",
+    "click": 283.87,
+    "word": 286.11,
+    "lead": 2.24
+  },
+  {
+    "line": "L33",
+    "cue": "started",
+    "click": 287.19,
+    "word": 287.31,
+    "lead": 0.12
+  },
+  {
+    "line": "L33",
+    "cue": "writ",
+    "click": 288.55,
+    "word": 288.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L33",
+    "cue": "two",
+    "click": 289.83,
+    "word": 289.95,
+    "lead": 0.12
+  },
+  {
+    "line": "L33",
+    "cue": "zero",
+    "click": 290.79,
+    "word": 290.91,
+    "lead": 0.12
+  },
+  {
+    "line": "L33",
+    "cue": "names",
+    "click": 292.87,
+    "word": 292.99,
+    "lead": 0.12
+  },
+  {
+    "line": "L34",
+    "cue": "all",
+    "click": 297.01,
+    "word": 297.13,
+    "lead": 0.12
+  },
+  {
+    "line": "L34",
+    "cue": "export",
+    "click": 304.61,
+    "word": 304.73,
+    "lead": 0.12
+  },
+  {
+    "line": "L35",
+    "cue": "landing",
+    "click": 308.1,
+    "word": 308.22,
+    "lead": 0.12
+  },
+  {
+    "line": "L35",
+    "cue": "phones",
+    "click": 314.02,
+    "word": 314.14,
+    "lead": 0.12
+  }
+]

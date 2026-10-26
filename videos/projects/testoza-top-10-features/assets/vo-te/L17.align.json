@@ -1,0 +1,128 @@
+[
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 0.06,
+  "end": 0.44,
+  "score": 0.482
+ },
+ {
+  "w": "tab",
+  "r": "tab",
+  "start": 0.54,
+  "end": 0.741,
+  "score": 0.796
+ },
+ {
+  "w": "లో,",
+  "r": "loo",
+  "start": 0.821,
+  "end": 0.961,
+  "score": 0.901
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.401,
+  "end": 1.741,
+  "score": 0.739
+ },
+ {
+  "w": "తర్వాత",
+  "r": "tarvaata",
+  "start": 1.821,
+  "end": 2.242,
+  "score": 0.996
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 2.642,
+  "end": 3.242,
+  "score": 0.594
+ },
+ {
+  "w": "ఏం",
+  "r": "eem",
+  "start": 3.362,
+  "end": 3.502,
+  "score": 0.41
+ },
+ {
+  "w": "చూడాలో",
+  "r": "cuuddaaloo",
+  "start": 3.563,
+  "end": 4.023,
+  "score": 0.978
+ },
+ {
+  "w": "మీరే",
+  "r": "miiree",
+  "start": 4.303,
+  "end": 4.583,
+  "score": 0.935
+ },
+ {
+  "w": "నిర్ణయిస్తారు.",
+  "r": "nirnnayistaaru",
+  "start": 4.603,
+  "end": 5.244,
+  "score": 0.834
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 5.664,
+  "end": 6.064,
+  "score": 0.263
+ },
+ {
+  "w": "shuffle",
+  "r": "shuffle",
+  "start": 6.144,
+  "end": 6.485,
+  "score": 0.333
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 6.485,
+  "end": 6.885,
+  "score": 0.992
+ },
+ {
+  "w": "ఎవరికీ",
+  "r": "evarikii",
+  "start": 7.445,
+  "end": 7.926,
+  "score": 0.874
+ },
+ {
+  "w": "ఒకే",
+  "r": "okee",
+  "start": 8.186,
+  "end": 8.446,
+  "score": 0.846
+ },
+ {
+  "w": "order",
+  "r": "order",
+  "start": 8.506,
+  "end": 8.786,
+  "score": 0.469
+ },
+ {
+  "w": "రాదు.",
+  "r": "raadu",
+  "start": 8.846,
+  "end": 9.126,
+  "score": 0.96
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 9.627,
+  "end": 9.907,
+  "score": 0.238
+ }
+]

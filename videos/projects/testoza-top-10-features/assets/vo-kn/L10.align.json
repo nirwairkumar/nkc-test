@@ -1,0 +1,226 @@
+[
+ {
+  "w": "Language",
+  "r": "language",
+  "start": 0.04,
+  "end": 0.4,
+  "score": 0.373
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 0.4,
+  "end": 0.741,
+  "score": 0.418
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 0.761,
+  "end": 0.941,
+  "score": 0.982
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 1.021,
+  "end": 1.261,
+  "score": 0.999
+ },
+ {
+  "w": "ಇಲ್ಲಿ",
+  "r": "illi",
+  "start": 1.541,
+  "end": 1.702,
+  "score": 0.995
+ },
+ {
+  "w": "Hindi",
+  "r": "hindi",
+  "start": 1.762,
+  "end": 2.022,
+  "score": 0.762
+ },
+ {
+  "w": "ಆರಿಸ್ತಿದ್ದೀವಿ",
+  "r": "aaristiddiivi",
+  "start": 2.122,
+  "end": 2.683,
+  "score": 0.828
+ },
+ {
+  "w": "ಕನ್ನಡ",
+  "r": "kannadda",
+  "start": 3.123,
+  "end": 3.443,
+  "score": 0.883
+ },
+ {
+  "w": "ಕೂಡ",
+  "r": "kuudda",
+  "start": 3.483,
+  "end": 3.703,
+  "score": 0.928
+ },
+ {
+  "w": "ಇದೆ",
+  "r": "ide",
+  "start": 3.804,
+  "end": 3.944,
+  "score": 0.987
+ },
+ {
+  "w": "English",
+  "r": "english",
+  "start": 4.524,
+  "end": 4.865,
+  "score": 0.62
+ },
+ {
+  "w": "letters",
+  "r": "letters",
+  "start": 4.885,
+  "end": 5.185,
+  "score": 0.795
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 5.225,
+  "end": 5.405,
+  "score": 0.95
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 5.525,
+  "end": 5.745,
+  "score": 0.498
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 5.765,
+  "end": 6.006,
+  "score": 0.999
+ },
+ {
+  "w": "Space",
+  "r": "space",
+  "start": 6.366,
+  "end": 6.706,
+  "score": 0.4
+ },
+ {
+  "w": "ಒತ್ತಿದ",
+  "r": "ottida",
+  "start": 6.746,
+  "end": 7.027,
+  "score": 0.987
+ },
+ {
+  "w": "ತಕ್ಷಣ",
+  "r": "takssanna",
+  "start": 7.087,
+  "end": 7.447,
+  "score": 0.937
+ },
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 7.687,
+  "end": 7.988,
+  "score": 0.945
+ },
+ {
+  "w": "word",
+  "r": "word",
+  "start": 8.048,
+  "end": 8.248,
+  "score": 0.283
+ },
+ {
+  "w": "ಬದಲಾಗುತ್ತೆ",
+  "r": "badalaagutte",
+  "start": 8.288,
+  "end": 8.868,
+  "score": 0.995
+ },
+ {
+  "w": "ಬೇರೆ",
+  "r": "beere",
+  "start": 9.269,
+  "end": 9.489,
+  "score": 0.986
+ },
+ {
+  "w": "keyboard",
+  "r": "keyboard",
+  "start": 9.549,
+  "end": 9.849,
+  "score": 0.433
+ },
+ {
+  "w": "ಬೇಕಾಗಿಲ್ಲ.",
+  "r": "beekaagilla",
+  "start": 9.869,
+  "end": 10.35,
+  "score": 0.92
+ },
+ {
+  "w": "ಈಗ",
+  "r": "iiga",
+  "start": 10.93,
+  "end": 11.11,
+  "score": 0.997
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 11.17,
+  "end": 11.491,
+  "score": 0.37
+ },
+ {
+  "w": "ಎರಡು",
+  "r": "eraddu",
+  "start": 11.591,
+  "end": 11.811,
+  "score": 0.961
+ },
+ {
+  "w": "ಭಾಷೆಗಳಲ್ಲಿ",
+  "r": "bhaassegallalli",
+  "start": 11.831,
+  "end": 12.372,
+  "score": 0.874
+ },
+ {
+  "w": "ಇದೆ,",
+  "r": "ide",
+  "start": 12.432,
+  "end": 12.592,
+  "score": 0.989
+ },
+ {
+  "w": "options",
+  "r": "options",
+  "start": 13.032,
+  "end": 13.413,
+  "score": 0.423
+ },
+ {
+  "w": "ಕೂಡ",
+  "r": "kuudda",
+  "start": 13.453,
+  "end": 13.653,
+  "score": 0.994
+ },
+ {
+  "w": "ಹಾಗೇ.",
+  "r": "haagee",
+  "start": 13.733,
+  "end": 13.953,
+  "score": 0.819
+ }
+]

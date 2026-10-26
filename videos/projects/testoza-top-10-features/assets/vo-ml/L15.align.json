@@ -1,0 +1,121 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.16,
+  "score": 0.632
+ },
+ {
+  "w": "റെഡി",
+  "r": "rreddi",
+  "start": 0.2,
+  "end": 0.56,
+  "score": 0.564
+ },
+ {
+  "w": "ആയാൽ,",
+  "r": "aayaala",
+  "start": 0.621,
+  "end": 0.921,
+  "score": 0.992
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 1.121,
+  "end": 1.521,
+  "score": 0.228
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.601,
+  "end": 1.862,
+  "score": 0.734
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 1.982,
+  "end": 2.122,
+  "score": 0.659
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 2.202,
+  "end": 2.482,
+  "score": 0.832
+ },
+ {
+  "w": "ഒരു",
+  "r": "oru",
+  "start": 2.883,
+  "end": 3.023,
+  "score": 0.998
+ },
+ {
+  "w": "secure",
+  "r": "secure",
+  "start": 3.063,
+  "end": 3.463,
+  "score": 0.647
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 3.503,
+  "end": 3.803,
+  "score": 0.74
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 3.863,
+  "end": 4.044,
+  "score": 0.588
+ },
+ {
+  "w": "കിട്ടും.",
+  "r": "kittttum",
+  "start": 4.064,
+  "end": 4.364,
+  "score": 0.925
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 4.804,
+  "end": 5.185,
+  "score": 0.629
+ },
+ {
+  "w": "conducting,",
+  "r": "conducting",
+  "start": 5.245,
+  "end": 5.725,
+  "score": 0.334
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 5.905,
+  "end": 6.286,
+  "score": 0.744
+ },
+ {
+  "w": "ഇപ്പോൾ",
+  "r": "ippoolla",
+  "start": 6.326,
+  "end": 6.666,
+  "score": 0.805
+ },
+ {
+  "w": "live.",
+  "r": "live",
+  "start": 6.686,
+  "end": 6.926,
+  "score": 0.558
+ }
+]

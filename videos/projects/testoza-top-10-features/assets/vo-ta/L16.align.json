@@ -1,0 +1,191 @@
+[
+ {
+  "w": "அடுத்த",
+  "r": "adutta",
+  "start": 0.02,
+  "end": 0.32,
+  "score": 0.78
+ },
+ {
+  "w": "step-ஐ",
+  "r": "stepai",
+  "start": 0.38,
+  "end": 0.981,
+  "score": 0.791
+ },
+ {
+  "w": "TestoZa-வே",
+  "r": "testozavee",
+  "start": 1.001,
+  "end": 1.721,
+  "score": 0.857
+ },
+ {
+  "w": "சொல்லுது:",
+  "r": "collutu",
+  "start": 1.761,
+  "end": 2.142,
+  "score": 0.499
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.582,
+  "end": 2.922,
+  "score": 0.676
+ },
+ {
+  "w": "room",
+  "r": "room",
+  "start": 2.982,
+  "end": 3.103,
+  "score": 0.554
+ },
+ {
+  "w": "set",
+  "r": "set",
+  "start": 3.183,
+  "end": 3.343,
+  "score": 0.812
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 3.403,
+  "end": 3.703,
+  "score": 0.562
+ },
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 4.143,
+  "end": 4.324,
+  "score": 0.508
+ },
+ {
+  "w": "screen.",
+  "r": "screen",
+  "start": 4.404,
+  "end": 4.744,
+  "score": 0.497
+ },
+ {
+  "w": "Tab,",
+  "r": "tab",
+  "start": 5.184,
+  "end": 5.444,
+  "score": 0.932
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 5.625,
+  "end": 5.765,
+  "score": 0.619
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 5.845,
+  "end": 6.105,
+  "score": 0.493
+ },
+ {
+  "w": "பிடிபடும்,",
+  "r": "pidipadum",
+  "start": 6.165,
+  "end": 6.685,
+  "score": 0.925
+ },
+ {
+  "w": "limit",
+  "r": "limit",
+  "start": 7.046,
+  "end": 7.326,
+  "score": 0.925
+ },
+ {
+  "w": "வைங்க",
+  "r": "vaingka",
+  "start": 7.366,
+  "end": 7.706,
+  "score": 0.529
+ },
+ {
+  "w": "மூணு",
+  "r": "muunu",
+  "start": 8.127,
+  "end": 8.407,
+  "score": 0.753
+ },
+ {
+  "w": "warnings",
+  "r": "warnings",
+  "start": 8.467,
+  "end": 8.947,
+  "score": 0.607
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 9.147,
+  "end": 9.408,
+  "score": 0.988
+ },
+ {
+  "w": "தானா",
+  "r": "taanaa",
+  "start": 9.528,
+  "end": 9.868,
+  "score": 0.849
+ },
+ {
+  "w": "submit.",
+  "r": "submit",
+  "start": 9.908,
+  "end": 10.288,
+  "score": 0.656
+ },
+ {
+  "w": "Copy-paste,",
+  "r": "copypaste",
+  "start": 10.669,
+  "end": 11.609,
+  "score": 0.375
+ },
+ {
+  "w": "right-click,",
+  "r": "rightclick",
+  "start": 11.609,
+  "end": 12.17,
+  "score": 0.501
+ },
+ {
+  "w": "back",
+  "r": "back",
+  "start": 12.33,
+  "end": 12.55,
+  "score": 0.703
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 12.61,
+  "end": 12.951,
+  "score": 0.628
+ },
+ {
+  "w": "எல்லாமே",
+  "r": "ellaamee",
+  "start": 13.151,
+  "end": 13.611,
+  "score": 0.894
+ },
+ {
+  "w": "block.",
+  "r": "block",
+  "start": 13.651,
+  "end": 13.891,
+  "score": 0.592
+ }
+]

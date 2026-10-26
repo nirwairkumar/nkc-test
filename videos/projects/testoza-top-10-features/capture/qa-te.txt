@@ -1,0 +1,4 @@
+Here are the problems found in the voice-over lines:
+
+* **L08**: Added the word "to" (pronounced "h equals to u t minus" instead of "h equals u t minus").
+* **L16**: Cut-off ending (ends abruptly on "back b...", with the words "button కూడా" cut off/missing).

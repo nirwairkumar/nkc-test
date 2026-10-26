@@ -1,0 +1,142 @@
+[
+ {
+  "w": "अगला,",
+  "r": "agalaa",
+  "start": 0.04,
+  "end": 0.361,
+  "score": 0.757
+ },
+ {
+  "w": "Tab",
+  "r": "tab",
+  "start": 0.702,
+  "end": 1.083,
+  "score": 0.916
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 1.243,
+  "end": 1.384,
+  "score": 0.465
+ },
+ {
+  "w": "App",
+  "r": "app",
+  "start": 1.564,
+  "end": 1.745,
+  "score": 0.561
+ },
+ {
+  "w": "Switch",
+  "r": "switch",
+  "start": 1.865,
+  "end": 2.085,
+  "score": 0.497
+ },
+ {
+  "w": "Detection.",
+  "r": "detection",
+  "start": 2.166,
+  "end": 2.607,
+  "score": 0.535
+ },
+ {
+  "w": "दूसरा",
+  "r": "duusaraa",
+  "start": 3.068,
+  "end": 3.409,
+  "score": 0.941
+ },
+ {
+  "w": "टैब",
+  "r": "ttaib",
+  "start": 3.429,
+  "end": 3.65,
+  "score": 0.729
+ },
+ {
+  "w": "खोलना,",
+  "r": "kholanaa",
+  "start": 3.71,
+  "end": 4.091,
+  "score": 0.975
+ },
+ {
+  "w": "WhatsApp",
+  "r": "whatsapp",
+  "start": 4.291,
+  "end": 4.732,
+  "score": 0.488
+ },
+ {
+  "w": "पर",
+  "r": "par",
+  "start": 4.793,
+  "end": 4.893,
+  "score": 0.995
+ },
+ {
+  "w": "जाना,",
+  "r": "jaanaa",
+  "start": 4.953,
+  "end": 5.254,
+  "score": 0.958
+ },
+ {
+  "w": "ब्राउज़र",
+  "r": "braauzar",
+  "start": 5.434,
+  "end": 5.835,
+  "score": 0.813
+ },
+ {
+  "w": "मिनिमाइज़",
+  "r": "minimaaiz",
+  "start": 5.916,
+  "end": 6.397,
+  "score": 0.778
+ },
+ {
+  "w": "करना",
+  "r": "karanaa",
+  "start": 6.437,
+  "end": 6.758,
+  "score": 0.988
+ },
+ {
+  "w": "टेस्टोज़ा",
+  "r": "ttesttozaa",
+  "start": 7.038,
+  "end": 7.58,
+  "score": 0.858
+ },
+ {
+  "w": "सब",
+  "r": "sab",
+  "start": 7.66,
+  "end": 7.8,
+  "score": 0.996
+ },
+ {
+  "w": "पकड़",
+  "r": "pakadd",
+  "start": 7.861,
+  "end": 8.121,
+  "score": 0.99
+ },
+ {
+  "w": "लेता",
+  "r": "letaa",
+  "start": 8.181,
+  "end": 8.382,
+  "score": 0.986
+ },
+ {
+  "w": "है।",
+  "r": "hai",
+  "start": 8.402,
+  "end": 8.482,
+  "score": 0.829
+ }
+]

@@ -1,0 +1,86 @@
+[
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 0.02,
+  "end": 0.441,
+  "score": 0.984
+ },
+ {
+  "w": "institute-ന്റെ",
+  "r": "institutenrre",
+  "start": 0.542,
+  "end": 1.204,
+  "score": 0.6
+ },
+ {
+  "w": "logo-യും",
+  "r": "logoyum",
+  "start": 1.444,
+  "end": 1.845,
+  "score": 0.741
+ },
+ {
+  "w": "പേരും",
+  "r": "peerum",
+  "start": 1.886,
+  "end": 2.166,
+  "score": 0.997
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 2.588,
+  "end": 2.949,
+  "score": 0.994
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 2.989,
+  "end": 3.31,
+  "score": 0.685
+ },
+ {
+  "w": "test-ലും.",
+  "r": "testlum",
+  "start": 3.37,
+  "end": 3.731,
+  "score": 0.705
+ },
+ {
+  "w": "എങ്ങനെയെന്ന്",
+  "r": "engnganeyenn",
+  "start": 4.293,
+  "end": 4.774,
+  "score": 0.928
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 4.874,
+  "end": 5.155,
+  "score": 0.345
+ },
+ {
+  "w": "by",
+  "r": "by",
+  "start": 5.195,
+  "end": 5.316,
+  "score": 0.54
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 5.316,
+  "end": 5.556,
+  "score": 0.395
+ },
+ {
+  "w": "നോക്കാം.",
+  "r": "nookkaam",
+  "start": 5.617,
+  "end": 5.978,
+  "score": 0.955
+ }
+]

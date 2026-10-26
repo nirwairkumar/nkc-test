@@ -1,0 +1,45 @@
+{
+  "provider": "gemini",
+  "tts_model": "gemini-3.8-flash-tts",
+  "voice": "Sulafat",
+  "lang": "hi",
+  "style": "A warm, friendly young Indian woman in her late twenties, a teacher showing a colleague a neat trick. Natural everyday Hinglish, relaxed and smiling, like talking to a friend, never a newsreader or an advert. Smooth flow with short natural breaths at commas and full stops. Say PDF the way Indians say it in one quick breath, pee-dee-eff, never spelled slowly. Say AI as ay-eye.",
+  "lines": [
+    {
+      "id": "f01",
+      "text": "देखिए, ये एक आम-सी PDF है। अब सवाल ये है... इसे लाइव ऑनलाइन टेस्ट बनने में कितना टाइम लगेगा?",
+      "style": "Curious and playful, a small challenge in the question."
+    },
+    {
+      "id": "f02",
+      "text": "तो स्टॉपवॉच चालू! अब Testoza पे, PDF अपलोड कीजिए।",
+      "style": "Brisk and upbeat, getting started."
+    },
+    {
+      "id": "f03",
+      "text": "अब AI हर सवाल खुद पढ़ रहा है... ऑप्शन्स, आंसर की, डायग्राम, और इक्वेशन्स भी।",
+      "style": "Genuinely impressed, listing the items with light rhythm."
+    },
+    {
+      "id": "f04",
+      "text": "तीस सवाल... एक मिनट चौदह सेकंड में तैयार!",
+      "style": "The number lands, a little proud and pleased."
+    },
+    {
+      "id": "f05",
+      "text": "मार्किंग सेट कीजिए, प्लस फ़ोर, माइनस वन, और टेस्ट लाइव। बच्चों को बस छह अंकों का कोड दीजिए।",
+      "style": "Quick and easy, two simple steps, then the code."
+    },
+    {
+      "id": "f06",
+      "text": "ना ऐप, ना अकाउंट। फ़ोन पर कोड डाला, और टेस्ट शुरू।",
+      "style": "Light, matter-of-fact, almost a smile."
+    },
+    {
+      "id": "f07",
+      "text": "PDF से लाइव टेस्ट, बस दो मिनट में। testoza.com पर, बिल्कुल फ़्री।",
+      "style": "Warm payoff, then say the web address slowly and clearly: testoza dot com."
+    }
+  ],
+  "bgm": { "mode": "none" }
+}

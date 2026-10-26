@@ -6,3 +6,17 @@ projects/testoza-builder-tutorial/renders/builder-tutorial-hi-v3.mp4
 shared/tts-venv/
 # one copy of each finished video, too big for GitHub
 exports/
+# DPP Short: raw screencast frames and the long phone recordings (rebuild with capture/frames2mp4.mjs)
+projects/testoza-dpp-short/capture/run*/
+projects/testoza-dpp-short/assets/footage/
+projects/testoza-dpp-short/samples/
+# Top 10 Features: raw takes, cut sections, mixes, probes (rebuild with capture/record.mjs, build.mjs, mix.mjs)
+projects/testoza-top-10-features/capture/rec/
+projects/testoza-top-10-features/capture/probe/
+projects/testoza-top-10-features/assets/cut/
+projects/testoza-top-10-features/assets/mix/
+# Branding Short: raw takes, cut sections, mixes, probes (rebuild with capture/record.mjs, build.mjs, mix.mjs)
+projects/testoza-branding-short/capture/rec/
+projects/testoza-branding-short/capture/probe/
+projects/testoza-branding-short/assets/cut/
+projects/testoza-branding-short/assets/mix/

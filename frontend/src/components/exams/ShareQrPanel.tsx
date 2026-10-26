@@ -48,8 +48,11 @@ export default function ShareQrPanel({ test, className = '' }: { test: any; clas
     );
 }
 
-/** The QR with the picked app's icon in the middle (TestoZa's for "any app"). Level Q keeps it scannable. */
-function BrandedQr({ url, app, size, className = '' }: { url: string; app: ShareApp; size: number; className?: string }) {
+/**
+ * The QR with the picked app's icon in the middle (TestoZa's for "any app"). Level Q keeps it scannable.
+ * Also used by the invite link's QR (components/referrals/ReferralQrPanel).
+ */
+export function BrandedQr({ url, app, size, className = '' }: { url: string; app: ShareApp; size: number; className?: string }) {
     // The badge covers about a fifth of the width, which level Q absorbs (checked at 112 px).
     const badge = Math.round(size * 0.215);
     const glyph = Math.round(badge * 0.64);
@@ -69,7 +72,7 @@ function BrandedQr({ url, app, size, className = '' }: { url: string; app: Share
     );
 }
 
-function AppChips({ appId, onPick, large = false, className = '' }: {
+export function AppChips({ appId, onPick, large = false, className = '' }: {
     appId: ShareAppId; onPick: (id: ShareAppId) => void; large?: boolean; className?: string;
 }) {
     return (
@@ -97,7 +100,7 @@ function AppChips({ appId, onPick, large = false, className = '' }: {
 }
 
 /** The same share QR, as big as the screen allows. Esc, × or leaving full screen closes it. */
-function FullScreenQr({ title, appId, url, onPick, onClose }: {
+export function FullScreenQr({ title, appId, url, onPick, onClose }: {
     title: string; appId: ShareAppId; url: string; onPick: (id: ShareAppId) => void; onClose: () => void;
 }) {
     const rootRef = useRef<HTMLDivElement>(null);

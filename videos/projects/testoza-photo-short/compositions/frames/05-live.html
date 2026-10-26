@@ -1,0 +1,64 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f5-mt img, #f5-toast img { position: absolute; left: 0; top: 0; width: 960px; transform-origin: 0 0; }
+  #f5-mt { top: 700px; height: 421px; visibility: hidden; }
+  #f5-toast { top: 1150px; height: 203px; visibility: hidden; border-radius: 20px; }
+  .f5-code { position: absolute; left: 120px; top: 1170px; width: 840px; height: 300px; z-index: 9; border-radius: 36px; visibility: hidden;
+    background: rgba(15, 23, 42, 0.9); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6), 0 40px 100px -30px rgba(0, 0, 0, 0.9), 0 0 80px -10px rgba(56, 189, 248, 0.45);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .f5-code p { margin: 0; font: 700 28px/1 'Outfit', sans-serif; letter-spacing: 0.3em; color: #38bdf8; }
+  .f5-digits { display: flex; gap: 14px; font: 900 140px/1 'Outfit', sans-serif; color: #f8fafc; font-variant-numeric: tabular-nums; }
+  .f5-digits span { display: inline-block; }
+  .f5-digits .gap { width: 30px; }
+  .f5-code small { font: 600 30px/1 'Outfit', sans-serif; color: #94a3b8; }
+  .f5-code small b { color: #e2e8f0; font-weight: 700; }
+  #f5-s1 span, #f5-s2 span { display: inline-block; }
+</style>
+<div id="root" data-composition-id="f05-live" data-width="1080" data-height="1920">
+  <div class="sf">
+    <div id="f5-stage" class="clip sf-stage" data-start="0" data-duration="5.8" data-track-index="0"></div>
+    <div class="sf-panel" id="f5-mt"><img id="f5-mti" src="assets/ui/mytests.png" alt="" /></div>
+    <div class="sf-panel" id="f5-toast"><img src="assets/ui/toast.png" alt="" /></div>
+    <div class="f5-code" id="f5-code">
+      <p>JOIN CODE</p>
+      <div class="f5-digits"><span>4</span><span>8</span><span>2</span><span class="gap"></span><span>9</span><span>1</span><span>3</span></div>
+      <small>Students open <b>testoza.com/join</b></small>
+    </div>
+    <div class="sf-sup" id="f5-s1">Go <em>live.</em></div>
+    <div class="sf-sup" id="f5-s2">One <em>6-digit</em> code.</div>
+    <svg class="sf-cursor" viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.8L4 19z" fill="#fff" stroke="#0f172a" stroke-width="1.3" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f05-live';
+  const { q, qa, tl, superIn, superOut, cursorAt, move, click } = SF(ID);
+  // My Tests with the new test first: push into its card, click "Conduct exam" on "live"
+  tl.set('#f5-mt', { autoAlpha: 1 }, 0);
+  tl.fromTo('#f5-mt', { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out' }, 0);
+  tl.fromTo('#f5-mti', { scale: 1.6, x: 480 - 1.6 * 168, y: 210 - 1.6 * 295 }, { scale: 2.2, x: 480 - 2.2 * 168, y: 210 - 2.2 * 295, duration: 1.0, ease: 'power3.out' }, 0.05);
+  cursorAt(0.1, 860, 1180);
+  move(0.2, 738, 1031, 0.6);
+  // "Test live कीजिए,"
+  click(0.95, 738, 1031);
+  superIn(0.75, q('#f5-s1'));
+  // the real toast, then the code itself, big
+  tl.set('#f5-toast', { autoAlpha: 1 }, 1.25);
+  tl.fromTo('#f5-toast', { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'expo.out' }, 1.25);
+  tl.set('.sf-cursor', { autoAlpha: 0 }, 1.3);
+  tl.to('#f5-toast', { opacity: 0, scale: 0.94, duration: 0.25, ease: 'power2.in' }, 1.85);
+  tl.set('#f5-code', { autoAlpha: 1 }, 1.9);
+  tl.fromTo('#f5-code', { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(1.6)' }, 1.9);
+  tl.fromTo(qa('.f5-digits span'), { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out', stagger: 0.07 }, 2.0);
+  tl.to('#f5-code', { scale: 1.05, duration: 3.3, ease: 'sine.inOut' }, 2.5);
+  // "और बच्चों को बस छह अंकों का code भेज दीजिए।"
+  superOut(1.6, q('#f5-s1'));
+  superIn(1.75, q('#f5-s2'));
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

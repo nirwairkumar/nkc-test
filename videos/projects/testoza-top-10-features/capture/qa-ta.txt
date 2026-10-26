@@ -1,0 +1,4 @@
+Here are the lines with errors found in the audio:
+
+* **L11**: "patterns" is mispronounced as "pack-ends".
+* **L31**: "batch-ஐ" is wrongly read as "batches".

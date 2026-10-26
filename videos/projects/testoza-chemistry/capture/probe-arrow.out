@@ -1,0 +1,6 @@
+A inside → "\\ce{Na2B4O7 \\xrightarrow{\\Delta } 2X + Y}"
+B arrow → "\\ce{CuSO4 + Y}\\xrightarrow{?}"
+slots 1
+B words → "\\ce{CuSO4 + Y}\\xrightarrow{\\text{Non-Luminous flame}}\\ce{Z + SO3}"
+C plain → "\\ce{CaCO3 + 2HCl \\ce{->} CaCl2 + H2O + CO2\\ce{^}}"
+question text ""

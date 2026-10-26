@@ -1,0 +1,170 @@
+[
+  {
+    "id": "w0",
+    "text": "First",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "is",
+    "start": 0.48,
+    "end": 0.8
+  },
+  {
+    "id": "w2",
+    "text": "force",
+    "start": 0.8,
+    "end": 1.44
+  },
+  {
+    "id": "w3",
+    "text": "full",
+    "start": 1.44,
+    "end": 1.76
+  },
+  {
+    "id": "w4",
+    "text": "screen.",
+    "start": 1.76,
+    "end": 2.32
+  },
+  {
+    "id": "w5",
+    "text": "The",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w6",
+    "text": "exam",
+    "start": 2.48,
+    "end": 2.88
+  },
+  {
+    "id": "w7",
+    "text": "opens",
+    "start": 2.88,
+    "end": 3.28
+  },
+  {
+    "id": "w8",
+    "text": "full",
+    "start": 3.28,
+    "end": 3.68
+  },
+  {
+    "id": "w9",
+    "text": "screen",
+    "start": 3.68,
+    "end": 4.08
+  },
+  {
+    "id": "w10",
+    "text": "and",
+    "start": 4.16,
+    "end": 4.32
+  },
+  {
+    "id": "w11",
+    "text": "if",
+    "start": 4.32,
+    "end": 4.48
+  },
+  {
+    "id": "w12",
+    "text": "a",
+    "start": 4.48,
+    "end": 4.56
+  },
+  {
+    "id": "w13",
+    "text": "student",
+    "start": 4.56,
+    "end": 4.96
+  },
+  {
+    "id": "w14",
+    "text": "leaves",
+    "start": 4.96,
+    "end": 5.36
+  },
+  {
+    "id": "w15",
+    "text": "it,",
+    "start": 5.36,
+    "end": 5.68
+  },
+  {
+    "id": "w16",
+    "text": "that's",
+    "start": 5.68,
+    "end": 6
+  },
+  {
+    "id": "w17",
+    "text": "counted",
+    "start": 6,
+    "end": 6.48
+  },
+  {
+    "id": "w18",
+    "text": "as",
+    "start": 6.48,
+    "end": 6.64
+  },
+  {
+    "id": "w19",
+    "text": "a",
+    "start": 6.64,
+    "end": 6.8
+  },
+  {
+    "id": "w20",
+    "text": "violation.",
+    "start": 6.8,
+    "end": 7.76
+  },
+  {
+    "id": "w21",
+    "text": "For",
+    "start": 7.76,
+    "end": 8.08
+  },
+  {
+    "id": "w22",
+    "text": "any",
+    "start": 8.08,
+    "end": 8.32
+  },
+  {
+    "id": "w23",
+    "text": "serious",
+    "start": 8.32,
+    "end": 8.88
+  },
+  {
+    "id": "w24",
+    "text": "test,",
+    "start": 8.88,
+    "end": 9.28
+  },
+  {
+    "id": "w25",
+    "text": "switch",
+    "start": 9.28,
+    "end": 9.68
+  },
+  {
+    "id": "w26",
+    "text": "this",
+    "start": 9.68,
+    "end": 9.84
+  },
+  {
+    "id": "w27",
+    "text": "on.",
+    "start": 9.84,
+    "end": 10.08
+  }
+]

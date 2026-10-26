@@ -1,0 +1,86 @@
+[
+ {
+  "w": "Logo",
+  "r": "logo",
+  "start": 0.08,
+  "end": 0.34,
+  "score": 0.907
+ },
+ {
+  "w": "వేయండి,",
+  "r": "veeyamddi",
+  "start": 0.4,
+  "end": 0.781,
+  "score": 0.964
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 1.201,
+  "end": 1.702,
+  "score": 0.826
+ },
+ {
+  "w": "పేరు",
+  "r": "peeru",
+  "start": 1.742,
+  "end": 1.982,
+  "score": 0.997
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.042,
+  "end": 2.262,
+  "score": 0.5
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 2.282,
+  "end": 2.622,
+  "score": 0.941
+ },
+ {
+  "w": "colour,",
+  "r": "colour",
+  "start": 3.123,
+  "end": 3.483,
+  "score": 0.334
+ },
+ {
+  "w": "font",
+  "r": "font",
+  "start": 3.823,
+  "end": 4.124,
+  "score": 0.519
+ },
+ {
+  "w": "ఎంచుకోండి.",
+  "r": "emcukoomddi",
+  "start": 4.144,
+  "end": 4.624,
+  "score": 0.897
+ },
+ {
+  "w": "అంతే",
+  "r": "amtee",
+  "start": 5.005,
+  "end": 5.325,
+  "score": 0.978
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 5.665,
+  "end": 5.945,
+  "score": 0.777
+ },
+ {
+  "w": "ready.",
+  "r": "ready",
+  "start": 6.025,
+  "end": 6.226,
+  "score": 0.537
+ }
+]

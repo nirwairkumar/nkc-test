@@ -1,0 +1,163 @@
+[
+ {
+  "w": "ಇಲ್ಲಿ",
+  "r": "illi",
+  "start": 0.04,
+  "end": 0.221,
+  "score": 0.989
+ },
+ {
+  "w": "ಒಬ್ಬ",
+  "r": "obba",
+  "start": 0.321,
+  "end": 0.541,
+  "score": 0.903
+ },
+ {
+  "w": "student,",
+  "r": "student",
+  "start": 0.601,
+  "end": 1.042,
+  "score": 0.753
+ },
+ {
+  "w": "ಅವಳ",
+  "r": "avalla",
+  "start": 1.483,
+  "end": 1.724,
+  "score": 0.591
+ },
+ {
+  "w": "phone",
+  "r": "phone",
+  "start": 1.784,
+  "end": 2.005,
+  "score": 0.794
+ },
+ {
+  "w": "ನಲ್ಲಿ,",
+  "r": "nalli",
+  "start": 2.045,
+  "end": 2.285,
+  "score": 0.987
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 2.666,
+  "end": 3.127,
+  "score": 0.824
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 3.207,
+  "end": 3.448,
+  "score": 0.892
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 3.508,
+  "end": 3.689,
+  "score": 0.652
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 3.749,
+  "end": 4.069,
+  "score": 0.889
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 4.19,
+  "end": 4.43,
+  "score": 0.878
+ },
+ {
+  "w": "ನಲ್ಲಿ.",
+  "r": "nalli",
+  "start": 4.49,
+  "end": 4.731,
+  "score": 0.993
+ },
+ {
+  "w": "ಆರು",
+  "r": "aaru",
+  "start": 5.192,
+  "end": 5.393,
+  "score": 0.701
+ },
+ {
+  "w": "digits",
+  "r": "digits",
+  "start": 5.473,
+  "end": 5.753,
+  "score": 0.69
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 5.834,
+  "end": 6.054,
+  "score": 0.514
+ },
+ {
+  "w": "ಮಾಡ್ತಾಳೆ,",
+  "r": "maaddtaalle",
+  "start": 6.074,
+  "end": 6.495,
+  "score": 0.782
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 6.896,
+  "end": 7.237,
+  "score": 0.724
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 7.337,
+  "end": 7.578,
+  "score": 0.698
+ },
+ {
+  "w": "ಆಗುತ್ತೆ.",
+  "r": "aagutte",
+  "start": 7.598,
+  "end": 7.939,
+  "score": 0.71
+ },
+ {
+  "w": "Name,",
+  "r": "name",
+  "start": 8.44,
+  "end": 8.941,
+  "score": 0.499
+ },
+ {
+  "w": "roll",
+  "r": "roll",
+  "start": 8.941,
+  "end": 9.141,
+  "score": 0.714
+ },
+ {
+  "w": "number,",
+  "r": "number",
+  "start": 9.141,
+  "end": 9.462,
+  "score": 0.585
+ },
+ {
+  "w": "start.",
+  "r": "start",
+  "start": 9.602,
+  "end": 10.003,
+  "score": 0.915
+ }
+]

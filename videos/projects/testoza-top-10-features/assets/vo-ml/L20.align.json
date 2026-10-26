@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.281,
+  "score": 0.298
+ },
+ {
+  "w": "seven:",
+  "r": "seven",
+  "start": 0.341,
+  "end": 0.581,
+  "score": 0.06
+ },
+ {
+  "w": "വേണ്ട",
+  "r": "veenntta",
+  "start": 0.962,
+  "end": 1.263,
+  "score": 0.51
+ },
+ {
+  "w": "details",
+  "r": "details",
+  "start": 1.323,
+  "end": 1.684,
+  "score": 0.498
+ },
+ {
+  "w": "എടുക്കൂ.",
+  "r": "ettukkuu",
+  "start": 1.724,
+  "end": 1.985,
+  "score": 0.373
+ }
+]

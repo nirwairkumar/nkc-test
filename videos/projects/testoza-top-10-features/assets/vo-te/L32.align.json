@@ -1,0 +1,163 @@
+[
+ {
+  "w": "ఇవే",
+  "r": "ivee",
+  "start": 0.04,
+  "end": 0.24,
+  "score": 0.962
+ },
+ {
+  "w": "పది",
+  "r": "padi",
+  "start": 0.3,
+  "end": 0.481,
+  "score": 0.956
+ },
+ {
+  "w": "features",
+  "r": "features",
+  "start": 0.521,
+  "end": 0.921,
+  "score": 0.243
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 1.121,
+  "end": 1.442,
+  "score": 0.245
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 1.482,
+  "end": 1.722,
+  "score": 0.599
+ },
+ {
+  "w": "నుంచి",
+  "r": "numci",
+  "start": 1.762,
+  "end": 2.023,
+  "score": 0.936
+ },
+ {
+  "w": "ranked",
+  "r": "ranked",
+  "start": 2.163,
+  "end": 2.443,
+  "score": 0.487
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 2.503,
+  "end": 2.784,
+  "score": 0.501
+ },
+ {
+  "w": "వరకు,",
+  "r": "varaku",
+  "start": 2.824,
+  "end": 3.064,
+  "score": 0.97
+ },
+ {
+  "w": "అన్నీ",
+  "r": "annii",
+  "start": 3.284,
+  "end": 3.544,
+  "score": 0.858
+ },
+ {
+  "w": "ఒకే",
+  "r": "okee",
+  "start": 3.685,
+  "end": 3.885,
+  "score": 0.871
+ },
+ {
+  "w": "చోట.",
+  "r": "cootta",
+  "start": 3.925,
+  "end": 4.165,
+  "score": 0.727
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 4.806,
+  "end": 5.227,
+  "score": 0.845
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 5.347,
+  "end": 5.507,
+  "score": 0.665
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 5.527,
+  "end": 5.667,
+  "score": 0.46
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 5.687,
+  "end": 5.787,
+  "score": 0.942
+ },
+ {
+  "w": "try",
+  "r": "try",
+  "start": 5.827,
+  "end": 5.968,
+  "score": 0.486
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 6.008,
+  "end": 6.308,
+  "score": 0.99
+ },
+ {
+  "w": "ఇలాంటి",
+  "r": "ilaamtti",
+  "start": 6.548,
+  "end": 6.869,
+  "score": 0.989
+ },
+ {
+  "w": "videos",
+  "r": "videos",
+  "start": 6.889,
+  "end": 7.189,
+  "score": 0.84
+ },
+ {
+  "w": "కోసం",
+  "r": "koosam",
+  "start": 7.209,
+  "end": 7.489,
+  "score": 0.988
+ },
+ {
+  "w": "subscribe",
+  "r": "subscribe",
+  "start": 7.549,
+  "end": 7.95,
+  "score": 0.651
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 7.95,
+  "end": 8.29,
+  "score": 0.99
+ }
+]

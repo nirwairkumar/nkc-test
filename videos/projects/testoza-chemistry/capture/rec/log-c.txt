@@ -1,0 +1,57 @@
+prebuild details
+prebuild q1
+prebuild q2
+prebuild q3
+  mark c:x-start @ 0.351
+record q4
+  mark c:q4add @ 2.002
+  mark c:x-q4text @ 4.183
+  mark c:x-sypad4 @ 7.309
+  mark c:tables @ 8.629
+  mark c:match @ 9.934
+  mark c:editor @ 11.445
+  mark c:labels @ 13.274
+  mark c:x-lab1 @ 14.211
+  mark c:x-lab2 @ 15.129
+  mark c:x-lab3 @ 16.261
+  mark c:x-lab4 @ 17.229
+  mark c:x-lab5 @ 18.101
+  mark c:x-lab6 @ 19.18
+  mark c:x-lab7 @ 20.357
+  mark c:tins @ 21.475
+  mark c:blue @ 22.93
+  mark c:x-chem4 @ 24.821
+  mark c:box1 @ 25.747
+  mark c:f1 @ 26.266
+  mark c:xe @ 26.576
+  mark c:box2 @ 28.76
+  mark c:x-f1 @ 29.52
+  mark c:x-t1 @ 29.851
+  mark c:fill @ 31.907
+  mark c:x-f2 @ 32.981
+  mark c:x-t2 @ 33.415
+  mark c:x-box3 @ 35.835
+  mark c:x-f3 @ 36.981
+  mark c:x-t3 @ 37.31
+  mark c:x-box4 @ 39.404
+  mark c:x-f4 @ 40.626
+  mark c:x-t4 @ 40.981
+  mark c:x-box5 @ 42.9
+  mark c:x-f5 @ 44.195
+  mark c:x-t5 @ 44.543
+  mark c:x-box6 @ 46.218
+  mark c:x-f6 @ 47.459
+  mark c:x-t6 @ 47.806
+  mark c:x-box7 @ 49.943
+  mark c:x-f7 @ 51.091
+  mark c:x-t7 @ 51.457
+  mark c:tins2 @ 53.193
+  mark c:x-done @ 55.239
+  mark c:table @ 56.658
+  mark c:x-q4rest @ 59.095
+  mark c:opts4 @ 64.367
+  mark c:x-opt1 @ 66.317
+  mark c:x-opt2 @ 68.742
+  mark c:x-opt3 @ 70.576
+  mark c:correct4 @ 72.322
+✓ c.mp4  520 frames  51 marks  sync {"lagMedian":-3.074,"lagMax":0.082,"unread":0}

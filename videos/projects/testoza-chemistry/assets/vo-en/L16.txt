@@ -1,0 +1,2 @@
+Now JEE Advanced, Paper 1. The answer here is a number, so change the question type to Numerical answer.
+And JEE Advanced takes nothing off for a wrong number, so set Wrong to zero. You can set the marks on any question, like this.

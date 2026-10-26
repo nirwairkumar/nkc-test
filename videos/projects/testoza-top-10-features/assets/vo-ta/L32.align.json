@@ -1,0 +1,156 @@
+[
+ {
+  "w": "இதுதான்",
+  "r": "itutaan",
+  "start": 0.04,
+  "end": 0.34,
+  "score": 0.83
+ },
+ {
+  "w": "பத்து",
+  "r": "pattu",
+  "start": 0.4,
+  "end": 0.681,
+  "score": 0.969
+ },
+ {
+  "w": "features",
+  "r": "features",
+  "start": 0.721,
+  "end": 1.141,
+  "score": 0.187
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 1.441,
+  "end": 1.802,
+  "score": 0.34
+ },
+ {
+  "w": "paper-ல",
+  "r": "paperla",
+  "start": 1.862,
+  "end": 2.202,
+  "score": 0.592
+ },
+ {
+  "w": "இருந்து",
+  "r": "iruntu",
+  "start": 2.222,
+  "end": 2.442,
+  "score": 0.985
+ },
+ {
+  "w": "ranked",
+  "r": "ranked",
+  "start": 2.542,
+  "end": 2.822,
+  "score": 0.552
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 2.863,
+  "end": 3.163,
+  "score": 0.389
+ },
+ {
+  "w": "வரை,",
+  "r": "varai",
+  "start": 3.203,
+  "end": 3.763,
+  "score": 0.793
+ },
+ {
+  "w": "எல்லாமே",
+  "r": "ellaamee",
+  "start": 3.823,
+  "end": 4.244,
+  "score": 0.971
+ },
+ {
+  "w": "ஒரே",
+  "r": "oree",
+  "start": 4.304,
+  "end": 4.484,
+  "score": 0.746
+ },
+ {
+  "w": "இடத்துல.",
+  "r": "idattula",
+  "start": 4.544,
+  "end": 4.884,
+  "score": 0.643
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 5.285,
+  "end": 5.745,
+  "score": 0.616
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 5.825,
+  "end": 5.985,
+  "score": 0.419
+ },
+ {
+  "w": "com-ல",
+  "r": "comla",
+  "start": 6.025,
+  "end": 6.245,
+  "score": 0.571
+ },
+ {
+  "w": "try",
+  "r": "try",
+  "start": 6.286,
+  "end": 6.486,
+  "score": 0.349
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 6.546,
+  "end": 6.846,
+  "score": 0.712
+ },
+ {
+  "w": "இது",
+  "r": "itu",
+  "start": 7.126,
+  "end": 7.246,
+  "score": 0.994
+ },
+ {
+  "w": "மாதிரி",
+  "r": "maatiri",
+  "start": 7.286,
+  "end": 7.547,
+  "score": 0.944
+ },
+ {
+  "w": "videos-க்கு",
+  "r": "videoskku",
+  "start": 7.587,
+  "end": 8.007,
+  "score": 0.795
+ },
+ {
+  "w": "subscribe",
+  "r": "subscribe",
+  "start": 8.087,
+  "end": 8.487,
+  "score": 0.411
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 8.487,
+  "end": 8.748,
+  "score": 0.75
+ }
+]

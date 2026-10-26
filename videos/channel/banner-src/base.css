@@ -1,0 +1,23 @@
+@font-face{font-family:Outfit;font-weight:400;src:url(Outfit-400.woff2)}
+@font-face{font-family:Outfit;font-weight:500;src:url(Outfit-500.woff2)}
+@font-face{font-family:Outfit;font-weight:600;src:url(Outfit-600.woff2)}
+@font-face{font-family:Outfit;font-weight:700;src:url(Outfit-700.woff2)}
+@font-face{font-family:Outfit;font-weight:800;src:url(Outfit-800.woff2)}
+@font-face{font-family:Outfit;font-weight:900;src:url(Outfit-900.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:2560px;height:1440px;overflow:hidden}
+body{font-family:Outfit,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.stage{position:relative;width:2560px;height:1440px;overflow:hidden;isolation:isolate}
+/* YouTube shows this 1546 x 423 centre on every device, so all text and the logo live here.
+   Desktop shows the full 2560 x 423 band (y 508-931); only TVs show the whole canvas. */
+.safe{position:absolute;left:507px;top:508px;width:1546px;height:423px;z-index:2}
+.wm{display:block}
+/* Grain breaks up gradient banding after YouTube's JPEG recompression. */
+.grain{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+
+/* ?guides draws YouTube's crop lines: phone (red), tablet (amber), desktop band (green). */
+.guide{position:absolute;z-index:9;border:4px dashed;pointer-events:none}
+.guide.phone{left:507px;top:508px;width:1546px;height:423px;border-color:#ef4444}
+.guide.tablet{left:352px;top:508px;width:1855px;height:423px;border-color:#f59e0b}
+.guide.desk{left:0;top:508px;width:2560px;height:423px;border-color:#22c55e}

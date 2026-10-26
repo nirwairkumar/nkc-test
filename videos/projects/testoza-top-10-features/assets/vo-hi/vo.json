@@ -1,0 +1,226 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-hi/L01.wav",
+    "duration": 20.740417,
+    "text": "एक question paper, बन गया online test। Equations — बस कुछ सेकंड में। Students किसी भी फ़ोन से join करते हैं। Cheating तुरंत पकड़ी जाती है। और हर result आता है, rank के साथ।\nये है Testoza — और ये हैं इसके top ten features, और हर एक को इस्तेमाल कैसे करना है।",
+    "raw": "{m1}एक question paper, बन गया online test। {m2}Equations — बस कुछ सेकंड में। {m3}Students किसी भी फ़ोन से join करते हैं। {m4}Cheating तुरंत पकड़ी जाती है। {m5}और हर result आता है, rank के साथ।\n{title}ये है TestoZa — और ये हैं इसके top ten features, और हर एक को इस्तेमाल कैसे करना है।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-hi/L02.wav",
+    "duration": 2.264125,
+    "text": "नंबर एक: Generate with AI।",
+    "raw": "नंबर एक: Generate with AI।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-hi/L03.wav",
+    "duration": 9.612,
+    "text": "आपका question paper PDF में है, या बस फ़ोटो? Generate with AI खोलिए, फ़ाइल चुनिए — तीन पेज की PDF, answer key के साथ — और Extract Questions दबाइए।",
+    "raw": "आपका question paper PDF में है, या बस फ़ोटो? {upload}Generate with AI खोलिए, {choose}फ़ाइल चुनिए — तीन पेज की PDF, answer key के साथ — {extract}और Extract Questions दबाइए।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-hi/L04.wav",
+    "duration": 10.153417,
+    "text": "अब देखिए। AI हर एक पेज पढ़ता है, और questions एक-एक करके आने लगते हैं — options, maths, सब कुछ। क़रीब आधे मिनट में, बारहों सवाल तैयार।",
+    "raw": "{reading}अब देखिए। AI हर एक पेज पढ़ता है, {q1}और questions एक-एक करके आने लगते हैं — options, maths, सब कुछ। {preview}क़रीब आधे मिनट में, बारहों सवाल तैयार।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-hi/L05.wav",
+    "duration": 7.835542,
+    "text": "आख़िरी पेज की answer key भी इसने पढ़ ली, तो हर answer पहले से marked है। एक नज़र डालिए, Save कीजिए, और आपका paper अब एक test है।",
+    "raw": "{answers}आख़िरी पेज की answer key भी इसने पढ़ ली, तो हर answer पहले से marked है। एक नज़र डालिए, {save}Save कीजिए, {newcard}और आपका paper अब एक test है।"
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-hi/L06.wav",
+    "duration": 4.030167,
+    "text": "नंबर दो: maths और science, बिल्कुल सही तरीके से।",
+    "raw": "नंबर दो: maths और science, बिल्कुल सही तरीके से।"
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-hi/L07.wav",
+    "duration": 10.985083,
+    "text": "Test को builder में खोलिए — बारहों सवाल यहाँ पहले से हैं। एक question जोड़िए, और शब्द हमेशा की तरह टाइप कीजिए। Formula के लिए, Maths and symbols खोलिए — ये है Sy Pad।",
+    "raw": "{edit}Test को builder में खोलिए — बारहों सवाल यहाँ पहले से हैं। {addq}एक question जोड़िए, {q13text}और शब्द हमेशा की तरह टाइप कीजिए। {sypad}Formula के लिए, Maths and symbols खोलिए — ये है Sy Pad।"
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-hi/L08.wav",
+    "duration": 15.490708,
+    "text": "टाइप कीजिए एच equals यू टी minus, fraction key दबाइए, one over two, फिर power key, t square के लिए। एक सही formula — कोई code सीखने की ज़रूरत नहीं। Insert, और ये सीधे question के अंदर।",
+    "raw": "{h}टाइप कीजिए एच equals यू टी minus, {frac}fraction key दबाइए, one over two, {power}फिर power key, t square के लिए। {formula}एक सही formula — कोई code सीखने की ज़रूरत नहीं। {insert}Insert, और ये सीधे question के अंदर।"
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-hi/L09.wav",
+    "duration": 5.166375,
+    "text": "नंबर तीन: हिंदी में टाइप कीजिए — या एक सौ उन्नीस भाषाओं में से किसी में भी।",
+    "raw": "नंबर तीन: हिंदी में टाइप कीजिए — या एक सौ उन्नीस भाषाओं में से किसी में भी।"
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-hi/L10.wav",
+    "duration": 12.644542,
+    "text": "Language switch दबाइए, Hindi चुनिए, और बस English letters में टाइप कीजिए। Space दबाते ही हर शब्द हिंदी में बदल जाता है — हिंदी keyboard की ज़रूरत ही नहीं। अब question दोनों भाषाओं में है, और options पहले की तरह ही।",
+    "raw": "{lang}Language switch दबाइए, {hindi}Hindi चुनिए, {hitype}और बस English letters में टाइप कीजिए। Space दबाते ही हर शब्द हिंदी में बदल जाता है — हिंदी keyboard की ज़रूरत ही नहीं। {hindone}अब question दोनों भाषाओं में है, {opts}और options पहले की तरह ही।"
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-hi/L11.wav",
+    "duration": 2.48225,
+    "text": "नंबर चार: असली exam patterns।",
+    "raw": "नंबर चार: असली exam patterns।"
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-hi/L12.wav",
+    "duration": 10.014167,
+    "text": "हर question पर plus four, minus one। JEE Advanced जैसा चाहिए? इसे multiple correct बनाइए, JEE Advanced partial marks चुनिए, और सही answer mark कीजिए।",
+    "raw": "{marks}हर question पर plus four, minus one। {qtype}JEE Advanced जैसा चाहिए? {multi}इसे multiple correct बनाइए, {jeeadv}JEE Advanced partial marks चुनिए, {correct}और सही answer mark कीजिए।"
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-hi/L13.wav",
+    "duration": 11.916833,
+    "text": "अब paper को sections में बाँटिए, और हर section का अपना timer — बिल्कुल SSC की तरह। कहीं से भी split कीजिए: सवाल सात से तेरह बन गए Section B। यहाँ दस मिनट, वहाँ दस मिनट… Save।",
+    "raw": "{sections}अब paper को sections में बाँटिए, {timed}और हर section का अपना timer — बिल्कुल SSC की तरह। {gap}कहीं से भी split कीजिए: {split}सवाल सात से तेरह बन गए Section B। {mina}यहाँ दस मिनट, {minb}वहाँ दस मिनट… {save}Save।"
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-hi/L14.wav",
+    "duration": 3.977167,
+    "text": "नंबर पाँच: एक click में live — एक anti-cheating exam room के अंदर।",
+    "raw": "नंबर पाँच: एक click में live — एक anti-cheating exam room के अंदर।"
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-hi/L15.wav",
+    "duration": 5.99375,
+    "text": "Test तैयार होते ही, Conduct exam दबाइए। आपको मिलता है एक secure exam link। Start conducting, और exam live है।",
+    "raw": "{card}Test तैयार होते ही, {conduct}Conduct exam दबाइए। {link}आपको मिलता है एक secure exam link। {start}Start conducting, {live}और exam live है।"
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-hi/L16.wav",
+    "duration": 15.922,
+    "text": "Testoza ख़ुद बताता है अगला step: exam room सेट कीजिए। Full screen ज़रूरी। हर tab या app switch पकड़ा जाएगा, एक limit रखिए — मान लीजिए तीन warnings — फिर test अपने-आप submit। Copy-paste बंद, right-click बंद, और back button भी।",
+    "raw": "{tip1}TestoZa ख़ुद बताता है अगला step: {settings}exam room सेट कीजिए। {fs}Full screen ज़रूरी। {tab}हर tab या app switch पकड़ा जाएगा, {count}एक limit रखिए — {threepick}मान लीजिए तीन warnings — फिर test अपने-आप submit। {copyoff}Copy-paste बंद, {right}right-click बंद, {back}और back button भी।"
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-hi/L17.wav",
+    "duration": 8.867583,
+    "text": "Results tab पर, आप तय करते हैं कि exam के बाद candidates क्या देखें। और questions shuffle कीजिए, ताकि किसी को भी एक जैसा order न मिले। Save।",
+    "raw": "{results}Results tab पर, {resultview}आप तय करते हैं कि exam के बाद candidates क्या देखें। {shuffle}और questions shuffle कीजिए, ताकि किसी को भी एक जैसा order न मिले। {saveset}Save।"
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-hi/L18.wav",
+    "duration": 1.777042,
+    "text": "नंबर छह: कहीं भी share कीजिए।",
+    "raw": "नंबर छह: कहीं भी share कीजिए।"
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-hi/L19.wav",
+    "duration": 14.097125,
+    "text": "अगली tip: इसे अपने candidates को भेजिए। Link copy कीजिए, या सीधे class के WhatsApp group पर share कीजिए। क्लास में फ़ोन नहीं? Join code लीजिए। छह अंक। बोर्ड पर लिख दीजिए, और students इसे testoza dot com slash join पर डालते हैं।",
+    "raw": "{tip2}अगली tip: इसे अपने candidates को भेजिए। {copy}Link copy कीजिए, {share}या सीधे class के WhatsApp group पर share कीजिए। {menu}क्लास में फ़ोन नहीं? {getcode}Join code लीजिए। {code}छह अंक। बोर्ड पर लिख दीजिए, और students इसे testoza dot com slash join पर डालते हैं।"
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-hi/L20.wav",
+    "duration": 2.744583,
+    "text": "नंबर सात: जो details चाहिए, वो लीजिए।",
+    "raw": "नंबर सात: जो details चाहिए, वो लीजिए।"
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-hi/L21.wav",
+    "duration": 8.142417,
+    "text": "नाम default में पूछा जाता है। Roll Number जोड़िए, या कुछ और भी — batch, school, phone। Candidates शुरू करने से पहले इसे भरते हैं।",
+    "raw": "{inputs}नाम default में पूछा जाता है। {roll}Roll Number जोड़िए, {inputsdone}या कुछ और भी — batch, school, phone। Candidates शुरू करने से पहले इसे भरते हैं।"
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-hi/L22.wav",
+    "duration": 3.784583,
+    "text": "नंबर आठ: किसी भी फ़ोन पर exam room। न app, न sign-up।",
+    "raw": "नंबर आठ: किसी भी फ़ोन पर exam room। न app, न sign-up।"
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-hi/L23.wav",
+    "duration": 9.622667,
+    "text": "ये रही एक student, अपने फ़ोन पर, testoza dot com slash join पर। वो छह अंक डालती है, और उसका exam खुल जाता है। नाम, roll number, start।",
+    "raw": "{join}ये रही एक student, अपने फ़ोन पर, testoza dot com slash join पर। {code6}वो छह अंक डालती है, {details}और उसका exam खुल जाता है। {name}नाम, {rollin}roll number, {go}start।"
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-hi/L24.wav",
+    "duration": 5.068667,
+    "text": "Full screen, साफ़-सुथरा, और पढ़ने में आसान। Answer पर tap, save and next।",
+    "raw": "{exam}Full screen, साफ़-सुथरा, और पढ़ने में आसान। {ans1}Answer पर tap, {next1}save and next।"
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-hi/L25.wav",
+    "duration": 5.509958,
+    "text": "अब वो दूसरे app पर जाती है — और exam पकड़ लेता है। Warning one of three। सीधे वापस paper पर।",
+    "raw": "{violation}अब वो दूसरे app पर जाती है — और exam पकड़ लेता है। Warning one of three। {warnok}सीधे वापस paper पर।"
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-hi/L26.wav",
+    "duration": 3.261167,
+    "text": "चलिए, आख़िर तक fast-forward करते हैं। Submit, और confirm।",
+    "raw": "{rush}चलिए, आख़िर तक fast-forward करते हैं। {submit}Submit, {yes}और confirm।"
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-hi/L27.wav",
+    "duration": 2.592,
+    "text": "नंबर नौ: exam को live देखिए।",
+    "raw": "नंबर नौ: exam को live देखिए।"
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-hi/L28.wav",
+    "duration": 12.156542,
+    "text": "वापस आपके dashboard पर: अभी तीस students लिख रहे हैं, दो submit कर चुके। Results खोलिए — started, writing, submitted, dropped। किसी भी tile पर tap कीजिए, और देखिए कौन-कौन है, और कितना कर चुका है।",
+    "raw": "{dash}वापस आपके dashboard पर: {writing}अभी तीस students लिख रहे हैं, {subm}दो submit कर चुके। {panel}Results खोलिए — {started}started, {writ}writing, {two}submitted, {zero}dropped। {names}किसी भी tile पर tap कीजिए, और देखिए कौन-कौन है, और कितना कर चुका है।"
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-hi/L29.wav",
+    "duration": 2.339542,
+    "text": "और नंबर दस: submit करते ही results।",
+    "raw": "और नंबर दस: submit करते ही results।"
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-hi/L30.wav",
+    "duration": 4.920917,
+    "text": "उसे तुरंत अपना score दिखता है — पचहत्तर percent — solution key के साथ, अगर आप allow करें।",
+    "raw": "{score}उसे तुरंत अपना score दिखता है — पचहत्तर percent — {solkey}solution key के साथ, अगर आप allow करें।"
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-hi/L31.wav",
+    "duration": 9.344583,
+    "text": "और जब सब कर लें, तो सारे बत्तीस results आ जाते हैं। Ranks on कीजिए, पूरा batch scroll कीजिए, और सब कुछ Excel में download, एक click में।",
+    "raw": "{all}और जब सब कर लें, तो सारे बत्तीस results आ जाते हैं। {rank}Ranks on कीजिए, {scrolllist}पूरा batch scroll कीजिए, {export}और सब कुछ Excel में download, एक click में।"
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-hi/L32.wav",
+    "duration": 8.714125,
+    "text": "ये थे दस features — question paper से ranked results तक, सब एक जगह। Try कीजिए testoza dot com पर, और ऐसे और videos के लिए subscribe कीजिए।",
+    "raw": "ये थे दस features — question paper से ranked results तक, सब एक जगह। {endurl}Try कीजिए testoza dot com पर, {thanks}और ऐसे और videos के लिए subscribe कीजिए।"
+  }
+]

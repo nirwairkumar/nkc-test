@@ -1,0 +1,44 @@
+[
+ {
+  "w": "చివరి",
+  "r": "civari",
+  "start": 0.02,
+  "end": 0.302,
+  "score": 0.992
+ },
+ {
+  "w": "వరకు",
+  "r": "varaku",
+  "start": 0.342,
+  "end": 0.603,
+  "score": 0.992
+ },
+ {
+  "w": "fast-forward",
+  "r": "fastforward",
+  "start": 0.965,
+  "end": 1.689,
+  "score": 0.599
+ },
+ {
+  "w": "చేద్దాం.",
+  "r": "ceeddaam",
+  "start": 1.75,
+  "end": 2.152,
+  "score": 0.817
+ },
+ {
+  "w": "Submit,",
+  "r": "submit",
+  "start": 3.198,
+  "end": 3.62,
+  "score": 0.826
+ },
+ {
+  "w": "confirm.",
+  "r": "confirm",
+  "start": 3.982,
+  "end": 4.425,
+  "score": 0.284
+ }
+]

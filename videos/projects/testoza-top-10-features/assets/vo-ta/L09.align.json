@@ -1,0 +1,65 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.361,
+  "score": 0.579
+ },
+ {
+  "w": "three:",
+  "r": "three",
+  "start": 0.442,
+  "end": 0.643,
+  "score": 0.3
+ },
+ {
+  "w": "தமிழ்,",
+  "r": "tamil",
+  "start": 1.004,
+  "end": 1.386,
+  "score": 0.827
+ },
+ {
+  "w": "ஹிந்தி",
+  "r": "hinti",
+  "start": 1.606,
+  "end": 1.888,
+  "score": 0.407
+ },
+ {
+  "w": "நூற்றுப்",
+  "r": "nuurrup",
+  "start": 2.149,
+  "end": 2.45,
+  "score": 0.108
+ },
+ {
+  "w": "பத்தொன்பது",
+  "r": "pattonpatu",
+  "start": 2.47,
+  "end": 2.892,
+  "score": 0.04
+ },
+ {
+  "w": "மொழிகள்ல",
+  "r": "molikalla",
+  "start": 2.932,
+  "end": 3.414,
+  "score": 0.808
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 3.474,
+  "end": 3.735,
+  "score": 0.2
+ },
+ {
+  "w": "பண்ணலாம்.",
+  "r": "pannalaam",
+  "start": 3.735,
+  "end": 3.996,
+  "score": 0.57
+ }
+]

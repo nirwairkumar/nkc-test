@@ -1,0 +1,233 @@
+[
+ {
+  "w": "ഒരു",
+  "r": "oru",
+  "start": 0.04,
+  "end": 0.18,
+  "score": 0.995
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.22,
+  "end": 0.561,
+  "score": 0.334
+ },
+ {
+  "w": "paper,",
+  "r": "paper",
+  "start": 0.581,
+  "end": 0.941,
+  "score": 0.543
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 1.321,
+  "end": 1.782,
+  "score": 0.724
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 1.802,
+  "end": 2.042,
+  "score": 0.687
+ },
+ {
+  "w": "ആയി",
+  "r": "aayi",
+  "start": 2.042,
+  "end": 2.162,
+  "score": 0.8
+ },
+ {
+  "w": "മാറുന്നു.",
+  "r": "maarrunnu",
+  "start": 2.202,
+  "end": 2.563,
+  "score": 0.94
+ },
+ {
+  "w": "Equations",
+  "r": "equations",
+  "start": 3.164,
+  "end": 3.744,
+  "score": 0.228
+ },
+ {
+  "w": "ഏതാനും",
+  "r": "eetaanum",
+  "start": 4.065,
+  "end": 4.485,
+  "score": 0.864
+ },
+ {
+  "w": "സെക്കന്റിൽ.",
+  "r": "sekkanrrila",
+  "start": 4.525,
+  "end": 5.046,
+  "score": 0.96
+ },
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 6.427,
+  "end": 6.948,
+  "score": 0.631
+ },
+ {
+  "w": "ഏത്",
+  "r": "eet",
+  "start": 7.228,
+  "end": 7.408,
+  "score": 0.919
+ },
+ {
+  "w": "phone-ൽ",
+  "r": "phonela",
+  "start": 7.488,
+  "end": 7.829,
+  "score": 0.808
+ },
+ {
+  "w": "നിന്നും",
+  "r": "ninnum",
+  "start": 7.829,
+  "end": 8.069,
+  "score": 0.899
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 8.109,
+  "end": 8.369,
+  "score": 0.514
+ },
+ {
+  "w": "ചെയ്യും.",
+  "r": "ceyyum",
+  "start": 8.389,
+  "end": 8.67,
+  "score": 0.993
+ },
+ {
+  "w": "Cheating",
+  "r": "cheating",
+  "start": 10.432,
+  "end": 10.912,
+  "score": 0.422
+ },
+ {
+  "w": "ഉടനെ",
+  "r": "uttane",
+  "start": 11.233,
+  "end": 11.533,
+  "score": 0.923
+ },
+ {
+  "w": "പിടിക്കപ്പെടും.",
+  "r": "pittikkappettum",
+  "start": 11.633,
+  "end": 12.174,
+  "score": 0.942
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 12.814,
+  "end": 13.095,
+  "score": 0.983
+ },
+ {
+  "w": "result-ഉം",
+  "r": "resultum",
+  "start": 13.135,
+  "end": 13.595,
+  "score": 0.673
+ },
+ {
+  "w": "rank-ഓടെ",
+  "r": "rankootte",
+  "start": 13.956,
+  "end": 14.456,
+  "score": 0.857
+ },
+ {
+  "w": "വരും.",
+  "r": "varum",
+  "start": 14.476,
+  "end": 14.717,
+  "score": 0.996
+ },
+ {
+  "w": "ഇതാണ്",
+  "r": "itaann",
+  "start": 15.517,
+  "end": 15.838,
+  "score": 0.949
+ },
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 16.258,
+  "end": 16.799,
+  "score": 0.682
+ },
+ {
+  "w": "ഇതിന്റെ",
+  "r": "itinrre",
+  "start": 17.4,
+  "end": 17.66,
+  "score": 0.982
+ },
+ {
+  "w": "top",
+  "r": "top",
+  "start": 17.72,
+  "end": 17.96,
+  "score": 0.721
+ },
+ {
+  "w": "ten",
+  "r": "ten",
+  "start": 18.06,
+  "end": 18.18,
+  "score": 0.503
+ },
+ {
+  "w": "features,",
+  "r": "features",
+  "start": 18.22,
+  "end": 18.661,
+  "score": 0.201
+ },
+ {
+  "w": "ഓരോന്നും",
+  "r": "ooroonnum",
+  "start": 19.101,
+  "end": 19.582,
+  "score": 0.975
+ },
+ {
+  "w": "എങ്ങനെ",
+  "r": "engngane",
+  "start": 19.882,
+  "end": 20.223,
+  "score": 0.974
+ },
+ {
+  "w": "ഉപയോഗിക്കാമെന്ന്",
+  "r": "upayoogikkaamenn",
+  "start": 20.263,
+  "end": 20.944,
+  "score": 0.976
+ },
+ {
+  "w": "നോക്കാം.",
+  "r": "nookkaam",
+  "start": 21.004,
+  "end": 21.324,
+  "score": 0.986
+ }
+]

@@ -1,0 +1,72 @@
+[
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 0.04,
+  "end": 0.241,
+  "score": 0.835
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 0.281,
+  "end": 0.783,
+  "score": 0.427
+ },
+ {
+  "w": "சரியான",
+  "r": "cariyaana",
+  "start": 1.425,
+  "end": 1.887,
+  "score": 0.968
+ },
+ {
+  "w": "answer-ஐ",
+  "r": "answerai",
+  "start": 1.907,
+  "end": 2.228,
+  "score": 0.511
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.288,
+  "end": 2.409,
+  "score": 0.89
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 2.429,
+  "end": 2.73,
+  "score": 0.578
+ },
+ {
+  "w": "அடுத்தது,",
+  "r": "aduttatu",
+  "start": 3.272,
+  "end": 3.693,
+  "score": 0.84
+ },
+ {
+  "w": "இன்னொண்ணு.",
+  "r": "innonnu",
+  "start": 3.934,
+  "end": 4.315,
+  "score": 0.785
+ },
+ {
+  "w": "அப்புறம்",
+  "r": "appuram",
+  "start": 4.777,
+  "end": 5.279,
+  "score": 0.546
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 5.76,
+  "end": 6.061,
+  "score": 0.372
+ }
+]

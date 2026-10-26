@@ -1,0 +1,142 @@
+[
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 0.06,
+  "end": 0.481,
+  "score": 0.526
+ },
+ {
+  "w": "tab",
+  "r": "tab",
+  "start": 0.521,
+  "end": 0.661,
+  "score": 0.743
+ },
+ {
+  "w": "ನಲ್ಲಿ,",
+  "r": "nalli",
+  "start": 0.741,
+  "end": 0.961,
+  "score": 0.959
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.282,
+  "end": 1.642,
+  "score": 0.496
+ },
+ {
+  "w": "ಆದ",
+  "r": "aada",
+  "start": 1.662,
+  "end": 1.783,
+  "score": 0.72
+ },
+ {
+  "w": "ಮೇಲೆ",
+  "r": "meele",
+  "start": 1.803,
+  "end": 1.943,
+  "score": 0.936
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 1.983,
+  "end": 2.544,
+  "score": 0.593
+ },
+ {
+  "w": "ಏನು",
+  "r": "eenu",
+  "start": 2.644,
+  "end": 2.804,
+  "score": 0.284
+ },
+ {
+  "w": "ನೋಡಬೇಕು",
+  "r": "nooddabeeku",
+  "start": 2.804,
+  "end": 3.145,
+  "score": 0.693
+ },
+ {
+  "w": "ಅಂತ",
+  "r": "amta",
+  "start": 3.185,
+  "end": 3.325,
+  "score": 0.809
+ },
+ {
+  "w": "ನೀವೇ",
+  "r": "niivee",
+  "start": 3.445,
+  "end": 3.726,
+  "score": 0.926
+ },
+ {
+  "w": "ನಿರ್ಧರಿಸ್ತೀರ.",
+  "r": "nirdharistiira",
+  "start": 3.746,
+  "end": 4.346,
+  "score": 0.863
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 4.827,
+  "end": 5.188,
+  "score": 0.244
+ },
+ {
+  "w": "shuffle",
+  "r": "shuffle",
+  "start": 5.208,
+  "end": 5.508,
+  "score": 0.415
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 5.508,
+  "end": 5.728,
+  "score": 0.999
+ },
+ {
+  "w": "ಯಾರಿಗೂ",
+  "r": "yaariguu",
+  "start": 5.989,
+  "end": 6.349,
+  "score": 0.822
+ },
+ {
+  "w": "ಒಂದೇ",
+  "r": "omdee",
+  "start": 6.43,
+  "end": 6.67,
+  "score": 0.707
+ },
+ {
+  "w": "order",
+  "r": "order",
+  "start": 6.67,
+  "end": 6.89,
+  "score": 0.404
+ },
+ {
+  "w": "ಬರಲ್ಲ.",
+  "r": "baralla",
+  "start": 6.93,
+  "end": 7.211,
+  "score": 0.844
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 7.792,
+  "end": 8.012,
+  "score": 0.319
+ }
+]

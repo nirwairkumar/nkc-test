@@ -1,0 +1,163 @@
+[
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 0.08,
+  "end": 0.401,
+  "score": 0.93
+ },
+ {
+  "w": "question-க்கும்",
+  "r": "questionkkum",
+  "start": 0.461,
+  "end": 1.042,
+  "score": 0.455
+ },
+ {
+  "w": "plus",
+  "r": "plus",
+  "start": 1.363,
+  "end": 1.603,
+  "score": 0.279
+ },
+ {
+  "w": "four,",
+  "r": "four",
+  "start": 1.683,
+  "end": 1.904,
+  "score": 0.087
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 2.064,
+  "end": 2.404,
+  "score": 0.609
+ },
+ {
+  "w": "one.",
+  "r": "one",
+  "start": 2.505,
+  "end": 2.945,
+  "score": 0.059
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 3.146,
+  "end": 3.346,
+  "score": 0.865
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 3.787,
+  "end": 4.268,
+  "score": 0.735
+ },
+ {
+  "w": "style",
+  "r": "style",
+  "start": 4.348,
+  "end": 4.589,
+  "score": 0.393
+ },
+ {
+  "w": "வேணுமா?",
+  "r": "veenumaa",
+  "start": 4.589,
+  "end": 4.969,
+  "score": 0.953
+ },
+ {
+  "w": "Multiple",
+  "r": "multiple",
+  "start": 5.49,
+  "end": 6.011,
+  "score": 0.618
+ },
+ {
+  "w": "correct-ஆ",
+  "r": "correctaa",
+  "start": 6.011,
+  "end": 6.372,
+  "score": 0.327
+ },
+ {
+  "w": "மாத்துங்க,",
+  "r": "maattungka",
+  "start": 6.432,
+  "end": 6.813,
+  "score": 0.934
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 7.334,
+  "end": 7.514,
+  "score": 0.896
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 7.975,
+  "end": 8.456,
+  "score": 0.74
+ },
+ {
+  "w": "partial",
+  "r": "partial",
+  "start": 8.616,
+  "end": 9.037,
+  "score": 0.842
+ },
+ {
+  "w": "marks",
+  "r": "marks",
+  "start": 9.097,
+  "end": 9.377,
+  "score": 0.764
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 9.397,
+  "end": 9.618,
+  "score": 0.275
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 9.678,
+  "end": 9.999,
+  "score": 0.879
+ },
+ {
+  "w": "சரியான",
+  "r": "cariyaana",
+  "start": 10.459,
+  "end": 10.88,
+  "score": 0.886
+ },
+ {
+  "w": "answer-ஐ",
+  "r": "answerai",
+  "start": 10.94,
+  "end": 11.301,
+  "score": 0.49
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 11.301,
+  "end": 11.481,
+  "score": 0.984
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 11.541,
+  "end": 11.822,
+  "score": 0.87
+ }
+]

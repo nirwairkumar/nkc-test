@@ -1,0 +1,205 @@
+[
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 0.32,
+  "end": 0.44,
+  "score": 0.998
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.52,
+  "end": 0.9,
+  "score": 0.305
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.96,
+  "end": 1.281,
+  "score": 0.603
+ },
+ {
+  "w": "PDF",
+  "r": "pdf",
+  "start": 1.601,
+  "end": 1.981,
+  "score": 0.669
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 2.061,
+  "end": 2.161,
+  "score": 0.964
+ },
+ {
+  "w": "ఉందా,",
+  "r": "umdaa",
+  "start": 2.201,
+  "end": 2.461,
+  "score": 0.969
+ },
+ {
+  "w": "లేదా",
+  "r": "leedaa",
+  "start": 2.841,
+  "end": 3.161,
+  "score": 0.924
+ },
+ {
+  "w": "photos",
+  "r": "photos",
+  "start": 3.501,
+  "end": 3.862,
+  "score": 0.947
+ },
+ {
+  "w": "మాత్రమేనా?",
+  "r": "maatrameenaa",
+  "start": 3.922,
+  "end": 4.482,
+  "score": 0.794
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 5.102,
+  "end": 5.562,
+  "score": 0.573
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 5.582,
+  "end": 5.722,
+  "score": 0.441
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 5.982,
+  "end": 6.103,
+  "score": 0.84
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 6.303,
+  "end": 6.543,
+  "score": 0.747
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 6.583,
+  "end": 6.943,
+  "score": 0.915
+ },
+ {
+  "w": "file",
+  "r": "file",
+  "start": 7.503,
+  "end": 7.763,
+  "score": 0.494
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 7.803,
+  "end": 8.063,
+  "score": 0.694
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 8.083,
+  "end": 8.444,
+  "score": 0.952
+ },
+ {
+  "w": "మూడు",
+  "r": "muuddu",
+  "start": 8.964,
+  "end": 9.204,
+  "score": 0.989
+ },
+ {
+  "w": "pages",
+  "r": "pages",
+  "start": 9.224,
+  "end": 9.524,
+  "score": 0.457
+ },
+ {
+  "w": "PDF,",
+  "r": "pdf",
+  "start": 9.584,
+  "end": 9.924,
+  "score": 0.668
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 10.044,
+  "end": 10.304,
+  "score": 0.504
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 10.344,
+  "end": 10.464,
+  "score": 0.332
+ },
+ {
+  "w": "తో",
+  "r": "too",
+  "start": 10.484,
+  "end": 10.604,
+  "score": 0.992
+ },
+ {
+  "w": "సహా",
+  "r": "sahaa",
+  "start": 10.624,
+  "end": 10.885,
+  "score": 0.842
+ },
+ {
+  "w": "తర్వాత",
+  "r": "tarvaata",
+  "start": 11.385,
+  "end": 11.825,
+  "score": 0.994
+ },
+ {
+  "w": "Extract",
+  "r": "extract",
+  "start": 12.305,
+  "end": 12.785,
+  "score": 0.695
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 12.805,
+  "end": 13.226,
+  "score": 0.456
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 13.306,
+  "end": 13.466,
+  "score": 0.969
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 13.526,
+  "end": 13.866,
+  "score": 0.931
+ }
+]

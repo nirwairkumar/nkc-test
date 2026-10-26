@@ -1,0 +1,93 @@
+[
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 0.06,
+  "end": 0.18,
+  "score": 0.995
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 0.22,
+  "end": 0.741,
+  "score": 0.884
+ },
+ {
+  "w": "logo,",
+  "r": "logo",
+  "start": 0.801,
+  "end": 1.001,
+  "score": 0.993
+ },
+ {
+  "w": "పేరు",
+  "r": "peeru",
+  "start": 1.121,
+  "end": 1.402,
+  "score": 0.999
+ },
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 1.582,
+  "end": 1.842,
+  "score": 0.998
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 1.942,
+  "end": 2.303,
+  "score": 0.658
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 2.323,
+  "end": 2.503,
+  "score": 0.988
+ },
+ {
+  "w": "మీద.",
+  "r": "miida",
+  "start": 2.563,
+  "end": 2.763,
+  "score": 0.93
+ },
+ {
+  "w": "ఎలాగో",
+  "r": "elaagoo",
+  "start": 3.264,
+  "end": 3.624,
+  "score": 0.941
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 3.885,
+  "end": 4.105,
+  "score": 0.743
+ },
+ {
+  "w": "by",
+  "r": "by",
+  "start": 4.125,
+  "end": 4.245,
+  "score": 0.493
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 4.265,
+  "end": 4.445,
+  "score": 0.755
+ },
+ {
+  "w": "చూద్దాం.",
+  "r": "cuuddaam",
+  "start": 4.485,
+  "end": 4.806,
+  "score": 0.883
+ }
+]

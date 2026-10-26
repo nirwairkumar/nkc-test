@@ -1,0 +1,7 @@
+GET https://ajxtouqthtdenhqcvdft.supabase.co/rest/v1/test_registrations?select=test_id%2Cuser_id%2Cstatus%2Cstarted_at%2Clast_active_at&test_id=in.%28d3914fe1-10e9-4b50-8fdd-cffaa38953ce%29&status=eq.in_progress&or=%28last_active_at.gte.2026-10-20T12%3A51%3A09.734Z%2Cstarted_at.gte.2026-10-20T12%3A51%3A09.734Z%29&limit=2000
+status 200
+
+[{"test_id":"d3914fe1-10e9-4b50-8fdd-cffaa38953ce","user_id":"7bfa7203-e20d-4a67-96c0-018c4c644efd","status":"in_progress","started_at":"2026-10-20T12:57:28.021458+00:00","last_active_at":"2026-10-20T12:57:28.021458+00:00"}, 
+ {"test_id":"d3914fe1-10e9-4b50-8fdd-cffaa38953ce","user_id":"856e23bb-899f-4fba-9514-7a94c37ea8f2","status":"in_progress","started_at":"2026-10-20T12:58:33.95661+00:00","last_active_at":"2026-10-20T12:58:33.95661+00:00"}, 
+ {"test_id":"d3914fe1-10e9-4b50-8fdd-cffaa38953ce","user_id":"6d903881-4d6c-4cbd-9741-159672c79b86","status":"in_progress","started_at":"2026-10-20T12:59:13.201157+00:00","last_active_at":"2026-10-20T12:59:13.201157+00:00"}, 
+ {"test_id":"d3914fe1-10e9-4b50-8fdd-cffaa38953ce","user_id":"90628204-b7b4-4555-91bc-bd70e572efe0","status":"in_progress","started_at":"2026-10-20T12:59:51.238644+00:00","last_active_at":"2026-10-20T12:59:51.238644+00:00"}]

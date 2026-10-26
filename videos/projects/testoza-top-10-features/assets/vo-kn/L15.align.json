@@ -1,0 +1,135 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.261,
+  "score": 0.733
+ },
+ {
+  "w": "ರೆಡಿ",
+  "r": "reddi",
+  "start": 0.261,
+  "end": 0.441,
+  "score": 0.759
+ },
+ {
+  "w": "ಆದ",
+  "r": "aada",
+  "start": 0.501,
+  "end": 0.682,
+  "score": 0.985
+ },
+ {
+  "w": "ತಕ್ಷಣ,",
+  "r": "takssanna",
+  "start": 0.742,
+  "end": 1.083,
+  "score": 0.856
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 1.484,
+  "end": 1.885,
+  "score": 0.287
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.925,
+  "end": 2.166,
+  "score": 0.74
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.266,
+  "end": 2.427,
+  "score": 0.994
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 2.487,
+  "end": 2.707,
+  "score": 0.999
+ },
+ {
+  "w": "ನಿಮಗೆ",
+  "r": "nimage",
+  "start": 3.048,
+  "end": 3.289,
+  "score": 0.831
+ },
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 3.329,
+  "end": 3.49,
+  "score": 0.788
+ },
+ {
+  "w": "secure",
+  "r": "secure",
+  "start": 3.61,
+  "end": 4.051,
+  "score": 0.648
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 4.071,
+  "end": 4.292,
+  "score": 0.496
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 4.332,
+  "end": 4.492,
+  "score": 0.486
+ },
+ {
+  "w": "ಸಿಗುತ್ತೆ.",
+  "r": "sigutte",
+  "start": 4.533,
+  "end": 4.894,
+  "score": 0.993
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 5.335,
+  "end": 5.636,
+  "score": 0.796
+ },
+ {
+  "w": "conducting,",
+  "r": "conducting",
+  "start": 5.676,
+  "end": 6.137,
+  "score": 0.396
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 6.458,
+  "end": 6.779,
+  "score": 0.751
+ },
+ {
+  "w": "ಈಗ",
+  "r": "iiga",
+  "start": 6.799,
+  "end": 6.919,
+  "score": 0.712
+ },
+ {
+  "w": "live.",
+  "r": "live",
+  "start": 7.039,
+  "end": 7.3,
+  "score": 0.593
+ }
+]

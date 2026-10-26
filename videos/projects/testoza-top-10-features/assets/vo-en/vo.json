@@ -1,0 +1,226 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-en/L01.wav",
+    "duration": 18.055417,
+    "text": "A question paper becomes an online test. Equations, typed in seconds. Students join from any phone. Cheating gets caught. And every result lands, ranked.\nThis is Testoza — and these are its top ten features, with exactly how to use each one.",
+    "raw": "{m1}A question paper becomes an online test. {m2}Equations, typed in seconds. {m3}Students join from any phone. {m4}Cheating gets caught. {m5}And every result lands, ranked.\n{title}This is TestoZa — and these are its top ten features, with exactly how to use each one."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-en/L02.wav",
+    "duration": 2.31425,
+    "text": "Number one: Generate with AI.",
+    "raw": "Number one: Generate with AI."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-en/L03.wav",
+    "duration": 10.389042,
+    "text": "Got your question paper as a PDF, or just photos? Open Generate with AI, choose the file — a three-page PDF, answer key included — and tap Extract Questions.",
+    "raw": "Got your question paper as a PDF, or just photos? {upload}Open Generate with AI, {choose}choose the file — a three-page PDF, answer key included — {extract}and tap Extract Questions."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-en/L04.wav",
+    "duration": 11.662,
+    "text": "Now watch. The AI reads every single page, and the questions start arriving one by one — options, maths, everything. In about half a minute, all twelve are done.",
+    "raw": "{reading}Now watch. The AI reads every single page, {q1}and the questions start arriving one by one — options, maths, everything. {preview}In about half a minute, all twelve are done."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-en/L05.wav",
+    "duration": 7.767333,
+    "text": "It even read the answer key on the last page, so every answer is already marked. Have a quick look, save, and your paper is now a test.",
+    "raw": "{answers}It even read the answer key on the last page, so every answer is already marked. Have a quick look, {save}save, {newcard}and your paper is now a test."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-en/L06.wav",
+    "duration": 3.277875,
+    "text": "Number two: maths and science, typed properly.",
+    "raw": "Number two: maths and science, typed properly."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-en/L07.wav",
+    "duration": 10.512042,
+    "text": "Open the test in the builder — all twelve questions are already here. Add a question, and type the words as usual. For the formula, open Maths and symbols — this is Sy Pad.",
+    "raw": "{edit}Open the test in the builder — all twelve questions are already here. {addq}Add a question, {q13text}and type the words as usual. {sypad}For the formula, open Maths and symbols — this is Sy Pad."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-en/L08.wav",
+    "duration": 14.33975,
+    "text": "Type h equals u t minus, tap the fraction key, one over two, then the power key, for t squared. A proper formula — no code to learn. Insert, and it sits right inside the question.",
+    "raw": "{h}Type h equals u t minus, {frac}tap the fraction key, one over two, {power}then the power key, for t squared. {formula}A proper formula — no code to learn. {insert}Insert, and it sits right inside the question."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-en/L09.wav",
+    "duration": 4.345958,
+    "text": "Number three: type in Hindi — or any of a hundred and nineteen languages.",
+    "raw": "Number three: type in Hindi — or any of a hundred and nineteen languages."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-en/L10.wav",
+    "duration": 13.515208,
+    "text": "Tap the language switch, pick Hindi, and just type in English letters. Every word turns into Hindi the moment you hit space — no Hindi keyboard needed. Now the question is in both languages, and the options go in just like before.",
+    "raw": "{lang}Tap the language switch, {hindi}pick Hindi, {hitype}and just type in English letters. Every word turns into Hindi the moment you hit space — no Hindi keyboard needed. {hindone}Now the question is in both languages, {opts}and the options go in just like before."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-en/L11.wav",
+    "duration": 3.085708,
+    "text": "Number four: real exam patterns.",
+    "raw": "Number four: real exam patterns."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-en/L12.wav",
+    "duration": 10.596875,
+    "text": "Plus four, minus one, on every question. Need JEE Advanced style? Make it multiple correct, choose JEE Advanced partial marks, and mark the right answer.",
+    "raw": "{marks}Plus four, minus one, on every question. {qtype}Need JEE Advanced style? {multi}Make it multiple correct, {jeeadv}choose JEE Advanced partial marks, {correct}and mark the right answer."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-en/L13.wav",
+    "duration": 13.942875,
+    "text": "Now split the paper into sections, and give every section its own timer, the way SSC does. Split it anywhere: questions seven to thirteen become Section B. Ten minutes here, ten minutes there… save.",
+    "raw": "{sections}Now split the paper into sections, {timed}and give every section its own timer, the way SSC does. {gap}Split it anywhere: {split}questions seven to thirteen become Section B. {mina}Ten minutes here, {minb}ten minutes there… {save}save."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-en/L14.wav",
+    "duration": 4.403667,
+    "text": "Number five: go live in one click — inside an anti-cheating exam room.",
+    "raw": "Number five: go live in one click — inside an anti-cheating exam room."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-en/L15.wav",
+    "duration": 7.644292,
+    "text": "When the test is ready, tap Conduct exam. You get a secure exam link. Start conducting, and the exam is live.",
+    "raw": "{card}When the test is ready, {conduct}tap Conduct exam. {link}You get a secure exam link. {start}Start conducting, {live}and the exam is live."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-en/L16.wav",
+    "duration": 13.547042,
+    "text": "Testoza even tells you the next step: set up the exam room. Force full screen. Catch every tab or app switch, set a limit — say three warnings — and the test submits itself. Block copy-paste, right-click, and the back button.",
+    "raw": "{tip1}TestoZa even tells you the next step: {settings}set up the exam room. {fs}Force full screen. {tab}Catch every tab or app switch, {count}set a limit — {threepick}say three warnings — and the test submits itself. {copyoff}Block copy-paste, {right}right-click, {back}and the back button."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-en/L17.wav",
+    "duration": 9.521417,
+    "text": "On the Results tab, you decide what candidates see after the exam. And shuffle the questions, so no two candidates get the same order. Save.",
+    "raw": "{results}On the Results tab, {resultview}you decide what candidates see after the exam. {shuffle}And shuffle the questions, so no two candidates get the same order. {saveset}Save."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-en/L18.wav",
+    "duration": 2.143458,
+    "text": "Number six: share it anywhere.",
+    "raw": "Number six: share it anywhere."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-en/L19.wav",
+    "duration": 13.598542,
+    "text": "Next tip: send it to your candidates. Copy the link, or share it straight to your class WhatsApp group. No phones in class? Get a join code. Six digits. Write it on the board, and students type it at testoza dot com slash join.",
+    "raw": "{tip2}Next tip: send it to your candidates. {copy}Copy the link, {share}or share it straight to your class WhatsApp group. {menu}No phones in class? {getcode}Get a join code. {code}Six digits. Write it on the board, and students type it at testoza dot com slash join."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-en/L20.wav",
+    "duration": 2.531708,
+    "text": "Number seven: collect the details you need.",
+    "raw": "Number seven: collect the details you need."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-en/L21.wav",
+    "duration": 7.77875,
+    "text": "Name is asked by default. Add Roll Number, or anything else — batch, school, phone. Candidates fill it in before they start.",
+    "raw": "{inputs}Name is asked by default. {roll}Add Roll Number, {inputsdone}or anything else — batch, school, phone. Candidates fill it in before they start."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-en/L22.wav",
+    "duration": 4.357667,
+    "text": "Number eight: an exam room on any phone. No app, no sign-up.",
+    "raw": "Number eight: an exam room on any phone. No app, no sign-up."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-en/L23.wav",
+    "duration": 9.1175,
+    "text": "Here's a student on her phone, at testoza dot com slash join. She types the six digits, and her exam opens. Name, roll number, start.",
+    "raw": "{join}Here's a student on her phone, at testoza dot com slash join. {code6}She types the six digits, {details}and her exam opens. {name}Name, {rollin}roll number, {go}start."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-en/L24.wav",
+    "duration": 5.157167,
+    "text": "Full screen, clean, and easy to read. Tap an answer, save and next.",
+    "raw": "{exam}Full screen, clean, and easy to read. {ans1}Tap an answer, {next1}save and next."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-en/L25.wav",
+    "duration": 6.197292,
+    "text": "Now she switches to another app — and the exam catches it. Warning one of three. Straight back to the paper.",
+    "raw": "{violation}Now she switches to another app — and the exam catches it. Warning one of three. {warnok}Straight back to the paper."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-en/L26.wav",
+    "duration": 3.212792,
+    "text": "Let's fast-forward to the end. Submit, and confirm.",
+    "raw": "{rush}Let's fast-forward to the end. {submit}Submit, {yes}and confirm."
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-en/L27.wav",
+    "duration": 2.715958,
+    "text": "Number nine: watch the exam live.",
+    "raw": "Number nine: watch the exam live."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-en/L28.wav",
+    "duration": 12.747208,
+    "text": "Back on your dashboard: thirty students writing right now, two already submitted. Open Results — started, writing, submitted, dropped. Tap any tile to see exactly who, and how far they've got.",
+    "raw": "{dash}Back on your dashboard: {writing}thirty students writing right now, {subm}two already submitted. {panel}Open Results — {started}started, {writ}writing, {two}submitted, {zero}dropped. {names}Tap any tile to see exactly who, and how far they've got."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-en/L29.wav",
+    "duration": 3.11,
+    "text": "And number ten: results, the moment they submit.",
+    "raw": "And number ten: results, the moment they submit."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-en/L30.wav",
+    "duration": 5.198333,
+    "text": "She sees her score instantly — seventy-five percent — with the solution key, if you allow it.",
+    "raw": "{score}She sees her score instantly — seventy-five percent — {solkey}with the solution key, if you allow it."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-en/L31.wav",
+    "duration": 8.266042,
+    "text": "And when everyone's done, all thirty-two results are in. Turn on ranks, scroll the whole batch, and download everything to Excel, in one click.",
+    "raw": "{all}And when everyone's done, all thirty-two results are in. {rank}Turn on ranks, {scrolllist}scroll the whole batch, {export}and download everything to Excel, in one click."
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-en/L32.wav",
+    "duration": 8.398167,
+    "text": "That's ten features — from a question paper to ranked results, all in one place. Try it at testoza dot com, and subscribe for more.",
+    "raw": "That's ten features — from a question paper to ranked results, all in one place. {endurl}Try it at testoza dot com, {thanks}and subscribe for more."
+  }
+]

@@ -1,0 +1,67 @@
+/* TestoZa Short (1080x1920): stage, window, phone, supers, cursor. Shared by every frame. */
+@font-face{font-family:'Outfit';font-weight:600;font-display:block;src:url("fonts/Outfit-600.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:700;font-display:block;src:url("fonts/Outfit-700.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:800;font-display:block;src:url("fonts/Outfit-800.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:900;font-display:block;src:url("fonts/Outfit-900.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:500;font-display:block;src:url("fonts/Mukta-500.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:600;font-display:block;src:url("fonts/Mukta-600.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:700;font-display:block;src:url("fonts/Mukta-700.woff2") format("woff2");}
+
+.sf { position: absolute; inset: 0; overflow: hidden; font-family: 'Outfit', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.sf *, .sf *::before, .sf *::after { box-sizing: border-box; animation: none !important; transition: none !important; }
+
+/* night-blue stage with cyan + indigo glow and a faint grid */
+.sf-stage {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(900px 700px at 20% 18%, rgba(14, 116, 144, 0.30), transparent 70%),
+    radial-gradient(900px 800px at 85% 78%, rgba(79, 70, 229, 0.22), transparent 70%),
+    linear-gradient(180deg, #020617, #050b1d);
+}
+.sf-stage::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 30%, transparent 80%);
+}
+
+/* supers: upper third, two-tone */
+.sf-sup {
+  position: absolute; left: 60px; right: 60px; top: 312px; text-align: center; visibility: hidden;
+  font-weight: 800; font-size: 74px; line-height: 1.06; letter-spacing: -0.025em; color: #f8fafc;
+}
+.sf-sup em { font-style: normal; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sf-sup .sf-w { display: inline-block; }
+
+/* a light app window floating on the stage */
+.sf-win {
+  position: absolute; left: 60px; width: 960px; border-radius: 28px; overflow: hidden; background: #f5f5f7;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.25), 0 50px 120px -30px rgba(0, 0, 0, 0.85), 0 0 80px -20px rgba(56, 189, 248, 0.25);
+}
+.sf-chrome { height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 22px; background: #e9eaee; border-bottom: 1px solid #d9dbe1; }
+.sf-dots { display: flex; gap: 9px; }
+.sf-dots i { width: 14px; height: 14px; border-radius: 50%; background: #ff5f57; }
+.sf-dots i:nth-child(2) { background: #febc2e; }
+.sf-dots i:nth-child(3) { background: #28c840; }
+.sf-url { flex: 1; height: 36px; border-radius: 10px; background: #fff; display: flex; align-items: center; gap: 8px; padding: 0 16px; font: 500 21px/1 'Outfit', sans-serif; color: #64748b; }
+.sf-url b { font-weight: 500; color: #0f172a; }
+.sf-view { position: relative; overflow: hidden; }
+.sf-view > img, .sf-shot { position: absolute; left: 0; top: 0; display: block; width: 960px; }
+
+/* panels: a screen region shown on its own, no browser chrome */
+.sf-panel { position: absolute; left: 60px; width: 960px; border-radius: 26px; overflow: hidden; background: #f5f5f7;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.22), 0 40px 100px -30px rgba(0, 0, 0, 0.8); }
+
+/* phone */
+.sf-phone { position: absolute; left: 252px; width: 576px; height: 1207px; border-radius: 84px; padding: 18px; background: #0b1120;
+  box-shadow: 0 0 0 3px #334155, 0 60px 140px -30px rgba(0, 0, 0, 0.9), 0 0 90px -10px rgba(56, 189, 248, 0.3); }
+.sf-screen { position: relative; width: 540px; height: 1171px; border-radius: 66px; overflow: hidden; background: #f2f2f7; }
+/* screens sit 44px down so the notch never covers the app's own header */
+.sf-screen img { position: absolute; left: 0; top: 44px; width: 540px; height: 1171px; }
+.sf-notch { position: absolute; z-index: 5; left: 50%; top: 14px; width: 150px; height: 42px; margin-left: -75px; border-radius: 22px; background: #0b1120; }
+
+/* cursor + click ripple */
+.sf-cursor { position: absolute; z-index: 40; left: 0; top: 0; width: 46px; height: 46px; visibility: hidden; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45)); }
+.sf-ripple { position: absolute; z-index: 39; left: 0; top: 0; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%;
+  border: 4px solid rgba(56, 189, 248, 0.95); opacity: 0; }

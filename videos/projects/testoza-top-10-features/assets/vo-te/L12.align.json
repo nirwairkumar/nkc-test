@@ -1,0 +1,170 @@
+[
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 0.0,
+  "end": 0.24,
+  "score": 0.973
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.32,
+  "end": 0.601,
+  "score": 0.363
+ },
+ {
+  "w": "కి",
+  "r": "ki",
+  "start": 0.681,
+  "end": 0.761,
+  "score": 0.957
+ },
+ {
+  "w": "plus",
+  "r": "plus",
+  "start": 0.921,
+  "end": 1.161,
+  "score": 0.265
+ },
+ {
+  "w": "four,",
+  "r": "four",
+  "start": 1.241,
+  "end": 1.501,
+  "score": 0.18
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 1.742,
+  "end": 2.082,
+  "score": 0.777
+ },
+ {
+  "w": "one.",
+  "r": "one",
+  "start": 2.222,
+  "end": 2.382,
+  "score": 0.14
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 3.023,
+  "end": 3.203,
+  "score": 0.937
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 3.483,
+  "end": 3.964,
+  "score": 0.507
+ },
+ {
+  "w": "style",
+  "r": "style",
+  "start": 3.984,
+  "end": 4.264,
+  "score": 0.46
+ },
+ {
+  "w": "కావాలా?",
+  "r": "kaavaalaa",
+  "start": 4.284,
+  "end": 4.684,
+  "score": 0.867
+ },
+ {
+  "w": "Multiple",
+  "r": "multiple",
+  "start": 5.225,
+  "end": 5.685,
+  "score": 0.72
+ },
+ {
+  "w": "correct",
+  "r": "correct",
+  "start": 5.725,
+  "end": 6.026,
+  "score": 0.332
+ },
+ {
+  "w": "గా",
+  "r": "gaa",
+  "start": 6.066,
+  "end": 6.186,
+  "score": 0.993
+ },
+ {
+  "w": "మార్చండి,",
+  "r": "maarcamddi",
+  "start": 6.226,
+  "end": 6.746,
+  "score": 0.953
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 7.347,
+  "end": 7.507,
+  "score": 0.942
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 7.747,
+  "end": 8.188,
+  "score": 0.502
+ },
+ {
+  "w": "partial",
+  "r": "partial",
+  "start": 8.248,
+  "end": 8.628,
+  "score": 0.698
+ },
+ {
+  "w": "marks",
+  "r": "marks",
+  "start": 8.688,
+  "end": 8.968,
+  "score": 0.792
+ },
+ {
+  "w": "ఎంచుకోండి,",
+  "r": "emcukoomddi",
+  "start": 9.088,
+  "end": 9.609,
+  "score": 0.972
+ },
+ {
+  "w": "సరైన",
+  "r": "saraina",
+  "start": 10.029,
+  "end": 10.37,
+  "score": 0.787
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 10.41,
+  "end": 10.69,
+  "score": 0.498
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 10.73,
+  "end": 10.89,
+  "score": 0.733
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 10.95,
+  "end": 11.27,
+  "score": 0.932
+ }
+]

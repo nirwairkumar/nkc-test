@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.02,
+  "end": 0.261,
+  "score": 0.931
+ },
+ {
+  "w": "four:",
+  "r": "four",
+  "start": 0.301,
+  "end": 0.542,
+  "score": 0.305
+ },
+ {
+  "w": "real",
+  "r": "real",
+  "start": 1.005,
+  "end": 1.246,
+  "score": 0.906
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.426,
+  "end": 1.748,
+  "score": 0.92
+ },
+ {
+  "w": "patterns.",
+  "r": "patterns",
+  "start": 1.828,
+  "end": 2.331,
+  "score": 0.662
+ }
+]

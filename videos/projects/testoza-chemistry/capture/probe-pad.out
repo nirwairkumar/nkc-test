@@ -1,0 +1,6 @@
+formula → "\\ce{[MnBr4]^2- (A), [Cu(H2O)6]^2+ (B)}"
+keys inside ce → "\\ce{[MnBr4]^2- (A), [Cu(H2O)6]^2+ (B) A\\ce{(g)}\\ce{<=>} B\\ce{(g)}}"
+keys outside → "A\\ce{(g)}\\ce{<=>}B\\ce{(g)}"
+arrow inside ce → "\\ce{Na2B4O7 \\xrightarrow{?}}"
+slots 0
+FAIL locator.click: Timeout 20000ms exceeded. | Call log: | [2m  - waiting for getByLabel('Sy Pad — maths and chemistry keyboard').locator('.math-placeholder').first()[22m | 

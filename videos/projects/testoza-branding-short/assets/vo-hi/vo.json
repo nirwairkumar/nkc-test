@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-hi/L01.wav",
+    "duration": 5.006708,
+    "text": "आपके institute का logo और नाम — हर online test पर। देखिए कैसे, step by step।",
+    "raw": "{hook}आपके institute का logo और नाम — हर online test पर। {how}देखिए कैसे, step by step।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-hi/L02.wav",
+    "duration": 2.285792,
+    "text": "Test का नाम लिखिए, फिर Institution branding खोलिए।",
+    "raw": "{title}Test का नाम लिखिए, {branding}फिर Institution branding खोलिए।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-hi/L03.wav",
+    "duration": 5.136042,
+    "text": "Logo डालिए, institute का नाम लिखिए, colour चुनिए, font भी। बस — brand तैयार।",
+    "raw": "{logo}Logo डालिए, {name}institute का नाम लिखिए, {color}colour चुनिए, {font}font भी। {branded}बस — brand तैयार।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-hi/L04.wav",
+    "duration": 4.330917,
+    "text": "अब questions — सही answer पर tap, अगला, और एक — सेकंडों में। फिर Save।",
+    "raw": "{q1}अब questions — {right1}सही answer पर tap, अगला, {add3}और एक — सेकंडों में। {save}फिर Save।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-hi/L05.wav",
+    "duration": 5.245417,
+    "text": "फिर Conduct exam, start कीजिए, link copy कीजिए — या छह अंकों का join code भेजिए।",
+    "raw": "{conduct}फिर Conduct exam, {start}start कीजिए, {copy}link copy कीजिए — {code}या छह अंकों का join code भेजिए।"
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-hi/L06.wav",
+    "duration": 6.084417,
+    "text": "Students link खोलते हैं, अपना नाम लिखते हैं, start करते हैं… और देखिए — आपका logo और नाम, सबसे ऊपर।",
+    "raw": "{dopen}Students link खोलते हैं, {cname}अपना नाम लिखते हैं, {dgo}start करते हैं… {dbrand}और देखिए — आपका logo और नाम, सबसे ऊपर।"
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-hi/L07.wav",
+    "duration": 5.650958,
+    "text": "Phone पर? Code डालिए, Start दबाइए, और आपका brand वहाँ भी। हर question, आपके नाम के साथ।",
+    "raw": "{typecode}Phone पर? Code डालिए, {pgo}Start दबाइए, {pbrand}और आपका brand वहाँ भी। {ans1}हर question, आपके नाम के साथ।"
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-hi/L08.wav",
+    "duration": 4.49575,
+    "text": "आपका institute। आपका test। आज ही बनाइए — testoza.com पर।",
+    "raw": "{endcard}आपका institute। आपका test। {endurl}आज ही बनाइए — testoza.com पर।"
+  }
+]

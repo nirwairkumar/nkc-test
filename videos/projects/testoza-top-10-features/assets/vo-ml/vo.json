@@ -1,0 +1,226 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-ml/L01.wav",
+    "duration": 21.344,
+    "text": "ഒരു question paper, online test ആയി മാറുന്നു. Equations — ഏതാനും സെക്കന്റിൽ. Students ഏത് phone-ൽ നിന്നും join ചെയ്യും. Cheating ഉടനെ പിടിക്കപ്പെടും. ഓരോ result-ഉം rank-ഓടെ വരും.\nഇതാണ് Testoza — ഇതിന്റെ top ten features, ഓരോന്നും എങ്ങനെ ഉപയോഗിക്കാമെന്ന് നോക്കാം.",
+    "raw": "{m1}ഒരു question paper, online test ആയി മാറുന്നു. {m2}Equations — ഏതാനും സെക്കന്റിൽ. {m3}Students ഏത് phone-ൽ നിന്നും join ചെയ്യും. {m4}Cheating ഉടനെ പിടിക്കപ്പെടും. {m5}ഓരോ result-ഉം rank-ഓടെ വരും.\n{title}ഇതാണ് TestoZa — ഇതിന്റെ top ten features, ഓരോന്നും എങ്ങനെ ഉപയോഗിക്കാമെന്ന് നോക്കാം."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-ml/L02.wav",
+    "duration": 2.186083,
+    "text": "Number one: Generate with AI.",
+    "raw": "Number one: Generate with AI."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-ml/L03.wav",
+    "duration": 12.636208,
+    "text": "നിങ്ങളുടെ question paper PDF ആണോ, അതോ വെറും photos ആണോ? Generate with AI open ചെയ്യൂ, file select ചെയ്യൂ — മൂന്ന് page PDF, answer key അടക്കം — എന്നിട്ട് Extract Questions tap ചെയ്യൂ.",
+    "raw": "നിങ്ങളുടെ question paper PDF ആണോ, അതോ വെറും photos ആണോ? {upload}Generate with AI open ചെയ്യൂ, {choose}file select ചെയ്യൂ — മൂന്ന് page PDF, answer key അടക്കം — {extract}എന്നിട്ട് Extract Questions tap ചെയ്യൂ."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-ml/L04.wav",
+    "duration": 10.098917,
+    "text": "ഇനി നോക്കൂ. AI ഓരോ page-ഉം വായിക്കുന്നു, questions ഓരോന്നായി വരാൻ തുടങ്ങുന്നു — options, maths, എല്ലാം. അര മിനിറ്റിൽ, പന്ത്രണ്ട് questions-ഉം റെഡി.",
+    "raw": "{reading}ഇനി നോക്കൂ. AI ഓരോ page-ഉം വായിക്കുന്നു, {q1}questions ഓരോന്നായി വരാൻ തുടങ്ങുന്നു — options, maths, എല്ലാം. {preview}അര മിനിറ്റിൽ, പന്ത്രണ്ട് questions-ഉം റെഡി."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-ml/L05.wav",
+    "duration": 9.395292,
+    "text": "അവസാന page-ലെ answer key പോലും വായിച്ചു, അതുകൊണ്ട് ഓരോ answer-ഉം ഇതിനകം mark ആയിട്ടുണ്ട്. ഒന്ന് നോക്കൂ, Save ചെയ്യൂ, നിങ്ങളുടെ paper ഇപ്പോൾ ഒരു test.",
+    "raw": "{answers}അവസാന page-ലെ answer key പോലും വായിച്ചു, അതുകൊണ്ട് ഓരോ answer-ഉം ഇതിനകം mark ആയിട്ടുണ്ട്. ഒന്ന് നോക്കൂ, {save}Save ചെയ്യൂ, {newcard}നിങ്ങളുടെ paper ഇപ്പോൾ ഒരു test."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-ml/L06.wav",
+    "duration": 3.0305,
+    "text": "Number two: maths, science — ശരിയായി type ചെയ്യാം.",
+    "raw": "Number two: maths, science — ശരിയായി type ചെയ്യാം."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-ml/L07.wav",
+    "duration": 10.848875,
+    "text": "Test builder-ൽ open ചെയ്യൂ — പന്ത്രണ്ട് questions-ഉം ഇവിടെ ഉണ്ട്. ഒരു question add ചെയ്യൂ, words പതിവുപോലെ type ചെയ്യൂ. Formula-ക്ക്, Maths and symbols open ചെയ്യൂ — ഇതാണ് Sy Pad.",
+    "raw": "{edit}Test builder-ൽ open ചെയ്യൂ — പന്ത്രണ്ട് questions-ഉം ഇവിടെ ഉണ്ട്. {addq}ഒരു question add ചെയ്യൂ, {q13text}words പതിവുപോലെ type ചെയ്യൂ. {sypad}Formula-ക്ക്, Maths and symbols open ചെയ്യൂ — ഇതാണ് Sy Pad."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-ml/L08.wav",
+    "duration": 11.679708,
+    "text": "h equals u t minus എന്ന് type ചെയ്യൂ, fraction key, one over two, പിന്നെ power key, t square-ന്. ഒരു proper formula — code ഒന്നും പഠിക്കേണ്ട. Insert, അത് നേരെ question-ന്റെ ഉള്ളിൽ.",
+    "raw": "{h}h equals u t minus എന്ന് type ചെയ്യൂ, {frac}fraction key, one over two, {power}പിന്നെ power key, t square-ന്. {formula}ഒരു proper formula — code ഒന്നും പഠിക്കേണ്ട. {insert}Insert, അത് നേരെ question-ന്റെ ഉള്ളിൽ."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-ml/L09.wav",
+    "duration": 3.881375,
+    "text": "Number three: മലയാളം, ഹിന്ദി — നൂറ്റിപ്പത്തൊൻപത് ഭാഷകളിൽ type ചെയ്യാം.",
+    "raw": "Number three: മലയാളം, ഹിന്ദി — നൂറ്റിപ്പത്തൊൻപത് ഭാഷകളിൽ type ചെയ്യാം."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-ml/L10.wav",
+    "duration": 14.742792,
+    "text": "Language switch tap ചെയ്യൂ, ഇവിടെ Hindi തിരഞ്ഞെടുക്കുന്നു — മലയാളവും ഉണ്ട് — English letters-ൽ type ചെയ്യൂ. Space അമർത്തുമ്പോൾ ഓരോ word-ഉം മാറും — വേറെ keyboard വേണ്ട. ഇപ്പോൾ question രണ്ട് ഭാഷയിലും ഉണ്ട്, options-ഉം അതുപോലെ തന്നെ.",
+    "raw": "{lang}Language switch tap ചെയ്യൂ, {hindi}ഇവിടെ Hindi തിരഞ്ഞെടുക്കുന്നു — മലയാളവും ഉണ്ട് — {hitype}English letters-ൽ type ചെയ്യൂ. Space അമർത്തുമ്പോൾ ഓരോ word-ഉം മാറും — വേറെ keyboard വേണ്ട. {hindone}ഇപ്പോൾ question രണ്ട് ഭാഷയിലും ഉണ്ട്, {opts}options-ഉം അതുപോലെ തന്നെ."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-ml/L11.wav",
+    "duration": 2.89675,
+    "text": "Number four: real exam patterns.",
+    "raw": "Number four: real exam patterns."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-ml/L12.wav",
+    "duration": 10.482042,
+    "text": "ഓരോ question-നും plus four, minus one. JEE Advanced style വേണോ? Multiple correct ആക്കൂ, JEE Advanced partial marks തിരഞ്ഞെടുക്കൂ, ശരിയായ answer mark ചെയ്യൂ.",
+    "raw": "{marks}ഓരോ question-നും plus four, minus one. {qtype}JEE Advanced style വേണോ? {multi}Multiple correct ആക്കൂ, {jeeadv}JEE Advanced partial marks തിരഞ്ഞെടുക്കൂ, {correct}ശരിയായ answer mark ചെയ്യൂ."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-ml/L13.wav",
+    "duration": 12.54025,
+    "text": "ഇനി paper sections ആയി തിരിക്കൂ, ഓരോ section-നും സ്വന്തം timer — SSC പോലെ തന്നെ. എവിടെ വേണമെങ്കിലും split ചെയ്യാം: questions ഏഴ് മുതൽ പതിമൂന്ന് Section B ആയി. ഇവിടെ പത്ത് മിനിറ്റ്, അവിടെ പത്ത് മിനിറ്റ്… Save.",
+    "raw": "{sections}ഇനി paper sections ആയി തിരിക്കൂ, {timed}ഓരോ section-നും സ്വന്തം timer — SSC പോലെ തന്നെ. {gap}എവിടെ വേണമെങ്കിലും split ചെയ്യാം: {split}questions ഏഴ് മുതൽ പതിമൂന്ന് Section B ആയി. {mina}ഇവിടെ പത്ത് മിനിറ്റ്, {minb}അവിടെ പത്ത് മിനിറ്റ്… {save}Save."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-ml/L14.wav",
+    "duration": 4.298667,
+    "text": "Number five: ഒറ്റ click-ൽ live — anti-cheating exam room-ന്റെ ഉള്ളിൽ.",
+    "raw": "Number five: ഒറ്റ click-ൽ live — anti-cheating exam room-ന്റെ ഉള്ളിൽ."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-ml/L15.wav",
+    "duration": 6.926125,
+    "text": "Test റെഡി ആയാൽ, Conduct exam tap ചെയ്യൂ. ഒരു secure exam link കിട്ടും. Start conducting, exam ഇപ്പോൾ live.",
+    "raw": "{card}Test റെഡി ആയാൽ, {conduct}Conduct exam tap ചെയ്യൂ. {link}ഒരു secure exam link കിട്ടും. {start}Start conducting, {live}exam ഇപ്പോൾ live."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-ml/L16.wav",
+    "duration": 15.325917,
+    "text": "അടുത്തതായി എന്ത് ചെയ്യണമെന്ന് Testoza തന്നെ പറയും: exam room set ചെയ്യൂ. Full screen നിർബന്ധം. ഓരോ tab, app switch-ഉം പിടിക്കപ്പെടും, ഒരു limit വെക്കൂ — അതായത് മൂന്ന് warnings — പിന്നെ test സ്വയം submit ആകും. Copy-paste block, right-click block, back button-ഉം.",
+    "raw": "{tip1}അടുത്തതായി എന്ത് ചെയ്യണമെന്ന് TestoZa തന്നെ പറയും: {settings}exam room set ചെയ്യൂ. {fs}Full screen നിർബന്ധം. {tab}ഓരോ tab, app switch-ഉം പിടിക്കപ്പെടും, {count}ഒരു limit വെക്കൂ — {threepick}അതായത് മൂന്ന് warnings — പിന്നെ test സ്വയം submit ആകും. {copyoff}Copy-paste block, {right}right-click block, {back}back button-ഉം."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-ml/L17.wav",
+    "duration": 7.729625,
+    "text": "Results tab-ൽ, exam കഴിഞ്ഞ് candidates എന്ത് കാണണമെന്ന് നിങ്ങൾ തീരുമാനിക്കും. Questions shuffle ചെയ്യൂ, ആർക്കും ഒരേ order കിട്ടില്ല. Save.",
+    "raw": "{results}Results tab-ൽ, {resultview}exam കഴിഞ്ഞ് candidates എന്ത് കാണണമെന്ന് നിങ്ങൾ തീരുമാനിക്കും. {shuffle}Questions shuffle ചെയ്യൂ, ആർക്കും ഒരേ order കിട്ടില്ല. {saveset}Save."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-ml/L18.wav",
+    "duration": 1.940375,
+    "text": "Number six: എവിടെയും share ചെയ്യൂ.",
+    "raw": "Number six: എവിടെയും share ചെയ്യൂ."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-ml/L19.wav",
+    "duration": 15.901625,
+    "text": "അടുത്ത tip: candidates-ന് അയക്കൂ. Link copy ചെയ്യൂ, അല്ലെങ്കിൽ നേരെ class WhatsApp group-ൽ share ചെയ്യൂ. Class-ൽ phones ഇല്ലേ? Join code എടുക്കൂ. ആറ് digits. Board-ൽ എഴുതൂ, students അത് testoza dot com slash join-ൽ type ചെയ്യും.",
+    "raw": "{tip2}അടുത്ത tip: candidates-ന് അയക്കൂ. {copy}Link copy ചെയ്യൂ, {share}അല്ലെങ്കിൽ നേരെ class WhatsApp group-ൽ share ചെയ്യൂ. {menu}Class-ൽ phones ഇല്ലേ? {getcode}Join code എടുക്കൂ. {code}ആറ് digits. Board-ൽ എഴുതൂ, students അത് testoza dot com slash join-ൽ type ചെയ്യും."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-ml/L20.wav",
+    "duration": 2.025167,
+    "text": "Number seven: വേണ്ട details എടുക്കൂ.",
+    "raw": "Number seven: വേണ്ട details എടുക്കൂ."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-ml/L21.wav",
+    "duration": 7.91625,
+    "text": "Name default ആയി ചോദിക്കും. Roll Number add ചെയ്യൂ, അല്ലെങ്കിൽ മറ്റെന്തും — batch, school, phone. Start ചെയ്യുന്നതിന് മുൻപ് candidates ഇത് fill ചെയ്യും.",
+    "raw": "{inputs}Name default ആയി ചോദിക്കും. {roll}Roll Number add ചെയ്യൂ, {inputsdone}അല്ലെങ്കിൽ മറ്റെന്തും — batch, school, phone. Start ചെയ്യുന്നതിന് മുൻപ് candidates ഇത് fill ചെയ്യും."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-ml/L22.wav",
+    "duration": 4.013917,
+    "text": "Number eight: ഏത് phone-ലും exam room. App വേണ്ട, sign-up വേണ്ട.",
+    "raw": "Number eight: ഏത് phone-ലും exam room. App വേണ്ട, sign-up വേണ്ട."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-ml/L23.wav",
+    "duration": 11.645042,
+    "text": "ഇതാ ഒരു student, അവളുടെ phone-ൽ, testoza dot com slash join-ൽ. ആറ് digits type ചെയ്യുന്നു, exam open ആകുന്നു. Name, roll number, start.",
+    "raw": "{join}ഇതാ ഒരു student, അവളുടെ phone-ൽ, testoza dot com slash join-ൽ. {code6}ആറ് digits type ചെയ്യുന്നു, {details}exam open ആകുന്നു. {name}Name, {rollin}roll number, {go}start."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-ml/L24.wav",
+    "duration": 4.339542,
+    "text": "Full screen, clean, വായിക്കാൻ easy. Answer tap ചെയ്യൂ, save and next.",
+    "raw": "{exam}Full screen, clean, വായിക്കാൻ easy. {ans1}Answer tap ചെയ്യൂ, {next1}save and next."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-ml/L25.wav",
+    "duration": 6.509417,
+    "text": "ഇപ്പോൾ അവൾ വേറൊരു app-ലേക്ക് പോകുന്നു — exam ഉടനെ പിടിക്കുന്നു. Warning one of three. നേരെ തിരികെ paper-ലേക്ക്.",
+    "raw": "{violation}ഇപ്പോൾ അവൾ വേറൊരു app-ലേക്ക് പോകുന്നു — exam ഉടനെ പിടിക്കുന്നു. Warning one of three. {warnok}നേരെ തിരികെ paper-ലേക്ക്."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-ml/L26.wav",
+    "duration": 3.731375,
+    "text": "അവസാനം വരെ fast-forward ചെയ്യാം. Submit, confirm.",
+    "raw": "{rush}അവസാനം വരെ fast-forward ചെയ്യാം. {submit}Submit, {yes}confirm."
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-ml/L27.wav",
+    "duration": 2.742958,
+    "text": "Number nine: exam live ആയി കാണൂ.",
+    "raw": "Number nine: exam live ആയി കാണൂ."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-ml/L28.wav",
+    "duration": 12.050375,
+    "text": "നിങ്ങളുടെ dashboard-ൽ: ഇപ്പോൾ മുപ്പത് students എഴുതുന്നു, രണ്ട് പേർ submit ചെയ്തു. Results open ചെയ്യൂ — started, writing, submitted, dropped. ഏത് tile tap ചെയ്താലും, ആര്, എത്രത്തോളം ചെയ്തു എന്ന് അറിയാം.",
+    "raw": "{dash}നിങ്ങളുടെ dashboard-ൽ: {writing}ഇപ്പോൾ മുപ്പത് students എഴുതുന്നു, {subm}രണ്ട് പേർ submit ചെയ്തു. {panel}Results open ചെയ്യൂ — {started}started, {writ}writing, {two}submitted, {zero}dropped. {names}ഏത് tile tap ചെയ്താലും, ആര്, എത്രത്തോളം ചെയ്തു എന്ന് അറിയാം."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-ml/L29.wav",
+    "duration": 2.674,
+    "text": "Number ten: submit ചെയ്ത ഉടൻ results.",
+    "raw": "Number ten: submit ചെയ്ത ഉടൻ results."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-ml/L30.wav",
+    "duration": 5.237917,
+    "text": "അവളുടെ score ഉടനെ കാണാം — എഴുപത്തഞ്ച് percent — നിങ്ങൾ allow ചെയ്താൽ, solution key-യോടെ.",
+    "raw": "{score}അവളുടെ score ഉടനെ കാണാം — എഴുപത്തഞ്ച് percent — {solkey}നിങ്ങൾ allow ചെയ്താൽ, solution key-യോടെ."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-ml/L31.wav",
+    "duration": 7.365542,
+    "text": "എല്ലാവരും തീർത്താൽ, മുപ്പത്തിരണ്ട് results-ഉം വരും. Ranks on ചെയ്യൂ, മുഴുവൻ batch scroll ചെയ്യൂ, എല്ലാം ഒറ്റ click-ൽ Excel-ലേക്ക് download ചെയ്യൂ.",
+    "raw": "{all}എല്ലാവരും തീർത്താൽ, മുപ്പത്തിരണ്ട് results-ഉം വരും. {rank}Ranks on ചെയ്യൂ, {scrolllist}മുഴുവൻ batch scroll ചെയ്യൂ, {export}എല്ലാം ഒറ്റ click-ൽ Excel-ലേക്ക് download ചെയ്യൂ."
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-ml/L32.wav",
+    "duration": 9.763083,
+    "text": "ഇവയാണ് പത്ത് features — question paper മുതൽ ranked results വരെ, എല്ലാം ഒരിടത്ത്. testoza dot com-ൽ try ചെയ്യൂ, ഇതുപോലുള്ള videos-ന് subscribe ചെയ്യൂ.",
+    "raw": "ഇവയാണ് പത്ത് features — question paper മുതൽ ranked results വരെ, എല്ലാം ഒരിടത്ത്. {endurl}testoza dot com-ൽ try ചെയ്യൂ, {thanks}ഇതുപോലുള്ള videos-ന് subscribe ചെയ്യൂ."
+  }
+]

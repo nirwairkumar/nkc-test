@@ -1,0 +1,261 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-en/L01.wav",
+    "duration": 11.51575,
+    "text": "Twenty-seven students. One exam link. Anti-cheating switched on. And every result back on your screen — automatically.\nLet's run a real online exam on Testoza, start to finish.",
+    "raw": "{m1}Twenty-seven students. {m2}One exam link. {m3}Anti-cheating switched on. {m4}And every result back on your screen — automatically.\n{title}Let's run a real online exam on TestoZa, start to finish."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-en/L02.wav",
+    "duration": 7.888333,
+    "text": "Here's my test — the JEE Main mini mock we built in the last video.\nTo run it as a real exam, click Conduct exam.",
+    "raw": "Here's my test — {card}the JEE Main mini mock we built in the last video.\nTo run it as a real exam, {conduct}click Conduct exam."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-en/L03.wav",
+    "duration": 9.439583,
+    "text": "Testoza creates a private, secure link just for this exam.\nIt never shows up publicly — only people with this link can open it.\nStart Conducting… and your exam is live.",
+    "raw": "TestoZa creates {link}a private, secure link just for this exam.\nIt never shows up publicly — only people with this link can open it.\n{start}Start Conducting… {live}and your exam is live."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-en/L04.wav",
+    "duration": 7.457083,
+    "text": "See this little guide? Testoza walks you through it.\nStep one: set up the exam room. Let's open Settings.",
+    "raw": "See this little guide? {coach}TestoZa walks you through it.\nStep one: set up the exam room. {settings}Let's open Settings."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-en/L05.wav",
+    "duration": 8.485042,
+    "text": "This is your exam room. Three tabs: Proctoring, Access, and Results.\nI'll go through every switch, the way I'd set it up for a real exam.",
+    "raw": "This is your exam room. Three tabs: {t1}Proctoring, {t2}Access, {t3}and Results.\nI'll go through every switch, the way I'd set it up for a real exam."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-en/L06.wav",
+    "duration": 10.169583,
+    "text": "First — Force Full Screen.\nThe exam opens full screen, and if a student leaves it, that's counted as a violation.\nFor any serious test, switch this on.",
+    "raw": "First — {fs}Force Full Screen.\nThe exam opens full screen, and if a student leaves it, that's counted as a violation.\nFor any serious test, switch this on."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-en/L07.wav",
+    "duration": 8.828833,
+    "text": "Next, Tab and App Switch Detection.\nOpening another tab, jumping to WhatsApp, minimising the browser — Testoza catches all of it.",
+    "raw": "Next, {tab}Tab and App Switch Detection.\nOpening another tab, jumping to WhatsApp, minimising the browser — {caught}TestoZa catches all of it."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-en/L08.wav",
+    "duration": 21.96225,
+    "text": "Now decide what happens when they do.\nWarn only — fine for a practice test.\nStrict — the test submits on the very first switch.\nOr my favourite: give a few warnings, then submit.\nThree is fair. One notification can pop up by accident — three times is a habit.\nAnd full-screen exits count toward the same limit.",
+    "raw": "Now decide what happens when they do.\n{warn}Warn only — fine for a practice test.\n{strict}Strict — the test submits on the very first switch.\nOr my favourite: {count}give a few warnings, then submit.\n{three}Three is fair. One notification can pop up by accident — three times is a habit.\nAnd full-screen exits count toward the same limit."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-en/L09.wav",
+    "duration": 9.478292,
+    "text": "Disable Copy-Paste — so nobody pastes your question into Google or ChatGPT.\nDisable Right Click — no menu, no quick search, no translate.",
+    "raw": "{copy}Disable Copy-Paste — so nobody pastes your question into Google or ChatGPT.\n{right}Disable Right Click — no menu, no quick search, no translate."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-en/L10.wav",
+    "duration": 7.650042,
+    "text": "Block Back Button stops a student leaving the exam by accident.\nAnd Disable Exit Button hides the exit, so nobody walks out halfway.",
+    "raw": "{back}Block Back Button stops a student leaving the exam by accident.\nAnd {exit}Disable Exit Button hides the exit, so nobody walks out halfway."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-en/L11.wav",
+    "duration": 2.307,
+    "text": "Second tab: Access and Control.",
+    "raw": "Second tab: {access}Access and Control."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-en/L12.wav",
+    "duration": 8.136792,
+    "text": "Scheduled Access opens and closes the exam at times you choose — perfect when the whole batch must start together.\nWe're starting right now, so I'll leave it off.",
+    "raw": "{sched}Scheduled Access opens and closes the exam at times you choose — {pickers}perfect when the whole batch must start together.\n{schedoff}We're starting right now, so I'll leave it off."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-en/L13.wav",
+    "duration": 16.901417,
+    "text": "Assign to Class keeps this exam's results with the right batch.\nAttempt Limit — one exam, one attempt. No retakes after seeing the paper.\nAnd Require Candidate Login stays off for a class test.\nStudents just open the link, type their name, and start. No accounts. No app.",
+    "raw": "{class}Assign to Class keeps this exam's results with the right batch.\n{attempt}Attempt Limit — one exam, one attempt. {single}No retakes after seeing the paper.\nAnd {login}Require Candidate Login stays off for a class test.\nStudents just open the link, type their name, and start. No accounts. No app."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-en/L14.wav",
+    "duration": 1.969208,
+    "text": "Last tab: Results and Timing.",
+    "raw": "Last tab: {results}Results and Timing."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-en/L15.wav",
+    "duration": 8.121417,
+    "text": "Result Visibility — on, and students see their score and analysis the moment they submit.\nTurn it off if you'd rather announce results later.",
+    "raw": "{vis}Result Visibility — on, and students see their score and analysis the moment they submit.\nTurn it off if you'd rather announce results later."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-en/L16.wav",
+    "duration": 7.005917,
+    "text": "Strict Timer runs on our server.\nRefresh the page, close the browser — the clock keeps running. Always on, for real exams.",
+    "raw": "{strictt}Strict Timer runs on our server.\nRefresh the page, close the browser — the clock keeps running. Always on, for real exams."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-en/L17.wav",
+    "duration": 8.346292,
+    "text": "Allow Flexible Timer lets students switch the timer off.\nGreat for practice — and Testoza even warns you — but for an exam, keep it off.",
+    "raw": "{flex}Allow Flexible Timer lets students switch the timer off.\nGreat for practice — {flexwarn}and TestoZa even warns you — {flexoff}but for an exam, keep it off."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-en/L18.wav",
+    "duration": 6.082167,
+    "text": "Randomize Questions gives every student a different order —\nso the person sitting next to them can't help.",
+    "raw": "{shuffle}Randomize Questions gives every student a different order —\nso the person sitting next to them can't help."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-en/L19.wav",
+    "duration": 14.612625,
+    "text": "And finally, the exam screen itself.\nStandard Mode looks just like the JEE and NEET computer-based test, with a question palette on the right.\nModern Mode is a clean, one-card-at-a-time layout.\nFor exam practice, I keep Standard.",
+    "raw": "And finally, {layout}the exam screen itself.\n{std}Standard Mode looks just like the JEE and NEET computer-based test, with a question palette on the right.\n{modern}Modern Mode is a clean, one-card-at-a-time layout.\n{stdpick}For exam practice, I keep Standard."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-en/L20.wav",
+    "duration": 6.816375,
+    "text": "Save Settings… and look — the \"Anti-cheating is off\" warning is gone.\nYour exam room is locked.",
+    "raw": "{save}Save Settings… and look — {chip}the \"Anti-cheating is off\" warning is gone.\nYour exam room is locked."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-en/L21.wav",
+    "duration": 8.427292,
+    "text": "Now — who's writing? These are your candidate inputs.\nName is already there. Tap Roll No, and every result comes with a name and a roll number.",
+    "raw": "Now — who's writing? {inputs}These are your candidate inputs.\nName is already there. {roll}Tap Roll No, and every result comes with a name and a roll number."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-en/L22.wav",
+    "duration": 4.840875,
+    "text": "Step two: send it.\nCopy the link… or share it straight to your class WhatsApp group.",
+    "raw": "{coach2}Step two: send it.\n{copy2}Copy the link… {share}or share it straight to your class WhatsApp group."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-en/L23.wav",
+    "duration": 6.831667,
+    "text": "Testoza writes the message for you — exam name, time, the link, and simple instructions.\nSend.",
+    "raw": "{wa}TestoZa writes the message for you — {walines}exam name, time, the link, and simple instructions.\n{send}Send."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-en/L24.wav",
+    "duration": 9.662417,
+    "text": "Not everyone's on WhatsApp — and sometimes you're standing in a classroom.\nOpen the menu, get a join code… and there it is. Six digits.",
+    "raw": "Not everyone's on WhatsApp — and sometimes you're standing in a classroom.\n{menu}Open the menu, {getcode}get a join code… {code}and there it is. Six digits."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-en/L25.wav",
+    "duration": 3.855292,
+    "text": "Write it on the board: testoza.com slash join… and the code.",
+    "raw": "{board}Write it on the board: {url}testoza.com slash join… {digits}and the code."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-en/L26.wav",
+    "duration": 4.449917,
+    "text": "Now, the student's side. The message lands in the class group.\nOne tap…",
+    "raw": "Now, the student's side. {msg}The message lands in the class group.\n{tap}One tap…"
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-en/L27.wav",
+    "duration": 9.337375,
+    "text": "and the exam opens right in the browser. No app, no sign-up.\nThey see the paper, the time and the marks…\ntype their name and roll number… and tap Start.",
+    "raw": "{intro}and the exam opens right in the browser. No app, no sign-up.\n{scrollp}They see the paper, the time and the marks…\n{name}type their name and roll number… {go}and tap Start."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-en/L28.wav",
+    "duration": 7.398708,
+    "text": "No phone? No problem. Any browser — testoza.com slash join —\ntype the six digits from the board… and they're in.",
+    "raw": "No phone? No problem. {join}Any browser — testoza.com slash join —\n{typecode}type the six digits from the board… {cont}and they're in."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-en/L29.wav",
+    "duration": 8.553458,
+    "text": "Same exam, same rules. Name, roll number… Start.\nFull screen kicks in, the timer starts, and they answer like any computer-based test.",
+    "raw": "Same exam, same rules. {fill}Name, roll number… {start2}Start.\n{fsgo}Full screen kicks in, the timer starts, {answer}and they answer like any computer-based test."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-en/L30.wav",
+    "duration": 5.548542,
+    "text": "And if they try to sneak into another tab? Warning one of three. Testoza saw it — and counted it.",
+    "raw": "And if they try to sneak into another tab? {violation}Warning one of three. TestoZa saw it — and counted it."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-en/L31.wav",
+    "duration": 4.951625,
+    "text": "When they're done — Submit.\nResult Visibility is on, so they see their score instantly.",
+    "raw": "{submit}When they're done — Submit.\n{score}Result Visibility is on, so they see their score instantly."
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-en/L32.wav",
+    "duration": 7.808167,
+    "text": "Meanwhile, on your dashboard — twenty-five students writing right now, two already submitted.\nYou're watching the whole exam, live.",
+    "raw": "Meanwhile, {dash}on your dashboard — {writing}twenty-five students writing right now, {subm}two already submitted.\nYou're watching the whole exam, live."
+  },
+  {
+    "id": "L33",
+    "file": "assets/vo-en/L33.wav",
+    "duration": 9.257708,
+    "text": "Open Results: twenty-seven started, twenty-five writing, two submitted, zero dropped.\nEvery student, by name and roll number, as it happens.",
+    "raw": "{panel}Open Results: {started}twenty-seven started, {writ}twenty-five writing, {two}two submitted, {zero}zero dropped.\nEvery student, {names}by name and roll number, as it happens."
+  },
+  {
+    "id": "L34",
+    "file": "assets/vo-en/L34.wav",
+    "duration": 11.377458,
+    "text": "When the exam ends — all twenty-seven submitted, scored, and ranked. Automatically.\nNo checking copies. No totalling marks.\nAnd one click exports everything to Excel.",
+    "raw": "{later}When the exam ends — {all}all twenty-seven submitted, scored, and ranked. Automatically.\nNo checking copies. No totalling marks.\n{export}And one click exports everything to Excel."
+  },
+  {
+    "id": "L35",
+    "file": "assets/vo-en/L35.wav",
+    "duration": 8.83725,
+    "text": "That's Testoza.\nA paper that used to mean printing, invigilating, and a weekend of checking —\nnow runs on the phones your students already carry.",
+    "raw": "{landing}That's TestoZa.\nA paper that used to mean printing, invigilating, and a weekend of checking —\n{phones}now runs on the phones your students already carry."
+  },
+  {
+    "id": "L36",
+    "file": "assets/vo-en/L36.wav",
+    "duration": 12.02425,
+    "text": "And exams are going digital. The Education Ministry has announced that NEET-UG is set to move to computer-based testing from 2027.\nLet your students practise the way they'll be tested.",
+    "raw": "And exams are going digital. {neet}The Education Ministry has announced that NEET-UG is set to move to computer-based testing from 2027.\nLet your students practise the way they'll be tested."
+  },
+  {
+    "id": "L37",
+    "file": "assets/vo-en/L37.wav",
+    "duration": 9.350583,
+    "text": "Make your test, conduct it free, and see every result in minutes — at testoza.com.\nThanks for watching — subscribe, and I'll see you in the next one.",
+    "raw": "Make your test, conduct it free, and see every result in minutes — {endurl}at testoza.com.\n{thanks}Thanks for watching — subscribe, and I'll see you in the next one."
+  }
+]

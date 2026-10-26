@@ -1,0 +1,248 @@
+[
+  {
+    "id": "w0",
+    "text": "Tap",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "the",
+    "start": 0.32,
+    "end": 0.4
+  },
+  {
+    "id": "w2",
+    "text": "language",
+    "start": 0.4,
+    "end": 0.8
+  },
+  {
+    "id": "w3",
+    "text": "switch,",
+    "start": 0.8,
+    "end": 1.36
+  },
+  {
+    "id": "w4",
+    "text": "pick",
+    "start": 1.36,
+    "end": 1.68
+  },
+  {
+    "id": "w5",
+    "text": "Hindi,",
+    "start": 1.68,
+    "end": 2.32
+  },
+  {
+    "id": "w6",
+    "text": "and",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w7",
+    "text": "just",
+    "start": 2.48,
+    "end": 2.64
+  },
+  {
+    "id": "w8",
+    "text": "type",
+    "start": 2.64,
+    "end": 2.96
+  },
+  {
+    "id": "w9",
+    "text": "in",
+    "start": 2.96,
+    "end": 3.12
+  },
+  {
+    "id": "w10",
+    "text": "English",
+    "start": 3.12,
+    "end": 3.52
+  },
+  {
+    "id": "w11",
+    "text": "letters.",
+    "start": 3.52,
+    "end": 4.32
+  },
+  {
+    "id": "w12",
+    "text": "Every",
+    "start": 4.32,
+    "end": 4.72
+  },
+  {
+    "id": "w13",
+    "text": "word",
+    "start": 4.72,
+    "end": 5.04
+  },
+  {
+    "id": "w14",
+    "text": "turns",
+    "start": 5.04,
+    "end": 5.28
+  },
+  {
+    "id": "w15",
+    "text": "into",
+    "start": 5.28,
+    "end": 5.52
+  },
+  {
+    "id": "w16",
+    "text": "Hindi",
+    "start": 5.52,
+    "end": 6.08
+  },
+  {
+    "id": "w17",
+    "text": "the",
+    "start": 6.08,
+    "end": 6.24
+  },
+  {
+    "id": "w18",
+    "text": "moment",
+    "start": 6.24,
+    "end": 6.56
+  },
+  {
+    "id": "w19",
+    "text": "you",
+    "start": 6.56,
+    "end": 6.8
+  },
+  {
+    "id": "w20",
+    "text": "hit",
+    "start": 6.8,
+    "end": 7.04
+  },
+  {
+    "id": "w21",
+    "text": "space.",
+    "start": 7.04,
+    "end": 7.76
+  },
+  {
+    "id": "w22",
+    "text": "No",
+    "start": 7.76,
+    "end": 8
+  },
+  {
+    "id": "w23",
+    "text": "Hindi",
+    "start": 8,
+    "end": 8.48
+  },
+  {
+    "id": "w24",
+    "text": "keyboard",
+    "start": 8.48,
+    "end": 8.96
+  },
+  {
+    "id": "w25",
+    "text": "needed.",
+    "start": 8.96,
+    "end": 9.52
+  },
+  {
+    "id": "w26",
+    "text": "Now",
+    "start": 9.52,
+    "end": 9.84
+  },
+  {
+    "id": "w27",
+    "text": "the",
+    "start": 9.92,
+    "end": 10.08
+  },
+  {
+    "id": "w28",
+    "text": "question",
+    "start": 10.08,
+    "end": 10.4
+  },
+  {
+    "id": "w29",
+    "text": "is",
+    "start": 10.4,
+    "end": 10.56
+  },
+  {
+    "id": "w30",
+    "text": "in",
+    "start": 10.56,
+    "end": 10.72
+  },
+  {
+    "id": "w31",
+    "text": "both",
+    "start": 10.72,
+    "end": 10.96
+  },
+  {
+    "id": "w32",
+    "text": "languages",
+    "start": 10.96,
+    "end": 11.52
+  },
+  {
+    "id": "w33",
+    "text": "and",
+    "start": 11.6,
+    "end": 11.76
+  },
+  {
+    "id": "w34",
+    "text": "the",
+    "start": 11.76,
+    "end": 11.92
+  },
+  {
+    "id": "w35",
+    "text": "options",
+    "start": 11.92,
+    "end": 12.32
+  },
+  {
+    "id": "w36",
+    "text": "go",
+    "start": 12.32,
+    "end": 12.56
+  },
+  {
+    "id": "w37",
+    "text": "in",
+    "start": 12.56,
+    "end": 12.8
+  },
+  {
+    "id": "w38",
+    "text": "just",
+    "start": 12.8,
+    "end": 12.96
+  },
+  {
+    "id": "w39",
+    "text": "like",
+    "start": 12.96,
+    "end": 13.12
+  },
+  {
+    "id": "w40",
+    "text": "before.",
+    "start": 13.12,
+    "end": 13.44
+  }
+]

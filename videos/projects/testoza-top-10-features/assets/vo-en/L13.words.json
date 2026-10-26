@@ -1,0 +1,206 @@
+[
+  {
+    "id": "w0",
+    "text": "Now",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "split",
+    "start": 0.32,
+    "end": 0.72
+  },
+  {
+    "id": "w2",
+    "text": "the",
+    "start": 0.72,
+    "end": 0.88
+  },
+  {
+    "id": "w3",
+    "text": "paper",
+    "start": 0.88,
+    "end": 1.36
+  },
+  {
+    "id": "w4",
+    "text": "into",
+    "start": 1.36,
+    "end": 1.6
+  },
+  {
+    "id": "w5",
+    "text": "sections",
+    "start": 1.6,
+    "end": 2.16
+  },
+  {
+    "id": "w6",
+    "text": "and",
+    "start": 2.16,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "give",
+    "start": 2.4,
+    "end": 2.8
+  },
+  {
+    "id": "w8",
+    "text": "every",
+    "start": 2.8,
+    "end": 3.2
+  },
+  {
+    "id": "w9",
+    "text": "section",
+    "start": 3.2,
+    "end": 3.68
+  },
+  {
+    "id": "w10",
+    "text": "its",
+    "start": 3.68,
+    "end": 3.92
+  },
+  {
+    "id": "w11",
+    "text": "own",
+    "start": 3.92,
+    "end": 4.24
+  },
+  {
+    "id": "w12",
+    "text": "timer",
+    "start": 4.24,
+    "end": 4.8
+  },
+  {
+    "id": "w13",
+    "text": "the",
+    "start": 4.8,
+    "end": 4.96
+  },
+  {
+    "id": "w14",
+    "text": "way",
+    "start": 4.96,
+    "end": 5.2
+  },
+  {
+    "id": "w15",
+    "text": "SSC",
+    "start": 5.2,
+    "end": 5.92
+  },
+  {
+    "id": "w16",
+    "text": "does.",
+    "start": 5.92,
+    "end": 6.4
+  },
+  {
+    "id": "w17",
+    "text": "Split",
+    "start": 6.4,
+    "end": 6.8
+  },
+  {
+    "id": "w18",
+    "text": "it",
+    "start": 6.8,
+    "end": 7.04
+  },
+  {
+    "id": "w19",
+    "text": "anywhere.",
+    "start": 7.04,
+    "end": 7.92
+  },
+  {
+    "id": "w20",
+    "text": "Question",
+    "start": 7.92,
+    "end": 8.48
+  },
+  {
+    "id": "w21",
+    "text": "seven",
+    "start": 8.48,
+    "end": 8.88
+  },
+  {
+    "id": "w22",
+    "text": "to",
+    "start": 8.88,
+    "end": 9.12
+  },
+  {
+    "id": "w23",
+    "text": "thirteen",
+    "start": 9.12,
+    "end": 9.68
+  },
+  {
+    "id": "w24",
+    "text": "become",
+    "start": 9.68,
+    "end": 10.16
+  },
+  {
+    "id": "w25",
+    "text": "section",
+    "start": 10.16,
+    "end": 10.64
+  },
+  {
+    "id": "w26",
+    "text": "B.",
+    "start": 10.64,
+    "end": 11.2
+  },
+  {
+    "id": "w27",
+    "text": "Ten",
+    "start": 11.2,
+    "end": 11.52
+  },
+  {
+    "id": "w28",
+    "text": "minutes",
+    "start": 11.52,
+    "end": 11.92
+  },
+  {
+    "id": "w29",
+    "text": "here,",
+    "start": 11.92,
+    "end": 12.32
+  },
+  {
+    "id": "w30",
+    "text": "ten",
+    "start": 12.32,
+    "end": 12.64
+  },
+  {
+    "id": "w31",
+    "text": "minutes",
+    "start": 12.64,
+    "end": 12.96
+  },
+  {
+    "id": "w32",
+    "text": "there,",
+    "start": 12.96,
+    "end": 13.36
+  },
+  {
+    "id": "w33",
+    "text": "save.",
+    "start": 13.36,
+    "end": 13.84
+  }
+]

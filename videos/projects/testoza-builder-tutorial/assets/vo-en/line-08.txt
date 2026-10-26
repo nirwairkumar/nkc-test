@@ -1,0 +1,4 @@
+Now it's time for maths. Open Maths & symbols. At the top it says "Goes into Question 4", so the formula lands in question four.
+f of x equals the integral… inside, a fraction… x squared dx on top… and two brackets below — one plus x squared in the first, and in the second, one plus the root of one plus x squared.
+Watch the preview at the top. As you type, the question builds up exactly like the paper. Press Insert, and type the rest of the line.
+The options use log, root and pi by four — all from Sy Pad. The last option is plain text: None of these. Correct answer: B.

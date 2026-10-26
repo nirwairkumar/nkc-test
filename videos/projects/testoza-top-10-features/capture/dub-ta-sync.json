@@ -1,0 +1,956 @@
+{
+  "lines": [
+    {
+      "id": "L01",
+      "tempo": 1,
+      "start": 0.15,
+      "end": 17.37,
+      "pauses": []
+    },
+    {
+      "id": "L02",
+      "tempo": 1,
+      "start": 19.56,
+      "end": 21.65,
+      "pauses": []
+    },
+    {
+      "id": "L03",
+      "tempo": 1.06,
+      "start": 22.98,
+      "end": 33.39,
+      "pauses": []
+    },
+    {
+      "id": "L04",
+      "tempo": 1,
+      "start": 33.61,
+      "end": 44.74,
+      "pauses": [
+        0.43,
+        1.3
+      ]
+    },
+    {
+      "id": "L05",
+      "tempo": 1.15,
+      "start": 45.5,
+      "end": 54.45,
+      "pauses": []
+    },
+    {
+      "id": "L06",
+      "tempo": 1,
+      "start": 54.67,
+      "end": 58.11,
+      "pauses": []
+    },
+    {
+      "id": "L07",
+      "tempo": 1.09,
+      "start": 58.33,
+      "end": 68.41,
+      "pauses": []
+    },
+    {
+      "id": "L08",
+      "tempo": 1,
+      "start": 69.03,
+      "end": 82.66,
+      "pauses": [
+        1.08,
+        0.9
+      ]
+    },
+    {
+      "id": "L09",
+      "tempo": 1,
+      "start": 83.95,
+      "end": 87.95,
+      "pauses": []
+    },
+    {
+      "id": "L10",
+      "tempo": 1.15,
+      "start": 89.27,
+      "end": 101.88,
+      "pauses": [
+        0.16,
+        0.32
+      ]
+    },
+    {
+      "id": "L11",
+      "tempo": 1,
+      "start": 103.43,
+      "end": 105.84,
+      "pauses": []
+    },
+    {
+      "id": "L12",
+      "tempo": 1.12,
+      "start": 107.58,
+      "end": 118.29,
+      "pauses": []
+    },
+    {
+      "id": "L13",
+      "tempo": 1,
+      "start": 118.51,
+      "end": 132.15,
+      "pauses": [
+        0.74
+      ]
+    },
+    {
+      "id": "L14",
+      "tempo": 1,
+      "start": 132.95,
+      "end": 136.9,
+      "pauses": []
+    },
+    {
+      "id": "L15",
+      "tempo": 1.15,
+      "start": 138.15,
+      "end": 146.54,
+      "pauses": []
+    },
+    {
+      "id": "L16",
+      "tempo": 1.15,
+      "start": 146.76,
+      "end": 160.35,
+      "pauses": [
+        0.23,
+        0.39,
+        0.32,
+        0.51
+      ]
+    },
+    {
+      "id": "L17",
+      "tempo": 1,
+      "start": 160.57,
+      "end": 169.41,
+      "pauses": [
+        0.72
+      ]
+    },
+    {
+      "id": "L18",
+      "tempo": 1,
+      "start": 170.28,
+      "end": 172.91,
+      "pauses": []
+    },
+    {
+      "id": "L19",
+      "tempo": 1,
+      "start": 173.42,
+      "end": 186.93,
+      "pauses": [
+        0.25
+      ]
+    },
+    {
+      "id": "L20",
+      "tempo": 1,
+      "start": 187.66,
+      "end": 190.26,
+      "pauses": []
+    },
+    {
+      "id": "L21",
+      "tempo": 1,
+      "start": 191.17,
+      "end": 199.5,
+      "pauses": []
+    },
+    {
+      "id": "L22",
+      "tempo": 1,
+      "start": 199.72,
+      "end": 204.04,
+      "pauses": []
+    },
+    {
+      "id": "L23",
+      "tempo": 1,
+      "start": 204.91,
+      "end": 213.91,
+      "pauses": [
+        0.09,
+        0.19
+      ]
+    },
+    {
+      "id": "L24",
+      "tempo": 1,
+      "start": 214.28,
+      "end": 218.88,
+      "pauses": [
+        0.08
+      ]
+    },
+    {
+      "id": "L25",
+      "tempo": 1.03,
+      "start": 220.14,
+      "end": 226.64,
+      "pauses": []
+    },
+    {
+      "id": "L26",
+      "tempo": 1,
+      "start": 226.86,
+      "end": 230.56,
+      "pauses": []
+    },
+    {
+      "id": "L27",
+      "tempo": 1,
+      "start": 230.78,
+      "end": 233.16,
+      "pauses": []
+    },
+    {
+      "id": "L28",
+      "tempo": 1,
+      "start": 234.22,
+      "end": 247.01,
+      "pauses": [
+        0.44,
+        0.06
+      ]
+    },
+    {
+      "id": "L29",
+      "tempo": 1,
+      "start": 247.6,
+      "end": 250.79,
+      "pauses": []
+    },
+    {
+      "id": "L30",
+      "tempo": 1,
+      "start": 251.7,
+      "end": 257.11,
+      "pauses": []
+    },
+    {
+      "id": "L31",
+      "tempo": 1,
+      "start": 257.77,
+      "end": 266.28,
+      "pauses": [
+        0.37,
+        0.2
+      ]
+    },
+    {
+      "id": "L32",
+      "tempo": 1,
+      "start": 267.29,
+      "end": 276.27,
+      "pauses": [
+        0.16
+      ]
+    }
+  ],
+  "cues": [
+    {
+      "line": "L01",
+      "cue": "m1",
+      "action": 0,
+      "word": 0.19,
+      "lag": 0.19
+    },
+    {
+      "line": "L01",
+      "cue": "m2",
+      "action": 2.95,
+      "word": 3.05,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "m3",
+      "action": 5.19,
+      "word": 5.29,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "m4",
+      "action": 7.51,
+      "word": 7.99,
+      "lag": 0.48
+    },
+    {
+      "line": "L01",
+      "cue": "m5",
+      "action": 9.35,
+      "word": 10.02,
+      "lag": 0.67
+    },
+    {
+      "line": "L01",
+      "cue": "title",
+      "action": 12.31,
+      "word": 12.41,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "upload",
+      "action": 25.96,
+      "word": 26.06,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "choose",
+      "action": 27.02,
+      "word": 28.1,
+      "lag": 1.08
+    },
+    {
+      "line": "L03",
+      "cue": "extract",
+      "action": 31.39,
+      "word": 31.54,
+      "lag": 0.15
+    },
+    {
+      "line": "L04",
+      "cue": "reading",
+      "action": 33.44,
+      "word": 33.65,
+      "lag": 0.21
+    },
+    {
+      "line": "L04",
+      "cue": "q1",
+      "action": 36.88,
+      "word": 36.98,
+      "lag": 0.1
+    },
+    {
+      "line": "L04",
+      "cue": "preview",
+      "action": 42.4,
+      "word": 42.5,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "answers",
+      "action": 45.4,
+      "word": 45.5,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "save",
+      "action": 50.42,
+      "word": 51.99,
+      "lag": 1.57
+    },
+    {
+      "line": "L05",
+      "cue": "newcard",
+      "action": 51.8,
+      "word": 52.9,
+      "lag": 1.1
+    },
+    {
+      "line": "L07",
+      "cue": "edit",
+      "action": 58.22,
+      "word": 58.35,
+      "lag": 0.13
+    },
+    {
+      "line": "L07",
+      "cue": "addq",
+      "action": 61.51,
+      "word": 62.12,
+      "lag": 0.61
+    },
+    {
+      "line": "L07",
+      "cue": "q13text",
+      "action": 62.62,
+      "word": 63.58,
+      "lag": 0.96
+    },
+    {
+      "line": "L07",
+      "cue": "sypad",
+      "action": 64.62,
+      "word": 65.37,
+      "lag": 0.75
+    },
+    {
+      "line": "L08",
+      "cue": "h",
+      "action": 68.95,
+      "word": 69.05,
+      "lag": 0.1
+    },
+    {
+      "line": "L08",
+      "cue": "frac",
+      "action": 71.43,
+      "word": 71.63,
+      "lag": 0.2
+    },
+    {
+      "line": "L08",
+      "cue": "power",
+      "action": 74.55,
+      "word": 74.65,
+      "lag": 0.1
+    },
+    {
+      "line": "L08",
+      "cue": "formula",
+      "action": 77.67,
+      "word": 77.77,
+      "lag": 0.1
+    },
+    {
+      "line": "L08",
+      "cue": "insert",
+      "action": 80.39,
+      "word": 80.67,
+      "lag": 0.28
+    },
+    {
+      "line": "L10",
+      "cue": "lang",
+      "action": 89.2,
+      "word": 89.3,
+      "lag": 0.1
+    },
+    {
+      "line": "L10",
+      "cue": "hindi",
+      "action": 90.56,
+      "word": 90.83,
+      "lag": 0.27
+    },
+    {
+      "line": "L10",
+      "cue": "hitype",
+      "action": 91.52,
+      "word": 93.29,
+      "lag": 1.77
+    },
+    {
+      "line": "L10",
+      "cue": "hindone",
+      "action": 98.72,
+      "word": 98.82,
+      "lag": 0.1
+    },
+    {
+      "line": "L10",
+      "cue": "opts",
+      "action": 100.8,
+      "word": 100.9,
+      "lag": 0.1
+    },
+    {
+      "line": "L12",
+      "cue": "marks",
+      "action": 107.55,
+      "word": 107.65,
+      "lag": 0.1
+    },
+    {
+      "line": "L12",
+      "cue": "qtype",
+      "action": 110.19,
+      "word": 110.39,
+      "lag": 0.2
+    },
+    {
+      "line": "L12",
+      "cue": "multi",
+      "action": 112.43,
+      "word": 112.53,
+      "lag": 0.1
+    },
+    {
+      "line": "L12",
+      "cue": "jeeadv",
+      "action": 114.11,
+      "word": 114.21,
+      "lag": 0.1
+    },
+    {
+      "line": "L12",
+      "cue": "correct",
+      "action": 116.59,
+      "word": 117,
+      "lag": 0.41
+    },
+    {
+      "line": "L13",
+      "cue": "sections",
+      "action": 118.29,
+      "word": 118.55,
+      "lag": 0.26
+    },
+    {
+      "line": "L13",
+      "cue": "timed",
+      "action": 120.45,
+      "word": 120.95,
+      "lag": 0.5
+    },
+    {
+      "line": "L13",
+      "cue": "gap",
+      "action": 124.69,
+      "word": 124.79,
+      "lag": 0.1
+    },
+    {
+      "line": "L13",
+      "cue": "split",
+      "action": 126.21,
+      "word": 126.45,
+      "lag": 0.24
+    },
+    {
+      "line": "L13",
+      "cue": "mina",
+      "action": 128.84,
+      "word": 129.61,
+      "lag": 0.77
+    },
+    {
+      "line": "L13",
+      "cue": "minb",
+      "action": 130.45,
+      "word": 130.67,
+      "lag": 0.22
+    },
+    {
+      "line": "L13",
+      "cue": "save",
+      "action": 131.65,
+      "word": 131.83,
+      "lag": 0.18
+    },
+    {
+      "line": "L15",
+      "cue": "card",
+      "action": 138.26,
+      "word": 138.36,
+      "lag": 0.1
+    },
+    {
+      "line": "L15",
+      "cue": "conduct",
+      "action": 139.62,
+      "word": 139.75,
+      "lag": 0.13
+    },
+    {
+      "line": "L15",
+      "cue": "link",
+      "action": 141.3,
+      "word": 141.91,
+      "lag": 0.61
+    },
+    {
+      "line": "L15",
+      "cue": "start",
+      "action": 143.38,
+      "word": 144.05,
+      "lag": 0.67
+    },
+    {
+      "line": "L15",
+      "cue": "live",
+      "action": 144.58,
+      "word": 145.32,
+      "lag": 0.74
+    },
+    {
+      "line": "L16",
+      "cue": "tip1",
+      "action": 146.28,
+      "word": 146.78,
+      "lag": 0.5
+    },
+    {
+      "line": "L16",
+      "cue": "settings",
+      "action": 148.36,
+      "word": 149,
+      "lag": 0.64
+    },
+    {
+      "line": "L16",
+      "cue": "fs",
+      "action": 149.62,
+      "word": 150.36,
+      "lag": 0.74
+    },
+    {
+      "line": "L16",
+      "cue": "tab",
+      "action": 150.68,
+      "word": 151.27,
+      "lag": 0.59
+    },
+    {
+      "line": "L16",
+      "cue": "count",
+      "action": 152.46,
+      "word": 152.89,
+      "lag": 0.43
+    },
+    {
+      "line": "L16",
+      "cue": "threepick",
+      "action": 153.96,
+      "word": 154.06,
+      "lag": 0.1
+    },
+    {
+      "line": "L16",
+      "cue": "copyoff",
+      "action": 156.56,
+      "word": 156.66,
+      "lag": 0.1
+    },
+    {
+      "line": "L16",
+      "cue": "right",
+      "action": 157.7,
+      "word": 157.8,
+      "lag": 0.1
+    },
+    {
+      "line": "L16",
+      "cue": "back",
+      "action": 158.84,
+      "word": 158.94,
+      "lag": 0.1
+    },
+    {
+      "line": "L17",
+      "cue": "results",
+      "action": 160.05,
+      "word": 160.63,
+      "lag": 0.58
+    },
+    {
+      "line": "L17",
+      "cue": "resultview",
+      "action": 161.41,
+      "word": 161.51,
+      "lag": 0.1
+    },
+    {
+      "line": "L17",
+      "cue": "shuffle",
+      "action": 164.61,
+      "word": 165.12,
+      "lag": 0.51
+    },
+    {
+      "line": "L17",
+      "cue": "saveset",
+      "action": 169.01,
+      "word": 169.11,
+      "lag": 0.1
+    },
+    {
+      "line": "L19",
+      "cue": "tip2",
+      "action": 173.34,
+      "word": 173.44,
+      "lag": 0.1
+    },
+    {
+      "line": "L19",
+      "cue": "copy",
+      "action": 175.85,
+      "word": 175.95,
+      "lag": 0.1
+    },
+    {
+      "line": "L19",
+      "cue": "share",
+      "action": 176.7,
+      "word": 177.29,
+      "lag": 0.59
+    },
+    {
+      "line": "L19",
+      "cue": "menu",
+      "action": 179.34,
+      "word": 179.92,
+      "lag": 0.58
+    },
+    {
+      "line": "L19",
+      "cue": "getcode",
+      "action": 180.54,
+      "word": 181.1,
+      "lag": 0.56
+    },
+    {
+      "line": "L19",
+      "cue": "code",
+      "action": 181.82,
+      "word": 182.2,
+      "lag": 0.38
+    },
+    {
+      "line": "L21",
+      "cue": "inputs",
+      "action": 191.15,
+      "word": 191.25,
+      "lag": 0.1
+    },
+    {
+      "line": "L21",
+      "cue": "roll",
+      "action": 192.51,
+      "word": 192.89,
+      "lag": 0.38
+    },
+    {
+      "line": "L21",
+      "cue": "inputsdone",
+      "action": 193.95,
+      "word": 194.17,
+      "lag": 0.22
+    },
+    {
+      "line": "L23",
+      "cue": "join",
+      "action": 204.83,
+      "word": 204.93,
+      "lag": 0.1
+    },
+    {
+      "line": "L23",
+      "cue": "code6",
+      "action": 208.75,
+      "word": 208.9,
+      "lag": 0.15
+    },
+    {
+      "line": "L23",
+      "cue": "details",
+      "action": 210.35,
+      "word": 210.49,
+      "lag": 0.14
+    },
+    {
+      "line": "L23",
+      "cue": "name",
+      "action": 211.67,
+      "word": 211.95,
+      "lag": 0.28
+    },
+    {
+      "line": "L23",
+      "cue": "rollin",
+      "action": 212.56,
+      "word": 212.66,
+      "lag": 0.1
+    },
+    {
+      "line": "L23",
+      "cue": "go",
+      "action": 213.47,
+      "word": 213.57,
+      "lag": 0.1
+    },
+    {
+      "line": "L24",
+      "cue": "exam",
+      "action": 214.24,
+      "word": 214.34,
+      "lag": 0.1
+    },
+    {
+      "line": "L24",
+      "cue": "ans1",
+      "action": 216.96,
+      "word": 217.06,
+      "lag": 0.1
+    },
+    {
+      "line": "L24",
+      "cue": "next1",
+      "action": 218.16,
+      "word": 218.26,
+      "lag": 0.1
+    },
+    {
+      "line": "L25",
+      "cue": "violation",
+      "action": 220.08,
+      "word": 220.18,
+      "lag": 0.1
+    },
+    {
+      "line": "L25",
+      "cue": "warnok",
+      "action": 225.04,
+      "word": 225.45,
+      "lag": 0.41
+    },
+    {
+      "line": "L26",
+      "cue": "rush",
+      "action": 226.58,
+      "word": 226.86,
+      "lag": 0.28
+    },
+    {
+      "line": "L26",
+      "cue": "submit",
+      "action": 228.33,
+      "word": 228.98,
+      "lag": 0.65
+    },
+    {
+      "line": "L26",
+      "cue": "yes",
+      "action": 229.06,
+      "word": 229.36,
+      "lag": 0.3
+    },
+    {
+      "line": "L28",
+      "cue": "dash",
+      "action": 234.14,
+      "word": 234.24,
+      "lag": 0.1
+    },
+    {
+      "line": "L28",
+      "cue": "writing",
+      "action": 235.66,
+      "word": 235.76,
+      "lag": 0.1
+    },
+    {
+      "line": "L28",
+      "cue": "subm",
+      "action": 237.58,
+      "word": 237.68,
+      "lag": 0.1
+    },
+    {
+      "line": "L28",
+      "cue": "panel",
+      "action": 239.16,
+      "word": 239.26,
+      "lag": 0.1
+    },
+    {
+      "line": "L28",
+      "cue": "started",
+      "action": 240.3,
+      "word": 240.54,
+      "lag": 0.24
+    },
+    {
+      "line": "L28",
+      "cue": "writ",
+      "action": 241.02,
+      "word": 241.12,
+      "lag": 0.1
+    },
+    {
+      "line": "L28",
+      "cue": "two",
+      "action": 241.66,
+      "word": 242.1,
+      "lag": 0.44
+    },
+    {
+      "line": "L28",
+      "cue": "zero",
+      "action": 242.38,
+      "word": 243.1,
+      "lag": 0.72
+    },
+    {
+      "line": "L28",
+      "cue": "names",
+      "action": 243.18,
+      "word": 243.92,
+      "lag": 0.74
+    },
+    {
+      "line": "L30",
+      "cue": "score",
+      "action": 251.62,
+      "word": 251.72,
+      "lag": 0.1
+    },
+    {
+      "line": "L30",
+      "cue": "solkey",
+      "action": 254.74,
+      "word": 255.02,
+      "lag": 0.28
+    },
+    {
+      "line": "L31",
+      "cue": "all",
+      "action": 257.75,
+      "word": 257.85,
+      "lag": 0.1
+    },
+    {
+      "line": "L31",
+      "cue": "rank",
+      "action": 260.75,
+      "word": 260.85,
+      "lag": 0.1
+    },
+    {
+      "line": "L31",
+      "cue": "scrolllist",
+      "action": 262.15,
+      "word": 262.25,
+      "lag": 0.1
+    },
+    {
+      "line": "L31",
+      "cue": "export",
+      "action": 263.51,
+      "word": 263.92,
+      "lag": 0.41
+    },
+    {
+      "line": "L32",
+      "cue": "endurl",
+      "action": 272.47,
+      "word": 272.57,
+      "lag": 0.1
+    },
+    {
+      "line": "L32",
+      "cue": "thanks",
+      "action": 274.47,
+      "word": 274.57,
+      "lag": 0.1
+    }
+  ]
+}

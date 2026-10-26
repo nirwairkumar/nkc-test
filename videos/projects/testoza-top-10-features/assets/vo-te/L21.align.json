@@ -1,0 +1,142 @@
+[
+ {
+  "w": "Name",
+  "r": "name",
+  "start": 0.1,
+  "end": 0.461,
+  "score": 0.498
+ },
+ {
+  "w": "default",
+  "r": "default",
+  "start": 0.481,
+  "end": 0.922,
+  "score": 0.562
+ },
+ {
+  "w": "గా",
+  "r": "gaa",
+  "start": 0.942,
+  "end": 1.022,
+  "score": 0.502
+ },
+ {
+  "w": "అడుగుతుంది.",
+  "r": "addugutumdi",
+  "start": 1.042,
+  "end": 1.483,
+  "score": 0.961
+ },
+ {
+  "w": "Roll",
+  "r": "roll",
+  "start": 2.085,
+  "end": 2.265,
+  "score": 0.498
+ },
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 2.345,
+  "end": 2.626,
+  "score": 0.696
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 2.826,
+  "end": 2.966,
+  "score": 0.749
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 3.027,
+  "end": 3.407,
+  "score": 0.926
+ },
+ {
+  "w": "లేదా",
+  "r": "leedaa",
+  "start": 3.868,
+  "end": 4.169,
+  "score": 0.819
+ },
+ {
+  "w": "ఇంకేదైనా",
+  "r": "imkeedainaa",
+  "start": 4.229,
+  "end": 4.871,
+  "score": 0.911
+ },
+ {
+  "w": "batch,",
+  "r": "batch",
+  "start": 5.251,
+  "end": 5.652,
+  "score": 0.507
+ },
+ {
+  "w": "school,",
+  "r": "school",
+  "start": 5.993,
+  "end": 6.374,
+  "score": 0.333
+ },
+ {
+  "w": "phone.",
+  "r": "phone",
+  "start": 6.855,
+  "end": 7.216,
+  "score": 0.797
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 7.737,
+  "end": 7.997,
+  "score": 0.711
+ },
+ {
+  "w": "చేసే",
+  "r": "ceesee",
+  "start": 8.038,
+  "end": 8.298,
+  "score": 0.963
+ },
+ {
+  "w": "ముందు",
+  "r": "mumdu",
+  "start": 8.318,
+  "end": 8.519,
+  "score": 0.995
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 8.619,
+  "end": 9.14,
+  "score": 0.563
+ },
+ {
+  "w": "ఇది",
+  "r": "idi",
+  "start": 9.16,
+  "end": 9.26,
+  "score": 0.771
+ },
+ {
+  "w": "fill",
+  "r": "fill",
+  "start": 9.32,
+  "end": 9.501,
+  "score": 0.529
+ },
+ {
+  "w": "చేస్తారు.",
+  "r": "ceestaaru",
+  "start": 9.561,
+  "end": 9.962,
+  "score": 0.988
+ }
+]

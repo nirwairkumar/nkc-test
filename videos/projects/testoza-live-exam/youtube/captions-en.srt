@@ -1,0 +1,655 @@
+1
+00:00:00,530 --> 00:00:01,730
+Twenty-seven students.
+
+2
+00:00:01,730 --> 00:00:02,850
+One exam link.
+
+3
+00:00:02,850 --> 00:00:04,610
+Anti-cheating switched on.
+
+4
+00:00:04,610 --> 00:00:07,090
+And every result back on your screen
+
+5
+00:00:07,090 --> 00:00:08,290
+automatically.
+
+6
+00:00:08,290 --> 00:00:11,090
+Let's run a real online exam on TestoZa,
+
+7
+00:00:11,090 --> 00:00:12,116
+start to finish.
+
+8
+00:00:14,466 --> 00:00:15,426
+Here's my test
+
+9
+00:00:15,426 --> 00:00:19,106
+the JEE Main mini mock we built in the last video.
+
+10
+00:00:19,106 --> 00:00:22,504
+To run it as a real exam, click Conduct exam.
+
+11
+00:00:22,674 --> 00:00:26,194
+TestoZa creates a private, secure link just for this exam.
+
+12
+00:00:26,194 --> 00:00:27,794
+It never shows up publicly
+
+13
+00:00:27,794 --> 00:00:29,874
+only people with this link can open it.
+
+14
+00:00:29,874 --> 00:00:30,834
+Start Conducting…
+
+15
+00:00:30,834 --> 00:00:32,264
+and your exam is live.
+
+16
+00:00:32,434 --> 00:00:33,794
+See this little guide?
+
+17
+00:00:33,794 --> 00:00:35,874
+TestoZa walks you through it.
+
+18
+00:00:35,874 --> 00:00:38,514
+Step one: set up the exam room.
+
+19
+00:00:38,514 --> 00:00:40,041
+Let's open Settings.
+
+20
+00:00:40,211 --> 00:00:41,811
+This is your exam room.
+
+21
+00:00:41,811 --> 00:00:44,851
+Three tabs: Proctoring, Access, and Results.
+
+22
+00:00:44,851 --> 00:00:47,971
+I'll go through every switch, the way I'd set it up for
+
+23
+00:00:47,971 --> 00:00:48,846
+a real exam.
+
+24
+00:00:49,016 --> 00:00:49,816
+First
+
+25
+00:00:49,816 --> 00:00:51,336
+Force Full Screen.
+
+26
+00:00:51,336 --> 00:00:54,696
+The exam opens full screen, and if a student leaves it,
+
+27
+00:00:54,696 --> 00:00:56,776
+that's counted as a violation.
+
+28
+00:00:56,776 --> 00:00:59,335
+For any serious test, switch this on.
+
+29
+00:00:59,505 --> 00:01:02,545
+Next, Tab and App Switch Detection.
+
+30
+00:01:02,545 --> 00:01:05,185
+Opening another tab, jumping to WhatsApp,
+
+31
+00:01:05,185 --> 00:01:06,545
+minimising the browser
+
+32
+00:01:06,545 --> 00:01:08,484
+TestoZa catches all of it.
+
+33
+00:01:08,894 --> 00:01:11,694
+Now decide what happens when they do.
+
+34
+00:01:11,694 --> 00:01:12,814
+Warn only
+
+35
+00:01:12,814 --> 00:01:14,734
+fine for a practice test.
+
+36
+00:01:14,734 --> 00:01:15,614
+Strict
+
+37
+00:01:15,614 --> 00:01:18,334
+the test submits on the very first switch.
+
+38
+00:01:18,334 --> 00:01:21,294
+Or my favourite: give a few warnings,
+
+39
+00:01:21,294 --> 00:01:22,414
+then submit.
+
+40
+00:01:22,414 --> 00:01:23,614
+Three is fair.
+
+41
+00:01:23,614 --> 00:01:26,254
+One notification can pop up by accident
+
+42
+00:01:26,254 --> 00:01:27,774
+three times is a habit.
+
+43
+00:01:27,774 --> 00:01:30,766
+And full-screen exits count toward the same limit.
+
+44
+00:01:30,936 --> 00:01:32,456
+Disable Copy-Paste
+
+45
+00:01:32,456 --> 00:01:36,136
+so nobody pastes your question into Google or ChatGPT.
+
+46
+00:01:36,136 --> 00:01:37,656
+Disable Right Click
+
+47
+00:01:37,656 --> 00:01:40,565
+no menu, no quick search, no translate.
+
+48
+00:01:40,815 --> 00:01:43,695
+Block Back Button stops a student leaving the exam by
+
+49
+00:01:43,695 --> 00:01:44,255
+accident.
+
+50
+00:01:44,255 --> 00:01:46,655
+And Disable Exit Button hides the exit,
+
+51
+00:01:46,655 --> 00:01:48,535
+so nobody walks out halfway.
+
+52
+00:01:48,705 --> 00:01:51,162
+Second tab: Access and Control.
+
+53
+00:01:51,412 --> 00:01:54,292
+Scheduled Access opens and closes the exam at times you
+
+54
+00:01:54,292 --> 00:01:54,852
+choose
+
+55
+00:01:54,852 --> 00:01:57,412
+perfect when the whole batch must start together.
+
+56
+00:01:57,412 --> 00:01:59,619
+We're starting right now, so I'll leave it off.
+
+57
+00:01:59,869 --> 00:02:02,589
+Assign to Class keeps this exam's results with the right
+
+58
+00:02:02,589 --> 00:02:03,309
+batch.
+
+59
+00:02:03,309 --> 00:02:04,269
+Attempt Limit
+
+60
+00:02:04,269 --> 00:02:06,109
+one exam, one attempt.
+
+61
+00:02:06,109 --> 00:02:08,509
+No retakes after seeing the paper.
+
+62
+00:02:08,509 --> 00:02:11,789
+And Require Candidate Login stays off for a class test.
+
+63
+00:02:11,789 --> 00:02:14,429
+Students just open the link, type their name,
+
+64
+00:02:14,429 --> 00:02:15,309
+and start.
+
+65
+00:02:15,309 --> 00:02:16,029
+No accounts.
+
+66
+00:02:16,029 --> 00:02:16,840
+No app.
+
+67
+00:02:17,010 --> 00:02:19,129
+Last tab: Results and Timing.
+
+68
+00:02:19,379 --> 00:02:20,659
+Result Visibility
+
+69
+00:02:20,659 --> 00:02:24,099
+on, and students see their score and analysis the moment
+
+70
+00:02:24,099 --> 00:02:24,979
+they submit.
+
+71
+00:02:24,979 --> 00:02:27,571
+Turn it off if you'd rather announce results later.
+
+72
+00:02:27,741 --> 00:02:29,661
+Strict Timer runs on our server.
+
+73
+00:02:29,661 --> 00:02:31,581
+Refresh the page, close the browser
+
+74
+00:02:31,581 --> 00:02:33,181
+the clock keeps running.
+
+75
+00:02:33,181 --> 00:02:34,897
+Always on, for real exams.
+
+76
+00:02:35,067 --> 00:02:38,427
+Allow Flexible Timer lets students switch the timer off.
+
+77
+00:02:38,427 --> 00:02:39,547
+Great for practice
+
+78
+00:02:39,547 --> 00:02:41,547
+and TestoZa even warns you
+
+79
+00:02:41,547 --> 00:02:43,563
+but for an exam, keep it off.
+
+80
+00:02:43,733 --> 00:02:47,493
+Randomize Questions gives every student a different order
+
+81
+00:02:47,493 --> 00:02:49,965
+so the person sitting next to them can't help.
+
+82
+00:02:50,135 --> 00:02:52,855
+And finally, the exam screen itself.
+
+83
+00:02:52,855 --> 00:02:56,535
+Standard Mode looks just like the JEE and NEET computer-based
+
+84
+00:02:56,535 --> 00:02:59,175
+test, with a question palette on the right.
+
+85
+00:02:59,175 --> 00:03:02,455
+Modern Mode is a clean, one-card-at-a-time layout.
+
+86
+00:03:02,455 --> 00:03:04,898
+For exam practice, I keep Standard.
+
+87
+00:03:05,228 --> 00:03:06,508
+Save Settings…
+
+88
+00:03:06,508 --> 00:03:07,388
+and look
+
+89
+00:03:07,388 --> 00:03:10,028
+the "Anti-cheating is off" warning is gone.
+
+90
+00:03:10,028 --> 00:03:12,034
+Your exam room is locked.
+
+91
+00:03:12,204 --> 00:03:12,604
+Now
+
+92
+00:03:12,604 --> 00:03:13,884
+who's writing?
+
+93
+00:03:13,884 --> 00:03:15,804
+These are your candidate inputs.
+
+94
+00:03:15,804 --> 00:03:17,164
+Name is already there.
+
+95
+00:03:17,164 --> 00:03:20,044
+Tap Roll No, and every result comes with a name and a
+
+96
+00:03:20,044 --> 00:03:20,781
+roll number.
+
+97
+00:03:20,951 --> 00:03:22,551
+Step two: send it.
+
+98
+00:03:22,551 --> 00:03:23,431
+Copy the link…
+
+99
+00:03:23,431 --> 00:03:25,942
+or share it straight to your class WhatsApp group.
+
+100
+00:03:27,252 --> 00:03:29,012
+TestoZa writes the message for you
+
+101
+00:03:29,012 --> 00:03:33,320
+exam name, time, the link, and simple instructions.
+
+102
+00:03:33,320 --> 00:03:33,914
+Send.
+
+103
+00:03:35,264 --> 00:03:37,664
+Not everyone's on WhatsApp
+
+104
+00:03:37,664 --> 00:03:40,224
+and sometimes you're standing in a classroom.
+
+105
+00:03:40,224 --> 00:03:42,784
+Open the menu, get a join code…
+
+106
+00:03:42,784 --> 00:03:43,904
+and there it is.
+
+107
+00:03:43,904 --> 00:03:45,077
+Six digits.
+
+108
+00:03:46,264 --> 00:03:49,464
+Write it on the board: testoza.com slash join…
+
+109
+00:03:49,464 --> 00:03:50,269
+and the code.
+
+110
+00:03:52,279 --> 00:03:53,879
+Now, the student's side.
+
+111
+00:03:53,879 --> 00:03:55,799
+The message lands in the class group.
+
+112
+00:03:55,799 --> 00:03:56,719
+One tap…
+
+113
+00:03:57,719 --> 00:04:00,039
+and the exam opens right in the browser.
+
+114
+00:04:00,039 --> 00:04:01,799
+No app, no sign-up.
+
+115
+00:04:01,799 --> 00:04:04,439
+They see the paper, the time and the marks…
+
+116
+00:04:04,439 --> 00:04:06,119
+type their name and roll number…
+
+117
+00:04:06,119 --> 00:04:07,207
+and tap Start.
+
+118
+00:04:09,419 --> 00:04:10,299
+No phone?
+
+119
+00:04:10,299 --> 00:04:11,099
+No problem.
+
+120
+00:04:11,099 --> 00:04:12,059
+Any browser
+
+121
+00:04:12,059 --> 00:04:14,219
+testoza.com slash join
+
+122
+00:04:14,219 --> 00:04:15,979
+type the six digits from the board…
+
+123
+00:04:15,979 --> 00:04:16,968
+and they're in.
+
+124
+00:04:17,138 --> 00:04:18,898
+Same exam, same rules.
+
+125
+00:04:18,898 --> 00:04:20,338
+Name, roll number…
+
+126
+00:04:20,338 --> 00:04:21,218
+Start.
+
+127
+00:04:21,218 --> 00:04:23,618
+Full screen kicks in, the timer starts,
+
+128
+00:04:23,618 --> 00:04:25,841
+and they answer like any computer-based test.
+
+129
+00:04:26,011 --> 00:04:28,171
+And if they try to sneak into another tab?
+
+130
+00:04:28,171 --> 00:04:29,371
+Warning one of three.
+
+131
+00:04:29,371 --> 00:04:30,651
+TestoZa saw it
+
+132
+00:04:30,651 --> 00:04:31,710
+and counted it.
+
+133
+00:04:31,880 --> 00:04:32,840
+When they're done
+
+134
+00:04:32,840 --> 00:04:33,560
+Submit.
+
+135
+00:04:33,560 --> 00:04:36,982
+Result Visibility is on, so they see their score instantly.
+
+136
+00:04:37,986 --> 00:04:39,906
+Meanwhile, on your dashboard
+
+137
+00:04:39,906 --> 00:04:41,986
+twenty-five students writing right now,
+
+138
+00:04:41,986 --> 00:04:43,506
+two already submitted.
+
+139
+00:04:43,506 --> 00:04:45,944
+You're watching the whole exam, live.
+
+140
+00:04:46,114 --> 00:04:48,674
+Open Results: twenty-seven started,
+
+141
+00:04:48,674 --> 00:04:50,914
+twenty-five writing, two submitted,
+
+142
+00:04:50,914 --> 00:04:52,194
+zero dropped.
+
+143
+00:04:52,194 --> 00:04:54,434
+Every student, by name and roll number,
+
+144
+00:04:54,434 --> 00:04:55,522
+as it happens.
+
+145
+00:04:55,692 --> 00:04:57,132
+When the exam ends
+
+146
+00:04:57,132 --> 00:04:59,532
+all twenty-seven submitted, scored,
+
+147
+00:04:59,532 --> 00:05:00,572
+and ranked.
+
+148
+00:05:00,572 --> 00:05:01,852
+Automatically.
+
+149
+00:05:01,852 --> 00:05:03,372
+No checking copies.
+
+150
+00:05:03,372 --> 00:05:04,732
+No totalling marks.
+
+151
+00:05:04,732 --> 00:05:07,219
+And one click exports everything to Excel.
+
+152
+00:05:08,219 --> 00:05:09,739
+That's TestoZa.
+
+153
+00:05:09,739 --> 00:05:11,659
+A paper that used to mean printing,
+
+154
+00:05:11,659 --> 00:05:14,139
+invigilating, and a weekend of checking
+
+155
+00:05:14,139 --> 00:05:17,207
+now runs on the phones your students already carry.
+
+156
+00:05:20,999 --> 00:05:23,319
+And exams are going digital.
+
+157
+00:05:23,319 --> 00:05:27,079
+The Education Ministry has announced that NEET-UG is set
+
+158
+00:05:27,079 --> 00:05:30,279
+to move to computer-based testing from 2027.
+
+159
+00:05:30,279 --> 00:05:33,094
+Let your students practise the way they'll be tested.
+
+160
+00:05:34,744 --> 00:05:38,184
+Make your test, conduct it free, and see every result
+
+161
+00:05:38,184 --> 00:05:38,824
+in minutes
+
+162
+00:05:38,824 --> 00:05:40,744
+at testoza.com.
+
+163
+00:05:40,744 --> 00:05:41,864
+Thanks for watching
+
+164
+00:05:41,864 --> 00:05:44,244
+subscribe, and I'll see you in the next one.

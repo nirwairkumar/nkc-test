@@ -1,0 +1,122 @@
+[
+  {
+    "id": "w0",
+    "text": "Opened",
+    "start": 0,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "results,",
+    "start": 0.56,
+    "end": 1.2
+  },
+  {
+    "id": "w2",
+    "text": "27",
+    "start": 1.2,
+    "end": 1.76
+  },
+  {
+    "id": "w3",
+    "text": "started,",
+    "start": 1.92,
+    "end": 2.56
+  },
+  {
+    "id": "w4",
+    "text": "25",
+    "start": 2.56,
+    "end": 2.96
+  },
+  {
+    "id": "w5",
+    "text": "writing,",
+    "start": 3.2,
+    "end": 3.84
+  },
+  {
+    "id": "w6",
+    "text": "2",
+    "start": 3.84,
+    "end": 4.16
+  },
+  {
+    "id": "w7",
+    "text": "submitted,",
+    "start": 4.16,
+    "end": 4.8
+  },
+  {
+    "id": "w8",
+    "text": "0",
+    "start": 4.8,
+    "end": 5.2
+  },
+  {
+    "id": "w9",
+    "text": "dropped.",
+    "start": 5.2,
+    "end": 6.08
+  },
+  {
+    "id": "w10",
+    "text": "Every",
+    "start": 6.08,
+    "end": 6.48
+  },
+  {
+    "id": "w11",
+    "text": "student",
+    "start": 6.48,
+    "end": 6.88
+  },
+  {
+    "id": "w12",
+    "text": "by",
+    "start": 6.88,
+    "end": 7.12
+  },
+  {
+    "id": "w13",
+    "text": "name",
+    "start": 7.12,
+    "end": 7.44
+  },
+  {
+    "id": "w14",
+    "text": "and",
+    "start": 7.44,
+    "end": 7.6
+  },
+  {
+    "id": "w15",
+    "text": "role",
+    "start": 7.6,
+    "end": 7.92
+  },
+  {
+    "id": "w16",
+    "text": "number",
+    "start": 7.92,
+    "end": 8.32
+  },
+  {
+    "id": "w17",
+    "text": "as",
+    "start": 8.32,
+    "end": 8.48
+  },
+  {
+    "id": "w18",
+    "text": "it",
+    "start": 8.48,
+    "end": 8.64
+  },
+  {
+    "id": "w19",
+    "text": "happens.",
+    "start": 8.64,
+    "end": 9.12
+  }
+]

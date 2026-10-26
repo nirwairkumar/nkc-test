@@ -1,0 +1,177 @@
+[
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 0.02,
+  "end": 0.2,
+  "score": 0.594
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.26,
+  "end": 0.621,
+  "score": 0.589
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.681,
+  "end": 0.981,
+  "score": 0.6
+ },
+ {
+  "w": "PDF-ஆ",
+  "r": "pdfaa",
+  "start": 1.122,
+  "end": 1.682,
+  "score": 0.793
+ },
+ {
+  "w": "இருக்கா,",
+  "r": "irukkaa",
+  "start": 1.702,
+  "end": 2.003,
+  "score": 0.454
+ },
+ {
+  "w": "இல்ல",
+  "r": "illa",
+  "start": 2.123,
+  "end": 2.283,
+  "score": 0.975
+ },
+ {
+  "w": "photos-ஆ?",
+  "r": "photosaa",
+  "start": 2.343,
+  "end": 2.864,
+  "score": 0.929
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 3.265,
+  "end": 3.685,
+  "score": 0.494
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 3.725,
+  "end": 3.846,
+  "score": 0.401
+ },
+ {
+  "w": "AI-ஐ",
+  "r": "aiai",
+  "start": 4.146,
+  "end": 4.607,
+  "score": 0.463
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 4.647,
+  "end": 4.827,
+  "score": 0.713
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 4.887,
+  "end": 5.268,
+  "score": 0.753
+ },
+ {
+  "w": "file-ஐ",
+  "r": "fileai",
+  "start": 5.428,
+  "end": 5.828,
+  "score": 0.361
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 5.828,
+  "end": 6.089,
+  "score": 0.577
+ },
+ {
+  "w": "பண்ணுங்க",
+  "r": "pannungka",
+  "start": 6.089,
+  "end": 6.489,
+  "score": 0.744
+ },
+ {
+  "w": "மூணு",
+  "r": "muunu",
+  "start": 6.69,
+  "end": 6.95,
+  "score": 0.878
+ },
+ {
+  "w": "page",
+  "r": "page",
+  "start": 7.01,
+  "end": 7.13,
+  "score": 0.491
+ },
+ {
+  "w": "PDF,",
+  "r": "pdf",
+  "start": 7.271,
+  "end": 7.671,
+  "score": 0.668
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 7.912,
+  "end": 8.232,
+  "score": 0.513
+ },
+ {
+  "w": "key-யோட",
+  "r": "keyyooda",
+  "start": 8.292,
+  "end": 8.673,
+  "score": 0.671
+ },
+ {
+  "w": "அப்புறம்",
+  "r": "appuram",
+  "start": 9.073,
+  "end": 9.354,
+  "score": 0.436
+ },
+ {
+  "w": "Extract",
+  "r": "extract",
+  "start": 9.474,
+  "end": 9.874,
+  "score": 0.627
+ },
+ {
+  "w": "Questions-ஐ",
+  "r": "questionsai",
+  "start": 9.894,
+  "end": 10.395,
+  "score": 0.473
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 10.415,
+  "end": 10.575,
+  "score": 0.699
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 10.615,
+  "end": 10.956,
+  "score": 0.687
+ }
+]

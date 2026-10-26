@@ -1,0 +1,142 @@
+[
+ {
+  "w": "ഇവയാണ്",
+  "r": "ivayaann",
+  "start": 0.04,
+  "end": 0.461,
+  "score": 0.896
+ },
+ {
+  "w": "പത്ത്",
+  "r": "patt",
+  "start": 0.662,
+  "end": 0.882,
+  "score": 0.796
+ },
+ {
+  "w": "features",
+  "r": "features",
+  "start": 0.982,
+  "end": 1.423,
+  "score": 0.158
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 1.804,
+  "end": 2.185,
+  "score": 0.368
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 2.225,
+  "end": 2.466,
+  "score": 0.623
+ },
+ {
+  "w": "മുതൽ",
+  "r": "mutala",
+  "start": 2.506,
+  "end": 2.767,
+  "score": 0.92
+ },
+ {
+  "w": "ranked",
+  "r": "ranked",
+  "start": 2.887,
+  "end": 3.328,
+  "score": 0.568
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 3.448,
+  "end": 3.849,
+  "score": 0.632
+ },
+ {
+  "w": "വരെ,",
+  "r": "vare",
+  "start": 3.889,
+  "end": 4.07,
+  "score": 0.936
+ },
+ {
+  "w": "എല്ലാം",
+  "r": "ellaam",
+  "start": 4.41,
+  "end": 4.731,
+  "score": 0.943
+ },
+ {
+  "w": "ഒരിടത്ത്.",
+  "r": "orittatt",
+  "start": 4.872,
+  "end": 5.854,
+  "score": 0.962
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 5.874,
+  "end": 6.315,
+  "score": 0.681
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 6.375,
+  "end": 6.556,
+  "score": 0.703
+ },
+ {
+  "w": "com-ൽ",
+  "r": "comla",
+  "start": 6.656,
+  "end": 6.916,
+  "score": 0.683
+ },
+ {
+  "w": "try",
+  "r": "try",
+  "start": 6.997,
+  "end": 7.177,
+  "score": 0.729
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 7.277,
+  "end": 7.558,
+  "score": 0.853
+ },
+ {
+  "w": "ഇതുപോലുള്ള",
+  "r": "itupoolulllla",
+  "start": 7.879,
+  "end": 8.38,
+  "score": 0.802
+ },
+ {
+  "w": "videos-ന്",
+  "r": "videosn",
+  "start": 8.38,
+  "end": 8.801,
+  "score": 0.842
+ },
+ {
+  "w": "subscribe",
+  "r": "subscribe",
+  "start": 8.921,
+  "end": 9.442,
+  "score": 0.621
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 9.442,
+  "end": 9.703,
+  "score": 0.839
+ }
+]

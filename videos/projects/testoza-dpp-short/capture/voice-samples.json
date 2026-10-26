@@ -1,0 +1,12 @@
+{
+  "lang": "en",
+  "out_dir": "samples",
+  "style": "You are a bright, friendly young Indian woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak smooth, clear Indian English: warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy.",
+  "lines": [
+    { "id": "laomedeia", "voice": "Laomedeia", "text": "JEE, NEET, SSC, Banking... every serious aspirant has a stack of DPPs. So why not turn today's DPP into a real online test?" },
+    { "id": "leda", "voice": "Leda", "text": "JEE, NEET, SSC, Banking... every serious aspirant has a stack of DPPs. So why not turn today's DPP into a real online test?" },
+    { "id": "zephyr", "voice": "Zephyr", "text": "JEE, NEET, SSC, Banking... every serious aspirant has a stack of DPPs. So why not turn today's DPP into a real online test?" },
+    { "id": "autonoe", "voice": "Autonoe", "text": "JEE, NEET, SSC, Banking... every serious aspirant has a stack of DPPs. So why not turn today's DPP into a real online test?" },
+    { "id": "despina", "voice": "Despina", "text": "JEE, NEET, SSC, Banking... every serious aspirant has a stack of DPPs. So why not turn today's DPP into a real online test?" }
+  ]
+}

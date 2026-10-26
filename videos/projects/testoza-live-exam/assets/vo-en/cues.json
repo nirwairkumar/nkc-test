@@ -1,0 +1,463 @@
+{
+  "L01": {
+    "duration": 11.51575,
+    "cues": {
+      "m1": 0.08,
+      "m2": 1.28,
+      "m3": 2.4,
+      "m4": 4.16,
+      "title": 7.84
+    },
+    "dist": 4,
+    "words": 29,
+    "missing": [
+      "twenty",
+      "seven",
+      "switched",
+      "testoza"
+    ]
+  },
+  "L02": {
+    "duration": 7.888333,
+    "cues": {
+      "card": 0.96,
+      "conduct": 6.48
+    },
+    "dist": 1,
+    "words": 24,
+    "missing": [
+      "jee"
+    ]
+  },
+  "L03": {
+    "duration": 9.439583,
+    "cues": {
+      "link": 0.96,
+      "start": 7.2,
+      "live": 8.16
+    },
+    "dist": 0,
+    "words": 30,
+    "missing": []
+  },
+  "L04": {
+    "duration": 7.457083,
+    "cues": {
+      "coach": 1.36,
+      "settings": 6.08
+    },
+    "dist": 2,
+    "words": 19,
+    "missing": [
+      "testoza",
+      "one"
+    ]
+  },
+  "L05": {
+    "duration": 8.485042,
+    "cues": {
+      "t1": 2.4,
+      "t2": 3.36,
+      "t3": 3.76
+    },
+    "dist": 0,
+    "words": 26,
+    "missing": []
+  },
+  "L06": {
+    "duration": 10.169583,
+    "cues": {
+      "fs": 0.8
+    },
+    "dist": 1,
+    "words": 27,
+    "missing": []
+  },
+  "L07": {
+    "duration": 8.828833,
+    "cues": {
+      "tab": 0.72,
+      "caught": 7.04
+    },
+    "dist": 2,
+    "words": 20,
+    "missing": [
+      "minimising",
+      "testoza"
+    ]
+  },
+  "L08": {
+    "duration": 21.96225,
+    "cues": {
+      "warn": 3.04,
+      "strict": 6.08,
+      "count": 11.2,
+      "three": 13.76
+    },
+    "dist": 2,
+    "words": 56,
+    "missing": [
+      "favourite",
+      "toward"
+    ]
+  },
+  "L09": {
+    "duration": 9.478292,
+    "cues": {
+      "copy": 0,
+      "right": 5.2
+    },
+    "dist": 2,
+    "words": 22,
+    "missing": [
+      "chatgpt"
+    ]
+  },
+  "L10": {
+    "duration": 7.650042,
+    "cues": {
+      "back": 0.08,
+      "exit": 3.84
+    },
+    "dist": 0,
+    "words": 23,
+    "missing": []
+  },
+  "L11": {
+    "duration": 2.307,
+    "cues": {
+      "access": 1.12
+    },
+    "dist": 0,
+    "words": 5,
+    "missing": []
+  },
+  "L12": {
+    "duration": 8.136792,
+    "cues": {
+      "sched": 0.08,
+      "pickers": 3.52,
+      "schedoff": 6.08
+    },
+    "dist": 2,
+    "words": 28,
+    "missing": [
+      "were"
+    ]
+  },
+  "L13": {
+    "duration": 16.901417,
+    "cues": {
+      "class": 0.08,
+      "attempt": 3.52,
+      "single": 6.32,
+      "login": 8.96
+    },
+    "dist": 1,
+    "words": 47,
+    "missing": [
+      "assign"
+    ]
+  },
+  "L14": {
+    "duration": 1.969208,
+    "cues": {
+      "results": 0.88
+    },
+    "dist": 1,
+    "words": 5,
+    "missing": []
+  },
+  "L15": {
+    "duration": 8.121417,
+    "cues": {
+      "vis": 0.08
+    },
+    "dist": 0,
+    "words": 23,
+    "missing": []
+  },
+  "L16": {
+    "duration": 7.005917,
+    "cues": {
+      "strictt": 0
+    },
+    "dist": 1,
+    "words": 21,
+    "missing": [
+      "our"
+    ]
+  },
+  "L17": {
+    "duration": 8.346292,
+    "cues": {
+      "flex": 0,
+      "flexwarn": 4.48,
+      "flexoff": 6.48
+    },
+    "dist": 1,
+    "words": 24,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L18": {
+    "duration": 6.082167,
+    "cues": {
+      "shuffle": 0
+    },
+    "dist": 2,
+    "words": 17,
+    "missing": [
+      "randomize",
+      "every"
+    ]
+  },
+  "L19": {
+    "duration": 14.612625,
+    "cues": {
+      "layout": 0.88,
+      "std": 2.72,
+      "modern": 9.04,
+      "stdpick": 12.32
+    },
+    "dist": 3,
+    "words": 42,
+    "missing": [
+      "jee",
+      "neet",
+      "a"
+    ]
+  },
+  "L20": {
+    "duration": 6.816375,
+    "cues": {
+      "save": 0.16,
+      "chip": 2.32
+    },
+    "dist": 0,
+    "words": 17,
+    "missing": []
+  },
+  "L21": {
+    "duration": 8.427292,
+    "cues": {
+      "inputs": 1.68,
+      "roll": 4.96
+    },
+    "dist": 1,
+    "words": 26,
+    "missing": [
+      "no"
+    ]
+  },
+  "L22": {
+    "duration": 4.840875,
+    "cues": {
+      "coach2": 0,
+      "copy2": 1.6,
+      "share": 2.48
+    },
+    "dist": 0,
+    "words": 16,
+    "missing": []
+  },
+  "L23": {
+    "duration": 6.831667,
+    "cues": {
+      "wa": 0.32,
+      "walines": 2.08,
+      "send": 6.832
+    },
+    "dist": 3,
+    "words": 15,
+    "missing": [
+      "testoza",
+      "send"
+    ]
+  },
+  "L24": {
+    "duration": 9.662417,
+    "cues": {
+      "menu": 4.96,
+      "getcode": 6.08,
+      "code": 7.52
+    },
+    "dist": 0,
+    "words": 24,
+    "missing": []
+  },
+  "L25": {
+    "duration": 3.855292,
+    "cues": {
+      "board": 0,
+      "url": 1.12,
+      "digits": 3.2
+    },
+    "dist": 1,
+    "words": 11,
+    "missing": [
+      "testozacom"
+    ]
+  },
+  "L26": {
+    "duration": 4.449917,
+    "cues": {
+      "msg": 1.76,
+      "tap": 3.68
+    },
+    "dist": 1,
+    "words": 13,
+    "missing": [
+      "students"
+    ]
+  },
+  "L27": {
+    "duration": 9.337375,
+    "cues": {
+      "intro": 0,
+      "scrollp": 4.08,
+      "name": 6.72,
+      "go": 8.4
+    },
+    "dist": 1,
+    "words": 31,
+    "missing": [
+      "the"
+    ]
+  },
+  "L28": {
+    "duration": 7.398708,
+    "cues": {
+      "join": 1.68,
+      "typecode": 4.8,
+      "cont": 6.56
+    },
+    "dist": 3,
+    "words": 19,
+    "missing": [
+      "testozacom",
+      "theyre",
+      "in"
+    ]
+  },
+  "L29": {
+    "duration": 8.553458,
+    "cues": {
+      "fill": 1.76,
+      "start2": 3.2,
+      "fsgo": 4.08,
+      "answer": 6.48
+    },
+    "dist": 1,
+    "words": 23,
+    "missing": [
+      "they"
+    ]
+  },
+  "L30": {
+    "duration": 5.548542,
+    "cues": {
+      "violation": 2.16
+    },
+    "dist": 1,
+    "words": 19,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L31": {
+    "duration": 4.951625,
+    "cues": {
+      "submit": 0,
+      "score": 1.68
+    },
+    "dist": 2,
+    "words": 14,
+    "missing": [
+      "theyre"
+    ]
+  },
+  "L32": {
+    "duration": 7.808167,
+    "cues": {
+      "dash": 0.72,
+      "writing": 1.92,
+      "subm": 4
+    },
+    "dist": 0,
+    "words": 19,
+    "missing": []
+  },
+  "L33": {
+    "duration": 9.257708,
+    "cues": {
+      "panel": 0,
+      "started": 1.2,
+      "writ": 2.56,
+      "two": 3.84,
+      "zero": 4.8,
+      "names": 6.88
+    },
+    "dist": 8,
+    "words": 22,
+    "missing": [
+      "open",
+      "twenty",
+      "seven",
+      "twenty",
+      "five",
+      "two",
+      "zero",
+      "roll"
+    ]
+  },
+  "L34": {
+    "duration": 11.377458,
+    "cues": {
+      "later": 0,
+      "all": 1.44,
+      "export": 9.04
+    },
+    "dist": 1,
+    "words": 25,
+    "missing": [
+      "totalling"
+    ]
+  },
+  "L35": {
+    "duration": 8.83725,
+    "cues": {
+      "landing": 0,
+      "phones": 5.92
+    },
+    "dist": 1,
+    "words": 24,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L36": {
+    "duration": 12.02425,
+    "cues": {
+      "neet": 2.4
+    },
+    "dist": 1,
+    "words": 32,
+    "missing": [
+      "practise"
+    ]
+  },
+  "L37": {
+    "duration": 9.350583,
+    "cues": {
+      "endurl": 4.08,
+      "thanks": 6
+    },
+    "dist": 1,
+    "words": 26,
+    "missing": [
+      "testozacom"
+    ]
+  }
+}

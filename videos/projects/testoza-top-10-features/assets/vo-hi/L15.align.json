@@ -1,0 +1,142 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.0,
+  "end": 0.2,
+  "score": 0.686
+ },
+ {
+  "w": "तैयार",
+  "r": "taiyaar",
+  "start": 0.241,
+  "end": 0.521,
+  "score": 0.927
+ },
+ {
+  "w": "होते",
+  "r": "hote",
+  "start": 0.561,
+  "end": 0.762,
+  "score": 0.993
+ },
+ {
+  "w": "ही,",
+  "r": "hii",
+  "start": 0.802,
+  "end": 0.902,
+  "score": 0.996
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 1.103,
+  "end": 1.463,
+  "score": 0.361
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.483,
+  "end": 1.744,
+  "score": 0.666
+ },
+ {
+  "w": "दबाइए।",
+  "r": "dabaaie",
+  "start": 1.784,
+  "end": 2.105,
+  "score": 0.91
+ },
+ {
+  "w": "आपको",
+  "r": "aapako",
+  "start": 2.406,
+  "end": 2.626,
+  "score": 0.965
+ },
+ {
+  "w": "मिलता",
+  "r": "milataa",
+  "start": 2.686,
+  "end": 2.967,
+  "score": 0.991
+ },
+ {
+  "w": "है",
+  "r": "hai",
+  "start": 2.967,
+  "end": 3.027,
+  "score": 0.051
+ },
+ {
+  "w": "एक",
+  "r": "ek",
+  "start": 3.027,
+  "end": 3.087,
+  "score": 0.977
+ },
+ {
+  "w": "secure",
+  "r": "secure",
+  "start": 3.167,
+  "end": 3.608,
+  "score": 0.567
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 3.628,
+  "end": 3.869,
+  "score": 0.495
+ },
+ {
+  "w": "link।",
+  "r": "link",
+  "start": 3.929,
+  "end": 4.089,
+  "score": 0.532
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 4.37,
+  "end": 4.671,
+  "score": 0.962
+ },
+ {
+  "w": "conducting,",
+  "r": "conducting",
+  "start": 4.711,
+  "end": 5.192,
+  "score": 0.437
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 5.212,
+  "end": 5.292,
+  "score": 0.958
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 5.312,
+  "end": 5.613,
+  "score": 0.733
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 5.693,
+  "end": 5.914,
+  "score": 0.725
+ },
+ {
+  "w": "है।",
+  "r": "hai",
+  "start": 5.914,
+  "end": 5.994,
+  "score": 0.95
+ }
+]

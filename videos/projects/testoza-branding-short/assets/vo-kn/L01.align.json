@@ -1,0 +1,114 @@
+[
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 0.04,
+  "end": 0.24,
+  "score": 0.98
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 0.38,
+  "end": 0.881,
+  "score": 0.823
+ },
+ {
+  "w": "ನ",
+  "r": "na",
+  "start": 0.921,
+  "end": 0.981,
+  "score": 0.857
+ },
+ {
+  "w": "logo",
+  "r": "logo",
+  "start": 1.081,
+  "end": 1.322,
+  "score": 0.798
+ },
+ {
+  "w": "ಮತ್ತು",
+  "r": "mattu",
+  "start": 1.422,
+  "end": 1.622,
+  "score": 0.998
+ },
+ {
+  "w": "ಹೆಸರು",
+  "r": "hesaru",
+  "start": 1.682,
+  "end": 2.002,
+  "score": 0.997
+ },
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 2.303,
+  "end": 2.583,
+  "score": 0.998
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 2.703,
+  "end": 3.023,
+  "score": 0.71
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 3.043,
+  "end": 3.184,
+  "score": 0.914
+ },
+ {
+  "w": "ಮೇಲೆ.",
+  "r": "meele",
+  "start": 3.244,
+  "end": 3.464,
+  "score": 0.951
+ },
+ {
+  "w": "ಹೇಗೆ",
+  "r": "heege",
+  "start": 4.005,
+  "end": 4.265,
+  "score": 0.984
+ },
+ {
+  "w": "ಅಂತ",
+  "r": "amta",
+  "start": 4.325,
+  "end": 4.545,
+  "score": 0.989
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 4.645,
+  "end": 4.886,
+  "score": 0.753
+ },
+ {
+  "w": "by",
+  "r": "by",
+  "start": 4.906,
+  "end": 5.026,
+  "score": 0.496
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 5.046,
+  "end": 5.246,
+  "score": 0.915
+ },
+ {
+  "w": "ನೋಡೋಣ.",
+  "r": "nooddoonna",
+  "start": 5.286,
+  "end": 5.586,
+  "score": 0.6
+ }
+]

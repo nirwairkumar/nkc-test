@@ -1,0 +1,170 @@
+[
+ {
+  "w": "చివరి",
+  "r": "civari",
+  "start": 0.02,
+  "end": 0.3,
+  "score": 0.994
+ },
+ {
+  "w": "page",
+  "r": "page",
+  "start": 0.36,
+  "end": 0.601,
+  "score": 0.25
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 0.621,
+  "end": 0.721,
+  "score": 0.894
+ },
+ {
+  "w": "ఉన్న",
+  "r": "unna",
+  "start": 0.741,
+  "end": 0.901,
+  "score": 0.997
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 0.941,
+  "end": 1.221,
+  "score": 0.5
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 1.281,
+  "end": 1.381,
+  "score": 0.333
+ },
+ {
+  "w": "కూడా",
+  "r": "kuuddaa",
+  "start": 1.442,
+  "end": 1.702,
+  "score": 0.893
+ },
+ {
+  "w": "చదివేసింది,",
+  "r": "cadiveesimdi",
+  "start": 1.742,
+  "end": 2.343,
+  "score": 0.996
+ },
+ {
+  "w": "కాబట్టి",
+  "r": "kaabatttti",
+  "start": 2.783,
+  "end": 3.223,
+  "score": 0.991
+ },
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 3.684,
+  "end": 3.964,
+  "score": 0.998
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 4.084,
+  "end": 4.425,
+  "score": 0.5
+ },
+ {
+  "w": "ఇప్పటికే",
+  "r": "ippattikee",
+  "start": 4.585,
+  "end": 5.025,
+  "score": 0.92
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 5.085,
+  "end": 5.366,
+  "score": 0.999
+ },
+ {
+  "w": "అయ్యి",
+  "r": "ayyi",
+  "start": 5.386,
+  "end": 5.546,
+  "score": 0.872
+ },
+ {
+  "w": "ఉంది.",
+  "r": "umdi",
+  "start": 5.606,
+  "end": 5.786,
+  "score": 0.997
+ },
+ {
+  "w": "ఒకసారి",
+  "r": "okasaari",
+  "start": 6.387,
+  "end": 6.747,
+  "score": 0.956
+ },
+ {
+  "w": "చూడండి,",
+  "r": "cuuddamddi",
+  "start": 6.787,
+  "end": 7.208,
+  "score": 0.999
+ },
+ {
+  "w": "Save",
+  "r": "save",
+  "start": 7.768,
+  "end": 8.009,
+  "score": 0.5
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 8.049,
+  "end": 8.409,
+  "score": 0.897
+ },
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 8.95,
+  "end": 9.09,
+  "score": 0.999
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 9.15,
+  "end": 9.51,
+  "score": 0.6
+ },
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 9.731,
+  "end": 9.991,
+  "score": 0.99
+ },
+ {
+  "w": "ఒక",
+  "r": "oka",
+  "start": 10.031,
+  "end": 10.151,
+  "score": 0.873
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 10.271,
+  "end": 10.551,
+  "score": 0.985
+ }
+]

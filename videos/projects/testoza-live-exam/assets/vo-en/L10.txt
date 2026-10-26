@@ -1,0 +1,2 @@
+Block Back Button stops a student leaving the exam by accident.
+And Disable Exit Button hides the exit, so nobody walks out halfway.

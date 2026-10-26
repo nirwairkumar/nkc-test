@@ -1,0 +1,205 @@
+[
+ {
+  "w": "दूसरा",
+  "r": "duusaraa",
+  "start": 0.06,
+  "end": 0.36,
+  "score": 0.974
+ },
+ {
+  "w": "रिएक्शन:",
+  "r": "riekshan",
+  "start": 0.381,
+  "end": 0.721,
+  "score": 0.751
+ },
+ {
+  "w": "copper",
+  "r": "copper",
+  "start": 1.021,
+  "end": 1.282,
+  "score": 0.497
+ },
+ {
+  "w": "sulphate",
+  "r": "sulphate",
+  "start": 1.322,
+  "end": 1.802,
+  "score": 0.578
+ },
+ {
+  "w": "प्लस",
+  "r": "plas",
+  "start": 1.843,
+  "end": 2.103,
+  "score": 0.827
+ },
+ {
+  "w": "Y।",
+  "r": "y",
+  "start": 2.403,
+  "end": 2.423,
+  "score": 0.046
+ },
+ {
+  "w": "वही",
+  "r": "vahii",
+  "start": 3.144,
+  "end": 3.345,
+  "score": 0.866
+ },
+ {
+  "w": "arrow,",
+  "r": "arrow",
+  "start": 3.405,
+  "end": 3.645,
+  "score": 0.501
+ },
+ {
+  "w": "पर",
+  "r": "par",
+  "start": 3.785,
+  "end": 3.925,
+  "score": 0.887
+ },
+ {
+  "w": "अब",
+  "r": "ab",
+  "start": 3.945,
+  "end": 4.025,
+  "score": 0.984
+ },
+ {
+  "w": "Words",
+  "r": "words",
+  "start": 4.166,
+  "end": 4.426,
+  "score": 0.499
+ },
+ {
+  "w": "दबाइए,",
+  "r": "dabaaie",
+  "start": 4.466,
+  "end": 4.827,
+  "score": 0.981
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 5.347,
+  "end": 5.467,
+  "score": 0.979
+ },
+ {
+  "w": "टाइप",
+  "r": "ttaaip",
+  "start": 5.528,
+  "end": 5.788,
+  "score": 0.981
+ },
+ {
+  "w": "कीजिए",
+  "r": "kiijie",
+  "start": 5.868,
+  "end": 6.188,
+  "score": 0.68
+ },
+ {
+  "w": "non-luminous",
+  "r": "nonluminous",
+  "start": 6.509,
+  "end": 7.23,
+  "score": 0.786
+ },
+ {
+  "w": "flame।",
+  "r": "flame",
+  "start": 7.29,
+  "end": 7.57,
+  "score": 0.401
+ },
+ {
+  "w": "Words",
+  "r": "words",
+  "start": 8.191,
+  "end": 8.492,
+  "score": 0.451
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 8.552,
+  "end": 8.652,
+  "score": 0.988
+ },
+ {
+  "w": "spaces",
+  "r": "spaces",
+  "start": 8.692,
+  "end": 9.092,
+  "score": 0.528
+ },
+ {
+  "w": "वैसे",
+  "r": "vaise",
+  "start": 9.152,
+  "end": 9.413,
+  "score": 0.964
+ },
+ {
+  "w": "ही",
+  "r": "hii",
+  "start": 9.433,
+  "end": 9.533,
+  "score": 0.968
+ },
+ {
+  "w": "रहते",
+  "r": "rahate",
+  "start": 9.553,
+  "end": 9.793,
+  "score": 0.985
+ },
+ {
+  "w": "हैं,",
+  "r": "haim",
+  "start": 9.833,
+  "end": 9.954,
+  "score": 0.988
+ },
+ {
+  "w": "जैसे",
+  "r": "jaise",
+  "start": 9.974,
+  "end": 10.174,
+  "score": 0.877
+ },
+ {
+  "w": "नॉर्मल",
+  "r": "normal",
+  "start": 10.234,
+  "end": 10.474,
+  "score": 0.9
+ },
+ {
+  "w": "टेक्स्ट",
+  "r": "ttekstta",
+  "start": 10.514,
+  "end": 10.815,
+  "score": 0.921
+ },
+ {
+  "w": "में।",
+  "r": "mem",
+  "start": 10.835,
+  "end": 10.935,
+  "score": 0.982
+ },
+ {
+  "w": "Insert।",
+  "r": "insert",
+  "start": 11.556,
+  "end": 11.876,
+  "score": 0.116
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 0.04,
+  "end": 0.261,
+  "score": 0.451
+ },
+ {
+  "w": "institute.",
+  "r": "institute",
+  "start": 0.321,
+  "end": 0.804,
+  "score": 0.837
+ },
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 1.226,
+  "end": 1.427,
+  "score": 0.552
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 1.527,
+  "end": 1.768,
+  "score": 0.995
+ },
+ {
+  "w": "இன்னைக்கே",
+  "r": "innaikkee",
+  "start": 2.271,
+  "end": 2.612,
+  "score": 0.536
+ },
+ {
+  "w": "உருவாக்குங்க",
+  "r": "uruvaakkungka",
+  "start": 2.632,
+  "end": 3.094,
+  "score": 0.532
+ },
+ {
+  "w": "testoza.com-ல.",
+  "r": "testozacomla",
+  "start": 3.235,
+  "end": 4.22,
+  "score": 0.697
+ }
+]

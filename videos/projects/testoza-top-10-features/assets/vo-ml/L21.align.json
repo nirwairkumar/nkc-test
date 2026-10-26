@@ -1,0 +1,142 @@
+[
+ {
+  "w": "Name",
+  "r": "name",
+  "start": 0.06,
+  "end": 0.461,
+  "score": 0.525
+ },
+ {
+  "w": "default",
+  "r": "default",
+  "start": 0.481,
+  "end": 0.922,
+  "score": 0.418
+ },
+ {
+  "w": "ആയി",
+  "r": "aayi",
+  "start": 0.922,
+  "end": 1.042,
+  "score": 0.665
+ },
+ {
+  "w": "ചോദിക്കും.",
+  "r": "coodikkum",
+  "start": 1.082,
+  "end": 1.483,
+  "score": 0.911
+ },
+ {
+  "w": "Roll",
+  "r": "roll",
+  "start": 1.844,
+  "end": 2.024,
+  "score": 0.967
+ },
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 2.084,
+  "end": 2.365,
+  "score": 0.476
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 2.445,
+  "end": 2.545,
+  "score": 0.335
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 2.625,
+  "end": 2.886,
+  "score": 0.667
+ },
+ {
+  "w": "അല്ലെങ്കിൽ",
+  "r": "allengkila",
+  "start": 2.986,
+  "end": 3.427,
+  "score": 0.985
+ },
+ {
+  "w": "മറ്റെന്തും",
+  "r": "marrrrentum",
+  "start": 3.467,
+  "end": 3.948,
+  "score": 0.841
+ },
+ {
+  "w": "batch,",
+  "r": "batch",
+  "start": 4.189,
+  "end": 4.509,
+  "score": 0.593
+ },
+ {
+  "w": "school,",
+  "r": "school",
+  "start": 4.65,
+  "end": 5.01,
+  "score": 0.332
+ },
+ {
+  "w": "phone.",
+  "r": "phone",
+  "start": 5.171,
+  "end": 5.511,
+  "score": 0.818
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 5.772,
+  "end": 6.113,
+  "score": 0.527
+ },
+ {
+  "w": "ചെയ്യുന്നതിന്",
+  "r": "ceyyunnatin",
+  "start": 6.173,
+  "end": 6.513,
+  "score": 0.674
+ },
+ {
+  "w": "മുൻപ്",
+  "r": "munap",
+  "start": 6.513,
+  "end": 6.714,
+  "score": 0.871
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 6.834,
+  "end": 7.355,
+  "score": 0.383
+ },
+ {
+  "w": "ഇത്",
+  "r": "it",
+  "start": 7.375,
+  "end": 7.415,
+  "score": 0.704
+ },
+ {
+  "w": "fill",
+  "r": "fill",
+  "start": 7.475,
+  "end": 7.716,
+  "score": 0.743
+ },
+ {
+  "w": "ചെയ്യും.",
+  "r": "ceyyum",
+  "start": 7.716,
+  "end": 7.896,
+  "score": 0.607
+ }
+]

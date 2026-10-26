@@ -1,0 +1,65 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.241,
+  "score": 0.116
+ },
+ {
+  "w": "three:",
+  "r": "three",
+  "start": 0.281,
+  "end": 0.461,
+  "score": 0.067
+ },
+ {
+  "w": "తెలుగు,",
+  "r": "telugu",
+  "start": 0.883,
+  "end": 1.224,
+  "score": 0.988
+ },
+ {
+  "w": "హిందీ",
+  "r": "himdii",
+  "start": 1.685,
+  "end": 2.046,
+  "score": 0.837
+ },
+ {
+  "w": "నూట",
+  "r": "nuutta",
+  "start": 2.447,
+  "end": 2.668,
+  "score": 0.973
+ },
+ {
+  "w": "పంతొమ్మిది",
+  "r": "pamtommidi",
+  "start": 2.708,
+  "end": 3.089,
+  "score": 0.806
+ },
+ {
+  "w": "భాషల్లో",
+  "r": "bhaassalloo",
+  "start": 3.129,
+  "end": 3.551,
+  "score": 0.946
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 3.591,
+  "end": 3.791,
+  "score": 0.46
+ },
+ {
+  "w": "చేయొచ్చు.",
+  "r": "ceeyoccu",
+  "start": 3.791,
+  "end": 4.172,
+  "score": 0.864
+ }
+]

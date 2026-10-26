@@ -1,0 +1,63 @@
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:400 600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Backdrop for the whole Short (brand sky + indigo, faint grid, small wordmark up top) */
+.stage{position:absolute;inset:0;background:radial-gradient(900px 900px at 20% 70%,rgba(14,165,233,.24),rgba(2,6,23,0) 70%),radial-gradient(800px 800px at 85% 22%,rgba(99,102,241,.26),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);background-size:60px 60px}
+.topmark{position:absolute;left:0;right:0;margin:0 auto;top:150px;height:62px;opacity:.95;filter:drop-shadow(0 6px 18px rgba(0,0,0,.4))}
+.card{position:absolute;inset:0;overflow:hidden}
+.scene{position:absolute;inset:0}
+.glow{position:absolute;left:90px;top:420px;width:900px;height:1100px;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.26),rgba(56,189,248,0));filter:blur(10px)}
+.glow.g2{left:-120px;top:240px;width:1320px;height:1000px;background:radial-gradient(closest-side,rgba(129,140,248,.22),rgba(129,140,248,0))}
+
+/* Desktop footage in a camera card: 2304x1296 frames shown at 1536x864 CSS px; GSAP scales/pans the cam */
+.dcard{position:absolute;overflow:hidden;border-radius:34px;background:#fff;box-shadow:0 0 0 2px rgba(148,163,184,.25),0 50px 120px -30px rgba(0,0,0,.85)}
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.cur svg,.fcur svg{width:100%;height:100%;display:block}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+/* The logo file dragged in by the cursor */
+.fly{position:absolute;left:0;top:0;z-index:6;opacity:0}
+.fly img{display:block;width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(15,23,42,.45))}
+.fly .fcur{position:absolute;right:-10px;bottom:-14px;width:26px;height:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* Laptop: a 1000x562.5 screen in a dark lid on a silver base */
+.lwrap{position:absolute;width:1000px;transform-origin:50% 60%}
+.lid{position:relative;width:1032px;margin-left:-16px;padding:16px;border-radius:30px 30px 6px 6px;background:#0b0f19;box-shadow:0 0 0 2px #1e293b,inset 0 0 0 2px #334155,0 60px 120px -40px rgba(0,0,0,.9)}
+.lcam{position:absolute;left:50%;top:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#334155;display:block}
+.lscreen{position:relative;width:1000px;height:562.5px;overflow:hidden;border-radius:6px;background:#fff}
+.lbase{position:relative;width:1080px;height:30px;margin-left:-40px;border-radius:4px 4px 34px 34px;background:linear-gradient(180deg,#e2e8f0,#94a3b8 70%,#64748b);box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.lbase i{position:absolute;left:50%;top:0;width:170px;height:12px;margin-left:-85px;border-radius:0 0 12px 12px;background:#94a3b8;display:block}
+
+/* Phone: 646x1398 footage at 0.7 (452x979 screen), the whole frame scaled by its wrapper */
+.pwrap{position:absolute;transform-origin:0 0}
+.pcam{position:absolute;inset:0;transform-origin:0 0}
+.phone{position:relative;padding:14px;border-radius:64px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 60px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;border-radius:50px;overflow:hidden;background:#fff}
+.pv{position:absolute;left:0;top:0;width:100%;height:100%}
+.pvid{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.chrome{position:absolute;left:0;right:0;top:0;height:140px;background:#f8fafc;border-bottom:1px solid #e2e8f0;z-index:3;opacity:0}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:62px;background:#f8fafc;border-top:1px solid #e2e8f0;z-index:3;display:flex;justify-content:space-around;align-items:center;padding:0 26px 10px;opacity:0}
+.tbar i{width:22px;height:22px;border-radius:6px;border:2.5px solid #64748b;display:block}
+.tbar i:nth-child(3){border-radius:50%}
+.sbar{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 38px 0 44px;font:700 17px 'Outfit';color:#0f172a}
+.isl{position:absolute;left:50%;top:13px;width:122px;height:34px;margin-left:-61px;border-radius:20px;background:#000;display:block}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:16px;height:6px;background:currentColor;border-radius:1px}
+.purl{position:absolute;left:18px;right:18px;top:70px;height:48px;border-radius:24px;background:#e9eef5;display:flex;align-items:center;justify-content:center;gap:8px;font:600 18px 'Outfit';color:#1e293b}
+.purl .lk{width:15px;height:15px;color:#475569;display:block}
+.purl .lk svg{width:15px;height:15px;display:block}
+.purl .u2{display:none}
+
+/* End card: the TestoZa logo and testoza.com (no other words) */
+.endcard{background:radial-gradient(800px 800px at 50% 46%,rgba(56,189,248,.2),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:700px;height:150px}
+.endcard .pill{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:960px;height:100px;padding:0 54px;border-radius:999px;display:flex;align-items:center;font:700 50px 'Outfit';color:#f8fafc;background:rgba(15,23,42,.75);box-shadow:0 0 0 3px rgba(56,189,248,.7),0 30px 60px -20px rgba(56,189,248,.45);white-space:nowrap}

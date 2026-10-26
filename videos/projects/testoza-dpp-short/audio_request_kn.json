@@ -1,0 +1,60 @@
+{
+  "lang": "kn",
+  "voice": "Zephyr",
+  "out_dir": "assets/voice-kn",
+  "style": "You are a bright, friendly young Kannada woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak natural everyday Kannada the way young students in Bengaluru talk, mixing English words exactly as written: smooth, clear, warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy. English words stay English. Say Testoza as 'test-OH-za'.",
+  "lines": [
+    {
+      "id": "e01",
+      "text": "JEE, NEET, SSC, Banking... ಪ್ರತಿ aspirant ಹತ್ರ DPPs ರಾಶಿ ಇರುತ್ತೆ."
+    },
+    {
+      "id": "e02",
+      "text": "ಆದ್ರೆ paper ಮೇಲೆ, ಹಿಂದೆ clock ಇಟ್ಟುಕೊಂಡು solve ಮಾಡೋದು? ಅದು real exam ಅಲ್ಲ."
+    },
+    {
+      "id": "e03",
+      "text": "ಅದಕ್ಕೆ Testoza open ಮಾಡಿ. PDF ಇದ್ಯಾ? ಅದೂ ok. ಆದ್ರೆ ಸುಲಭದ ದಾರಿ... ನಿಮ್ಮ DPP pages photo ತಗೊಳ್ಳಿ."
+    },
+    {
+      "id": "e04",
+      "text": "ಆಮೇಲೆ answer key photo ತಗೊಂಡು... ಇಲ್ಲಿ ಹಾಕಿ."
+    },
+    {
+      "id": "e05",
+      "text": "Marking set ಮಾಡಿ, plus four, minus one... Extract ಒತ್ತಿ."
+    },
+    {
+      "id": "e06",
+      "text": "ಈಗ AI ಪ್ರತಿ question ಓದುತ್ತೆ... ನಿಮ್ಮ key ಇಂದ ಸರಿಯಾದ answer ಕೂಡ ಹಾಕುತ್ತೆ."
+    },
+    {
+      "id": "e07",
+      "text": "ಹನ್ನೆರಡು questions, ಮೂವತ್ತೆರಡು seconds ಅಲ್ಲಿ ready!"
+    },
+    {
+      "id": "e08",
+      "text": "ಒಮ್ಮೆ ನೋಡಿ, save ಮಾಡಿ... ನಿಮ್ಮ test My Tests ಅಲ್ಲಿ ರೆಡಿ."
+    },
+    {
+      "id": "e09",
+      "text": "Preview ಒತ್ತಿ, start ಮಾಡಿ."
+    },
+    {
+      "id": "e10",
+      "text": "ಈಗ clock real. Answer select ಮಾಡಿ, ಮುಂದೆ ಹೋಗಿ, ಮತ್ತೆ ಬನ್ನಿ... exam day ತರಾನೇ."
+    },
+    {
+      "id": "e11",
+      "text": "Submit..."
+    },
+    {
+      "id": "e12",
+      "text": "result ತಕ್ಷಣ. ನಿಮ್ಮ score, ಯಾವುದು ತಪ್ಪು, time ಎಲ್ಲಿ ಹೋಯ್ತು ಅಂತ."
+    },
+    {
+      "id": "e13",
+      "text": "ಇವತ್ತಿನ DPP... ಇವತ್ತೇ online test. Testoza dot com."
+    }
+  ]
+}

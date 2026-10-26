@@ -1,0 +1,128 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.26,
+  "score": 0.99
+ },
+ {
+  "w": "రెడీ",
+  "r": "reddii",
+  "start": 0.341,
+  "end": 0.601,
+  "score": 0.674
+ },
+ {
+  "w": "అయ్యాక,",
+  "r": "ayyaaka",
+  "start": 0.621,
+  "end": 1.042,
+  "score": 0.823
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 1.342,
+  "end": 1.723,
+  "score": 0.285
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.783,
+  "end": 2.064,
+  "score": 0.747
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.144,
+  "end": 2.384,
+  "score": 0.983
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 2.465,
+  "end": 2.865,
+  "score": 0.991
+ },
+ {
+  "w": "మీకు",
+  "r": "miiku",
+  "start": 3.326,
+  "end": 3.587,
+  "score": 0.999
+ },
+ {
+  "w": "ఒక",
+  "r": "oka",
+  "start": 3.687,
+  "end": 3.827,
+  "score": 0.994
+ },
+ {
+  "w": "secure",
+  "r": "secure",
+  "start": 3.927,
+  "end": 4.428,
+  "score": 0.824
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 4.448,
+  "end": 4.729,
+  "score": 0.501
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 4.789,
+  "end": 4.989,
+  "score": 0.713
+ },
+ {
+  "w": "వస్తుంది.",
+  "r": "vastumdi",
+  "start": 5.069,
+  "end": 5.53,
+  "score": 0.999
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 5.971,
+  "end": 6.292,
+  "score": 0.799
+ },
+ {
+  "w": "conducting,",
+  "r": "conducting",
+  "start": 6.372,
+  "end": 6.893,
+  "score": 0.375
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 7.173,
+  "end": 7.514,
+  "score": 0.75
+ },
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 7.554,
+  "end": 7.814,
+  "score": 0.973
+ },
+ {
+  "w": "live.",
+  "r": "live",
+  "start": 7.875,
+  "end": 8.135,
+  "score": 0.682
+ }
+]

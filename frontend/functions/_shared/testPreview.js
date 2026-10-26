@@ -91,6 +91,25 @@ export function joinPageMeta() {
     };
 }
 
+/**
+ * app.testoza.com/invite/<CODE>, an educator's invite link to a colleague
+ * (functions/invite). Unlike an exam link in a class group, this one IS a
+ * recommendation of TestoZa, so it keeps the big TestoZa card, with the inviter's name.
+ * Pages-only: the worker never sees app.testoza.com/invite.
+ */
+export function invitePageMeta(name) {
+    const who = (name || '').trim();
+    const title = who ? `${who} invited you to TestoZa` : 'You’re invited to TestoZa';
+    return {
+        title,
+        description: 'Turn a question paper into an online test in about a minute. Students write it on their phones; marks, ranks and Excel come out on their own.',
+        robots: 'noindex, nofollow',
+        siteName: 'TestoZa',
+        card: 'summary_large_image',
+        image: { url: 'https://testoza.com/default-og.png', width: 1200, height: 630, alt: 'TestoZa: online exams and mock tests' },
+    };
+}
+
 /** Rewrites the SPA shell's head with `meta`. */
 export function rewriteHead(response, meta, canonicalUrl) {
     const set = (value) => ({ element(e) { if (value == null) e.remove(); else e.setAttribute('content', String(value)); } });

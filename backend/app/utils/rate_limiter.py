@@ -304,6 +304,9 @@ join_heartbeat_per_token = RateLimiter(requests=30, window=60, name="join_heartb
 # "See your result" lookups: enough for a computer lab checking at once, slow for
 # anyone walking through roll numbers.
 join_result_per_ip = RateLimiter(requests=80, window=300, name="join_result")
+# Invite links (/invite/<code>): each open looks the code up and counts the visit. A staff
+# room opening the same link together fits easily; walking through codes does not.
+referral_lookup_per_ip = RateLimiter(requests=60, window=300, name="referral_lookup")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -362,6 +365,13 @@ async def check_support_rate_limit(request: Request):
     allowed, _, reset_in = support_per_ip.check(_get_client_ip(request))
     if not allowed:
         _reject(support_per_ip, reset_in, "Too many messages sent. Please try again later.")
+
+
+async def check_referral_rate_limit(request: Request):
+    """Public invite-link lookups — IP only."""
+    allowed, _, reset_in = referral_lookup_per_ip.check(_get_client_ip(request))
+    if not allowed:
+        _reject(referral_lookup_per_ip, reset_in, "Too many invite links opened. Please try again in a few minutes.")
 
 
 def check_support_reply_limit(user_id: str) -> None:

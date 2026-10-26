@@ -1,0 +1,86 @@
+[
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 0.0,
+  "end": 0.381,
+  "score": 0.415
+ },
+ {
+  "w": "exam,",
+  "r": "exam",
+  "start": 0.421,
+  "end": 0.702,
+  "score": 0.443
+ },
+ {
+  "w": "start,",
+  "r": "start",
+  "start": 0.983,
+  "end": 1.364,
+  "score": 0.962
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 1.785,
+  "end": 1.986,
+  "score": 0.719
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 2.066,
+  "end": 2.307,
+  "score": 0.461
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 2.327,
+  "end": 2.568,
+  "score": 0.852
+ },
+ {
+  "w": "ಅಥವಾ",
+  "r": "athavaa",
+  "start": 2.889,
+  "end": 3.17,
+  "score": 0.962
+ },
+ {
+  "w": "ಆರು",
+  "r": "aaru",
+  "start": 3.27,
+  "end": 3.491,
+  "score": 0.696
+ },
+ {
+  "w": "ಅಂಕಿಯ",
+  "r": "amkiya",
+  "start": 3.511,
+  "end": 3.752,
+  "score": 0.265
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 3.852,
+  "end": 4.113,
+  "score": 0.876
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 4.173,
+  "end": 4.414,
+  "score": 0.497
+ },
+ {
+  "w": "ಕಳಿಸಿ.",
+  "r": "kallisi",
+  "start": 4.414,
+  "end": 4.715,
+  "score": 0.883
+ }
+]

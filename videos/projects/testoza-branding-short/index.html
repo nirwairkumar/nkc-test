@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=1920"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:400 600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Backdrop for the whole Short (brand sky + indigo, faint grid, small wordmark up top) */
+.stage{position:absolute;inset:0;background:radial-gradient(900px 900px at 20% 70%,rgba(14,165,233,.24),rgba(2,6,23,0) 70%),radial-gradient(800px 800px at 85% 22%,rgba(99,102,241,.26),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);background-size:60px 60px}
+.topmark{position:absolute;left:0;right:0;margin:0 auto;top:150px;height:62px;opacity:.95;filter:drop-shadow(0 6px 18px rgba(0,0,0,.4))}
+.card{position:absolute;inset:0;overflow:hidden}
+.scene{position:absolute;inset:0}
+.glow{position:absolute;left:90px;top:420px;width:900px;height:1100px;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.26),rgba(56,189,248,0));filter:blur(10px)}
+.glow.g2{left:-120px;top:240px;width:1320px;height:1000px;background:radial-gradient(closest-side,rgba(129,140,248,.22),rgba(129,140,248,0))}
+
+/* Desktop footage in a camera card: 2304x1296 frames shown at 1536x864 CSS px; GSAP scales/pans the cam */
+.dcard{position:absolute;overflow:hidden;border-radius:34px;background:#fff;box-shadow:0 0 0 2px rgba(148,163,184,.25),0 50px 120px -30px rgba(0,0,0,.85)}
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.cur svg,.fcur svg{width:100%;height:100%;display:block}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+/* The logo file dragged in by the cursor */
+.fly{position:absolute;left:0;top:0;z-index:6;opacity:0}
+.fly img{display:block;width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(15,23,42,.45))}
+.fly .fcur{position:absolute;right:-10px;bottom:-14px;width:26px;height:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* Laptop: a 1000x562.5 screen in a dark lid on a silver base */
+.lwrap{position:absolute;width:1000px;transform-origin:50% 60%}
+.lid{position:relative;width:1032px;margin-left:-16px;padding:16px;border-radius:30px 30px 6px 6px;background:#0b0f19;box-shadow:0 0 0 2px #1e293b,inset 0 0 0 2px #334155,0 60px 120px -40px rgba(0,0,0,.9)}
+.lcam{position:absolute;left:50%;top:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#334155;display:block}
+.lscreen{position:relative;width:1000px;height:562.5px;overflow:hidden;border-radius:6px;background:#fff}
+.lbase{position:relative;width:1080px;height:30px;margin-left:-40px;border-radius:4px 4px 34px 34px;background:linear-gradient(180deg,#e2e8f0,#94a3b8 70%,#64748b);box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+.lbase i{position:absolute;left:50%;top:0;width:170px;height:12px;margin-left:-85px;border-radius:0 0 12px 12px;background:#94a3b8;display:block}
+
+/* Phone: 646x1398 footage at 0.7 (452x979 screen), the whole frame scaled by its wrapper */
+.pwrap{position:absolute;transform-origin:0 0}
+.pcam{position:absolute;inset:0;transform-origin:0 0}
+.phone{position:relative;padding:14px;border-radius:64px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 60px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;border-radius:50px;overflow:hidden;background:#fff}
+.pv{position:absolute;left:0;top:0;width:100%;height:100%}
+.pvid{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.chrome{position:absolute;left:0;right:0;top:0;height:140px;background:#f8fafc;border-bottom:1px solid #e2e8f0;z-index:3;opacity:0}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:62px;background:#f8fafc;border-top:1px solid #e2e8f0;z-index:3;display:flex;justify-content:space-around;align-items:center;padding:0 26px 10px;opacity:0}
+.tbar i{width:22px;height:22px;border-radius:6px;border:2.5px solid #64748b;display:block}
+.tbar i:nth-child(3){border-radius:50%}
+.sbar{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 38px 0 44px;font:700 17px 'Outfit';color:#0f172a}
+.isl{position:absolute;left:50%;top:13px;width:122px;height:34px;margin-left:-61px;border-radius:20px;background:#000;display:block}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:16px;height:6px;background:currentColor;border-radius:1px}
+.purl{position:absolute;left:18px;right:18px;top:70px;height:48px;border-radius:24px;background:#e9eef5;display:flex;align-items:center;justify-content:center;gap:8px;font:600 18px 'Outfit';color:#1e293b}
+.purl .lk{width:15px;height:15px;color:#475569;display:block}
+.purl .lk svg{width:15px;height:15px;display:block}
+.purl .u2{display:none}
+
+/* End card: the TestoZa logo and testoza.com (no other words) */
+.endcard{background:radial-gradient(800px 800px at 50% 46%,rgba(56,189,248,.2),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:700px;height:150px}
+.endcard .pill{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:960px;height:100px;padding:0 54px;border-radius:999px;display:flex;align-items:center;font:700 50px 'Outfit';color:#f8fafc;background:rgba(15,23,42,.75);box-shadow:0 0 0 3px rgba(56,189,248,.7),0 30px 60px -20px rgba(56,189,248,.45);white-space:nowrap}
+
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="47.72" data-width="1080" data-height="1920">
+<div class="clip stage" id="stage" data-start="0" data-duration="47.72" data-track-index="0"><div class="grid"></div><img class="topmark" src="assets/img/wordmark.png" alt="TestoZa"/></div>
+<div class="scene" id="hook" data-on="0" data-off="5.89"><div class="glow"></div><div class="glow g2"></div>
+      <div class="lwrap" id="hk-lap" style="left:40px;top:330px"><div class="laptop"><div class="lid"><i class="lcam"></i><div class="lscreen"><div class="cam" id="hk-cam"><video class="clip foot" id="v1" src="assets/cut/0-hook-desk-b7a9ccb69a.mp4" muted data-start="0" data-duration="5.89" data-track-index="1"></video></div></div></div><div class="lbase"><i></i></div></div></div>
+      <div class="pwrap" id="hk-ph" style="left:560px;top:820px;transform:scale(0.98)"><div class="phone" style="width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv full"><video class="clip pvid" id="v2" src="assets/cut/0-hook-phone-afe639a6ff.mp4" muted data-start="0" data-duration="5.89" data-track-index="1"></video></div>
+  <div class="chrome" id="hk-chrome"><div class="sbar"><b>9:41</b><i class="isl"></i><span class="sig"><b></b><b></b><b></b><b></b><em></em></span></div><div class="purl"><i class="lk"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></i><span class="u1">testoza.com/join</span><span class="u2">app.testoza.com</span></div></div>
+  <div class="tbar" id="hk-tbar"><i></i><i></i><i></i><i></i><i></i></div></div></div></div></div>
+<div class="scene" id="w1" data-on="5.89" data-off="21.22"><div class="glow"></div><div class="dcard" id="dc1" style="left:40px;top:300px;width:1000px;height:1240px"><div class="cam" id="cam1"><video class="clip foot" id="v3" src="assets/cut/1-build-bf778d8638.mp4" muted data-start="5.89" data-duration="15.33" data-track-index="1"></video><div class="ov"><div class="fly" id="fly1"><img src="assets/img/apex-academy-logo.png" alt=""/><div class="fcur"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div><div class="cur" id="cur1"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip1"></div></div></div></div></div>
+<div class="scene" id="w2" data-on="21.22" data-off="26.76"><div class="glow"></div><div class="dcard" id="dc2" style="left:40px;top:300px;width:1000px;height:1240px"><div class="cam" id="cam2"><video class="clip foot" id="v4" src="assets/cut/2-conduct-2ea70725bc.mp4" muted data-start="21.22" data-duration="5.53" data-track-index="1"></video><div class="ov"><div class="cur" id="cur2"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip2"></div></div></div></div></div>
+<div class="scene" id="w3" data-on="26.76" data-off="33.62"><div class="glow g2"></div><div class="lwrap" id="lw3" style="left:40px;top:650px"><div class="laptop"><div class="lid"><i class="lcam"></i><div class="lscreen"><div class="cam" id="cam3"><video class="clip foot" id="v5" src="assets/cut/3-desk-34eb74a234.mp4" muted data-start="26.76" data-duration="6.87" data-track-index="1"></video><div class="ov"><div class="cur" id="cur3"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip3"></div></div></div></div></div><div class="lbase"><i></i></div></div></div></div>
+<div class="scene" id="ph4" data-on="33.62" data-off="40.82"><div class="glow"></div><div class="pcam" id="ph4-cam">
+        <div class="pwrap" id="ph4-wrap" style="left:192px;top:250px;transform:scale(1.45)"><div class="phone" style="width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv" id="ph4-pv"><video class="clip pvid" id="v6" src="assets/cut/4-phone-84bc4090b7.mp4" muted data-start="33.62" data-duration="7.2" data-track-index="1"></video></div>
+  <div class="chrome" id="ph4-chrome"><div class="sbar"><b>9:41</b><i class="isl"></i><span class="sig"><b></b><b></b><b></b><b></b><em></em></span></div><div class="purl"><i class="lk"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></i><span class="u1">testoza.com/join</span><span class="u2">app.testoza.com</span></div></div>
+  <div class="tbar" id="ph4-tbar"><i></i><i></i><i></i><i></i><i></i></div></div></div></div></div></div>
+<div class="clip card endcard" id="end" data-start="40.82" data-duration="6.9" data-track-index="3">
+      <img class="wm" src="assets/img/wordmark.png" alt="TestoZa"/>
+      <div class="pill url">testoza.com</div></div>
+<audio id="hksting" src="assets/sfx/sparkle.mp3" data-start="0.1" data-duration="2" data-track-index="13" data-volume="0.22"></audio>
+<audio id="sting2" src="assets/sfx/sting.mp3" data-start="40.87" data-duration="4" data-track-index="14" data-volume="0.28"></audio>
+<audio id="voL01" data-audio-group="voiceover" src="assets/vo-en/L01.wav" data-start="0.25" data-duration="5.29" data-track-index="10" data-volume="1"></audio>
+<audio id="voL02" data-audio-group="voiceover" src="assets/vo-en/L02.wav" data-start="6.53" data-duration="2.58" data-track-index="10" data-volume="1"></audio>
+<audio id="voL03" data-audio-group="voiceover" src="assets/vo-en/L03.wav" data-start="9.29" data-duration="5.72" data-track-index="10" data-volume="1"></audio>
+<audio id="voL04" data-audio-group="voiceover" src="assets/vo-en/L04.wav" data-start="15.19" data-duration="5.72" data-track-index="10" data-volume="1"></audio>
+<audio id="voL05" data-audio-group="voiceover" src="assets/vo-en/L05.wav" data-start="21.83" data-duration="4.64" data-track-index="10" data-volume="1"></audio>
+<audio id="voL06" data-audio-group="voiceover" src="assets/vo-en/L06.wav" data-start="27.19" data-duration="6.15" data-track-index="10" data-volume="1"></audio>
+<audio id="voL07" data-audio-group="voiceover" src="assets/vo-en/L07.wav" data-start="34.63" data-duration="5.9" data-track-index="10" data-volume="1"></audio>
+<audio id="voL08" data-audio-group="voiceover" src="assets/vo-en/L08.wav" data-start="41.17" data-duration="4.15" data-track-index="10" data-volume="1"></audio>
+<audio id="ck0" src="assets/sfx/click-soft.mp3" data-start="6.2" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck1" src="assets/sfx/click-soft.mp3" data-start="7.21" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck2" src="assets/sfx/click-soft.mp3" data-start="9.78" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck3" src="assets/sfx/click-soft.mp3" data-start="11.65" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck4" src="assets/sfx/click-soft.mp3" data-start="12.53" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck5" src="assets/sfx/click-soft.mp3" data-start="14.39" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck6" src="assets/sfx/click-soft.mp3" data-start="15.64" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck7" src="assets/sfx/click-soft.mp3" data-start="15.92" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck8" src="assets/sfx/click-soft.mp3" data-start="16.39" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck9" src="assets/sfx/click-soft.mp3" data-start="17.42" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck10" src="assets/sfx/click-soft.mp3" data-start="17.82" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck11" src="assets/sfx/click-soft.mp3" data-start="18.3" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck12" src="assets/sfx/click-soft.mp3" data-start="19.42" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck13" src="assets/sfx/click-soft.mp3" data-start="19.95" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck14" src="assets/sfx/click-soft.mp3" data-start="21.53" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck15" src="assets/sfx/click-soft.mp3" data-start="22.12" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck16" src="assets/sfx/click-soft.mp3" data-start="23.22" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck17" src="assets/sfx/click-soft.mp3" data-start="23.56" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck18" src="assets/sfx/click-soft.mp3" data-start="23.84" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck19" src="assets/sfx/click-soft.mp3" data-start="28.24" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck20" src="assets/sfx/click-soft.mp3" data-start="28.91" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck21" src="assets/sfx/click-soft.mp3" data-start="32.06" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck22" src="assets/sfx/click-soft.mp3" data-start="33.93" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck23" src="assets/sfx/click-soft.mp3" data-start="35.23" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck24" src="assets/sfx/click-soft.mp3" data-start="35.99" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck25" src="assets/sfx/click-soft.mp3" data-start="36.91" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck26" src="assets/sfx/click-soft.mp3" data-start="38.67" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck27" src="assets/sfx/click-soft.mp3" data-start="39.31" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck28" src="assets/sfx/click-soft.mp3" data-start="40.26" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="wh0" src="assets/sfx/whoosh-short.mp3" data-start="5.71" data-duration="0.57" data-track-index="16" data-volume="0.22"></audio>
+<audio id="wh1" src="assets/sfx/whoosh-short.mp3" data-start="21.04" data-duration="0.57" data-track-index="16" data-volume="0.22"></audio>
+<audio id="wh2" src="assets/sfx/whoosh-short.mp3" data-start="26.58" data-duration="0.57" data-track-index="16" data-volume="0.22"></audio>
+<audio id="wh3" src="assets/sfx/whoosh-short.mp3" data-start="33.44" data-duration="0.57" data-track-index="16" data-volume="0.22"></audio>
+<audio id="wh4" src="assets/sfx/whoosh-short.mp3" data-start="40.64" data-duration="0.57" data-track-index="16" data-volume="0.22"></audio>
+<audio id="bed" src="assets/music/bed.mp3" data-start="0" data-duration="47.72" data-track-index="20" data-volume="0.24" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.85}"></audio>
+</div>
+<script>
+const PLAN = [{"type":"hook","at":0,"end":5.89,"cam0":{"scale":1.08,"x":0,"y":0},"cam1":{"scale":1.18,"x":0,"y":-26},"how":3.49},{"type":"fly","sel":"#fly1","at":9.17,"x":372,"y":374,"size":74},{"type":"cursor","cur":"#cur1","rip":"#rip1","moves":[{"at":6.2,"x":746,"y":333,"click":true,"d":0.25},{"at":7.21,"x":754,"y":270,"click":true,"d":0.5},{"at":8.64,"x":372,"y":374,"click":false,"d":0.5},{"at":9.78,"x":796,"y":358,"click":true,"d":0.5},{"at":11.65,"x":480,"y":412,"click":true,"d":0.5},{"at":12.53,"x":745,"y":412,"click":true,"d":0.5},{"at":13.41,"x":494,"y":270,"click":false,"d":0.5},{"at":14.39,"x":746,"y":242,"click":true,"d":0.5},{"at":14.78,"x":734,"y":330,"click":true,"d":0.31},{"at":14.94,"x":734,"y":376,"click":true,"d":0.12},{"at":15.13,"x":734,"y":422,"click":true,"d":0.15},{"at":15.29,"x":734,"y":468,"click":true,"d":0.13},{"at":15.64,"x":348,"y":330,"click":true,"d":0.28},{"at":15.92,"x":746,"y":580,"click":true,"d":0.23},{"at":16.39,"x":746,"y":224,"click":true,"d":0.38},{"at":16.76,"x":734,"y":312,"click":true,"d":0.3},{"at":16.94,"x":734,"y":358,"click":true,"d":0.14},{"at":17.11,"x":734,"y":404,"click":true,"d":0.13},{"at":17.28,"x":734,"y":450,"click":true,"d":0.14},{"at":17.42,"x":348,"y":404,"click":true,"d":0.12},{"at":17.82,"x":746,"y":562,"click":true,"d":0.32},{"at":18.3,"x":746,"y":224,"click":true,"d":0.38},{"at":18.6,"x":734,"y":312,"click":true,"d":0.24},{"at":18.79,"x":734,"y":358,"click":true,"d":0.15},{"at":19,"x":734,"y":404,"click":true,"d":0.17},{"at":19.22,"x":734,"y":450,"click":true,"d":0.17},{"at":19.42,"x":348,"y":358,"click":true,"d":0.16},{"at":19.95,"x":1108,"y":660,"click":true,"d":0.42}],"hides":[[8.42,9.32]]},{"type":"reveal","sel":"#dc1","at":5.89,"pk":1},{"type":"cam","sel":"#cam1","keys":[{"at":5.89,"scale":1.4352,"x":-390,"y":0},{"at":8.47,"scale":1.4352,"x":-390,"y":0},{"at":12.5,"scale":1.4352,"x":-367,"y":0},{"at":13.43,"scale":1.4352,"x":-385,"y":0},{"at":14.72,"scale":1.4352,"x":-362,"y":0},{"at":16.91,"scale":1.4352,"x":-362,"y":0},{"at":19.02,"scale":2,"x":-1716,"y":-488}]},{"type":"cursor","cur":"#cur2","rip":"#rip2","moves":[{"at":21.53,"x":632,"y":487,"click":true,"d":0.25},{"at":22.12,"x":852,"y":636,"click":true,"d":0.47},{"at":23.22,"x":1326,"y":214,"click":true,"d":0.5},{"at":23.56,"x":1404,"y":123,"click":true,"d":0.27},{"at":23.84,"x":1300,"y":284,"click":true,"d":0.23},{"at":24.59,"x":871,"y":292,"click":false,"d":0.5}],"hides":[]},{"type":"reveal","sel":"#dc2","at":21.22,"pk":1},{"type":"cam","sel":"#cam2","keys":[{"at":21.22,"scale":1.4352,"x":-751,"y":0},{"at":22.32,"scale":1.6,"x":-1458,"y":0},{"at":23.67,"scale":1.4352,"x":-499,"y":0}]},{"type":"cursor","cur":"#cur3","rip":"#rip3","moves":[{"at":28.24,"x":604,"y":389,"click":true,"d":0.5},{"at":28.91,"x":768,"y":549,"click":true,"d":0.5},{"at":30.03,"x":687,"y":22,"click":false,"d":0.5},{"at":32.06,"x":195,"y":339,"click":true,"d":0.5}],"hides":[]},{"type":"reveal","sel":"#lw3","at":26.76,"pk":1},{"type":"cam","sel":"#cam3","keys":[{"at":26.76,"scale":0.8537,"x":0,"y":-15},{"at":27.36,"scale":0.8537,"x":0,"y":-15},{"at":29.16,"scale":1.12,"x":0,"y":0}]},{"type":"phone","sel":"#ph4","start":33.62,"end":40.82,"wins":[[33.78,36]],"urlAt":34.87,"zooms":[{"at":33.28,"z":1.3,"cx":539.64,"cy":1014.98,"hold":1.46},{"at":36.26,"z":1.35,"cx":415.89,"cy":303.79,"hold":1.16}],"W":1080,"H":1920},{"type":"reveal","sel":"#ph4-wrap","at":33.62,"pk":1.45},{"type":"end","at":40.82,"endurl":42.97}];
+// Builds the one paused timeline from PLAN (written by build.mjs). Every tween is fromTo with
+// immediateRender off (or a set), so seeking to any time gives the same frame.
+const q = (s, r = document) => r.querySelector(s);
+const qa = (s, r = document) => [...r.querySelectorAll(s)];
+
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  const fade = (el, at, a, b, d = 0.2) => el && tl.fromTo(el, { opacity: a }, { opacity: b, duration: d, ease: 'power1.out', immediateRender: false }, at);
+  // Footage wrappers are shown only inside their own window.
+  qa('[data-on]').forEach((el) => {
+    const on = +el.dataset.on;
+    if (on > 0) { tl.set(el, { autoAlpha: 0 }, 0); tl.set(el, { autoAlpha: 1 }, on); }
+    tl.set(el, { autoAlpha: 0 }, +el.dataset.off);
+  });
+
+  for (const p of PLAN) {
+    if (p.type === 'cam') {
+      const el = q(p.sel);
+      tl.set(el, { transformOrigin: '0 0', ...p.keys[0] }, 0);
+      p.keys.slice(1).forEach((k, i) => {
+        const a = p.keys[i];
+        tl.fromTo(el, { scale: a.scale, x: a.x, y: a.y }, { scale: k.scale, x: k.x, y: k.y, duration: 0.75, ease: 'power2.inOut', immediateRender: false }, k.at);
+      });
+    }
+    if (p.type === 'reveal') {
+      // The section's card / laptop / phone rises into place.
+      const el = q(p.sel);
+      tl.set(el, { scale: p.pk }, 0);
+      tl.fromTo(el, { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', immediateRender: false }, p.at);
+    }
+    if (p.type === 'cursor') {
+      // Glides between recorded points; a ripple on every click.
+      const cur = q(p.cur), rip = q(p.rip);
+      tl.set(cur, { x: p.moves[0].x, y: p.moves[0].y, opacity: 1 }, 0);
+      tl.set(rip, { opacity: 0 }, 0);
+      let prev = p.moves[0];
+      for (const m of p.moves.slice(1)) {
+        if (m.x !== prev.x || m.y !== prev.y) tl.fromTo(cur, { x: prev.x, y: prev.y }, { x: m.x, y: m.y, duration: m.d, ease: 'power2.inOut', immediateRender: false }, m.at - m.d);
+        if (m.click) tl.fromTo(rip, { x: m.x, y: m.y, scale: 0.5, opacity: 0.95 }, { x: m.x, y: m.y, scale: 1.9, opacity: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, m.at);
+        prev = m;
+      }
+      for (const [a, b] of p.hides) { fade(cur, a, 1, 0, 0.12); fade(cur, b, 0, 1, 0.12); }
+    }
+    if (p.type === 'fly') {
+      // The logo file is carried in from outside the frame and dropped on the upload box.
+      const el = q(p.sel);
+      tl.set(el, { width: p.size, height: p.size, xPercent: -50, yPercent: -50, x: p.x + 560, y: p.y + 420, rotation: -14, scale: 1.4, opacity: 0 }, 0);
+      tl.fromTo(el, { x: p.x + 560, y: p.y + 420, rotation: -14, scale: 1.4, opacity: 0 }, { x: p.x, y: p.y, rotation: 0, scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out', immediateRender: false }, p.at - 0.72);
+      tl.fromTo(el, { scale: 1 }, { scale: 0.9, duration: 0.1, yoyo: true, repeat: 1, immediateRender: false }, p.at - 0.02);
+      tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.22, immediateRender: false }, p.at + 0.2);
+    }
+    if (p.type === 'phone') {
+      const scene = q(p.sel), cam = q(p.sel + '-cam'), pv = q(p.sel + '-pv'), chrome = q(p.sel + '-chrome'), tbar = q(p.sel + '-tbar');
+      // Browser bars while the page is not full screen; the page lifts above the bottom toolbar.
+      tl.set([chrome, tbar], { opacity: 0 }, 0);
+      tl.set(pv, { y: 0 }, 0);
+      for (const [a, b] of p.wins) {
+        tl.set([chrome, tbar], { opacity: 1 }, a);
+        tl.set(pv, { y: -62 }, a);
+        if (b < p.end - 0.01) { tl.set([chrome, tbar], { opacity: 0 }, b); tl.set(pv, { y: 0 }, b); }
+      }
+      tl.set(q('.u1', scene), { display: 'inline' }, 0);
+      tl.set(q('.u2', scene), { display: 'none' }, 0);
+      tl.set(q('.u1', scene), { display: 'none' }, p.urlAt);
+      tl.set(q('.u2', scene), { display: 'inline' }, p.urlAt);
+      // Punch-ins on the moments that matter, then back out.
+      tl.set(cam, { transformOrigin: '0 0', scale: 1, x: 0, y: 0 }, 0);
+      for (const z of p.zooms) {
+        const x = Math.max(p.W * (1 - z.z), Math.min(0, z.cx * (1 - z.z) + (p.W / 2 - z.cx) * 0.55));
+        const y = Math.max(p.H * (1 - z.z), Math.min(0, z.cy * (1 - z.z) + (p.H / 2 - z.cy) * 0.55));
+        tl.fromTo(cam, { scale: 1, x: 0, y: 0 }, { scale: z.z, x, y, duration: 0.55, ease: 'power2.inOut', immediateRender: false }, z.at);
+        tl.fromTo(cam, { scale: z.z, x, y }, { scale: 1, x: 0, y: 0, duration: 0.55, ease: 'power2.inOut', immediateRender: false }, z.at + 0.55 + z.hold);
+      }
+    }
+    if (p.type === 'hook') {
+      // Laptop drops in, the phone slides up in front of it; a slow push-in on the brand bar.
+      const lap = q('#hk-lap'), ph = q('#hk-ph'), cam = q('#hk-cam');
+      tl.set(cam, { transformOrigin: '0 0', ...p.cam0 }, 0);
+      tl.fromTo(cam, p.cam0, { ...p.cam1, duration: p.end, ease: 'sine.inOut', immediateRender: false }, 0);
+      tl.fromTo(lap, { y: -60, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out', immediateRender: false }, 0);
+      tl.set(ph, { transformOrigin: '0 0', scale: 0.98 }, 0);
+      tl.fromTo(ph, { y: 260, opacity: 0, rotation: 6 }, { y: 0, opacity: 1, rotation: 0, duration: 0.7, ease: 'back.out(1.4)', immediateRender: false }, 0.22);
+      tl.fromTo(ph, { y: 0 }, { y: -40, duration: p.end - 0.9, ease: 'sine.inOut', immediateRender: false }, 0.92);
+    }
+    if (p.type === 'end') {
+      const sc = q('#end');
+      tl.fromTo(q('.wm', sc), { y: 50, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out', immediateRender: false }, p.at + 0.1);
+      tl.fromTo(q('.pill', sc), { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out', immediateRender: false }, p.endurl - 0.1);
+      tl.fromTo(q('.pill', sc), { scale: 1 }, { scale: 1.06, duration: 0.35, yoyo: true, repeat: 3, ease: 'sine.inOut', immediateRender: false }, p.endurl + 0.6);
+    }
+  }
+  window.__timelines = window.__timelines || {};
+  window.__timelines['main'] = tl;
+});
+
+</script>
+</body></html>

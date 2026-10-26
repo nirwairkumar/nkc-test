@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.281,
+  "end": 0.621,
+  "score": 0.62
+ },
+ {
+  "w": "ten:",
+  "r": "ten",
+  "start": 0.782,
+  "end": 0.942,
+  "score": 0.669
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 1.283,
+  "end": 1.704,
+  "score": 0.571
+ },
+ {
+  "w": "பண்ணதுமே",
+  "r": "pannatumee",
+  "start": 1.764,
+  "end": 2.265,
+  "score": 0.949
+ },
+ {
+  "w": "results.",
+  "r": "results",
+  "start": 2.526,
+  "end": 3.027,
+  "score": 0.578
+ }
+]

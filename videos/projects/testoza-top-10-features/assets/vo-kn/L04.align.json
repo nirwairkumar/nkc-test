@@ -1,0 +1,128 @@
+[
+ {
+  "w": "ಈಗ",
+  "r": "iiga",
+  "start": 0.04,
+  "end": 0.2,
+  "score": 0.991
+ },
+ {
+  "w": "ನೋಡಿ.",
+  "r": "nooddi",
+  "start": 0.24,
+  "end": 0.441,
+  "score": 0.967
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 1.062,
+  "end": 1.182,
+  "score": 0.857
+ },
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 1.263,
+  "end": 1.523,
+  "score": 0.992
+ },
+ {
+  "w": "page",
+  "r": "page",
+  "start": 1.603,
+  "end": 1.743,
+  "score": 0.476
+ },
+ {
+  "w": "ಓದುತ್ತೆ,",
+  "r": "oodutte",
+  "start": 1.844,
+  "end": 2.184,
+  "score": 0.971
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 2.525,
+  "end": 2.926,
+  "score": 0.462
+ },
+ {
+  "w": "ಒಂದೊಂದಾಗಿ",
+  "r": "omdomdaagi",
+  "start": 3.026,
+  "end": 3.447,
+  "score": 0.811
+ },
+ {
+  "w": "ಬರೋಕೆ",
+  "r": "barooke",
+  "start": 3.487,
+  "end": 3.747,
+  "score": 0.711
+ },
+ {
+  "w": "ಶುರುವಾಗುತ್ತೆ",
+  "r": "shuruvaagutte",
+  "start": 3.788,
+  "end": 4.289,
+  "score": 0.933
+ },
+ {
+  "w": "options,",
+  "r": "options",
+  "start": 4.649,
+  "end": 5.03,
+  "score": 0.436
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 5.11,
+  "end": 5.411,
+  "score": 0.777
+ },
+ {
+  "w": "ಎಲ್ಲಾ.",
+  "r": "ellaa",
+  "start": 5.531,
+  "end": 5.771,
+  "score": 0.964
+ },
+ {
+  "w": "ಅರ್ಧ",
+  "r": "ardha",
+  "start": 6.212,
+  "end": 6.453,
+  "score": 0.884
+ },
+ {
+  "w": "ನಿಮಿಷದಲ್ಲಿ,",
+  "r": "nimissadalli",
+  "start": 6.533,
+  "end": 6.974,
+  "score": 0.804
+ },
+ {
+  "w": "ಹನ್ನೆರಡು",
+  "r": "hanneraddu",
+  "start": 7.074,
+  "end": 7.395,
+  "score": 0.165
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 7.415,
+  "end": 7.795,
+  "score": 0.448
+ },
+ {
+  "w": "ರೆಡಿ.",
+  "r": "reddi",
+  "start": 7.836,
+  "end": 7.996,
+  "score": 0.762
+ }
+]

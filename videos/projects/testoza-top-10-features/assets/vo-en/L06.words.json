@@ -1,0 +1,44 @@
+[
+  {
+    "id": "w0",
+    "text": "Number",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "two.",
+    "start": 0.4,
+    "end": 0.96
+  },
+  {
+    "id": "w2",
+    "text": "Maths",
+    "start": 0.96,
+    "end": 1.52
+  },
+  {
+    "id": "w3",
+    "text": "and",
+    "start": 1.52,
+    "end": 1.68
+  },
+  {
+    "id": "w4",
+    "text": "Science",
+    "start": 1.68,
+    "end": 2.16
+  },
+  {
+    "id": "w5",
+    "text": "Typed",
+    "start": 2.32,
+    "end": 2.72
+  },
+  {
+    "id": "w6",
+    "text": "properly.",
+    "start": 2.72,
+    "end": 3.2
+  }
+]

@@ -1,0 +1,78 @@
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-700.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Screen footage: 2304x1296 frames shown at 1536x864 CSS px; GSAP scales the cam (1.25 = full frame) and pans for punch-ins. */
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.card{position:absolute;inset:0;overflow:hidden}
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 700px at 30% 60%,rgba(16,185,129,.22),rgba(2,6,23,0) 70%),radial-gradient(900px 600px at 82% 18%,rgba(14,116,144,.30),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);background-size:64px 64px}
+
+/* Overlays drawn inside a cam (CSS px of the recording, so they follow every zoom) */
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+.ring{position:absolute;border-radius:10px;transform-origin:50% 50%;box-shadow:0 0 0 3px #f59e0b,0 0 22px 4px rgba(245,158,11,.55);opacity:0;z-index:3}
+.tip{position:absolute;transform:translateX(-50%);padding:5px 10px;border-radius:7px;background:#1f2937;color:#fff;font:500 13px/1.25 'Outfit';white-space:nowrap;box-shadow:0 6px 16px -6px rgba(0,0,0,.5);opacity:0;z-index:6}
+
+/* File dialog (Windows-style Open box; not TestoZa UI) */
+.fdlg{position:absolute;inset:0;z-index:7;opacity:0}
+.fdlg .scrim{position:absolute;inset:0;background:rgba(2,6,23,.35)}
+.win{position:absolute;left:410px;top:170px;width:1100px;height:690px;border-radius:12px;background:#f3f3f3;box-shadow:0 40px 100px -30px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.12);overflow:hidden;font-family:'Segoe UI','Outfit',sans-serif;color:#1f2937}
+.win .bar{height:46px;display:flex;align-items:center;padding:0 18px;font:600 16px 'Outfit';background:#eeeeee}
+.win .bar i{margin-left:auto;font-style:normal;color:#64748b;letter-spacing:22px}
+.win .path{height:52px;margin:6px 16px 10px;border-radius:8px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;font:500 16px 'Outfit';color:#334155;box-shadow:0 0 0 1px #e2e8f0}
+.win .path b{color:#94a3b8;font-weight:500}
+.win .body{position:absolute;left:0;right:0;top:114px;bottom:86px;display:flex}
+.win .nav{width:220px;padding:10px 12px;border-right:1px solid #e5e5e5}
+.win .nav p{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:6px;font:500 16px 'Outfit';color:#334155}
+.win .nav p.on{background:#dbeafe}
+.win .nav s{width:18px;height:14px;border-radius:3px;background:#fbbf24;display:block}
+.win .files{flex:1;padding:22px 26px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:22px;background:#fff}
+.tile{width:190px;padding:10px;border-radius:8px;text-align:center;font:500 15px/1.3 'Outfit';color:#1f2937}
+.tile .th{height:140px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:4px;box-shadow:0 0 0 1px #e5e7eb;margin-bottom:8px;overflow:hidden}
+.tile .th img{max-width:170px;max-height:126px}
+.tile.sel{background:#cce4ff;box-shadow:0 0 0 1px #99c9ff}
+.win .foot2{position:absolute;left:0;right:0;bottom:0;height:86px;display:flex;align-items:center;gap:14px;padding:0 22px;background:#f3f3f3;border-top:1px solid #e5e5e5}
+.win .fname{flex:1;height:40px;border-radius:6px;background:#fff;box-shadow:0 0 0 1px #d4d4d4;display:flex;align-items:center;padding:0 14px;font:500 16px 'Outfit';color:#111827}
+.win .fname em{font-style:normal}
+.win .btn{height:40px;min-width:120px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:600 16px 'Outfit';box-shadow:0 0 0 1px #d4d4d4;background:#fff}
+.win .btn.open{background:#0067c0;color:#fff;box-shadow:none}
+.fcur{position:absolute;left:0;top:0;width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* Speed tag (AI wait shown faster) */
+.speed{position:absolute;right:64px;top:124px;height:56px;display:flex;align-items:center;gap:12px;padding:0 24px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 1.5px rgba(250,204,21,.7);color:#fde68a;font:600 25px 'Outfit';z-index:9}
+.speed b{font:800 25px 'Outfit';color:#facc15}
+
+/* Title card */
+.titlecard .wm{position:absolute;left:0;right:0;margin:0 auto;top:230px;height:140px}
+.ttl{position:absolute;left:0;right:0;top:440px;text-align:center;font:800 92px/1.08 'Outfit';color:#f8fafc;letter-spacing:-.02em;padding:0 160px}
+.ttl span{color:#34d399}
+.sub{position:absolute;left:0;right:0;top:680px;display:flex;justify-content:center;align-items:center;gap:22px;font:600 34px 'Outfit';color:#94a3b8}
+.sub i{width:9px;height:9px;border-radius:50%;background:#34d399;display:block}
+.src{position:absolute;left:0;right:0;top:770px;text-align:center;font:500 24px 'Outfit';color:#64748b}
+
+/* Chapter chip */
+.chip{position:absolute;left:64px;top:56px;height:56px;display:flex;align-items:center;gap:14px;padding:0 24px 0 8px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 1.5px rgba(52,211,153,.6),0 12px 30px -12px rgba(0,0,0,.6);color:#f8fafc;font:600 25px 'Outfit';white-space:nowrap;z-index:9}
+.chip b{width:42px;height:42px;border-radius:50%;background:#34d399;color:#020617;font:800 22px/42px 'Outfit';text-align:center}
+
+/* Source line for each paper question */
+.qsrc{position:absolute;right:64px;top:56px;height:44px;display:flex;align-items:center;padding:0 20px;border-radius:999px;background:rgba(2,6,23,.82);color:#cbd5e1;font:600 21px 'Outfit';z-index:8}
+
+/* Captions */
+.cap{position:absolute;left:0;right:0;bottom:44px;text-align:center;z-index:9}
+.cap.top{top:22px;bottom:auto}
+.cap.top span{max-width:1000px;font-size:34px}
+.cap span{display:inline-block;max-width:1480px;padding:10px 28px;border-radius:14px;background:rgba(2,6,23,.84);color:#fff;font:600 38px/1.3 'Outfit'}
+
+/* End card */
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:270px;height:170px}
+.endcard .tag{position:absolute;left:0;right:0;top:500px;text-align:center;font:700 52px/1.25 'Outfit';color:#f8fafc;padding:0 200px}
+.pills{position:absolute;left:0;right:0;top:680px;display:flex;justify-content:center;gap:28px}
+.pill{height:84px;padding:0 44px;border-radius:999px;display:flex;align-items:center;gap:14px;font:700 38px 'Outfit'}
+.pill.url{color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 2px rgba(52,211,153,.6)}
+.pill.subs{color:#fff;background:#dc2626;box-shadow:0 20px 40px -14px rgba(220,38,38,.7)}
+.bell{width:26px;height:26px;border-radius:13px 13px 4px 4px;background:#fff;display:block;position:relative}
+.bell::after{content:'';position:absolute;left:9px;bottom:-6px;width:8px;height:6px;border-radius:0 0 4px 4px;background:#fff}

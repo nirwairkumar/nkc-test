@@ -1,0 +1,247 @@
+1
+00:00:00,750 --> 00:00:03,240
+Questions in Hindi and English together…
+
+2
+00:00:03,240 --> 00:00:06,730
+a diagram straight from the paper… chemistry structures…
+
+3
+00:00:06,730 --> 00:00:08,290
+and full JEE-level maths.
+
+4
+00:00:08,290 --> 00:00:12,400
+In the next few minutes, you will build this whole paper yourself.
+
+5
+00:00:18,800 --> 00:00:22,360
+Hello! Today we take this JEE Main sample paper
+
+6
+00:00:22,360 --> 00:00:26,990
+and build a complete test on TestoZa from selected questions.
+
+7
+00:00:26,990 --> 00:00:31,090
+Every question teaches you something new. Let's begin.
+
+8
+00:00:32,780 --> 00:00:36,590
+Click Create Test in the menu on the left.
+
+9
+00:00:36,600 --> 00:00:41,320
+At the top, type the test name — JEE Main Mini Mock.
+
+10
+00:00:41,320 --> 00:00:47,310
+Below it, a one-line description candidates see before they start.
+
+11
+00:00:47,310 --> 00:00:51,850
+Now pick the time. The 3h button sets 180 minutes.
+
+12
+00:00:51,840 --> 00:00:58,100
+"Only my students" means only people you send the link to can see it.
+
+13
+00:00:58,110 --> 00:01:03,370
+In Marking, choose JEE / NEET: +4 for right, −1 for wrong.
+
+14
+00:01:03,370 --> 00:01:09,000
+Open Institution branding to add your institute name and logo.
+
+15
+00:01:10,100 --> 00:01:16,670
+Now go down to Questions. The first one is physics.
+
+16
+00:01:16,670 --> 00:01:20,660
+Let's type it in English first.
+
+17
+00:01:21,760 --> 00:01:24,420
+Now the same question in Hindi.
+
+18
+00:01:24,420 --> 00:01:29,740
+Click the button next to English and pick Hindi from the menu.
+
+19
+00:01:29,740 --> 00:01:36,090
+Type in English letters — each word turns into Hindi when you press space.
+
+20
+00:01:36,080 --> 00:01:40,450
+The Hindi version goes right below the English one.
+
+21
+00:01:40,460 --> 00:01:46,040
+Options need a square root: open Maths & symbols. This is Sy Pad.
+
+22
+00:01:46,030 --> 00:01:49,890
+Click option A, write the root, press Insert.
+
+23
+00:01:49,890 --> 00:01:56,840
+All four options done. Click the correct letter — D. One question, two languages.
+
+24
+00:01:57,940 --> 00:02:06,700
+Press Add question. Tip: a new question opens in the last language, so tap English first.
+
+25
+00:02:06,700 --> 00:02:11,720
+This question has a diagram — no need to redraw it.
+
+26
+00:02:11,720 --> 00:02:20,970
+Picture → the screen button. In the PDF press Win + Shift + S, box the diagram, then Ctrl + V.
+
+27
+00:02:20,980 --> 00:02:28,760
+The diagram sits under the question and above the options, just like the paper.
+
+28
+00:02:28,750 --> 00:02:33,470
+Fraction options from Sy Pad. Correct answer: B.
+
+29
+00:02:34,580 --> 00:02:40,780
+Question 3 is chemistry, and the structure sits inside the sentence.
+
+30
+00:02:40,780 --> 00:02:46,890
+TestoZa has no structure-drawing tool, so we cut it from the paper.
+
+31
+00:02:46,880 --> 00:02:52,900
+Picture → the cloud button places it exactly where your cursor is.
+
+32
+00:02:52,900 --> 00:02:59,370
+Then the reaction arrow from Sy Pad: ozone above, zinc and water below.
+
+33
+00:02:59,370 --> 00:03:05,480
+It's numerical: Question type → Numerical answer → Exact value → 1.
+
+34
+00:03:06,580 --> 00:03:14,240
+Now maths. Open Maths & symbols — "Goes into Question 4".
+
+35
+00:03:14,240 --> 00:03:19,880
+f(x) = integral… a fraction… x² dx on top…
+
+36
+00:03:19,880 --> 00:03:24,580
+…and (1 + x²)(1 + √(1 + x²)) below.
+
+37
+00:03:24,580 --> 00:03:34,650
+The preview builds it exactly like the paper. Insert, then finish the line.
+
+38
+00:03:34,650 --> 00:03:43,110
+Log, root and π/4 options — all from Sy Pad. Correct answer: B.
+
+39
+00:03:44,220 --> 00:03:51,160
+Now the biggest question in this video: a JEE-level multistep reaction.
+
+40
+00:03:51,150 --> 00:03:56,520
+First the bromobenzene structure, placed at the cursor.
+
+41
+00:03:56,530 --> 00:04:04,840
+In Sy Pad → Chemistry, pick the arrow with conditions. Three rows on top, none below.
+
+42
+00:04:04,830 --> 00:04:11,870
+The reagents: Mg and ether, then CO₂ and H⁺; NH₃ and heat; Br₂ and NaOH.
+
+43
+00:04:11,870 --> 00:04:17,540
+The options are structures too — a picture in each option.
+
+44
+00:04:17,540 --> 00:04:24,580
+Five diagrams in one question, still clean. Correct answer: B — aniline.
+
+45
+00:04:25,670 --> 00:04:29,700
+Match-the-list needs no table drawing.
+
+46
+00:04:29,700 --> 00:04:37,540
+Sy Pad → Tables → Match List. Reactants left, products right, then Insert.
+
+47
+00:04:37,540 --> 00:04:39,450
+Correct answer: C.
+
+48
+00:04:40,550 --> 00:04:47,650
+The paper is ready. Now split it into Physics, Chemistry and Mathematics, like real JEE.
+
+49
+00:04:47,650 --> 00:04:52,650
+First, drag the integral question to the bottom by its handle.
+
+50
+00:04:53,750 --> 00:04:59,220
+Switch on "Split into sections" — everything lands in Section A.
+
+51
+00:04:59,220 --> 00:05:03,830
+Click the + between two questions → New question here.
+
+52
+00:05:03,830 --> 00:05:08,790
+One more chemistry question, with Sy Pad's chemistry keys.
+
+53
+00:05:09,890 --> 00:05:16,330
+Press "Add a new section", name it Bonus, and add a maths question.
+
+54
+00:05:19,300 --> 00:05:24,790
+Now split Section A: click + where chemistry starts → Split section here.
+
+55
+00:05:24,790 --> 00:05:28,850
+Name the first part Physics and the new one Chemistry.
+
+56
+00:05:28,850 --> 00:05:34,410
+The integral is still in Chemistry — split it out and name it Mathematics.
+
+57
+00:05:34,410 --> 00:05:37,270
+Finally, merge Bonus into Mathematics.
+
+58
+00:05:37,260 --> 00:05:40,870
+Physics, Chemistry, Mathematics — just like JEE.
+
+59
+00:05:41,970 --> 00:05:45,860
+Click Save test. Your test is now in My Tests.
+
+60
+00:05:45,850 --> 00:05:52,610
+And this is exactly what your candidates see — sections, Hindi, diagrams, maths.
+
+61
+00:05:54,310 --> 00:05:58,310
+Make your first test today at testoza.com.
+
+62
+00:05:58,320 --> 00:06:03,280
+Liked the video? Subscribe. See you in the next one!

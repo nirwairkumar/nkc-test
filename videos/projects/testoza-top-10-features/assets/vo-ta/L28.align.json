@@ -1,0 +1,184 @@
+[
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 0.02,
+  "end": 0.16,
+  "score": 0.96
+ },
+ {
+  "w": "dashboard-ல:",
+  "r": "dashboardla",
+  "start": 0.26,
+  "end": 0.861,
+  "score": 0.618
+ },
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 1.101,
+  "end": 1.322,
+  "score": 0.598
+ },
+ {
+  "w": "முப்பது",
+  "r": "muppatu",
+  "start": 1.322,
+  "end": 1.662,
+  "score": 0.865
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 1.682,
+  "end": 1.982,
+  "score": 0.551
+ },
+ {
+  "w": "எழுதிட்டு",
+  "r": "elutiddu",
+  "start": 2.002,
+  "end": 2.343,
+  "score": 0.485
+ },
+ {
+  "w": "இருக்காங்க,",
+  "r": "irukkaangka",
+  "start": 2.343,
+  "end": 2.663,
+  "score": 0.645
+ },
+ {
+  "w": "ரெண்டு",
+  "r": "rendu",
+  "start": 2.983,
+  "end": 3.224,
+  "score": 0.692
+ },
+ {
+  "w": "பேர்",
+  "r": "peer",
+  "start": 3.264,
+  "end": 3.404,
+  "score": 0.867
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 3.444,
+  "end": 3.744,
+  "score": 0.697
+ },
+ {
+  "w": "பண்ணிட்டாங்க.",
+  "r": "panniddaangka",
+  "start": 3.764,
+  "end": 4.205,
+  "score": 0.62
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 4.565,
+  "end": 4.886,
+  "score": 0.391
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 4.926,
+  "end": 5.166,
+  "score": 0.738
+ },
+ {
+  "w": "பண்ணுங்க",
+  "r": "pannungka",
+  "start": 5.226,
+  "end": 5.506,
+  "score": 0.676
+ },
+ {
+  "w": "started,",
+  "r": "started",
+  "start": 5.847,
+  "end": 6.327,
+  "score": 0.939
+ },
+ {
+  "w": "writing,",
+  "r": "writing",
+  "start": 6.367,
+  "end": 7.068,
+  "score": 0.709
+ },
+ {
+  "w": "submitted,",
+  "r": "submitted",
+  "start": 7.348,
+  "end": 7.889,
+  "score": 0.77
+ },
+ {
+  "w": "dropped.",
+  "r": "dropped",
+  "start": 8.349,
+  "end": 8.71,
+  "score": 0.54
+ },
+ {
+  "w": "எந்த",
+  "r": "enta",
+  "start": 9.17,
+  "end": 9.411,
+  "score": 0.719
+ },
+ {
+  "w": "tile-ஐ",
+  "r": "tileai",
+  "start": 9.491,
+  "end": 9.811,
+  "score": 0.491
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 9.831,
+  "end": 9.991,
+  "score": 0.855
+ },
+ {
+  "w": "பண்ணாலும்,",
+  "r": "pannaalum",
+  "start": 10.031,
+  "end": 10.472,
+  "score": 0.912
+ },
+ {
+  "w": "யாரு,",
+  "r": "yaaru",
+  "start": 10.672,
+  "end": 11.013,
+  "score": 0.808
+ },
+ {
+  "w": "எவ்வளவு",
+  "r": "evvalavu",
+  "start": 11.073,
+  "end": 11.313,
+  "score": 0.473
+ },
+ {
+  "w": "முடிச்சிருக்காங்கன்னு",
+  "r": "mudiccirukkaangkannu",
+  "start": 11.313,
+  "end": 11.934,
+  "score": 0.677
+ },
+ {
+  "w": "தெரியும்.",
+  "r": "teriyum",
+  "start": 11.974,
+  "end": 12.234,
+  "score": 0.963
+ }
+]

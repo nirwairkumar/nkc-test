@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Shorts thumbnail (1080x1920), English only. Real app screens from the takes: the Institution
+     branding panel (builder) and the branded exam on a phone. The institute is fictional (Apex Academy). -->
+<style>
+  @font-face { font-family: 'Outfit'; font-weight: 900; src: url('../../assets/fonts/Outfit-900.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 800; src: url('../../assets/fonts/Outfit-800.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 700; src: url('../../assets/fonts/Outfit-700.woff2'); }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  .bg { position: absolute; inset: 0; background:
+      radial-gradient(800px 800px at 20% 72%, rgba(14,165,233,.36), rgba(2,6,23,0) 70%),
+      radial-gradient(760px 700px at 88% 30%, rgba(99,102,241,.42), rgba(2,6,23,0) 70%),
+      linear-gradient(170deg, #071233, #020617 70%); }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(148,163,184,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.07) 1px, transparent 1px); background-size: 60px 60px; }
+  .wm { position: absolute; left: 0; right: 0; margin: 0 auto; top: 92px; height: 78px; }
+  .h1 { position: absolute; left: 0; right: 0; top: 214px; text-align: center; font: 900 168px/0.9 'Outfit'; letter-spacing: -.045em; }
+  .h1 span { background: linear-gradient(135deg, #7dd3fc, #38bdf8 40%, #818cf8 72%, #facc15); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 20px 44px rgba(56,189,248,.45)); }
+  .h2 { position: absolute; left: 0; right: 0; top: 380px; text-align: center; font: 900 104px/1 'Outfit'; letter-spacing: -.025em; color: #fff; text-shadow: 0 12px 34px rgba(0,0,0,.6); }
+  .pill { position: absolute; left: 0; right: 0; margin: 0 auto; top: 518px; width: max-content; padding: 18px 34px; border-radius: 22px; background: #facc15; color: #0b1220; font: 800 50px/1 'Outfit'; box-shadow: 0 18px 40px -12px rgba(250,204,21,.6); }
+  .panel { position: absolute; left: 40px; top: 690px; width: 760px; border-radius: 22px; overflow: hidden; background: #fff; transform: rotate(-5deg); box-shadow: 0 40px 90px -20px rgba(0,0,0,.85), 0 0 0 3px rgba(255,255,255,.08); }
+  .panel img { width: 760px; display: block; }
+  .phone { position: absolute; left: 470px; top: 860px; width: 520px; padding: 16px; border-radius: 74px; background: #0b0f19; box-shadow: 0 0 0 3px #1e293b, 0 50px 100px -20px rgba(0,0,0,.9); transform: rotate(5deg); }
+  .phone .scr { width: 520px; height: 1000px; border-radius: 60px; overflow: hidden; background: #fff; }
+  .phone img { width: 520px; display: block; }
+  .ring { position: absolute; left: 520px; top: 850px; width: 430px; height: 120px; border-radius: 60px; border: 7px solid #facc15; transform: rotate(5deg); box-shadow: 0 0 40px rgba(250,204,21,.6); }
+  .logo { position: absolute; left: 70px; top: 1170px; width: 330px; filter: drop-shadow(0 30px 50px rgba(37,99,235,.55)); transform: rotate(-8deg); }
+  .arrow { position: absolute; left: 330px; top: 1120px; width: 200px; height: 120px; }
+</style></head><body>
+<div class="bg"></div><div class="grid"></div>
+<img class="wm" src="wordmark.png" alt="TestoZa">
+<div class="h1"><span>YOUR LOGO</span></div>
+<div class="h2">ON EVERY TEST</div>
+<div class="pill">Add Institute Branding</div>
+<div class="panel"><img src="panel.png" alt=""></div>
+<div class="phone"><div class="scr"><img src="phone-exam.png" alt=""></div></div>
+<div class="ring"></div>
+<img class="logo" src="apex-academy-logo.png" alt="">
+<svg class="arrow" viewBox="0 0 200 120"><path d="M10 100 C 70 110, 130 70, 170 22" fill="none" stroke="#facc15" stroke-width="12" stroke-linecap="round"/><path d="M140 18 L178 12 L168 50" fill="none" stroke="#facc15" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</body></html>

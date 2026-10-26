@@ -1,0 +1,86 @@
+[
+ {
+  "w": "Logo",
+  "r": "logo",
+  "start": 0.06,
+  "end": 0.301,
+  "score": 0.741
+ },
+ {
+  "w": "போடுங்க,",
+  "r": "poodungka",
+  "start": 0.402,
+  "end": 0.723,
+  "score": 0.924
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 0.984,
+  "end": 1.406,
+  "score": 0.528
+ },
+ {
+  "w": "பேரை",
+  "r": "peerai",
+  "start": 1.406,
+  "end": 1.707,
+  "score": 0.772
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.727,
+  "end": 1.867,
+  "score": 0.223
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 1.887,
+  "end": 2.209,
+  "score": 0.827
+ },
+ {
+  "w": "colour,",
+  "r": "colour",
+  "start": 2.49,
+  "end": 2.851,
+  "score": 0.333
+ },
+ {
+  "w": "font",
+  "r": "font",
+  "start": 3.032,
+  "end": 3.333,
+  "score": 0.276
+ },
+ {
+  "w": "தேர்ந்தெடுங்க.",
+  "r": "teerntedungka",
+  "start": 3.353,
+  "end": 3.875,
+  "score": 0.884
+ },
+ {
+  "w": "அவ்ளோதான்",
+  "r": "avlootaan",
+  "start": 4.217,
+  "end": 4.678,
+  "score": 0.881
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 4.96,
+  "end": 5.261,
+  "score": 0.725
+ },
+ {
+  "w": "ready.",
+  "r": "ready",
+  "start": 5.301,
+  "end": 5.482,
+  "score": 0.481
+ }
+]

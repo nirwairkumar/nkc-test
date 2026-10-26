@@ -279,6 +279,10 @@ app.include_router(exam_sessions.router, prefix="/api/exam-sessions", tags=["Exa
 app.include_router(join.router, prefix="/api/join", tags=["Join"])
 app.include_router(batches.router, prefix="/api/batches", tags=["Batches"])
 
+# Invite links: educators bring educators (/invite/<code>, Settings → Invite educators)
+from app.routers import referrals
+app.include_router(referrals.router, prefix="/api/referrals", tags=["Referrals"])
+
 # Visitor's country/state for the test builder's typing-language menu
 from app.routers import locale
 app.include_router(locale.router, prefix="/api/locale", tags=["Locale"])

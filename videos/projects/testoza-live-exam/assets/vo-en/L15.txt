@@ -1,0 +1,2 @@
+Result Visibility — on, and students see their score and analysis the moment they submit.
+Turn it off if you'd rather announce results later.

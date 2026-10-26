@@ -1,0 +1,2 @@
+This is your exam room. Three tabs: Proctoring, Access, and Results.
+I'll go through every switch, the way I'd set it up for a real exam.

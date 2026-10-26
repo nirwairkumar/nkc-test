@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-ml/L01.wav",
+    "duration": 6.017792,
+    "text": "നിങ്ങളുടെ institute-ന്റെ logo-യും പേരും — ഓരോ online test-ലും. എങ്ങനെയെന്ന് step by step നോക്കാം.",
+    "raw": "{hook}നിങ്ങളുടെ institute-ന്റെ logo-യും പേരും — ഓരോ online test-ലും. {how}എങ്ങനെയെന്ന് step by step നോക്കാം."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-ml/L02.wav",
+    "duration": 2.725,
+    "text": "Test-ന് പേര് നൽകൂ, പിന്നെ Institution branding open ചെയ്യൂ.",
+    "raw": "{title}Test-ന് പേര് നൽകൂ, {branding}പിന്നെ Institution branding open ചെയ്യൂ."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-ml/L03.wav",
+    "duration": 6.214167,
+    "text": "Logo ഇടൂ, institute-ന്റെ പേര് type ചെയ്യൂ, colour, font തിരഞ്ഞെടുക്കൂ. അത്രേയുള്ളൂ — brand ready.",
+    "raw": "{logo}Logo ഇടൂ, {name}institute-ന്റെ പേര് type ചെയ്യൂ, {color}colour, {font}font തിരഞ്ഞെടുക്കൂ. {branded}അത്രേയുള്ളൂ — brand ready."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-ml/L04.wav",
+    "duration": 6.334042,
+    "text": "ഇനി questions — ശരിയായ answer tap ചെയ്യൂ, അടുത്തത്, ഒന്നു കൂടി. പിന്നെ Save.",
+    "raw": "{q1}ഇനി questions — {right1}ശരിയായ answer tap ചെയ്യൂ, അടുത്തത്, {add3}ഒന്നു കൂടി. {save}പിന്നെ Save."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-ml/L05.wav",
+    "duration": 4.126,
+    "text": "പിന്നെ Conduct exam, start ചെയ്യൂ, link copy ചെയ്യൂ — അല്ലെങ്കിൽ ആറക്ക join code അയയ്ക്കൂ.",
+    "raw": "{conduct}പിന്നെ Conduct exam, {start}start ചെയ്യൂ, {copy}link copy ചെയ്യൂ — {code}അല്ലെങ്കിൽ ആറക്ക join code അയയ്ക്കൂ."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-ml/L06.wav",
+    "duration": 5.997292,
+    "text": "Students link open ചെയ്യുന്നു, പേര് type ചെയ്യുന്നു, start ചെയ്യുന്നു… നോക്കൂ — നിങ്ങളുടെ logo-യും പേരും, ഏറ്റവും മുകളിൽ.",
+    "raw": "{dopen}Students link open ചെയ്യുന്നു, {cname}പേര് type ചെയ്യുന്നു, {dgo}start ചെയ്യുന്നു… {dbrand}നോക്കൂ — നിങ്ങളുടെ logo-യും പേരും, ഏറ്റവും മുകളിൽ."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-ml/L07.wav",
+    "duration": 5.1145,
+    "text": "Phone-ലാണോ? Code type ചെയ്ത്, Start tap ചെയ്താൽ, അവിടെയും നിങ്ങളുടെ brand. ഓരോ question-ഉം, നിങ്ങളുടെ പേരിൽ.",
+    "raw": "{typecode}Phone-ലാണോ? Code type ചെയ്ത്, {pgo}Start tap ചെയ്താൽ, {pbrand}അവിടെയും നിങ്ങളുടെ brand. {ans1}ഓരോ question-ഉം, നിങ്ങളുടെ പേരിൽ."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-ml/L08.wav",
+    "duration": 4.049167,
+    "text": "നിങ്ങളുടെ institute. നിങ്ങളുടെ test. ഇന്നുതന്നെ തുടങ്ങൂ — testoza.com-ൽ.",
+    "raw": "{endcard}നിങ്ങളുടെ institute. നിങ്ങളുടെ test. {endurl}ഇന്നുതന്നെ തുടങ്ങൂ — testoza.com-ൽ."
+  }
+]

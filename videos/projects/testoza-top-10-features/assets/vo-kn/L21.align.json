@@ -1,0 +1,149 @@
+[
+ {
+  "w": "Name",
+  "r": "name",
+  "start": 0.06,
+  "end": 0.381,
+  "score": 0.481
+ },
+ {
+  "w": "default",
+  "r": "default",
+  "start": 0.401,
+  "end": 0.762,
+  "score": 0.471
+ },
+ {
+  "w": "ಆಗಿ",
+  "r": "aagi",
+  "start": 0.782,
+  "end": 0.942,
+  "score": 0.74
+ },
+ {
+  "w": "ಕೇಳುತ್ತೆ.",
+  "r": "keellutte",
+  "start": 1.002,
+  "end": 1.343,
+  "score": 0.876
+ },
+ {
+  "w": "ರೋಲ್",
+  "r": "rool",
+  "start": 1.904,
+  "end": 2.084,
+  "score": 0.967
+ },
+ {
+  "w": "ನಂಬರ್",
+  "r": "nambar",
+  "start": 2.144,
+  "end": 2.365,
+  "score": 0.913
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 2.425,
+  "end": 2.565,
+  "score": 0.64
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 2.585,
+  "end": 2.806,
+  "score": 0.95
+ },
+ {
+  "w": "ಅಥವಾ",
+  "r": "athavaa",
+  "start": 3.086,
+  "end": 3.367,
+  "score": 0.947
+ },
+ {
+  "w": "ಬೇರೆ",
+  "r": "beere",
+  "start": 3.467,
+  "end": 3.728,
+  "score": 0.931
+ },
+ {
+  "w": "ಏನಾದರೂ",
+  "r": "eenaadaruu",
+  "start": 3.788,
+  "end": 4.149,
+  "score": 0.69
+ },
+ {
+  "w": "batch,",
+  "r": "batch",
+  "start": 4.189,
+  "end": 4.549,
+  "score": 0.546
+ },
+ {
+  "w": "school,",
+  "r": "school",
+  "start": 4.75,
+  "end": 5.071,
+  "score": 0.334
+ },
+ {
+  "w": "phone.",
+  "r": "phone",
+  "start": 5.351,
+  "end": 5.652,
+  "score": 0.697
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 6.053,
+  "end": 6.373,
+  "score": 0.8
+ },
+ {
+  "w": "ಮಾಡೋ",
+  "r": "maaddoo",
+  "start": 6.413,
+  "end": 6.654,
+  "score": 0.743
+ },
+ {
+  "w": "ಮುಂಚೆ",
+  "r": "mumce",
+  "start": 6.654,
+  "end": 6.874,
+  "score": 0.986
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 7.235,
+  "end": 7.816,
+  "score": 0.601
+ },
+ {
+  "w": "ಇದನ್ನ",
+  "r": "idanna",
+  "start": 7.997,
+  "end": 8.257,
+  "score": 0.962
+ },
+ {
+  "w": "fill",
+  "r": "fill",
+  "start": 8.297,
+  "end": 8.438,
+  "score": 0.499
+ },
+ {
+  "w": "ಮಾಡ್ತಾರೆ.",
+  "r": "maaddtaare",
+  "start": 8.478,
+  "end": 8.838,
+  "score": 0.637
+ }
+]

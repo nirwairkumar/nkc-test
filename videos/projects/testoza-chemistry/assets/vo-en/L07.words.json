@@ -1,0 +1,158 @@
+[
+  {
+    "id": "w0",
+    "text": "The",
+    "start": 0,
+    "end": 0.16
+  },
+  {
+    "id": "w1",
+    "text": "other",
+    "start": 0.16,
+    "end": 0.32
+  },
+  {
+    "id": "w2",
+    "text": "keys",
+    "start": 0.32,
+    "end": 0.72
+  },
+  {
+    "id": "w3",
+    "text": "work",
+    "start": 0.72,
+    "end": 0.96
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 0.96,
+    "end": 1.12
+  },
+  {
+    "id": "w5",
+    "text": "same",
+    "start": 1.12,
+    "end": 1.36
+  },
+  {
+    "id": "w6",
+    "text": "way",
+    "start": 1.36,
+    "end": 1.6
+  },
+  {
+    "id": "w7",
+    "text": "gas",
+    "start": 1.76,
+    "end": 2.16
+  },
+  {
+    "id": "w8",
+    "text": "given",
+    "start": 2.16,
+    "end": 2.56
+  },
+  {
+    "id": "w9",
+    "text": "off,",
+    "start": 2.56,
+    "end": 2.96
+  },
+  {
+    "id": "w10",
+    "text": "a",
+    "start": 2.96,
+    "end": 3.12
+  },
+  {
+    "id": "w11",
+    "text": "precipitate,",
+    "start": 3.12,
+    "end": 4
+  },
+  {
+    "id": "w12",
+    "text": "heat,",
+    "start": 4,
+    "end": 4.56
+  },
+  {
+    "id": "w13",
+    "text": "degree",
+    "start": 4.56,
+    "end": 5.04
+  },
+  {
+    "id": "w14",
+    "text": "Celsius,",
+    "start": 5.04,
+    "end": 5.84
+  },
+  {
+    "id": "w15",
+    "text": "aqueous,",
+    "start": 5.84,
+    "end": 6.8
+  },
+  {
+    "id": "w16",
+    "text": "solid,",
+    "start": 6.8,
+    "end": 7.44
+  },
+  {
+    "id": "w17",
+    "text": "liquid,",
+    "start": 7.44,
+    "end": 8.08
+  },
+  {
+    "id": "w18",
+    "text": "KA,",
+    "start": 8.08,
+    "end": 8.88
+  },
+  {
+    "id": "w19",
+    "text": "KB,",
+    "start": 8.88,
+    "end": 9.6
+  },
+  {
+    "id": "w20",
+    "text": "PH,",
+    "start": 9.6,
+    "end": 10.08
+  },
+  {
+    "id": "w21",
+    "text": "and",
+    "start": 10.08,
+    "end": 10.24
+  },
+  {
+    "id": "w22",
+    "text": "mole,",
+    "start": 10.24,
+    "end": 10.8
+  },
+  {
+    "id": "w23",
+    "text": "one",
+    "start": 10.8,
+    "end": 10.88
+  },
+  {
+    "id": "w24",
+    "text": "tap",
+    "start": 11.04,
+    "end": 11.36
+  },
+  {
+    "id": "w25",
+    "text": "each.",
+    "start": 11.36,
+    "end": 11.6
+  }
+]

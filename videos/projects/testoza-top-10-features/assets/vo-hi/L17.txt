@@ -1,0 +1,1 @@
+Results tab पर, आप तय करते हैं कि exam के बाद candidates क्या देखें। और questions shuffle कीजिए, ताकि किसी को भी एक जैसा order न मिले। Save।

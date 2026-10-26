@@ -1,0 +1,107 @@
+[
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 0.02,
+  "end": 0.522,
+  "score": 0.503
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 0.582,
+  "end": 0.782,
+  "score": 0.586
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 0.802,
+  "end": 1.063,
+  "score": 0.7
+ },
+ {
+  "w": "ചെയ്യുന്നു,",
+  "r": "ceyyunnu",
+  "start": 1.103,
+  "end": 1.324,
+  "score": 0.744
+ },
+ {
+  "w": "പേര്",
+  "r": "peer",
+  "start": 1.565,
+  "end": 1.765,
+  "score": 0.965
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.845,
+  "end": 2.086,
+  "score": 0.574
+ },
+ {
+  "w": "ചെയ്യുന്നു,",
+  "r": "ceyyunnu",
+  "start": 2.086,
+  "end": 2.287,
+  "score": 0.476
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 2.407,
+  "end": 2.788,
+  "score": 0.556
+ },
+ {
+  "w": "ചെയ്യുന്നു…",
+  "r": "ceyyunnu",
+  "start": 2.808,
+  "end": 3.029,
+  "score": 0.648
+ },
+ {
+  "w": "നോക്കൂ",
+  "r": "nookkuu",
+  "start": 3.33,
+  "end": 3.651,
+  "score": 0.804
+ },
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 3.951,
+  "end": 4.353,
+  "score": 0.946
+ },
+ {
+  "w": "logo-യും",
+  "r": "logoyum",
+  "start": 4.393,
+  "end": 4.814,
+  "score": 0.843
+ },
+ {
+  "w": "പേരും,",
+  "r": "peerum",
+  "start": 4.854,
+  "end": 5.135,
+  "score": 0.941
+ },
+ {
+  "w": "ഏറ്റവും",
+  "r": "eerrrravum",
+  "start": 5.335,
+  "end": 5.717,
+  "score": 0.661
+ },
+ {
+  "w": "മുകളിൽ.",
+  "r": "mukallila",
+  "start": 5.737,
+  "end": 5.997,
+  "score": 0.796
+ }
+]

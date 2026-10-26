@@ -1,0 +1,14 @@
+prebuild details
+prebuild q1
+prebuild q2
+prebuild q3
+prebuild q4
+prebuild q5
+prebuild q6
+  mark f:x-start @ 0.301
+record save
+  mark f:save @ 1.866
+  mark f:saved @ 9.646
+  mark f:ready @ 11.496
+saved; url https://app.testoza.com/my-tests
+✓ f.mp4  197 frames  4 marks  sync {"lagMedian":0.287,"lagMax":0.337,"unread":0}

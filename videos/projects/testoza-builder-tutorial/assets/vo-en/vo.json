@@ -1,0 +1,114 @@
+[
+  {
+    "n": 1,
+    "id": "01",
+    "file": "assets/vo-en/line-01.wav",
+    "duration": 14.77225,
+    "text": "Questions in Hindi and English, side by side… a diagram straight from the paper… chemistry structures… and full JEE-level maths.\nIn the next few minutes, you're going to build this entire paper yourself."
+  },
+  {
+    "n": 2,
+    "id": "02",
+    "file": "assets/vo-en/line-02.wav",
+    "duration": 11.882208,
+    "text": "Hi! Today we'll take this JEE Main sample paper, and turn selected questions into a complete test on Testoza. Every question teaches you one new trick. So, let's get started."
+  },
+  {
+    "n": 3,
+    "id": "03",
+    "file": "assets/vo-en/line-03.wav",
+    "duration": 38.230125,
+    "text": "In the menu on the left, click Create Test. At the top, type the test name — JEE Main Mini Mock. Just below it, add a one-line description. Candidates see this before they start.\nNow pick the time. Tap the three-hour button, and it fills in a hundred and eighty minutes for you.\n\"Only my students\" means the test is visible only to the people you send the link to.\nIn Marking, choose JEE / NEET — plus four for a right answer, and minus one for a wrong one.\nAnd if you open Institution branding, you can add your institute's name and logo too."
+  },
+  {
+    "n": 4,
+    "id": "04",
+    "file": "assets/vo-en/line-04.wav",
+    "duration": 11.054083,
+    "text": "Now scroll down to Questions. The first one is physics. Let's type it in English first — a stone, a string of length L, and a vertical circle."
+  },
+  {
+    "n": 5,
+    "id": "05",
+    "file": "assets/vo-en/line-05.wav",
+    "duration": 39.135958,
+    "text": "Now, the same question in Hindi. Above the question, click the button next to English, search for Hindi in the menu, and pick it.\nNow just type in English letters — e, k… p, a, t, t, h, a, r — and the moment you press space, each word turns into Hindi. So right below the English question, you get the same question in Hindi.\nThe options need a square root, so open Maths & symbols. This is Sy Pad. Click option A, write the root, and press Insert.\nAll four options are in. Now click the letter of the correct answer — D. That's it. One question, two languages."
+  },
+  {
+    "n": 6,
+    "id": "06",
+    "file": "assets/vo-en/line-06.wav",
+    "duration": 35.89275,
+    "text": "To add the second question, press Add question. Small tip — a new question opens in the last language you used, so tap English first.\nThis question has a diagram, and there's no need to redraw it. Click Picture, and choose the screen button. Now, in the PDF, press Windows, Shift and S together, drag a box around the diagram, come back, and press Control V.\nLook — the diagram sits under the question and above the options, exactly like the paper. The fraction options come from Sy Pad. Correct answer: B."
+  },
+  {
+    "n": 7,
+    "id": "07",
+    "file": "assets/vo-en/line-07.wav",
+    "duration": 31.935792,
+    "text": "Question three is chemistry, and here the structure sits right inside the sentence. Testoza doesn't have a structure-drawing tool, so we simply cut it from the paper.\nIn Picture, choose the cloud button. It places the image exactly where your cursor is.\nNext to it, the reaction arrow from Sy Pad — ozone on top, zinc and water below.\nThis one is numerical. Up in Question type, choose Numerical answer, click Exact value, and type the answer — one."
+  },
+  {
+    "n": 8,
+    "id": "08",
+    "file": "assets/vo-en/line-08.wav",
+    "duration": 45.952042,
+    "text": "Now it's time for maths. Open Maths & symbols. At the top it says \"Goes into Question 4\", so the formula lands in question four.\nf of x equals the integral… inside, a fraction… x squared dx on top… and two brackets below — one plus x squared in the first, and in the second, one plus the root of one plus x squared.\nWatch the preview at the top. As you type, the question builds up exactly like the paper. Press Insert, and type the rest of the line.\nThe options use log, root and pi by four — all from Sy Pad. The last option is plain text: None of these. Correct answer: B."
+  },
+  {
+    "n": 9,
+    "id": "09",
+    "file": "assets/vo-en/line-09.wav",
+    "duration": 51.058083,
+    "text": "And now, the biggest question in this video — a JEE-level multistep reaction.\nFirst, the bromobenzene structure, with the cloud button, right at the cursor.\nThen open Chemistry in Sy Pad, and pick the arrow with conditions above and below. Press plus on top to make three rows, and remove the bottom one.\nNow the three sets of reagents. One: magnesium and ether, then carbon dioxide and H plus. Two: ammonia and heat. Three: bromine and sodium hydroxide.\nAnd this time, the options are structures too. Use the picture button next to each option to add its image. Five diagrams in a single question, and it's still perfectly clean. Correct answer: B — aniline."
+  },
+  {
+    "n": 10,
+    "id": "10",
+    "file": "assets/vo-en/line-10.wav",
+    "duration": 14.884083,
+    "text": "For a match-the-list question, you don't need to draw a table. In Sy Pad, open Tables and choose Match List. Reactants on the left, products on the right. Fill in the boxes, and press Insert. Correct answer: C."
+  },
+  {
+    "n": 11,
+    "id": "11",
+    "file": "assets/vo-en/line-11.wav",
+    "duration": 13.2855,
+    "text": "Our paper is ready. Now let's split it into Physics, Chemistry and Mathematics, just like the real JEE. First, grab the integral question by its handle, and drag it to the very bottom."
+  },
+  {
+    "n": 12,
+    "id": "12",
+    "file": "assets/vo-en/line-12.wav",
+    "duration": 15.237667,
+    "text": "Turn on \"Split into sections\", and every question lands in Section A. Click the plus between two questions, choose New question here, and add one more chemistry question — with the complex's formula from Sy Pad's chemistry keys."
+  },
+  {
+    "n": 13,
+    "id": "13",
+    "file": "assets/vo-en/line-13.wav",
+    "duration": 6.929542,
+    "text": "At the bottom, press Add a new section, name it Bonus, and add a maths question to it."
+  },
+  {
+    "n": 14,
+    "id": "14",
+    "file": "assets/vo-en/line-14.wav",
+    "duration": 25.182417,
+    "text": "Now let's split Section A in two. Where chemistry begins, click the plus, and choose Split section here. Name the first part Physics, and the new one Chemistry.\nThe integral question is still sitting in Chemistry, so split that out too, and name it Mathematics. And finally, merge Bonus into Mathematics.\nPhysics, Chemistry, Mathematics — just like JEE."
+  },
+  {
+    "n": 15,
+    "id": "15",
+    "file": "assets/vo-en/line-15.wav",
+    "duration": 11.144542,
+    "text": "Now click Save test. Your test is in My Tests. And this is exactly what your candidates will see — sections, Hindi, diagrams, maths… everything."
+  },
+  {
+    "n": 16,
+    "id": "16",
+    "file": "assets/vo-en/line-16.wav",
+    "duration": 7.660417,
+    "text": "So go ahead — make your first test today at testoza.com. If you liked this video, do subscribe. See you in the next one!"
+  }
+]

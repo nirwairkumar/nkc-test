@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-en/L01.wav",
+    "duration": 5.288958,
+    "text": "Your institute's logo and name, on every online test. Here's exactly how — step by step.",
+    "raw": "{hook}Your institute's logo and name, on every online test. {how}Here's exactly how — step by step."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-en/L02.wav",
+    "duration": 2.57725,
+    "text": "Name your test, then open Institution branding.",
+    "raw": "{title}Name your test, {branding}then open Institution branding."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-en/L03.wav",
+    "duration": 5.720417,
+    "text": "Drop in your logo, type your institute's name, pick your colour, and a font. That's your brand — done.",
+    "raw": "{logo}Drop in your logo, {name}type your institute's name, {color}pick your colour, {font}and a font. {branded}That's your brand — done."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-en/L04.wav",
+    "duration": 5.719125,
+    "text": "Now add your questions — tap the right answer, next one, and one more — all in seconds. Then hit Save.",
+    "raw": "{q1}Now add your questions — {right1}tap the right answer, next one, {add3}and one more — all in seconds. {save}Then hit Save."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-en/L05.wav",
+    "duration": 4.638208,
+    "text": "Then Conduct exam, start it, copy the link — or share a six-digit join code.",
+    "raw": "{conduct}Then Conduct exam, {start}start it, {copy}copy the link — {code}or share a six-digit join code."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-en/L06.wav",
+    "duration": 6.148667,
+    "text": "Students open the link, type their name, start… and boom — your logo and name, right on top.",
+    "raw": "{dopen}Students open the link, {cname}type their name, {dgo}start… {dbrand}and boom — your logo and name, right on top."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-en/L07.wav",
+    "duration": 5.902917,
+    "text": "On a phone? They type the code, tap Start, and your brand is right there too. Every question, under your name.",
+    "raw": "{typecode}On a phone? They type the code, {pgo}tap Start, {pbrand}and your brand is right there too. {ans1}Every question, under your name."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-en/L08.wav",
+    "duration": 4.145958,
+    "text": "Your institute. Your test. Make yours today on testoza.com.",
+    "raw": "{endcard}Your institute. Your test. {endurl}Make yours today on testoza.com."
+  }
+]

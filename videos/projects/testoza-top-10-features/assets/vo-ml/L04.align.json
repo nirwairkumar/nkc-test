@@ -1,0 +1,128 @@
+[
+ {
+  "w": "ഇനി",
+  "r": "ini",
+  "start": 0.04,
+  "end": 0.16,
+  "score": 0.984
+ },
+ {
+  "w": "നോക്കൂ.",
+  "r": "nookkuu",
+  "start": 0.22,
+  "end": 0.561,
+  "score": 0.849
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 1.222,
+  "end": 1.343,
+  "score": 0.715
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 1.563,
+  "end": 1.884,
+  "score": 0.958
+ },
+ {
+  "w": "page-ഉം",
+  "r": "pageum",
+  "start": 1.944,
+  "end": 2.244,
+  "score": 0.497
+ },
+ {
+  "w": "വായിക്കുന്നു,",
+  "r": "vaayikkunnu",
+  "start": 2.284,
+  "end": 2.745,
+  "score": 0.998
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 3.146,
+  "end": 3.607,
+  "score": 0.432
+ },
+ {
+  "w": "ഓരോന്നായി",
+  "r": "ooroonnaayi",
+  "start": 3.847,
+  "end": 4.308,
+  "score": 0.919
+ },
+ {
+  "w": "വരാൻ",
+  "r": "varaana",
+  "start": 4.328,
+  "end": 4.589,
+  "score": 0.8
+ },
+ {
+  "w": "തുടങ്ങുന്നു",
+  "r": "tuttangngunnu",
+  "start": 4.609,
+  "end": 5.009,
+  "score": 0.919
+ },
+ {
+  "w": "options,",
+  "r": "options",
+  "start": 5.51,
+  "end": 6.051,
+  "score": 0.606
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 6.352,
+  "end": 6.753,
+  "score": 0.792
+ },
+ {
+  "w": "എല്ലാം.",
+  "r": "ellaam",
+  "start": 6.973,
+  "end": 7.314,
+  "score": 0.998
+ },
+ {
+  "w": "അര",
+  "r": "ara",
+  "start": 7.915,
+  "end": 8.095,
+  "score": 0.919
+ },
+ {
+  "w": "മിനിറ്റിൽ,",
+  "r": "minirrrrila",
+  "start": 8.135,
+  "end": 8.556,
+  "score": 0.84
+ },
+ {
+  "w": "പന്ത്രണ്ട്",
+  "r": "pantranntt",
+  "start": 8.837,
+  "end": 9.277,
+  "score": 0.54
+ },
+ {
+  "w": "questions-ഉം",
+  "r": "questionsum",
+  "start": 9.317,
+  "end": 9.758,
+  "score": 0.499
+ },
+ {
+  "w": "റെഡി.",
+  "r": "rreddi",
+  "start": 9.798,
+  "end": 10.059,
+  "score": 0.293
+ }
+]

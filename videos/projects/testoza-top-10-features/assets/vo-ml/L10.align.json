@@ -1,0 +1,205 @@
+[
+ {
+  "w": "Language",
+  "r": "language",
+  "start": 0.06,
+  "end": 0.621,
+  "score": 0.5
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 0.621,
+  "end": 0.821,
+  "score": 0.462
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 0.982,
+  "end": 1.162,
+  "score": 0.633
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 1.242,
+  "end": 1.502,
+  "score": 0.822
+ },
+ {
+  "w": "ഇവിടെ",
+  "r": "ivitte",
+  "start": 1.923,
+  "end": 2.163,
+  "score": 0.999
+ },
+ {
+  "w": "Hindi",
+  "r": "hindi",
+  "start": 2.424,
+  "end": 2.744,
+  "score": 0.924
+ },
+ {
+  "w": "തിരഞ്ഞെടുക്കുന്നു",
+  "r": "tiranynyettukkunnu",
+  "start": 2.864,
+  "end": 3.445,
+  "score": 0.89
+ },
+ {
+  "w": "മലയാളവും",
+  "r": "malayaallavum",
+  "start": 3.806,
+  "end": 4.347,
+  "score": 0.869
+ },
+ {
+  "w": "ഉണ്ട്",
+  "r": "unntt",
+  "start": 4.367,
+  "end": 4.547,
+  "score": 0.999
+ },
+ {
+  "w": "English",
+  "r": "english",
+  "start": 5.088,
+  "end": 5.468,
+  "score": 0.596
+ },
+ {
+  "w": "letters-ൽ",
+  "r": "lettersla",
+  "start": 5.488,
+  "end": 5.989,
+  "score": 0.762
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 6.049,
+  "end": 6.33,
+  "score": 0.489
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 6.33,
+  "end": 6.59,
+  "score": 0.856
+ },
+ {
+  "w": "Space",
+  "r": "space",
+  "start": 7.131,
+  "end": 7.512,
+  "score": 0.425
+ },
+ {
+  "w": "അമർത്തുമ്പോൾ",
+  "r": "amarrattumpoolla",
+  "start": 7.532,
+  "end": 8.133,
+  "score": 0.906
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 8.333,
+  "end": 8.653,
+  "score": 0.922
+ },
+ {
+  "w": "word-ഉം",
+  "r": "wordum",
+  "start": 8.673,
+  "end": 8.974,
+  "score": 0.344
+ },
+ {
+  "w": "മാറും",
+  "r": "maarrum",
+  "start": 9.014,
+  "end": 9.314,
+  "score": 0.981
+ },
+ {
+  "w": "വേറെ",
+  "r": "veerre",
+  "start": 9.675,
+  "end": 9.915,
+  "score": 0.929
+ },
+ {
+  "w": "keyboard",
+  "r": "keyboard",
+  "start": 10.015,
+  "end": 10.416,
+  "score": 0.298
+ },
+ {
+  "w": "വേണ്ട.",
+  "r": "veenntta",
+  "start": 10.416,
+  "end": 10.677,
+  "score": 0.928
+ },
+ {
+  "w": "ഇപ്പോൾ",
+  "r": "ippoolla",
+  "start": 11.318,
+  "end": 11.638,
+  "score": 0.894
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 11.678,
+  "end": 12.019,
+  "score": 0.237
+ },
+ {
+  "w": "രണ്ട്",
+  "r": "ranntt",
+  "start": 12.099,
+  "end": 12.359,
+  "score": 0.714
+ },
+ {
+  "w": "ഭാഷയിലും",
+  "r": "bhaassayilum",
+  "start": 12.419,
+  "end": 12.92,
+  "score": 0.912
+ },
+ {
+  "w": "ഉണ്ട്,",
+  "r": "unntt",
+  "start": 12.94,
+  "end": 13.12,
+  "score": 0.999
+ },
+ {
+  "w": "options-ഉം",
+  "r": "optionsum",
+  "start": 13.661,
+  "end": 14.102,
+  "score": 0.656
+ },
+ {
+  "w": "അതുപോലെ",
+  "r": "atupoole",
+  "start": 14.162,
+  "end": 14.502,
+  "score": 0.969
+ },
+ {
+  "w": "തന്നെ.",
+  "r": "tanne",
+  "start": 14.522,
+  "end": 14.723,
+  "score": 0.995
+ }
+]

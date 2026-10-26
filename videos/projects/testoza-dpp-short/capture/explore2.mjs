@@ -1,0 +1,20 @@
+// Selected-files state on the phone importer (no AI run): 2 page photos + answer key photo.
+import { chromium, devices } from 'file:///D:/Yuga%20Yatra/nkc-Test-platform/frontend/node_modules/playwright/index.mjs';
+import { writeFileSync } from 'node:fs';
+const DIR = decodeURIComponent(new URL('./', import.meta.url).pathname.slice(1));
+const OUT = process.env.TZ_OUT;
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 2, storageState: process.env.TZ_STATE });
+const page = await ctx.newPage();
+await page.goto('https://app.testoza.com/generate-with-ai', { waitUntil: 'load' });
+await page.waitForTimeout(3000);
+await page.locator('input[type="file"]').first().setInputFiles([DIR + 'dpp/photos/IMG_3104.jpg', DIR + 'dpp/photos/IMG_3105.jpg']);
+await page.waitForTimeout(3000);
+await page.screenshot({ path: `${OUT}/sel-0.png`, fullPage: true });
+const inputs = await page.locator('input[type="file"]').evaluateAll((els) => els.map((e) => e.accept));
+console.log('file inputs', inputs);
+await page.locator('input[type="file"][accept=".pdf,.png,.jpg,.jpeg"]').setInputFiles(DIR + 'dpp/photos/IMG_3107.jpg');
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${OUT}/sel-1.png`, fullPage: true });
+writeFileSync(`${OUT}/sel-1.txt`, await page.locator('main').innerText().catch(() => page.locator('body').innerText()));
+await browser.close();

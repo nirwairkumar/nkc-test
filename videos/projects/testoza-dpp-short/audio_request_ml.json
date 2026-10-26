@@ -1,0 +1,60 @@
+{
+  "lang": "ml",
+  "voice": "Zephyr",
+  "out_dir": "assets/voice-ml",
+  "style": "You are a bright, friendly young Malayali woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak natural everyday Malayalam the way young students in Kochi talk, mixing English words exactly as written: smooth, clear, warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy. English words stay English. Say Testoza as 'test-OH-za'.",
+  "lines": [
+    {
+      "id": "e01",
+      "text": "JEE, NEET, SSC, Banking... എല്ലാ aspirant-നും DPPs-ന്റെ ഒരു കൂമ്പാരം ഉണ്ട്."
+    },
+    {
+      "id": "e02",
+      "text": "പക്ഷേ paper-ൽ, പിന്നിൽ clock വെച്ച് solve ചെയ്യുന്നത്? അത് real exam അല്ല."
+    },
+    {
+      "id": "e03",
+      "text": "അതുകൊണ്ട് Testoza open ചെയ്യൂ. PDF ഉണ്ടോ? അതും ok. പക്ഷേ ഏറ്റവും easy way... നിങ്ങളുടെ DPP pages-ന്റെ photo എടുക്കൂ."
+    },
+    {
+      "id": "e04",
+      "text": "പിന്നെ answer key-യുടെ photo എടുത്ത്... ഇവിടെ ഇടൂ."
+    },
+    {
+      "id": "e05",
+      "text": "Marking set ചെയ്യൂ, plus four, minus one... പിന്നെ Extract അമർത്തൂ."
+    },
+    {
+      "id": "e06",
+      "text": "ഇപ്പോൾ AI ഓരോ question-ഉം വായിക്കുന്നു... നിങ്ങളുടെ key-യിൽ നിന്ന് ശരിയായ answer-ഉം ഇടുന്നു."
+    },
+    {
+      "id": "e07",
+      "text": "പന്ത്രണ്ട് questions, മുപ്പത്തിരണ്ട് seconds-ൽ ready!"
+    },
+    {
+      "id": "e08",
+      "text": "ഒന്ന് നോക്കൂ, save ചെയ്യൂ... നിങ്ങളുടെ test My Tests-ൽ ready."
+    },
+    {
+      "id": "e09",
+      "text": "Preview അമർത്തൂ, start ചെയ്യൂ."
+    },
+    {
+      "id": "e10",
+      "text": "ഇപ്പോൾ clock real ആണ്. Answer select ചെയ്യൂ, മുന്നോട്ട് പോകൂ, തിരിച്ചു വരൂ... exam day പോലെ തന്നെ."
+    },
+    {
+      "id": "e11",
+      "text": "Submit..."
+    },
+    {
+      "id": "e12",
+      "text": "result ഉടനെ. നിങ്ങളുടെ score, എന്താണ് തെറ്റിയത്, time എവിടെ പോയി എന്ന്."
+    },
+    {
+      "id": "e13",
+      "text": "ഇന്നത്തെ DPP... ഇന്ന് തന്നെ online test. Testoza dot com."
+    }
+  ]
+}

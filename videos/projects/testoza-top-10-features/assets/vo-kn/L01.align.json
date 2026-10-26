@@ -1,0 +1,261 @@
+[
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 0.04,
+  "end": 0.28,
+  "score": 0.828
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.34,
+  "end": 0.64,
+  "score": 0.188
+ },
+ {
+  "w": "paper,",
+  "r": "paper",
+  "start": 0.7,
+  "end": 0.981,
+  "score": 0.599
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 1.161,
+  "end": 1.601,
+  "score": 0.661
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 1.621,
+  "end": 1.801,
+  "score": 0.993
+ },
+ {
+  "w": "ಆಗಿ",
+  "r": "aagi",
+  "start": 1.841,
+  "end": 2.001,
+  "score": 0.989
+ },
+ {
+  "w": "ಬದಲಾಗುತ್ತೆ.",
+  "r": "badalaagutte",
+  "start": 2.041,
+  "end": 2.582,
+  "score": 0.995
+ },
+ {
+  "w": "Equations",
+  "r": "equations",
+  "start": 3.042,
+  "end": 3.622,
+  "score": 0.218
+ },
+ {
+  "w": "ಕೆಲವೇ",
+  "r": "kelavee",
+  "start": 3.742,
+  "end": 4.102,
+  "score": 0.919
+ },
+ {
+  "w": "ಸೆಕೆಂಡ್‌ಗಳಲ್ಲಿ.",
+  "r": "sekemddgallalli",
+  "start": 4.142,
+  "end": 4.723,
+  "score": 0.779
+ },
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 5.303,
+  "end": 5.743,
+  "score": 0.825
+ },
+ {
+  "w": "ಯಾವ",
+  "r": "yaava",
+  "start": 5.823,
+  "end": 6.024,
+  "score": 0.725
+ },
+ {
+  "w": "phone",
+  "r": "phone",
+  "start": 6.064,
+  "end": 6.264,
+  "score": 0.798
+ },
+ {
+  "w": "ಇಂದ",
+  "r": "imda",
+  "start": 6.264,
+  "end": 6.424,
+  "score": 0.993
+ },
+ {
+  "w": "ಬೇಕಾದರೂ",
+  "r": "beekaadaruu",
+  "start": 6.484,
+  "end": 6.904,
+  "score": 0.703
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 6.944,
+  "end": 7.184,
+  "score": 0.584
+ },
+ {
+  "w": "ಆಗ್ತಾರೆ.",
+  "r": "aagtaare",
+  "start": 7.204,
+  "end": 7.544,
+  "score": 0.719
+ },
+ {
+  "w": "Cheating",
+  "r": "cheating",
+  "start": 8.085,
+  "end": 8.465,
+  "score": 0.499
+ },
+ {
+  "w": "ತಕ್ಷಣ",
+  "r": "takssanna",
+  "start": 8.565,
+  "end": 8.985,
+  "score": 0.925
+ },
+ {
+  "w": "ಸಿಕ್ಕಿಬೀಳುತ್ತೆ.",
+  "r": "sikkibiillutte",
+  "start": 9.065,
+  "end": 9.646,
+  "score": 0.846
+ },
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 10.086,
+  "end": 10.366,
+  "score": 0.998
+ },
+ {
+  "w": "result,",
+  "r": "result",
+  "start": 10.466,
+  "end": 10.846,
+  "score": 0.506
+ },
+ {
+  "w": "rank",
+  "r": "rank",
+  "start": 11.047,
+  "end": 11.307,
+  "score": 0.737
+ },
+ {
+  "w": "ಜೊತೆ",
+  "r": "jote",
+  "start": 11.387,
+  "end": 11.587,
+  "score": 0.98
+ },
+ {
+  "w": "ಬರುತ್ತೆ.",
+  "r": "barutte",
+  "start": 11.647,
+  "end": 11.947,
+  "score": 0.996
+ },
+ {
+  "w": "ಇದೇ",
+  "r": "idee",
+  "start": 12.387,
+  "end": 12.587,
+  "score": 0.781
+ },
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 12.688,
+  "end": 13.108,
+  "score": 0.768
+ },
+ {
+  "w": "ಇವು",
+  "r": "ivu",
+  "start": 13.528,
+  "end": 13.688,
+  "score": 0.997
+ },
+ {
+  "w": "ಇದರ",
+  "r": "idara",
+  "start": 13.968,
+  "end": 14.168,
+  "score": 0.987
+ },
+ {
+  "w": "top",
+  "r": "top",
+  "start": 14.248,
+  "end": 14.469,
+  "score": 0.78
+ },
+ {
+  "w": "ten",
+  "r": "ten",
+  "start": 14.569,
+  "end": 14.689,
+  "score": 0.984
+ },
+ {
+  "w": "features,",
+  "r": "features",
+  "start": 14.749,
+  "end": 15.149,
+  "score": 0.278
+ },
+ {
+  "w": "ಒಂದೊಂದನ್ನೂ",
+  "r": "omdomdannuu",
+  "start": 15.529,
+  "end": 16.15,
+  "score": 0.893
+ },
+ {
+  "w": "ಹೇಗೆ",
+  "r": "heege",
+  "start": 16.19,
+  "end": 16.39,
+  "score": 0.648
+ },
+ {
+  "w": "ಬಳಸೋದು",
+  "r": "ballasoodu",
+  "start": 16.39,
+  "end": 16.75,
+  "score": 0.805
+ },
+ {
+  "w": "ಅಂತ",
+  "r": "amta",
+  "start": 16.79,
+  "end": 16.97,
+  "score": 0.992
+ },
+ {
+  "w": "ನೋಡೋಣ.",
+  "r": "nooddoonna",
+  "start": 17.05,
+  "end": 17.37,
+  "score": 0.608
+ }
+]

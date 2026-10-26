@@ -1,0 +1,98 @@
+[
+  {
+    "id": "w0",
+    "text": "Save",
+    "start": 0.16,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "settings",
+    "start": 0.56,
+    "end": 1.2
+  },
+  {
+    "id": "w2",
+    "text": "and",
+    "start": 1.44,
+    "end": 1.76
+  },
+  {
+    "id": "w3",
+    "text": "look,",
+    "start": 1.76,
+    "end": 2.32
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w5",
+    "text": "anti-cheating",
+    "start": 2.48,
+    "end": 3.28
+  },
+  {
+    "id": "w6",
+    "text": "is",
+    "start": 3.28,
+    "end": 3.44
+  },
+  {
+    "id": "w7",
+    "text": "off",
+    "start": 3.44,
+    "end": 3.6
+  },
+  {
+    "id": "w8",
+    "text": "warning",
+    "start": 3.76,
+    "end": 4.08
+  },
+  {
+    "id": "w9",
+    "text": "is",
+    "start": 4.08,
+    "end": 4.32
+  },
+  {
+    "id": "w10",
+    "text": "gone.",
+    "start": 4.32,
+    "end": 4.96
+  },
+  {
+    "id": "w11",
+    "text": "Your",
+    "start": 4.96,
+    "end": 5.28
+  },
+  {
+    "id": "w12",
+    "text": "exam",
+    "start": 5.28,
+    "end": 5.76
+  },
+  {
+    "id": "w13",
+    "text": "room",
+    "start": 5.76,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "is",
+    "start": 6.08,
+    "end": 6.24
+  },
+  {
+    "id": "w15",
+    "text": "locked.",
+    "start": 6.24,
+    "end": 6.8
+  }
+]

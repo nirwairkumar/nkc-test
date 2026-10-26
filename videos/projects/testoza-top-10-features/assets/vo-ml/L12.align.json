@@ -1,0 +1,156 @@
+[
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 0.06,
+  "end": 0.321,
+  "score": 0.854
+ },
+ {
+  "w": "question-നും",
+  "r": "questionnum",
+  "start": 0.361,
+  "end": 0.822,
+  "score": 0.373
+ },
+ {
+  "w": "plus",
+  "r": "plus",
+  "start": 1.042,
+  "end": 1.303,
+  "score": 0.464
+ },
+ {
+  "w": "four,",
+  "r": "four",
+  "start": 1.403,
+  "end": 1.643,
+  "score": 0.222
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 1.864,
+  "end": 2.205,
+  "score": 0.796
+ },
+ {
+  "w": "one.",
+  "r": "one",
+  "start": 2.325,
+  "end": 2.465,
+  "score": 0.05
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 2.986,
+  "end": 3.167,
+  "score": 0.96
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 3.387,
+  "end": 3.908,
+  "score": 0.617
+ },
+ {
+  "w": "style",
+  "r": "style",
+  "start": 3.928,
+  "end": 4.229,
+  "score": 0.388
+ },
+ {
+  "w": "വേണോ?",
+  "r": "veennoo",
+  "start": 4.229,
+  "end": 4.469,
+  "score": 0.735
+ },
+ {
+  "w": "Multiple",
+  "r": "multiple",
+  "start": 4.87,
+  "end": 5.311,
+  "score": 0.729
+ },
+ {
+  "w": "correct",
+  "r": "correct",
+  "start": 5.331,
+  "end": 5.652,
+  "score": 0.306
+ },
+ {
+  "w": "ആക്കൂ,",
+  "r": "aakkuu",
+  "start": 5.672,
+  "end": 5.953,
+  "score": 0.668
+ },
+ {
+  "w": "JEE",
+  "r": "jee",
+  "start": 6.313,
+  "end": 6.494,
+  "score": 0.984
+ },
+ {
+  "w": "Advanced",
+  "r": "advanced",
+  "start": 6.714,
+  "end": 7.215,
+  "score": 0.621
+ },
+ {
+  "w": "partial",
+  "r": "partial",
+  "start": 7.255,
+  "end": 7.636,
+  "score": 0.705
+ },
+ {
+  "w": "marks",
+  "r": "marks",
+  "start": 7.676,
+  "end": 7.977,
+  "score": 0.958
+ },
+ {
+  "w": "തിരഞ്ഞെടുക്കൂ,",
+  "r": "tiranynyettukkuu",
+  "start": 7.997,
+  "end": 8.558,
+  "score": 0.452
+ },
+ {
+  "w": "ശരിയായ",
+  "r": "shariyaaya",
+  "start": 8.939,
+  "end": 9.44,
+  "score": 0.857
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 9.48,
+  "end": 9.761,
+  "score": 0.587
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 9.821,
+  "end": 10.081,
+  "score": 0.998
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 10.181,
+  "end": 10.442,
+  "score": 0.831
+ }
+]

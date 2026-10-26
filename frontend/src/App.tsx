@@ -58,6 +58,9 @@ const TestPage = safeLazy(() => import("./pages/TestPage"));
 // Exam sessions: join codes, live monitor, batches
 const JoinPage = safeLazy(() => import("./pages/join/JoinPage"));
 const ShareExamPage = safeLazy(() => import("./pages/ShareExamPage"));
+// Invite links: educators bring educators
+const InvitePage = safeLazy(() => import("./pages/InvitePage"));
+const ShareInvitePage = safeLazy(() => import("./pages/ShareInvitePage"));
 const ExamsPage = safeLazy(() => import("./pages/exams/ExamsPage"));
 const ExamSessionPage = safeLazy(() => import("./pages/exams/ExamSessionPage"));
 const ExamPresentPage = safeLazy(() => import("./pages/exams/ExamPresentPage"));
@@ -413,6 +416,9 @@ const App = () => (
                     {/* Exam sessions — students join with a 6-digit code (no account) */}
                     {/* Where the "Scan to share" QR on a live exam card lands, on the examiner's phone. */}
                     <Route path="/share-exam/:key" element={<ShareExamPage />} />
+                    {/* An educator's invite link, and where its "Scan to share" QR lands on their phone */}
+                    <Route path="/invite/:code" element={<InvitePage />} />
+                    <Route path="/share-invite/:code" element={<ShareInvitePage />} />
                     <Route path="/join" element={<JoinPage />} />
                     <Route path="/join/result" element={<JoinPage />} />
                     <Route path="/join/result/:code" element={<JoinPage />} />

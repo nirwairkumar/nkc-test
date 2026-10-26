@@ -1,0 +1,107 @@
+[
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 0.04,
+  "end": 0.301,
+  "score": 0.995
+ },
+ {
+  "w": "அவங்க",
+  "r": "avangka",
+  "start": 0.601,
+  "end": 0.862,
+  "score": 0.82
+ },
+ {
+  "w": "வேற",
+  "r": "veera",
+  "start": 0.922,
+  "end": 1.202,
+  "score": 0.774
+ },
+ {
+  "w": "app-க்கு",
+  "r": "appkku",
+  "start": 1.223,
+  "end": 1.483,
+  "score": 0.918
+ },
+ {
+  "w": "போறாங்க",
+  "r": "pooraangka",
+  "start": 1.523,
+  "end": 1.884,
+  "score": 0.943
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.245,
+  "end": 2.605,
+  "score": 0.539
+ },
+ {
+  "w": "உடனே",
+  "r": "udanee",
+  "start": 2.706,
+  "end": 3.086,
+  "score": 0.657
+ },
+ {
+  "w": "பிடிச்சிடுது.",
+  "r": "pidiccidutu",
+  "start": 3.126,
+  "end": 3.567,
+  "score": 0.961
+ },
+ {
+  "w": "Warning",
+  "r": "warning",
+  "start": 4.028,
+  "end": 4.469,
+  "score": 0.693
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 4.549,
+  "end": 4.73,
+  "score": 0.148
+ },
+ {
+  "w": "of",
+  "r": "of",
+  "start": 4.77,
+  "end": 4.83,
+  "score": 0.021
+ },
+ {
+  "w": "three.",
+  "r": "three",
+  "start": 4.89,
+  "end": 5.09,
+  "score": 0.137
+ },
+ {
+  "w": "நேரா",
+  "r": "neeraa",
+  "start": 5.471,
+  "end": 5.892,
+  "score": 0.767
+ },
+ {
+  "w": "paper-க்கு",
+  "r": "paperkku",
+  "start": 5.952,
+  "end": 6.333,
+  "score": 0.636
+ },
+ {
+  "w": "திரும்ப.",
+  "r": "tirumpa",
+  "start": 6.373,
+  "end": 6.614,
+  "score": 0.987
+ }
+]

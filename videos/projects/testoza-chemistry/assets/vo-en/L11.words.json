@@ -1,0 +1,152 @@
+[
+  {
+    "id": "w0",
+    "text": "Second",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "reaction",
+    "start": 0.48,
+    "end": 0.96
+  },
+  {
+    "id": "w2",
+    "text": "copper",
+    "start": 1.12,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "sulphate",
+    "start": 1.6,
+    "end": 2.24
+  },
+  {
+    "id": "w4",
+    "text": "plus",
+    "start": 2.24,
+    "end": 2.4
+  },
+  {
+    "id": "w5",
+    "text": "Y",
+    "start": 2.56,
+    "end": 2.8
+  },
+  {
+    "id": "w6",
+    "text": "Same",
+    "start": 3.2,
+    "end": 3.6
+  },
+  {
+    "id": "w7",
+    "text": "arrow",
+    "start": 3.6,
+    "end": 4.08
+  },
+  {
+    "id": "w8",
+    "text": "but",
+    "start": 4.24,
+    "end": 4.4
+  },
+  {
+    "id": "w9",
+    "text": "now",
+    "start": 4.4,
+    "end": 4.72
+  },
+  {
+    "id": "w10",
+    "text": "tap",
+    "start": 4.72,
+    "end": 4.96
+  },
+  {
+    "id": "w11",
+    "text": "words",
+    "start": 5.28,
+    "end": 5.92
+  },
+  {
+    "id": "w12",
+    "text": "and",
+    "start": 6.08,
+    "end": 6.4
+  },
+  {
+    "id": "w13",
+    "text": "type",
+    "start": 6.4,
+    "end": 7.04
+  },
+  {
+    "id": "w14",
+    "text": "non",
+    "start": 7.04,
+    "end": 7.36
+  },
+  {
+    "id": "w15",
+    "text": "luminous",
+    "start": 7.52,
+    "end": 8.16
+  },
+  {
+    "id": "w16",
+    "text": "flame.",
+    "start": 8.16,
+    "end": 8.8
+  },
+  {
+    "id": "w17",
+    "text": "Words",
+    "start": 8.8,
+    "end": 9.2
+  },
+  {
+    "id": "w18",
+    "text": "keep",
+    "start": 9.2,
+    "end": 9.44
+  },
+  {
+    "id": "w19",
+    "text": "their",
+    "start": 9.44,
+    "end": 9.68
+  },
+  {
+    "id": "w20",
+    "text": "spaces",
+    "start": 9.68,
+    "end": 10.32
+  },
+  {
+    "id": "w21",
+    "text": "like",
+    "start": 10.32,
+    "end": 10.64
+  },
+  {
+    "id": "w22",
+    "text": "normal",
+    "start": 10.64,
+    "end": 10.96
+  },
+  {
+    "id": "w23",
+    "text": "text.",
+    "start": 10.96,
+    "end": 11.52
+  },
+  {
+    "id": "w24",
+    "text": "Insert.",
+    "start": 11.52,
+    "end": 12.08
+  }
+]

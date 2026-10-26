@@ -1,0 +1,3 @@
+Now let's split Section A in two. Where chemistry begins, click the plus, and choose Split section here. Name the first part Physics, and the new one Chemistry.
+The integral question is still sitting in Chemistry, so split that out too, and name it Mathematics. And finally, merge Bonus into Mathematics.
+Physics, Chemistry, Mathematics — just like JEE.

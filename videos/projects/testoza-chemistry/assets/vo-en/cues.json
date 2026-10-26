@@ -1,0 +1,368 @@
+{
+  "L01": {
+    "duration": 15.195708,
+    "cues": {
+      "m1": 0,
+      "m2": 2.72,
+      "m3": 5.2,
+      "m4": 7.04,
+      "title": 9.84
+    },
+    "dist": 2,
+    "words": 37,
+    "missing": [
+      "testoza",
+      "youll"
+    ]
+  },
+  "L02": {
+    "duration": 9.396,
+    "cues": {
+      "create": 4.16,
+      "name": 5.44,
+      "marking": 6.32,
+      "questions": 7.84
+    },
+    "dist": 4,
+    "words": 26,
+    "missing": [
+      "jee",
+      "main",
+      "jee",
+      "jee"
+    ]
+  },
+  "L03": {
+    "duration": 11.884458,
+    "cues": {
+      "q1text": 4,
+      "sypad": 6.96,
+      "chem": 10.32
+    },
+    "dist": 3,
+    "words": 30,
+    "missing": [
+      "jee",
+      "sy",
+      "pad"
+    ]
+  },
+  "L04": {
+    "duration": 17.309542,
+    "cues": {
+      "formula": 4.32,
+      "mn": 7.76,
+      "sub": 10.32,
+      "charge": 13.68
+    },
+    "dist": 6,
+    "words": 42,
+    "missing": [
+      "m",
+      "n",
+      "b",
+      "r",
+      "see",
+      "caret"
+    ]
+  },
+  "L05": {
+    "duration": 20.345333,
+    "cues": {
+      "rest": 0,
+      "ins1a": 3.6,
+      "f1b": 4.4,
+      "ins1": 13.36,
+      "lands1": 14.16,
+      "opts1": 17.04,
+      "correct1": 18.8
+    },
+    "dist": 0,
+    "words": 50,
+    "missing": []
+  },
+  "L06": {
+    "duration": 8.970083,
+    "cues": {
+      "q2add": 0,
+      "q2text": 1.84,
+      "formula2": 3.04,
+      "a": 4.24,
+      "gas": 4.8,
+      "rev": 5.92,
+      "b": 7.28,
+      "gas2": 7.84
+    },
+    "dist": 0,
+    "words": 20,
+    "missing": []
+  },
+  "L07": {
+    "duration": 11.610542,
+    "cues": {
+      "up": 1.76,
+      "down": 2.96,
+      "heat": 4,
+      "deg": 4.56,
+      "aq": 5.84,
+      "consts": 8.08
+    },
+    "dist": 5,
+    "words": 28,
+    "missing": [
+      "k",
+      "a",
+      "k",
+      "b",
+      "mol"
+    ]
+  },
+  "L08": {
+    "duration": 9.021667,
+    "cues": {
+      "ins2": 0,
+      "rest2": 1.04,
+      "opts2": 6.56,
+      "correct2": 7.92
+    },
+    "dist": 0,
+    "words": 24,
+    "missing": []
+  },
+  "L09": {
+    "duration": 17.882542,
+    "cues": {
+      "q3add": 0,
+      "formula3": 3.36,
+      "arrowkey": 6.32,
+      "rows": 9.84,
+      "rowminus": 15.28,
+      "rowins": 16.88
+    },
+    "dist": 0,
+    "words": 43,
+    "missing": []
+  },
+  "L10": {
+    "duration": 8.794917,
+    "cues": {
+      "qmark": 0,
+      "delta": 2.96,
+      "step": 4.64,
+      "prod": 6.72,
+      "ins3a": 8.16
+    },
+    "dist": 0,
+    "words": 25,
+    "missing": []
+  },
+  "L11": {
+    "duration": 12.116833,
+    "cues": {
+      "line2": 0,
+      "arrow2": 3.2,
+      "words": 4.24,
+      "flame": 6.08,
+      "ins3b": 11.52
+    },
+    "dist": 0,
+    "words": 25,
+    "missing": []
+  },
+  "L12": {
+    "duration": 19.270833,
+    "cues": {
+      "line3": 0,
+      "ins3c": 12.48,
+      "q3rest": 13.6,
+      "opts3": 14.88,
+      "correct3": 18.08
+    },
+    "dist": 0,
+    "words": 53,
+    "missing": []
+  },
+  "L13": {
+    "duration": 12.304958,
+    "cues": {
+      "q4add": 0,
+      "tables": 2.32,
+      "match": 4.4,
+      "editor": 5.84,
+      "labels": 8.48,
+      "tins": 11.68
+    },
+    "dist": 7,
+    "words": 37,
+    "missing": [
+      "jee",
+      "sy",
+      "pad",
+      "i",
+      "ii",
+      "one",
+      "four"
+    ]
+  },
+  "L14": {
+    "duration": 18.124833,
+    "cues": {
+      "blue": 0,
+      "box1": 2.24,
+      "f1": 3.12,
+      "xe": 4.08,
+      "box2": 6.24,
+      "fill": 8.64
+    },
+    "dist": 11,
+    "words": 35,
+    "missing": [
+      "xeo3",
+      "xef2",
+      "xeo2f2",
+      "xeof4",
+      "ion",
+      "sf4"
+    ]
+  },
+  "L15": {
+    "duration": 11.966583,
+    "cues": {
+      "tins2": 0,
+      "table": 0.8,
+      "opts4": 6.72,
+      "correct4": 10.64
+    },
+    "dist": 0,
+    "words": 34,
+    "missing": []
+  },
+  "L16": {
+    "duration": 15.982667,
+    "cues": {
+      "q5add": 0,
+      "qtype": 4.64,
+      "numerical": 6.08,
+      "wrong": 11.12
+    },
+    "dist": 0,
+    "words": 44,
+    "missing": []
+  },
+  "L17": {
+    "duration": 13.674208,
+    "cues": {
+      "q5text": 0,
+      "pic": 2.64,
+      "cloud": 3.76,
+      "cloudwhy": 5.52,
+      "choose": 9.44,
+      "pick": 11.76,
+      "placed": 12.8
+    },
+    "dist": 1,
+    "words": 38,
+    "missing": [
+      "tap"
+    ]
+  },
+  "L18": {
+    "duration": 25.52125,
+    "cues": {
+      "arrow5": 3.52,
+      "heat5": 5.52,
+      "x": 8.72,
+      "second": 11.44,
+      "y": 23.68,
+      "ins5": 24.8
+    },
+    "dist": 6,
+    "words": 54,
+    "missing": [
+      "sy",
+      "pad",
+      "right",
+      "next",
+      "sy",
+      "pad"
+    ]
+  },
+  "L19": {
+    "duration": 4.775042,
+    "cues": {
+      "seen": 0,
+      "exact": 2.32,
+      "four": 3.76
+    },
+    "dist": 1,
+    "words": 13,
+    "missing": [
+      "four"
+    ]
+  },
+  "L20": {
+    "duration": 12.434625,
+    "cues": {
+      "q6add": 1.6,
+      "qtype6": 5.44,
+      "multi": 6.4,
+      "photo": 7.6,
+      "choose6": 9.28,
+      "reading": 10.72
+    },
+    "dist": 1,
+    "words": 40,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L21": {
+    "duration": 10.459917,
+    "cues": {
+      "filled": 0,
+      "ticked": 6.8
+    },
+    "dist": 2,
+    "words": 25,
+    "missing": [
+      "u",
+      "235"
+    ]
+  },
+  "L22": {
+    "duration": 10.712875,
+    "cues": {
+      "check": 0.24,
+      "partial": 2.08,
+      "jeeadv": 4.24
+    },
+    "dist": 2,
+    "words": 27,
+    "missing": [
+      "jee"
+    ]
+  },
+  "L23": {
+    "duration": 6.329333,
+    "cues": {
+      "save": 0.16,
+      "saved": 1.44,
+      "ready": 4.32
+    },
+    "dist": 0,
+    "words": 17,
+    "missing": []
+  },
+  "L24": {
+    "duration": 9.79175,
+    "cues": {
+      "endurl": 4.4,
+      "thanks": 7.28
+    },
+    "dist": 1,
+    "words": 26,
+    "missing": [
+      "testozacom"
+    ]
+  }
+}

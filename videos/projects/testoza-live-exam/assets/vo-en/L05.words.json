@@ -1,0 +1,158 @@
+[
+  {
+    "id": "w0",
+    "text": "This",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "is",
+    "start": 0.32,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "your",
+    "start": 0.48,
+    "end": 0.72
+  },
+  {
+    "id": "w3",
+    "text": "exam",
+    "start": 0.72,
+    "end": 1.12
+  },
+  {
+    "id": "w4",
+    "text": "room.",
+    "start": 1.12,
+    "end": 1.6
+  },
+  {
+    "id": "w5",
+    "text": "Three",
+    "start": 1.6,
+    "end": 1.84
+  },
+  {
+    "id": "w6",
+    "text": "tabs.",
+    "start": 1.84,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "Proctoring,",
+    "start": 2.4,
+    "end": 3.36
+  },
+  {
+    "id": "w8",
+    "text": "access,",
+    "start": 3.36,
+    "end": 3.76
+  },
+  {
+    "id": "w9",
+    "text": "and",
+    "start": 3.76,
+    "end": 3.92
+  },
+  {
+    "id": "w10",
+    "text": "results.",
+    "start": 3.92,
+    "end": 4.64
+  },
+  {
+    "id": "w11",
+    "text": "I'll",
+    "start": 4.64,
+    "end": 4.96
+  },
+  {
+    "id": "w12",
+    "text": "go",
+    "start": 4.96,
+    "end": 5.12
+  },
+  {
+    "id": "w13",
+    "text": "through",
+    "start": 5.12,
+    "end": 5.44
+  },
+  {
+    "id": "w14",
+    "text": "every",
+    "start": 5.44,
+    "end": 5.76
+  },
+  {
+    "id": "w15",
+    "text": "switch,",
+    "start": 5.76,
+    "end": 6.32
+  },
+  {
+    "id": "w16",
+    "text": "the",
+    "start": 6.32,
+    "end": 6.48
+  },
+  {
+    "id": "w17",
+    "text": "way",
+    "start": 6.48,
+    "end": 6.72
+  },
+  {
+    "id": "w18",
+    "text": "I'd",
+    "start": 6.72,
+    "end": 7.12
+  },
+  {
+    "id": "w19",
+    "text": "set",
+    "start": 7.12,
+    "end": 7.36
+  },
+  {
+    "id": "w20",
+    "text": "it",
+    "start": 7.36,
+    "end": 7.44
+  },
+  {
+    "id": "w21",
+    "text": "up",
+    "start": 7.44,
+    "end": 7.6
+  },
+  {
+    "id": "w22",
+    "text": "for",
+    "start": 7.6,
+    "end": 7.76
+  },
+  {
+    "id": "w23",
+    "text": "a",
+    "start": 7.76,
+    "end": 7.84
+  },
+  {
+    "id": "w24",
+    "text": "real",
+    "start": 7.84,
+    "end": 8.08
+  },
+  {
+    "id": "w25",
+    "text": "exam.",
+    "start": 8.08,
+    "end": 8.48
+  }
+]

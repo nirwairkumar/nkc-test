@@ -1,0 +1,98 @@
+[
+  {
+    "id": "w0",
+    "text": "Randomized",
+    "start": 0,
+    "end": 0.8
+  },
+  {
+    "id": "w1",
+    "text": "questions",
+    "start": 0.8,
+    "end": 1.36
+  },
+  {
+    "id": "w2",
+    "text": "gives",
+    "start": 1.36,
+    "end": 1.84
+  },
+  {
+    "id": "w3",
+    "text": "student",
+    "start": 2.08,
+    "end": 2.48
+  },
+  {
+    "id": "w4",
+    "text": "a",
+    "start": 2.48,
+    "end": 2.64
+  },
+  {
+    "id": "w5",
+    "text": "different",
+    "start": 2.64,
+    "end": 3.12
+  },
+  {
+    "id": "w6",
+    "text": "order.",
+    "start": 3.12,
+    "end": 3.76
+  },
+  {
+    "id": "w7",
+    "text": "So",
+    "start": 3.76,
+    "end": 4.08
+  },
+  {
+    "id": "w8",
+    "text": "the",
+    "start": 4.08,
+    "end": 4.24
+  },
+  {
+    "id": "w9",
+    "text": "person",
+    "start": 4.24,
+    "end": 4.48
+  },
+  {
+    "id": "w10",
+    "text": "sitting",
+    "start": 4.48,
+    "end": 4.8
+  },
+  {
+    "id": "w11",
+    "text": "next",
+    "start": 4.8,
+    "end": 4.96
+  },
+  {
+    "id": "w12",
+    "text": "to",
+    "start": 4.96,
+    "end": 5.12
+  },
+  {
+    "id": "w13",
+    "text": "them",
+    "start": 5.12,
+    "end": 5.28
+  },
+  {
+    "id": "w14",
+    "text": "can't",
+    "start": 5.28,
+    "end": 5.52
+  },
+  {
+    "id": "w15",
+    "text": "help.",
+    "start": 5.52,
+    "end": 5.92
+  }
+]

@@ -1,0 +1,86 @@
+[
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 0.0,
+  "end": 0.361,
+  "score": 0.365
+ },
+ {
+  "w": "exam,",
+  "r": "exam",
+  "start": 0.401,
+  "end": 0.682,
+  "score": 0.747
+ },
+ {
+  "w": "start,",
+  "r": "start",
+  "start": 0.742,
+  "end": 1.084,
+  "score": 0.802
+ },
+ {
+  "w": "link",
+  "r": "link",
+  "start": 1.365,
+  "end": 1.605,
+  "score": 0.786
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 1.645,
+  "end": 1.806,
+  "score": 0.42
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 1.866,
+  "end": 2.207,
+  "score": 0.958
+ },
+ {
+  "w": "లేదా",
+  "r": "leedaa",
+  "start": 2.348,
+  "end": 2.629,
+  "score": 0.989
+ },
+ {
+  "w": "ఆరు",
+  "r": "aaru",
+  "start": 2.93,
+  "end": 3.11,
+  "score": 0.996
+ },
+ {
+  "w": "అంకెల",
+  "r": "amkela",
+  "start": 3.191,
+  "end": 3.492,
+  "score": 0.942
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 3.572,
+  "end": 3.813,
+  "score": 0.689
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 3.853,
+  "end": 4.033,
+  "score": 0.433
+ },
+ {
+  "w": "ఇవ్వండి.",
+  "r": "ivvamddi",
+  "start": 4.033,
+  "end": 4.334,
+  "score": 0.874
+ }
+]

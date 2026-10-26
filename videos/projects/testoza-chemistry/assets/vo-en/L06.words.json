@@ -1,0 +1,122 @@
+[
+  {
+    "id": "w0",
+    "text": "Next",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "an",
+    "start": 0.48,
+    "end": 0.72
+  },
+  {
+    "id": "w2",
+    "text": "equilibrium.",
+    "start": 0.72,
+    "end": 1.84
+  },
+  {
+    "id": "w3",
+    "text": "Type",
+    "start": 1.84,
+    "end": 2.16
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 2.16,
+    "end": 2.32
+  },
+  {
+    "id": "w5",
+    "text": "first",
+    "start": 2.32,
+    "end": 2.56
+  },
+  {
+    "id": "w6",
+    "text": "line,",
+    "start": 2.56,
+    "end": 3.04
+  },
+  {
+    "id": "w7",
+    "text": "then",
+    "start": 3.04,
+    "end": 3.28
+  },
+  {
+    "id": "w8",
+    "text": "formula,",
+    "start": 3.44,
+    "end": 4.24
+  },
+  {
+    "id": "w9",
+    "text": "A",
+    "start": 4.24,
+    "end": 4.56
+  },
+  {
+    "id": "w10",
+    "text": "the",
+    "start": 4.8,
+    "end": 4.96
+  },
+  {
+    "id": "w11",
+    "text": "gas",
+    "start": 4.96,
+    "end": 5.36
+  },
+  {
+    "id": "w12",
+    "text": "key,",
+    "start": 5.36,
+    "end": 5.92
+  },
+  {
+    "id": "w13",
+    "text": "the",
+    "start": 5.92,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "reversible",
+    "start": 6.08,
+    "end": 6.72
+  },
+  {
+    "id": "w15",
+    "text": "arrow,",
+    "start": 6.72,
+    "end": 7.28
+  },
+  {
+    "id": "w16",
+    "text": "B,",
+    "start": 7.28,
+    "end": 7.84
+  },
+  {
+    "id": "w17",
+    "text": "and",
+    "start": 7.84,
+    "end": 8.08
+  },
+  {
+    "id": "w18",
+    "text": "gas",
+    "start": 8.08,
+    "end": 8.48
+  },
+  {
+    "id": "w19",
+    "text": "again.",
+    "start": 8.48,
+    "end": 8.88
+  }
+]

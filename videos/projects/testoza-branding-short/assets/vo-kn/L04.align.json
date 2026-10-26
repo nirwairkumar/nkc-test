@@ -1,0 +1,72 @@
+[
+ {
+  "w": "ಈಗ",
+  "r": "iiga",
+  "start": 0.06,
+  "end": 0.241,
+  "score": 0.995
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 0.341,
+  "end": 0.822,
+  "score": 0.508
+ },
+ {
+  "w": "ಸರಿಯಾದ",
+  "r": "sariyaada",
+  "start": 1.063,
+  "end": 1.484,
+  "score": 0.872
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 1.504,
+  "end": 1.724,
+  "score": 0.47
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 1.804,
+  "end": 1.965,
+  "score": 0.683
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 2.025,
+  "end": 2.265,
+  "score": 0.989
+ },
+ {
+  "w": "ಮುಂದಿನದು,",
+  "r": "mumdinadu",
+  "start": 2.566,
+  "end": 3.047,
+  "score": 0.869
+ },
+ {
+  "w": "ಇನ್ನೊಂದು.",
+  "r": "innomdu",
+  "start": 3.328,
+  "end": 3.689,
+  "score": 0.983
+ },
+ {
+  "w": "ಆಮೇಲೆ",
+  "r": "aameele",
+  "start": 4.05,
+  "end": 4.41,
+  "score": 0.855
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 4.531,
+  "end": 4.771,
+  "score": 0.497
+ }
+]
