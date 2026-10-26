@@ -6,7 +6,7 @@
  * One small request per period (SQL analytics_report_video); bots and team traffic excluded.
  */
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { CheckCircle2, ChevronRight, Database, House, LayoutDashboard, Megaphone, MonitorPlay, PlayCircle } from 'lucide-react';
+import { BarChart3, CheckCircle2, ChevronRight, ClipboardList, Database, House, LayoutDashboard, Megaphone, MonitorPlay, PlayCircle } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { Nav } from './AnalyticsPanel';
@@ -33,10 +33,22 @@ const PLACES: Record<string, PlaceMeta> = {
     },
     dashboard: {
         label: 'Educator dashboard',
-        where: 'First-exam checklist',
+        where: 'Beside the next step / results',
         icon: LayoutDashboard,
         tint: 'bg-violet-50 text-violet-600 ring-violet-600/15',
-        info: 'Only new educators see it, inside the first-exam checklist, which hides once they have run an exam. Page visitors counts everyone who opened the dashboard, so the real play rate here is higher.',
+        info: 'Every educator sees it on /dashboard: beside the next step while they have fewer than 5 candidate results, in the side column after that.',
+    },
+    all_results: {
+        label: 'All results',
+        where: 'Side column · /all-submissions',
+        icon: ClipboardList,
+        tint: 'bg-emerald-50 text-emerald-600 ring-emerald-600/15',
+    },
+    results_report: {
+        label: 'Results report',
+        where: 'Side column · /analytics/full',
+        icon: BarChart3,
+        tint: 'bg-rose-50 text-rose-600 ring-rose-600/15',
     },
 };
 

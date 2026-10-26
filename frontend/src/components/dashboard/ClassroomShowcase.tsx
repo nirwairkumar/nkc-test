@@ -25,7 +25,8 @@ const STEPS = [
     { title: 'No bundle of copies to check', body: 'A paper test means printing, collecting and hours of checking. Online, the checking is done when they submit.' },
 ];
 
-const CSS = `
+/** Scene keyframes; also used by ResultsPreview. */
+export const SHOWCASE_CSS = `
 .cs-a{animation:cs-pop .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
 .cs-left{animation-name:cs-left}
 .cs-grow{transform-origin:left center;animation-name:cs-grow;animation-duration:1.5s;animation-timing-function:cubic-bezier(.3,.7,.2,1)}
@@ -45,9 +46,9 @@ const CSS = `
 @media (prefers-reduced-motion:reduce){.cs-a,.cs-select,.cs-dot,.cs-ring,.cs-pulse,.cs-grow{animation:none!important}}
 `;
 
-const delay = (s: number) => ({ '--d': `${s}s` }) as React.CSSProperties;
+export const delay = (s: number) => ({ '--d': `${s}s` }) as React.CSSProperties;
 
-function usePrefersReducedMotion() {
+export function usePrefersReducedMotion() {
     const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
     useEffect(() => {
         const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -60,7 +61,7 @@ function usePrefersReducedMotion() {
 }
 
 /** Milliseconds since the scene started, in 100 ms steps, frozen while paused. */
-function useSceneClock(running: boolean, sceneKey: string) {
+export function useSceneClock(running: boolean, sceneKey: string) {
     const [t, setT] = useState(0);
     const elapsed = useRef(0);
     useEffect(() => {
@@ -85,7 +86,7 @@ function useSceneClock(running: boolean, sceneKey: string) {
 }
 
 /** A number that counts up from `fromMs` for `forMs`, easing out. */
-const countUp = (t: number, to: number, fromMs: number, forMs: number) => {
+export const countUp = (t: number, to: number, fromMs: number, forMs: number) => {
     const p = Math.min(1, Math.max(0, (t - fromMs) / forMs));
     return Math.round(to * (1 - (1 - p) ** 3));
 };
@@ -140,7 +141,7 @@ export default function ClassroomShowcase() {
 
     return (
         <section ref={sectionRef} aria-labelledby="showcase-heading" className={`${CARD} overflow-hidden`}>
-            <style>{CSS}</style>
+            <style>{SHOWCASE_CSS}</style>
             <div className="grid gap-x-2 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
                 <div className="px-5 pt-5 lg:col-start-1 lg:row-start-1 lg:pl-6 lg:pt-6">
                     <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-sky-700">New to online exams?</p>
@@ -223,7 +224,7 @@ export default function ClassroomShowcase() {
 
 /* ── Shared scene parts ──────────────────────────────────────────────────── */
 
-function Phone({ left, top, width, height, tilt = 0, d = 0, children }: {
+export function Phone({ left, top, width, height, tilt = 0, d = 0, children }: {
     left: number; top: number; width: number; height: number; tilt?: number; d?: number; children: React.ReactNode;
 }) {
     return (
@@ -235,7 +236,7 @@ function Phone({ left, top, width, height, tilt = 0, d = 0, children }: {
     );
 }
 
-function Float({ left, top, width, d, children, className = '' }: {
+export function Float({ left, top, width, d, children, className = '' }: {
     left: number; top: number; width?: number; d: number; children: React.ReactNode; className?: string;
 }) {
     return (
@@ -393,7 +394,7 @@ const RANKS = [
     { name: 'Arjun Singh', pct: 81 },
     { name: 'Ishaan Reddy', pct: 77 },
 ];
-const MEDALS = ['bg-amber-100 text-amber-800', 'bg-slate-200 text-slate-700', 'bg-orange-100 text-orange-800'];
+export const MEDALS = ['bg-amber-100 text-amber-800', 'bg-slate-200 text-slate-700', 'bg-orange-100 text-orange-800'];
 
 function ResultsScene({ t }: { t: number }) {
     const r = 30;

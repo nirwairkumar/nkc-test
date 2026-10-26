@@ -10,10 +10,10 @@ const BEATS = [
 ];
 
 /** The walkthrough film, beside the main column for every educator. Only the poster loads until play. */
-export default function WatchFilmCard({ className = '' }: { className?: string }) {
+export default function WatchFilmCard({ className = '', where = 'dashboard' }: { className?: string; where?: string }) {
     return (
         <section aria-labelledby="film-heading" className={`${CARD} flex flex-col overflow-hidden ${className}`}>
-            <LaunchVideo where="dashboard" label="How TestoZa works" />
+            <LaunchVideo where={where} label="How TestoZa works" />
             <div className="flex flex-1 flex-col px-5 py-4">
                 <h2 id="film-heading" className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
                     Watch a whole exam in {LAUNCH_VIDEO.duration}

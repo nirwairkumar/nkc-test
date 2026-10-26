@@ -303,6 +303,52 @@ function summarise(test: any, attempts: ScoredAttempt[]): TestResultSummary {
     };
 }
 
+/** Attempts that count as candidate results: on a known test, not the creator's own, conduct-only for conducted tests. */
+function candidateAttempts(tests: any[], rows: AttemptRow[], creatorId: string | undefined) {
+    const testById = new Map(tests.map(t => [t.id, t]));
+    const scored: ScoredAttempt[] = [];
+    let selfTried = false;
+    for (const row of rows) {
+        const test = testById.get(row.test_id);
+        if (!test) continue;
+        if (creatorId && row.user_id === creatorId) {
+            selfTried = true;
+            continue;
+        }
+        if (test.settings?.conduct_exam && row.conduct !== true) continue;
+        scored.push(scoreAttempt(row, test));
+    }
+    return { scored, selfTried, testById };
+}
+
+/** One summary per test that has candidate results, by the same rules as the dashboard. */
+export function summariseByTest(tests: any[], rows: AttemptRow[], creatorId: string | undefined): Map<string, TestResultSummary> {
+    const { scored, testById } = candidateAttempts(tests, rows, creatorId);
+    const byTest = new Map<string, ScoredAttempt[]>();
+    scored.forEach(a => {
+        const list = byTest.get(a.testId);
+        if (list) list.push(a);
+        else byTest.set(a.testId, [a]);
+    });
+    return new Map([...byTest.entries()].map(([id, list]) => [id, summarise(testById.get(id), list)]));
+}
+
+/** A row from GET /attempts/test/{id} in the shape the dashboard reads. */
+export function toAttemptRow(raw: any): AttemptRow {
+    const meta = raw?.metadata || {};
+    return {
+        id: raw.id,
+        user_id: raw.user_id ?? null,
+        test_id: raw.test_id,
+        score: raw.score ?? null,
+        created_at: raw.created_at,
+        violation_count: raw.violation_count ?? null,
+        sf: meta.startFormData || null,
+        stats: meta.stats || null,
+        conduct: meta.conduct_exam === true,
+    };
+}
+
 export function buildDashboardModel(input: {
     tests: any[];
     attempts: AttemptRow[];
@@ -313,21 +359,7 @@ export function buildDashboardModel(input: {
 }): DashboardModel {
     const now = input.now || new Date();
     const tests = input.tests || [];
-    const testById = new Map(tests.map(t => [t.id, t]));
-
-    // Attempts that count: not the creator's own, on a known test, conduct-only for conducted tests.
-    const scored: ScoredAttempt[] = [];
-    let selfTried = false;
-    for (const row of input.attempts) {
-        const test = testById.get(row.test_id);
-        if (!test) continue;
-        if (input.creatorId && row.user_id === input.creatorId) {
-            selfTried = true;
-            continue;
-        }
-        if (test.settings?.conduct_exam && row.conduct !== true) continue;
-        scored.push(scoreAttempt(row, test));
-    }
+    const { scored, selfTried, testById } = candidateAttempts(tests, input.attempts, input.creatorId);
 
     const byTest = new Map<string, ScoredAttempt[]>();
     scored.forEach(a => {

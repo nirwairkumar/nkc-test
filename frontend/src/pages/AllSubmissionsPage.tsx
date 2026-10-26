@@ -1,400 +1,390 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Helmet } from 'react-helmet-async';
+import { toast } from 'sonner';
+import { AlertTriangle, ChevronRight, Clock, FileText, Play, RefreshCw, Search, Send, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchTestsByUserId } from '@/lib/testsApi';
+import { examWhatsAppUrl } from '@/lib/conductExam';
 import {
-    ClipboardList,
-    BarChart2,
-    Users,
-    CheckCircle2,
-    Radio,
-    Search,
-    ArrowRight,
-    FileText,
-    Sparkles,
-    Clock,
-    Filter,
-    Calendar,
-    Award,
-    HelpCircle,
-    Inbox
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+    AttemptRow, TestResultSummary, WEAK_PCT, buildDashboardModel, fetchAttempts, isExampleTest, isLiveTest,
+    isUpcomingTest, rankListText, summariseByTest,
+} from '@/lib/teacherDashboardApi';
 import SplashLoader from '@/components/ui/SplashLoader';
-import { fetchTestsByUserId, Test } from '@/lib/testsApi';
+import { CARD, IconTile, LiveDot, Panel, Skeleton, TEXT_BTN, WhatsAppIcon } from '@/components/dashboard/dashboardUi';
+import { dayAndTime, pctText, plural, timeAgo } from '@/components/dashboard/format';
+import WatchFilmCard from '@/components/dashboard/WatchFilmCard';
+import NextStepCard from '@/components/dashboard/NextStepCard';
+import WaysToRunCard from '@/components/dashboard/WaysToRunCard';
+import DoubtsCard from '@/components/dashboard/DoubtsCard';
+import ResultsPreview from '@/components/results/ResultsPreview';
+import { useStartExam } from '@/components/results/useStartExam';
 
-interface ConductedTestCardItem {
-    id: string;
-    title: string;
-    custom_id?: string;
-    category?: string;
-    created_at?: string;
-    submissions_count: number;
-    duration?: number;
-    total_questions?: number;
-    total_max_marks?: number;
-    is_live: boolean;
-    has_conduct_enabled: boolean;
-    conduct_slug?: string;
-}
+/** Results from the very first one; the dashboard only looks back 180 days. */
+const ALL_TIME = '2000-01-01T00:00:00Z';
+const WAITING_SHOWN = 5;
 
+/**
+ * /all-submissions: every exam the educator's candidates have written, newest first, each
+ * opening its results report. Tests nobody has written yet are listed under it with the one
+ * thing to do (start the exam, or send the link), because most educators make a test and
+ * never send it. Before any candidate has written, the page shows what it will look like
+ * and how a class runs an online exam.
+ *
+ * Counts follow the dashboard's rules: the creator's own runs never count, conducted tests
+ * only count exam attempts, and a failed load says so instead of showing zeros.
+ */
 export default function AllSubmissionsPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const navigate = useNavigate();
 
-    const [tests, setTests] = useState<ConductedTestCardItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [searchQuery, setSearchQuery] = useState<string>('');
-    const [filterTab, setFilterTab] = useState<'all' | 'submitted' | 'major' | 'live'>('all');
+    const [tests, setTests] = useState<any[]>([]);
+    const [testsState, setTestsState] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+    const [attemptsState, setAttemptsState] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [query, setQuery] = useState('');
+    const [showAllWaiting, setShowAllWaiting] = useState(false);
+    const now = useMemo(() => new Date(), []);
 
-    useEffect(() => {
-        if (!authLoading && !user) {
+    const load = useCallback(async () => {
+        if (!user?.id) return;
+        setTestsState('loading');
+        setAttemptsState('loading');
+        let tourCompleted = false;
+        try {
+            tourCompleted = localStorage.getItem(`creator_dashboard_tour_completed_${user.id}`) === 'true';
+        } catch { /* storage blocked */ }
+        const { data, error } = await fetchTestsByUserId(user.id, { tourCompleted });
+        if (error) {
+            setTestsState('error');
+            setAttemptsState('error');
             return;
         }
-
-        if (user?.id) {
-            loadConductedSubmissionsData();
+        const list = Array.isArray(data) ? data : [];
+        setTests(list);
+        setTestsState('ready');
+        const res = await fetchAttempts(list.map(t => t.id), ALL_TIME);
+        if (res.error) {
+            console.error('Failed to load results:', res.error);
+            setAttemptsState('error');
+            return;
         }
-    }, [user, authLoading]);
+        setAttempts(res.data);
+        setAttemptsState('ready');
+    }, [user?.id]);
 
-    const loadConductedSubmissionsData = async () => {
-        setLoading(true);
-        try {
-            // 1. Fetch user's tests (backend already computes submission_count for each test)
-            const { data: userTests } = await fetchTestsByUserId(user!.id);
-            const rawTests: (Test & { submission_count?: number })[] = Array.isArray(userTests) ? userTests : [];
+    useEffect(() => {
+        load();
+    }, [load]);
 
-            const now = new Date();
+    const { startExam, dialog } = useStartExam((started) => {
+        setTests(prev => prev.map(t => (t.id === started.id ? started : t)));
+    });
 
-            const mapped: ConductedTestCardItem[] = rawTests.map(t => {
-                const isEnded = !!t.settings?.schedule?.enabled && !!t.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
-                const isLive = !!t.settings?.conduct_exam?.enabled && !isEnded;
-                const hasConduct = !!t.settings?.conduct_exam;
+    const summaries = useMemo(() => {
+        return [...summariseByTest(tests, attempts, user?.id).values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
+    }, [tests, attempts, user?.id]);
 
-                return {
-                    id: t.id,
-                    title: t.title || "Untitled Assessment",
-                    custom_id: t.custom_id,
-                    category: t.custom_category || 'General Assessment',
-                    created_at: t.created_at,
-                    submissions_count: t.submission_count || 0,
-                    duration: t.duration || 180,
-                    total_questions: t.total_questions || (t.questions?.length || 0),
-                    total_max_marks: t.total_max_marks || (t.questions?.length ? t.questions.length * 4 : 300),
-                    is_live: isLive,
-                    has_conduct_enabled: hasConduct,
-                    conduct_slug: t.settings?.conduct_exam?.conduct_slug
-                };
+    // Real tests with no candidate result yet, newest first.
+    const waiting = useMemo(() => {
+        const written = new Set(summaries.map(s => s.test.id));
+        const ownRuns = new Set(attempts.filter(a => a.user_id === user?.id).map(a => a.test_id));
+        return tests
+            .filter(t => !written.has(t.id) && !isExampleTest(t))
+            .map(t => ({ test: t, selfTried: ownRuns.has(t.id) }))
+            .sort((a, b) => {
+                const live = Number(isLiveTest(b.test, now)) - Number(isLiveTest(a.test, now));
+                return live || String(b.test.created_at || '').localeCompare(String(a.test.created_at || ''));
             });
+    }, [tests, summaries, attempts, user?.id, now]);
 
-            // Sort: Live tests first, then by submissions count, then by date
-            mapped.sort((a, b) => {
-                if (a.is_live && !b.is_live) return -1;
-                if (!a.is_live && b.is_live) return 1;
-                if (b.submissions_count !== a.submissions_count) {
-                    return b.submissions_count - a.submissions_count;
-                }
-                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-            });
+    const model = useMemo(() => buildDashboardModel({
+        tests, attempts, registrations: [], classes: [], creatorId: user?.id, now,
+    }), [tests, attempts, user?.id, now]);
 
-            setTests(mapped);
-        } catch (err) {
-            console.error("Failed to load conducted submissions data:", err);
-        } finally {
-            setLoading(false);
+    if (authLoading) return <SplashLoader text="Loading results..." />;
+    if (!user) return null;
+
+    const loaded = testsState === 'ready' && attemptsState === 'ready';
+    const failed = testsState === 'error' || attemptsState === 'error';
+    const gettingStarted = loaded && summaries.length === 0;
+
+    const q = query.trim().toLowerCase();
+    const matches = (t: any) => !q || String(t.title || '').toLowerCase().includes(q) || String(t.custom_id || '').toLowerCase().includes(q);
+    const shownSummaries = summaries.filter(s => matches(s.test));
+    const shownWaiting = waiting.filter(w => matches(w.test));
+
+    const totalResults = summaries.reduce((n, s) => n + s.count, 0);
+    const allPcts = summaries.flatMap(s => s.ranked.map(a => a.pct).filter((p): p is number => p !== null));
+    const overallAvg = allPcts.length ? allPcts.reduce((a, b) => a + b, 0) / allPcts.length : null;
+    const latest = summaries[0];
+
+    const openReport = (testId: string) => navigate(`/analytics/full?testId=${testId}`);
+    const rowGrid = 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]';
+    const fullName = profile?.full_name || user.user_metadata?.full_name || '';
+
+    const summaryLine = (() => {
+        if (!loaded) return failed ? 'Your results could not be loaded.' : 'Loading your results…';
+        if (gettingStarted) {
+            return waiting.length > 0
+                ? 'Nobody has written one of your tests yet. When they do, every candidate’s marks land here.'
+                : 'When your candidates write an exam, every result lands here.';
         }
-    };
+        return (
+            <>
+                {plural(totalResults, 'answer sheet')} from {plural(summaries.length, 'exam')}. Latest: “
+                <strong className="font-semibold text-slate-900">{latest.test.title}</strong>”, {timeAgo(latest.lastAt, now)}.
+            </>
+        );
+    })();
 
-    const filteredTests = useMemo(() => {
-        return tests.filter(t => {
-            const query = searchQuery.trim().toLowerCase();
-            const matchesQuery = !query ||
-                t.title.toLowerCase().includes(query) ||
-                (t.custom_id && t.custom_id.toLowerCase().includes(query)) ||
-                (t.category && t.category.toLowerCase().includes(query));
-
-            if (!matchesQuery) return false;
-
-            if (filterTab === 'submitted') return t.submissions_count > 0;
-            if (filterTab === 'major') return t.submissions_count >= 20;
-            if (filterTab === 'live') return t.is_live;
-            return true;
-        });
-    }, [tests, searchQuery, filterTab]);
-
-    const totalSubmissionsSum = useMemo(() => {
-        return tests.reduce((acc, curr) => acc + curr.submissions_count, 0);
-    }, [tests]);
-
-    const liveExamsCount = useMemo(() => {
-        return tests.filter(t => t.is_live).length;
-    }, [tests]);
-
-    const majorTestsCount = useMemo(() => {
-        return tests.filter(t => t.submissions_count >= 20).length;
-    }, [tests]);
-
-    if (authLoading || loading) {
-        return <SplashLoader text="Loading All Submissions & Conducted Tests..." />;
-    }
-
-    return (
-        <div className="container mx-auto max-w-6xl py-3 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-5">
-            <Helmet>
-                <title>All Submissions & Test Reports | TestoZa</title>
-                <meta name="description" content="View all student submissions and inspect full test analytics for your conducted exams." />
-            </Helmet>
-
-            {/* iOS-Inspired Title Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-3 sm:pb-4">
-                <div>
-                    <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                        All Student Submissions
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                        Select any test below to inspect complete student scorecards, rankings, and question-by-question analysis.
-                    </p>
-                </div>
-
-                <Button
-                    onClick={() => navigate('/my-tests')}
-                    variant="outline"
-                    size="sm"
-                    className="self-start md:self-auto gap-1.5 text-xs text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl h-8 sm:h-9"
-                >
-                    <FileText className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Manage Tests</span>
-                </Button>
-            </div>
-
-            {/* Quick Metrics Cards - 4 Column Responsive Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-                <Card 
-                    onClick={() => setFilterTab('submitted')}
-                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-all ${filterTab === 'submitted' ? 'ring-2 ring-indigo-500/20 border-indigo-400 dark:border-indigo-600' : ''}`}
-                >
-                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                        <Users className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Total Submissions</p>
-                        <p className="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 font-mono leading-tight">
-                            {totalSubmissionsSum}
-                        </p>
-                        <p className="text-[9px] text-slate-400 hidden sm:block">Across all tests</p>
-                    </div>
-                </Card>
-
-                <Card 
-                    onClick={() => setFilterTab('live')}
-                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all ${filterTab === 'live' ? 'ring-2 ring-emerald-500/20 border-emerald-400 dark:border-emerald-600' : ''}`}
-                >
-                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <Radio className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Live Exams</p>
-                        <p className="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono leading-tight">
-                            {liveExamsCount}
-                        </p>
-                        <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:block">Active responses</p>
-                    </div>
-                </Card>
-
-                <Card 
-                    onClick={() => setFilterTab('all')}
-                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-amber-300 dark:hover:border-amber-700 transition-all ${filterTab === 'all' ? 'ring-2 ring-amber-500/20 border-amber-400 dark:border-amber-600' : ''}`}
-                >
-                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <BarChart2 className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Conducted Tests</p>
-                        <p className="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 font-mono leading-tight">
-                            {tests.length}
-                        </p>
-                        <p className="text-[9px] text-slate-400 hidden sm:block">Total tests</p>
-                    </div>
-                </Card>
-
-                <Card 
-                    onClick={() => setFilterTab('major')}
-                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-all ${filterTab === 'major' ? 'ring-2 ring-purple-500/20 border-purple-400 dark:border-purple-600' : ''}`}
-                >
-                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                        <Award className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Conducted (≥20)</p>
-                        <p className="text-base sm:text-xl font-black text-purple-600 dark:text-purple-400 font-mono leading-tight">
-                            {majorTestsCount}
-                        </p>
-                        <p className="text-[9px] text-purple-600 dark:text-purple-400 font-medium hidden sm:block">≥20 submissions</p>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Search & Filter Bar - Horizontally Scrollable Pills on Mobile */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-                <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search test title or ID..."
-                        className="pl-8 sm:pl-9 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-8.5 sm:h-9 text-xs sm:text-sm rounded-xl"
-                    />
-                </div>
-
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
-                    <button
-                        onClick={() => setFilterTab('all')}
-                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                            filterTab === 'all'
-                                ? 'bg-indigo-600 text-white shadow-xs'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        All Tests ({tests.length})
+    const waitingPanel = shownWaiting.length > 0 && (
+        <Panel
+            id="waiting-heading"
+            title={gettingStarted ? 'Your tests' : 'Not written by anyone yet'}
+            count={shownWaiting.length}
+            note="Start one as an exam and send the link to your class"
+        >
+            <ul className="divide-y divide-slate-100">
+                {(showAllWaiting ? shownWaiting : shownWaiting.slice(0, WAITING_SHOWN)).map(w => (
+                    <WaitingRow key={w.test.id} test={w.test} selfTried={w.selfTried} now={now} onStart={() => startExam(w.test)} />
+                ))}
+            </ul>
+            {shownWaiting.length > WAITING_SHOWN && (
+                <div className="border-t border-slate-100 px-3 py-2">
+                    <button type="button" onClick={() => setShowAllWaiting(v => !v)} className={TEXT_BTN}>
+                        {showAllWaiting ? 'Show fewer' : `Show all ${shownWaiting.length}`}
                     </button>
-                    <button
-                        onClick={() => setFilterTab('submitted')}
-                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                            filterTab === 'submitted'
-                                ? 'bg-indigo-600 text-white shadow-xs'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        With Submissions ({tests.filter(t => t.submissions_count > 0).length})
-                    </button>
-                    <button
-                        onClick={() => setFilterTab('major')}
-                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                            filterTab === 'major'
-                                ? 'bg-purple-600 text-white shadow-xs'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        ≥20 Submissions ({majorTestsCount})
-                    </button>
-                    <button
-                        onClick={() => setFilterTab('live')}
-                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                            filterTab === 'live'
-                                ? 'bg-indigo-600 text-white shadow-xs'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        Live Exams ({liveExamsCount})
-                    </button>
-                </div>
-            </div>
-
-            {/* Test Submissions Cards List */}
-            {filteredTests.length === 0 ? (
-                <Card className="p-6 sm:p-8 text-center bg-white dark:bg-slate-900 border-dashed border-2 border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl space-y-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto">
-                        <Inbox className="w-6 h-6 sm:w-7 sm:h-7" />
-                    </div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">No Tests Found</h3>
-                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                        {searchQuery ? `No test matches "${searchQuery}". Try clearing your search.` : 'You have not conducted any tests yet. Once students submit their answers, their response data will appear here for 1-click analysis.'}
-                    </p>
-                    <Button
-                        onClick={() => navigate('/my-tests')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 font-semibold text-xs sm:text-sm"
-                    >
-                        Go to My Tests
-                    </Button>
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                    {filteredTests.map((test) => {
-                        return (
-                            <Card
-                                key={test.id}
-                                className="group relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-5 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
-                            >
-                                <div className="space-y-1.5 flex-1 min-w-0">
-                                    {/* Badges row */}
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {test.is_live ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                                LIVE EXAM
-                                            </span>
-                                        ) : test.has_conduct_enabled ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                                                <CheckCircle2 className="w-3 h-3 text-indigo-500" />
-                                                Conducted
-                                            </span>
-                                        ) : null}
-
-                                        {test.category && test.category.toLowerCase() !== 'general assessment' && (
-                                            <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]">
-                                                {test.category}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* Title */}
-                                    <h3 className="text-sm sm:text-lg font-extrabold text-slate-900 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                        {test.title}
-                                    </h3>
-
-                                    {/* Test Info Metadata */}
-                                    <div className="flex items-center gap-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                                        <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                                            {test.duration} mins
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                                            {test.total_questions} Questions ({test.total_max_marks} Marks)
-                                        </span>
-                                        {test.created_at && (
-                                            <span className="flex items-center gap-1">
-                                                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                                                Conducted: {new Date(test.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </span>
-                                        )}
-                                        {test.custom_id && (
-                                            <span className="font-mono text-slate-400">
-                                                ID: {test.custom_id}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Right Side Action Block - Responsive Layout for Mobile */}
-                                <div className="flex items-center justify-between gap-2.5 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 w-full md:w-auto">
-                                    {/* Submissions count pill */}
-                                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-indigo-50/70 dark:bg-slate-800/80 border border-indigo-100 dark:border-slate-700 text-center flex flex-col items-center justify-center min-w-[80px] sm:min-w-[100px]">
-                                        <p className="text-base sm:text-lg font-extrabold text-indigo-600 dark:text-indigo-400 font-mono leading-none">
-                                            {test.submissions_count}
-                                        </p>
-                                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider">
-                                            Submissions
-                                        </p>
-                                    </div>
-
-                                    {/* Primary Redirect Button */}
-                                    <Button
-                                        onClick={() => navigate(`/analytics/full?testId=${test.id}`)}
-                                        className="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 font-bold h-10 sm:h-11 text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs active:scale-[0.98] transition-all"
-                                    >
-                                        <span>View Full Analysis</span>
-                                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                    </Button>
-                                </div>
-                            </Card>
-                        );
-                    })}
                 </div>
             )}
+        </Panel>
+    );
+
+    return (
+        <div className="mx-auto w-full max-w-6xl space-y-5 px-4 pb-16 pt-5 sm:px-6 sm:pt-7 lg:px-8">
+            <Helmet>
+                <title>All submissions | TestoZa</title>
+                <meta name="description" content="Every exam your candidates have written, with marks, ranks and a full report for each." />
+            </Helmet>
+
+            {/* Header: what this page is, in one line */}
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-sky-700">Results</p>
+                    <h1 className="mt-1 text-[26px] font-bold leading-tight tracking-[-0.025em] text-slate-900 sm:text-[30px]">All submissions</h1>
+                    <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-slate-600">{summaryLine}</p>
+                </div>
+                {loaded && tests.length > 5 && (
+                    <label className="relative block w-full shrink-0 sm:w-64">
+                        <span className="sr-only">Search your tests</span>
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Search your tests"
+                            className="h-10 w-full rounded-full bg-white pl-9 pr-9 text-[14px] text-slate-900 ring-1 ring-slate-900/[0.08] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                        />
+                        {query && (
+                            <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer">
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </label>
+                )}
+            </header>
+
+            {failed && (
+                <div className="flex flex-col gap-3 rounded-2xl bg-amber-50 px-4 py-3.5 text-[14px] text-amber-900 ring-1 ring-inset ring-amber-600/20 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> Could not load your results. Check your connection.</span>
+                    <button type="button" onClick={load} className="inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white px-3.5 text-[13px] font-semibold text-amber-900 ring-1 ring-amber-600/20 hover:bg-amber-100 sm:self-auto cursor-pointer">
+                        <RefreshCw className="h-3.5 w-3.5" /> Try again
+                    </button>
+                </div>
+            )}
+
+            {!loaded && !failed && (
+                <div className={rowGrid}>
+                    <div className={`${CARD} space-y-4 p-5`}>
+                        <Skeleton className="h-4 w-40" />
+                        {[0, 1, 2, 3].map(i => (
+                            <div key={i} className="flex items-center gap-3">
+                                <Skeleton className="h-11 w-11 rounded-[12px]" />
+                                <div className="flex-1 space-y-2"><Skeleton className="h-3.5 w-2/3" /><Skeleton className="h-3 w-1/3" /></div>
+                            </div>
+                        ))}
+                    </div>
+                    <WatchFilmCard where="all_results" />
+                </div>
+            )}
+
+            {gettingStarted && (
+                <>
+                    <div className={rowGrid}>
+                        <NextStepCard
+                            className="min-w-0"
+                            checklist={model.checklist}
+                            liveExam={model.live[0] || null}
+                            onUploadPaper={() => navigate('/generate-with-ai')}
+                            onTypeQuestions={() => navigate('/create-test')}
+                            onConduct={startExam}
+                        />
+                        <WatchFilmCard where="all_results" />
+                    </div>
+                    <ResultsPreview />
+                    {waitingPanel}
+                    <WaysToRunCard />
+                    <DoubtsCard signedBy={fullName} />
+                </>
+            )}
+
+            {loaded && !gettingStarted && (
+                <div className={`${rowGrid} items-start`}>
+                    <div className="min-w-0 space-y-5">
+                        <Panel
+                            id="written-heading"
+                            title="Exams your candidates wrote"
+                            count={shownSummaries.length}
+                            note="Newest first. Tap one for its full report."
+                        >
+                            {shownSummaries.length === 0 ? (
+                                <p className="px-5 py-8 text-center text-[14px] text-slate-500">No exam matches “{query}”.</p>
+                            ) : (
+                                <ul className="divide-y divide-slate-100">
+                                    {shownSummaries.map(s => (
+                                        <ResultRow key={s.test.id} summary={s} now={now} onOpen={() => openReport(s.test.id)} />
+                                    ))}
+                                </ul>
+                            )}
+                        </Panel>
+                        {waitingPanel}
+                    </div>
+
+                    <aside className="min-w-0 space-y-5 lg:sticky lg:top-5" aria-label="Overview">
+                        <section aria-labelledby="totals-heading" className={`${CARD} p-5`}>
+                            <h2 id="totals-heading" className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">All your exams so far</h2>
+                            <dl className="mt-3 grid grid-cols-2 gap-2.5">
+                                <Tile label="Answer sheets" value={String(totalResults)} />
+                                <Tile label="Exams written" value={String(summaries.length)} />
+                                <Tile label="Average score" value={pctText(overallAvg)} />
+                                <Tile label="Not sent yet" value={String(waiting.length)} />
+                            </dl>
+                            <p className="mt-3 text-[12px] leading-snug text-slate-500">Your own test runs are not counted.</p>
+                        </section>
+                        <WatchFilmCard where="all_results" />
+                    </aside>
+                </div>
+            )}
+
+            {dialog}
         </div>
+    );
+}
+
+function Tile({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-900/[0.04]">
+            <dt className="truncate text-[12px] font-medium text-slate-500">{label}</dt>
+            <dd className="mt-0.5 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-900 tabular-nums">{value}</dd>
+        </div>
+    );
+}
+
+/** One written exam: class average, how many wrote, who needs help, and the rank list to send. */
+function ResultRow({ summary, now, onOpen }: { summary: TestResultSummary; now: Date; onOpen: () => void }) {
+    const { test, count, avgPct, weak, bands, lastAt } = summary;
+    const live = isLiveTest(test, now);
+    const banded = bands.strong + bands.average + bands.weak;
+    return (
+        <li className="group flex items-center gap-1 pr-3 transition-colors hover:bg-slate-50">
+            <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3.5 py-3.5 pl-5 text-left cursor-pointer">
+                <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[13px] bg-slate-100 ring-1 ring-inset ring-slate-900/[0.04]">
+                    <span className="text-[15px] font-bold leading-none text-slate-900 tabular-nums">{pctText(avgPct)}</span>
+                    <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500">avg</span>
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[15px] font-semibold text-slate-900 group-hover:text-sky-800" title={test.title}>{test.title}</span>
+                        {live && (
+                            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+                                <LiveDot /> Live
+                            </span>
+                        )}
+                    </span>
+                    <span className="mt-0.5 block text-[13px] text-slate-600">
+                        {plural(count, 'candidate')}
+                        {weak.length > 0 && <> · <span className="text-rose-700">{weak.length} below {WEAK_PCT}%</span></>}
+                        {' · '}last {timeAgo(lastAt, now)}
+                    </span>
+                    {banded > 1 && (
+                        <span className="mt-2 flex h-1.5 w-full max-w-[220px] gap-[2px] overflow-hidden rounded-full" aria-hidden="true">
+                            <span className="h-full bg-emerald-500" style={{ width: `${(bands.strong / banded) * 100}%` }} />
+                            <span className="h-full bg-amber-400" style={{ width: `${(bands.average / banded) * 100}%` }} />
+                            <span className="h-full bg-rose-500" style={{ width: `${(bands.weak / banded) * 100}%` }} />
+                        </span>
+                    )}
+                </span>
+            </button>
+            <a
+                href={`https://wa.me/?text=${encodeURIComponent(rankListText(summary))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Send the rank list on WhatsApp"
+                aria-label={`Send the rank list for ${test.title} on WhatsApp`}
+                className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#128C7E] transition-colors hover:bg-[#25D366]/15 sm:flex"
+            >
+                <WhatsAppIcon />
+            </a>
+            <button type="button" onClick={onOpen} aria-label={`Open the report for ${test.title}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-300 group-hover:text-slate-500 cursor-pointer">
+                <ChevronRight className="h-5 w-5" />
+            </button>
+        </li>
+    );
+}
+
+/** A test nobody has written: what state it is in, and the one thing to do about it. */
+function WaitingRow({ test, selfTried, now, onStart }: {
+    test: any; selfTried: boolean; now: Date; onStart: () => void;
+}) {
+    const live = isLiveTest(test, now);
+    const upcoming = isUpcomingTest(test, now);
+    const wasRun = !!test.settings?.conduct_exam;
+    const status = live
+        ? 'Live. Nobody has the link yet.'
+        : upcoming
+            ? `Starts ${dayAndTime(new Date(test.settings.schedule.start_time), now)}`
+            : selfTried
+                ? 'Only you have tried it'
+                : wasRun
+                    ? 'Ended with no candidates'
+                    : 'Not started as an exam';
+    const send = live || upcoming;
+
+    return (
+        <li className="flex items-center gap-3 px-5 py-3">
+            <IconTile icon={live ? Send : upcoming ? Clock : FileText} tone={live ? 'emerald' : upcoming ? 'violet' : 'slate'} size="sm" />
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-semibold text-slate-900" title={test.title}>{test.title}</p>
+                <p className={`mt-0.5 truncate text-[12.5px] ${live ? 'text-emerald-700' : 'text-slate-500'}`}>{status}</p>
+            </div>
+            {send ? (
+                <a
+                    href={examWhatsAppUrl(test)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => toast.success('Post it in your class group. Results show here as they submit.')}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3 text-[12.5px] font-semibold text-white transition-[filter] hover:brightness-95"
+                >
+                    <WhatsAppIcon className="h-3.5 w-3.5" /> Send
+                </a>
+            ) : (
+                <button
+                    type="button"
+                    onClick={onStart}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-sky-50 px-3 text-[12.5px] font-semibold text-sky-800 ring-1 ring-inset ring-sky-600/15 transition-colors hover:bg-sky-100 cursor-pointer"
+                >
+                    <Play className="h-3 w-3 fill-current" /> {wasRun ? 'Start again' : 'Start exam'}
+                </button>
+            )}
+        </li>
     );
 }
