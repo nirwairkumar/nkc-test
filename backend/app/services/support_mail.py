@@ -60,9 +60,9 @@ def _send(to: str, subject: str, body: str, reply_to: Optional[str] = None) -> N
     cfg = _smtp_ready()
     if not cfg or not to:
         return
-    from app.routers.email_broadcast import send_smtp_message
+    from app.routers.email_broadcast import send_smtp_message, sender_address
 
-    send_smtp_message(cfg, cfg["user"], "TestoZa Support", to, subject, body, reply_to=reply_to)
+    send_smtp_message(cfg, sender_address(cfg), "TestoZa Support", to, subject, body, reply_to=reply_to)
 
 
 def _paragraphs(text: str) -> str:

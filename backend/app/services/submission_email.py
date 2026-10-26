@@ -92,10 +92,10 @@ def _notify(db, creator_id: str, test_id: str, test_title: str) -> None:
         if not to or to.endswith("@guest.testoza.com"):
             return
 
-        from app.routers.email_broadcast import send_smtp_message
+        from app.routers.email_broadcast import send_smtp_message, sender_address
 
         mail = build_email(test_title, test_id, count, row.get("full_name"))
-        send_smtp_message(cfg, cfg["user"], cfg.get("from_name") or "TestoZa", to, mail["subject"], mail["html"])
+        send_smtp_message(cfg, sender_address(cfg),cfg.get("from_name") or "TestoZa", to, mail["subject"], mail["html"])
         logger.info("Submission email sent for test %s at %s submissions", test_id, count)
     except Exception as err:  # never let an email problem surface anywhere
         logger.warning("Submission email skipped for test %s: %s", test_id, err)

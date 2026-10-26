@@ -20,6 +20,13 @@ Limits (environment, so a new admin can't loosen them):
   EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="Nirwair from TestoZa"
   EMAIL_SENDERS=alias@testoza.com,…  · extra From addresses: aliases of the SMTP mailbox only
 
+SMTP (environment):
+  SMTP_HOST, SMTP_PORT (465 = SSL, 587 = STARTTLS), SMTP_USER, SMTP_PASSWORD
+  SMTP_FROM=no-reply@testoza.com · the From address when the SMTP login isn't one of our
+                                    addresses (Brevo: xxx@smtp-brevo.com, SES: an access key).
+                                    Unset = From the login, as with Zoho.
+  Brevo: SMTP_HOST=smtp-relay.brevo.com SMTP_PORT=587 SMTP_USER=<login> SMTP_PASSWORD=<SMTP key>
+
 runtime_smtp_config and send_smtp_message are also used by services/support_mail.py and
 services/submission_email.py: keep their names and signatures.
 """
@@ -59,8 +66,15 @@ runtime_smtp_config: Dict[str, Any] = {
     "user": os.getenv("SMTP_USER", "no-reply@testoza.com"),
     "password": os.getenv("SMTP_PASSWORD", ""),
     "from_name": os.getenv("SMTP_FROM_NAME", "TestoZa Team"),
+    "from_email": os.getenv("SMTP_FROM", "").strip(),
     "use_ssl": True,
 }
+
+
+def sender_address(cfg: Optional[Dict[str, Any]] = None) -> str:
+    """Our From address (also the envelope sender): SMTP_FROM if set, else the SMTP login."""
+    cfg = runtime_smtp_config if cfg is None else cfg
+    return (cfg.get("from_email") or cfg.get("user") or "").strip()
 
 
 def _int_env(name: str, default: int) -> int:
@@ -82,9 +96,10 @@ def senders() -> List[str]:
     """
     From addresses that will work. Zoho only sends From the signed-in mailbox or its aliases
     ("Relaying disallowed" otherwise), and nirwair@ / support@ are separate mailboxes, so the
-    list is the SMTP mailbox plus any aliases named in EMAIL_SENDERS (comma-separated).
+    list is the SMTP mailbox (or SMTP_FROM) plus any aliases named in EMAIL_SENDERS (comma-separated).
+    With Brevo, every address in EMAIL_SENDERS must also be a verified sender there.
     """
-    user = (runtime_smtp_config.get("user") or "").strip().lower()
+    user = sender_address().lower()
     extra = [a.strip().lower() for a in os.getenv("EMAIL_SENDERS", "").split(",") if a.strip()]
     out = ([user] if user else []) + [a for a in extra if a != user]
     return out or ["no-reply@testoza.com"]
@@ -102,17 +117,20 @@ class SmtpConfigRequest(BaseModel):
     user: str
     password: str
     from_name: Optional[str] = "TestoZa Team"
+    from_email: Optional[str] = None  # left out = keep SMTP_FROM
     use_ssl: Optional[bool] = True
 
 
 def get_active_smtp(override_config: Optional[SmtpConfigRequest] = None) -> Dict[str, Any]:
     if override_config:
+        from_email = override_config.from_email
         return {
             "host": override_config.host.strip(),
             "port": override_config.port,
             "user": override_config.user.strip(),
             "password": override_config.password.strip(),
             "from_name": (override_config.from_name or "TestoZa Team").strip(),
+            "from_email": (from_email if from_email is not None else runtime_smtp_config.get("from_email") or "").strip(),
             "use_ssl": override_config.use_ssl if override_config.use_ssl is not None else (override_config.port == 465),
         }
     return runtime_smtp_config
@@ -142,9 +160,9 @@ def build_message(
 
 
 def open_smtp(smtp_cfg: Dict[str, Any]) -> smtplib.SMTP:
-    """A signed-in connection. Zoho needs the envelope sender to be the signed-in account."""
+    """A signed-in connection. Send with sender_address() as the envelope sender (Zoho needs the signed-in account)."""
     if not _smtp_ready(smtp_cfg):
-        raise ValueError("SMTP credentials missing. Add the Zoho app password in Email Broadcast → Settings.")
+        raise ValueError("SMTP credentials missing. Set SMTP_USER and SMTP_PASSWORD on the server.")
     host, port = smtp_cfg["host"], int(smtp_cfg["port"])
     if port == 465:
         server: smtplib.SMTP = smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=20)
@@ -166,7 +184,7 @@ def send_smtp_message(
     msg = build_message(sender_email, sender_name, recipient_email, subject, html_body, reply_to, text_body, headers)
     server = open_smtp(smtp_cfg)
     try:
-        server.sendmail(smtp_cfg["user"].strip(), [recipient_email], msg.as_string())
+        server.sendmail(sender_address(smtp_cfg), [recipient_email], msg.as_string())
     finally:
         try:
             server.quit()
@@ -429,6 +447,7 @@ def get_smtp_status(request: Request, db: Client = Depends(get_db)):
         "host": runtime_smtp_config.get("host"),
         "port": runtime_smtp_config.get("port"),
         "user": runtime_smtp_config.get("user"),
+        "from_email": sender_address(),
         "from_name": runtime_smtp_config.get("from_name"),
         "available_senders": senders(),
     }
@@ -552,8 +571,8 @@ def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(g
     """Send the email to one address (yours), filled in with a real person's details if given."""
     verify_is_admin(request, db)
     if not _smtp_ready(runtime_smtp_config):
-        raise HTTPException(status_code=400, detail="Email isn't connected yet. Open Settings and add the Zoho app password.")
-    from_email = payload.from_email or runtime_smtp_config["user"]
+        raise HTTPException(status_code=400, detail="Email isn't connected yet. The owner sets SMTP_PASSWORD on the server.")
+    from_email = payload.from_email or sender_address()
     if not _sender_ok(from_email):
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
     person = _person(db, payload.user_id)
@@ -564,7 +583,7 @@ def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(g
                           f"[Test] {mail['subject']}", mail["html"], reply_to=REPLY_TO, text_body=mail["text"])
     except Exception as exc:
         logger.warning("test email failed: %s", exc)
-        # 409, not 5xx: the global handler hides 5xx details, and the admin needs Zoho's words.
+        # 409, not 5xx: the global handler hides 5xx details, and the admin needs the mail server's words.
         raise HTTPException(status_code=409, detail=f"The mail server said: {str(exc)[:200]}")
     return {"sent": True, "to": str(payload.to)}
 
@@ -721,10 +740,10 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
             )
             try:
                 try:
-                    server.sendmail(runtime_smtp_config["user"].strip(), [r["email"]], msg.as_string())
+                    server.sendmail(sender_address(), [r["email"]], msg.as_string())
                 except smtplib.SMTPServerDisconnected:
                     server = open_smtp(runtime_smtp_config)
-                    server.sendmail(runtime_smtp_config["user"].strip(), [r["email"]], msg.as_string())
+                    server.sendmail(sender_address(), [r["email"]], msg.as_string())
                 mark(r["send_id"], "sent")
                 sent += 1
             except smtplib.SMTPSenderRefused:
@@ -744,10 +763,10 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
         _table(db, "email_campaigns").update({"status": "paused"}).eq("id", cid_s).execute()
         logger.warning("broadcast %s stopped: %s", cid_s, exc)
         if isinstance(exc, smtplib.SMTPSenderRefused):
-            detail = (f"Zoho refused the From address {camp['from_email']}. Pick {runtime_smtp_config.get('user')} "
-                      "as From, or add this address as an alias of that mailbox in Zoho.")
+            detail = (f"The mail server refused the From address {camp['from_email']}. Pick {sender_address()} "
+                      "as From, or verify this address as a sender with the mail provider.")
         elif isinstance(exc, smtplib.SMTPAuthenticationError):
-            detail = "Zoho rejected the sign-in. Check the app password in Settings."
+            detail = "The mail server rejected the sign-in. Check SMTP_USER and SMTP_PASSWORD on the server."
         else:
             detail = f"Couldn't reach the mail server: {str(exc)[:160]}"
         raise HTTPException(status_code=409, detail=detail)

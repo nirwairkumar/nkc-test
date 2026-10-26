@@ -57,10 +57,10 @@ def _tell_referrer(db, referrer: Dict[str, Any], joined_name: str, joined_count:
     if not cfg or not to or to.lower().endswith(GUEST_DOMAIN):
         return
     try:
-        from app.routers.email_broadcast import send_smtp_message
+        from app.routers.email_broadcast import send_smtp_message, sender_address
 
         mail = build_joined_email(referrer.get("full_name"), joined_name, joined_count)
-        send_smtp_message(cfg, cfg["user"], "TestoZa", to, mail["subject"], mail["html"], reply_to=SUPPORT_EMAIL)
+        send_smtp_message(cfg, sender_address(cfg),"TestoZa", to, mail["subject"], mail["html"], reply_to=SUPPORT_EMAIL)
     except Exception as err:
         logger.warning("Referral: email to %s failed: %s", referrer_id, err)
 

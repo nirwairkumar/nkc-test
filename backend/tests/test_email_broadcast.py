@@ -265,6 +265,27 @@ def test_a_rejected_sign_in_pauses_and_frees_everyone(env, monkeypatch):
     monkeypatch.setattr(email_broadcast, "open_smtp", refuse)
     monkeypatch.setitem(email_broadcast.runtime_smtp_config, "password", "wrong")
     r = c.post(f"/api/email-broadcast/campaigns/{cid}/send-next", headers={"Authorization": f"Bearer {ADMIN}"}, json={})
-    assert r.status_code == 409 and "app password" in r.json()["detail"]
+    assert r.status_code == 409 and "SMTP_PASSWORD" in r.json()["detail"]
     assert db.tables["email_sends"] == []  # free to be sent once settings are fixed
     assert db.tables["email_campaigns"][0]["status"] == "paused"
+
+
+def test_smtp_from_sends_as_our_address_when_the_login_is_not(monkeypatch):
+    """Brevo signs in as xxx@smtp-brevo.com; mail must still come From (and envelope) no-reply@testoza.com."""
+    smtp = FakeSMTP()
+    monkeypatch.setattr(email_broadcast, "open_smtp", lambda cfg: smtp)
+    monkeypatch.setitem(email_broadcast.runtime_smtp_config, "user", "b5a1fb001@smtp-brevo.com")
+    monkeypatch.setitem(email_broadcast.runtime_smtp_config, "from_email", "no-reply@testoza.com")
+    monkeypatch.setitem(email_broadcast.runtime_smtp_config, "password", "smtp-key")
+
+    assert email_broadcast.senders()[0] == "no-reply@testoza.com"
+    assert "b5a1fb001@smtp-brevo.com" not in email_broadcast.senders()
+
+    from app.services import support_mail
+    support_mail._send("asha@coaching.in", "Hi", "<p>Hi</p>")
+    envelope, to, msg = smtp.sent[0]
+    assert envelope == "no-reply@testoza.com" and to == "asha@coaching.in"
+    assert "From: TestoZa Support <no-reply@testoza.com>" in msg
+
+    monkeypatch.setitem(email_broadcast.runtime_smtp_config, "from_email", "")
+    assert email_broadcast.sender_address() == "b5a1fb001@smtp-brevo.com"  # unset = the login, as with Zoho
