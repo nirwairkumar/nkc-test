@@ -17,7 +17,7 @@ Limits (environment, so a new admin can't loosen them):
   EMAIL_HOURLY_LIMIT=40  · Zoho allows 50–500 an hour depending on reputation and forbids
                            bulk bursts from business mailboxes — stay well under
   EMAIL_DAILY_LIMIT=200
-  EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="Nirwair from TestoZa"
+  EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="TestoZa"
   EMAIL_SENDERS=alias@testoza.com,…  · extra From addresses: aliases of the SMTP mailbox only
 
 SMTP (environment):
@@ -89,7 +89,7 @@ MONTHLY_CAP = _int_env("EMAIL_MONTHLY_CAP", 3)
 HOURLY_LIMIT = _int_env("EMAIL_HOURLY_LIMIT", 40)
 DAILY_LIMIT = _int_env("EMAIL_DAILY_LIMIT", 200)
 REPLY_TO = os.getenv("EMAIL_REPLY_TO", "support@testoza.com")
-DEFAULT_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Nirwair from TestoZa")
+DEFAULT_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "TestoZa")
 
 
 def senders() -> List[str]:
