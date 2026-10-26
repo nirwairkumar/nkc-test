@@ -47,11 +47,11 @@ export const TOOL_FACTS: Record<'editor' | 'hindi' | 'latex' | 'chatgpt', [strin
     hindi: [['Hindi text', 'Unicode Devanagari; new text set in Noto Sans Devanagari']],
     latex: [
         ['Input', 'LaTeX, Markdown, ChatGPT, Gemini and Claude maths'],
-        ['Output', 'A4 or Letter PDF with selectable text, links and bookmarks'],
+        ['Output', 'A4 or Letter PDF, portrait or landscape, with selectable text, links and bookmarks'],
     ],
     chatgpt: [
         ['Works with', 'ChatGPT, Gemini, Claude, Perplexity and other AI chats'],
-        ['Output', 'A4 or Letter PDF with selectable text'],
+        ['Output', 'A4 or Letter PDF, portrait or landscape, with selectable text'],
     ],
 };
 
@@ -213,7 +213,7 @@ export const HINDI_FAQS: Faq[] = [
 
 export const LATEX_STEPS: Step[] = [
     { title: 'Paste your text', text: 'Paste LaTeX, Markdown or an AI answer into the box — or open a sample to see what is supported.' },
-    { title: 'Check the pages', text: 'The preview shows real A4 or Letter pages with every page break. Choose margins, font, text size and page numbers.' },
+    { title: 'Check the pages', text: 'The preview shows real A4 or Letter pages with every page break. Choose portrait or landscape, margins, font, text size (2 to 24 pt) and page numbers.' },
     { title: 'Download the PDF', text: 'Press Download PDF. You get a sharp PDF with selectable, searchable text — no print dialog, no watermark.' },
 ];
 

@@ -21,6 +21,8 @@ import {
     Loader2,
     Lock,
     PenLine,
+    RectangleHorizontal,
+    RectangleVertical,
     ScanText,
     Sigma,
     Sparkles,
@@ -28,7 +30,7 @@ import {
     Wand2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PANNA, testozaUrl } from '../brand';
 import { setPendingFile } from '../handoff';
 import { analytics } from '@/lib/analytics/tracker';
@@ -172,7 +174,7 @@ const FEATURES = [
     { icon: Wand2, title: 'Broken copies repaired', text: 'Backslashes lost while copying, doubled backslashes from JSON, or garbled "x2x^2" text from selecting an answer: Panna puts the maths back.' },
     { icon: BookOpenText, title: 'Full LaTeX documents', text: '\\documentclass, sections, enumerate and itemize, tabular, numbered equations and \\newcommand macros.' },
     { icon: Languages, title: 'Hindi and chemistry', text: 'Hindi text — even inside formulas — and mhchem reactions like \\ce{H2SO4} come out correctly.' },
-    { icon: FileText, title: 'Real pages', text: 'A4 or Letter with the margins you choose. You see every page break before you download, and \\newpage is respected.' },
+    { icon: FileText, title: 'Real pages', text: 'A4 or Letter, portrait or landscape, with the margins and text size you choose. You see every page break before you download, and \\newpage is respected.' },
     { icon: ScanText, title: 'A real PDF, not a picture', text: 'Text stays selectable and searchable, sharp at any zoom, with clickable links and bookmarks. No print dialog.' },
 ];
 
@@ -201,14 +203,18 @@ const MathDocument = lazy(() => import('../latex/MathDocument').then((m) => ({ d
 /** Runs before paint in the browser; a no-op during pre-rendering. */
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+/** Body text sizes in the dropdown; the tiny ones fit a cheat sheet on one page. */
+const TEXT_SIZES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24];
+
 interface Settings {
     size: PageSizeId;
+    orientation: 'portrait' | 'landscape';
     margin: MarginId;
     family: 'serif' | 'sans';
-    sizePt: 11 | 12 | 13;
+    sizePt: number;
     pageNumbers: boolean;
 }
-const DEFAULTS: Settings = { size: 'a4', margin: 'normal', family: 'serif', sizePt: 12, pageNumbers: true };
+const DEFAULTS: Settings = { size: 'a4', orientation: 'portrait', margin: 'normal', family: 'serif', sizePt: 12, pageNumbers: true };
 const DRAFT_KEY = 'panna:latex:draft';
 const SETTINGS_KEY = 'panna:latex:settings';
 
@@ -216,9 +222,10 @@ function readSettings(): Settings {
     try {
         const s = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}') } as Settings;
         if (!PAGE_SIZES[s.size]) s.size = DEFAULTS.size;
+        if (s.orientation !== 'portrait' && s.orientation !== 'landscape') s.orientation = DEFAULTS.orientation;
         if (!MARGINS[s.margin]) s.margin = DEFAULTS.margin;
         if (s.family !== 'serif' && s.family !== 'sans') s.family = DEFAULTS.family;
-        if (![11, 12, 13].includes(s.sizePt)) s.sizePt = DEFAULTS.sizePt;
+        if (!TEXT_SIZES.includes(s.sizePt)) s.sizePt = DEFAULTS.sizePt;
         s.pageNumbers = s.pageNumbers !== false;
         return s;
     } catch {
@@ -278,15 +285,16 @@ function useMediaQuery(query: string) {
     return match;
 }
 
-function Segmented<T extends string | number>({ label, value, options, onChange }: { label: string; value: T; options: [T, ReactNode][]; onChange: (v: T) => void }) {
+function Segmented<T extends string | number>({ label, value, options, onChange }: { label: string; value: T; options: [T, ReactNode, string?][]; onChange: (v: T) => void }) {
     return (
         <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg bg-slate-100 p-0.5">
-            {options.map(([v, text]) => (
+            {options.map(([v, text, hint]) => (
                 <button
                     key={String(v)}
                     type="button"
                     role="radio"
                     aria-checked={v === value}
+                    title={hint}
                     onClick={() => onChange(v)}
                     className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${v === value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                 >
@@ -335,7 +343,10 @@ export default function LatexToPdfPage({ variant = 'default' }: { variant?: 'def
 
     const deferred = useDeferredValue(input);
     const result = useMemo(() => normalizeMath(deferred), [deferred]);
-    const setup = useMemo(() => ({ size: PAGE_SIZES[settings.size].size, margin: MARGINS[settings.margin].pt }), [settings.size, settings.margin]);
+    const setup = useMemo(() => {
+        const [w, h] = PAGE_SIZES[settings.size].size;
+        return { size: (settings.orientation === 'landscape' ? [h, w] : [w, h]) as [number, number], margin: MARGINS[settings.margin].pt };
+    }, [settings.size, settings.orientation, settings.margin]);
     const css = useMemo(() => documentCss('.panna-doc', { family: settings.family, sizePt: settings.sizePt }), [settings.family, settings.sizePt]);
     const autoTitle = useMemo(() => guessTitle(result.markdown), [result.markdown]);
     const docTitle = title.trim() || autoTitle;
@@ -652,6 +663,15 @@ export default function LatexToPdfPage({ variant = 'default' }: { variant?: 'def
                 >
                     <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2">
                         <Segmented label="Paper size" value={settings.size} onChange={(v) => set('size', v)} options={Object.entries(PAGE_SIZES).map(([id, p]) => [id as PageSizeId, p.label] as [PageSizeId, ReactNode])} />
+                        <Segmented
+                            label="Orientation"
+                            value={settings.orientation}
+                            onChange={(v) => set('orientation', v)}
+                            options={[
+                                ['portrait', <><RectangleVertical className="h-4 w-4" /><span className="sr-only">Portrait</span></>, 'Portrait'],
+                                ['landscape', <><RectangleHorizontal className="h-4 w-4" /><span className="sr-only">Landscape</span></>, 'Landscape'],
+                            ]}
+                        />
                         <Segmented label="Margins" value={settings.margin} onChange={(v) => set('margin', v)} options={Object.entries(MARGINS).map(([id, p]) => [id as MarginId, p.label] as [MarginId, ReactNode])} />
                         <Segmented
                             label="Font"
@@ -662,7 +682,24 @@ export default function LatexToPdfPage({ variant = 'default' }: { variant?: 'def
                                 ['sans', 'Sans'],
                             ]}
                         />
-                        <Segmented label="Text size" value={settings.sizePt} onChange={(v) => set('sizePt', v)} options={([11, 12, 13] as const).map((n) => [n, `${n} pt`] as [Settings['sizePt'], ReactNode])} />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                aria-label={`Text size: ${settings.sizePt} pt`}
+                                className="inline-flex h-7 items-center gap-1 rounded-lg bg-slate-100 pl-2.5 pr-2 text-xs font-semibold text-slate-900 hover:bg-slate-200"
+                            >
+                                {settings.sizePt} pt <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="max-h-[var(--radix-dropdown-menu-content-available-height)] w-32 overflow-y-auto">
+                                <DropdownMenuRadioGroup value={String(settings.sizePt)} onValueChange={(v) => set('sizePt', Number(v))}>
+                                    {TEXT_SIZES.map((n) => (
+                                        <DropdownMenuRadioItem key={n} value={String(n)} className="py-1 text-xs">
+                                            {n} pt
+                                            {n === DEFAULTS.sizePt && <span className="ml-auto pl-2 text-slate-400">default</span>}
+                                        </DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs font-semibold text-slate-600">
                             <input type="checkbox" checked={settings.pageNumbers} onChange={(e) => set('pageNumbers', e.target.checked)} className="h-3.5 w-3.5 accent-emerald-600" />
                             Page numbers
