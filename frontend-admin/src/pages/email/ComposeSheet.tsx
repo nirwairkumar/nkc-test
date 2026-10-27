@@ -17,8 +17,8 @@ import { BodyEditor, ChoiceChips, Confirm, EmailPreview, Field, Group, INPUT, PR
 import PeoplePicker from './PeoplePicker';
 import { SendProgress, useSender } from './sender';
 
-/** The whole audience is listed with tick boxes (the SQL returns at most 500 rows). */
-const LIST_LIMIT = 500;
+/** The whole audience is listed with tick boxes. The backend takes at most 200 per request (AudienceRequest). */
+const LIST_LIMIT = 200;
 
 export interface ComposeStart {
     template?: TemplateSummary | null;
@@ -263,7 +263,12 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                         ))}
                                     </ul>
                                 )}
-                                {aud.data && rows.length > 0 && !rows.some((r) => 'added' in r) ? (
+                                {aud.error && !aud.data ? (
+                                    <p className="mt-4 rounded-xl bg-rose-50 px-3 py-2.5 text-[13px] text-rose-800 ring-1 ring-inset ring-rose-600/20">
+                                        Couldn’t load the people for this email: {errorText(aud.error)}{' '}
+                                        <button type="button" className="font-semibold underline" onClick={() => aud.refetch()}>Try again</button>
+                                    </p>
+                                ) : aud.data && rows.length > 0 && !rows.some((r) => 'added' in r) ? (
                                     <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-900 ring-1 ring-inset ring-amber-600/20">
                                         To tick people and add anyone by search, run
                                         <span className="font-mono text-[12px]"> 20261028150000_email_pick_people.sql </span>
