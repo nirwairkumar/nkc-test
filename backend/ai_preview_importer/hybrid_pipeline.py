@@ -13,6 +13,7 @@ import re
 import json
 import base64
 import asyncio
+import threading
 import fitz
 from google import genai
 from google.genai import types
@@ -252,6 +253,8 @@ async def stream_gemini_and_parse(
     open_containers: List[Tuple[str, int]] = []
     in_string = False
     escape_next = False
+    # Set when the upload is abandoned: the reader thread stops and closes Gemini's stream.
+    stop_reading = threading.Event()
 
     def _try_parse_question(json_str: str) -> Optional[Dict]:
         """Parse one finished array element; keep it when it is a question object."""
@@ -287,12 +290,21 @@ async def stream_gemini_and_parse(
         def _consume_stream():
             try:
                 for chunk in stream:
+                    if stop_reading.is_set():
+                        break
                     if chunk.text:
                         loop.call_soon_threadsafe(queue.put_nowait, chunk.text)
             except Exception as e:
                 logger.error(f"Error consuming Gemini stream in thread: {e}")
                 loop.call_soon_threadsafe(queue.put_nowait, e)
             finally:
+                if stop_reading.is_set():
+                    # Closing the SDK's generator closes the HTTP stream, so Gemini stops
+                    # generating (and billing) the rest of this answer.
+                    try:
+                        stream.close()
+                    except Exception as e:
+                        logger.warning(f"Could not close abandoned Gemini stream: {e}")
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
         asyncio.create_task(asyncio.to_thread(_consume_stream))
@@ -351,6 +363,10 @@ async def stream_gemini_and_parse(
             f"{len(questions_found)} questions extracted incrementally."
         )
 
+    except asyncio.CancelledError:
+        # The upload was abandoned (see /ai/parse-stream): stop reading Gemini's answer.
+        stop_reading.set()
+        raise
     except Exception as e:
         logger.error(f"Streaming Gemini call failed: {e}")
         if not questions_found:

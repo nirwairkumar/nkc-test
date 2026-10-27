@@ -11,6 +11,7 @@ from google.genai import types
 import json
 import re
 import asyncio
+import hashlib
 
 from app.core.auth import verify_auth_token, verify_is_admin
 from app.utils.rate_limiter import (
@@ -516,6 +517,54 @@ from fastapi.responses import StreamingResponse
 # process_files_stream is lazily imported inside the route to avoid loading heavy OCR libs at startup
 import asyncio
 
+# Longest one upload may stream before it is stopped with a timeout error.
+PARSE_STREAM_MAX_SECONDS = 600
+
+
+class _ParseRun:
+    """One upload being read: its AI job and the queue its browser's stream reads."""
+
+    def __init__(self, queue: asyncio.Queue, task: asyncio.Task):
+        self.queue = queue
+        self.task = task
+        self.stop_reason: Optional[str] = None
+
+    def stop(self, reason: str) -> None:
+        """Cancel the AI job if it is still running, logging why once."""
+        if self.task.done() or self.stop_reason is not None:
+            return
+        self.stop_reason = reason
+        logger.info(f"AI upload stopped: {reason}. Cancelling its AI job.")
+        self.task.cancel()
+
+
+# Uploads being read right now, keyed by person + file contents. Starting the same file
+# again (a retry, or a second tab) stops the earlier run, so one file never runs twice at
+# once. Kept per server instance.
+_active_parse_runs: Dict[str, _ParseRun] = {}
+
+
+def _parse_run_key(user_id: str, file_data: List[Dict[str, Any]]) -> str:
+    """Same person and same files (in any order) give the same key."""
+    digests = sorted(hashlib.sha256(f["content"]).hexdigest() for f in file_data)
+    return f"{user_id}:{hashlib.sha256(''.join(digests).encode()).hexdigest()}"
+
+
+class _ClosingStreamingResponse(StreamingResponse):
+    """
+    Closes the event generator however the response ends. When the browser disconnects while
+    a chunk is being sent, Starlette leaves the generator paused, and its `finally` (which stops
+    the AI job) would wait for the garbage collector, seconds to minutes later.
+    """
+
+    async def __call__(self, scope, receive, send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            aclose = getattr(self.body_iterator, "aclose", None)
+            if aclose is not None:
+                await aclose()
+
 
 @router.post("/parse-stream")
 async def parse_document_stream(
@@ -594,7 +643,9 @@ async def parse_document_stream(
     except Exception as e:
         logger.error(f"File Read Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to read files: {str(e)}")
-    
+
+    run_key = _parse_run_key(requesting_user_id, file_data)
+
     async def event_generator():
         """Generate SSE events for the stream"""
         queue = asyncio.Queue()
@@ -668,45 +719,68 @@ async def parse_document_stream(
                 })
                 processing_complete = True
         
+        # The same person starting the same file again replaces the earlier run: stop it,
+        # and tell its browser why if that tab is still open.
+        earlier = _active_parse_runs.get(run_key)
+        if earlier is not None and not earlier.task.done():
+            earlier.stop("the same file was started again")
+            earlier.queue.put_nowait({
+                'event': 'error',
+                'data': {'message': 'You started this file again, so this earlier run was stopped.', 'type': 'replaced'}
+            })
+
         # Start processing in background
-        asyncio.create_task(process_document())
-        
+        run = _ParseRun(queue, asyncio.create_task(process_document()))
+        _active_parse_runs[run_key] = run
+        end_reason = "the browser left before it finished"
+
         # Stream events with timeout
         start_time = asyncio.get_event_loop().time()
-        max_duration = 600  # 10 minutes max
-        
-        while True:
-            try:
-                # Check timeout
-                elapsed = asyncio.get_event_loop().time() - start_time
-                if elapsed > max_duration:
-                    yield f"event: error\ndata: {json.dumps({'message': 'Processing timeout - document too large', 'type': 'timeout'})}\n\n"
+        max_duration = PARSE_STREAM_MAX_SECONDS
+
+        try:
+            while True:
+                try:
+                    # Check timeout
+                    elapsed = asyncio.get_event_loop().time() - start_time
+                    if elapsed > max_duration:
+                        end_reason = f"it passed the {max_duration}-second limit"
+                        yield f"event: error\ndata: {json.dumps({'message': 'Processing timeout - document too large', 'type': 'timeout'})}\n\n"
+                        break
+
+                    # Wait for next event with shorter timeout to allow checking
+                    timeout = 1.0 if not processing_complete else 0.1
+                    event = await asyncio.wait_for(queue.get(), timeout=timeout)
+
+                    # Format as SSE
+                    yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
+
+                    # Exit on complete or error
+                    if event['event'] in ('complete', 'error'):
+                        break
+
+                except asyncio.TimeoutError:
+                    # Send keepalive to prevent connection timeout
+                    if not processing_complete:
+                        yield f": keepalive\n\n"
+                    else:
+                        # Check if processing is done
+                        break
+                except Exception as e:
+                    logger.error(f"Stream error: {e}")
+                    end_reason = "the stream failed"
+                    yield f"event: error\ndata: {json.dumps({'message': f'Stream error: {str(e)}', 'type': 'stream'})}\n\n"
                     break
-                
-                # Wait for next event with shorter timeout to allow checking
-                timeout = 1.0 if not processing_complete else 0.1
-                event = await asyncio.wait_for(queue.get(), timeout=timeout)
-                
-                # Format as SSE
-                yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
-                
-                # Exit on complete or error
-                if event['event'] in ('complete', 'error'):
-                    break
-                    
-            except asyncio.TimeoutError:
-                # Send keepalive to prevent connection timeout
-                if not processing_complete:
-                    yield f": keepalive\n\n"
-                else:
-                    # Check if processing is done
-                    break
-            except Exception as e:
-                logger.error(f"Stream error: {e}")
-                yield f"event: error\ndata: {json.dumps({'message': f'Stream error: {str(e)}', 'type': 'stream'})}\n\n"
-                break
-    
-    return StreamingResponse(
+        finally:
+            # Nobody can receive this run's result any more (the browser closed, cancelled or
+            # left the page, the time limit passed, or a retry replaced it), so stop the AI job
+            # instead of paying Gemini for the rest of the document. No await here: this also
+            # runs while the stream is being cancelled.
+            run.stop(end_reason)
+            if _active_parse_runs.get(run_key) is run:
+                del _active_parse_runs[run_key]
+
+    return _ClosingStreamingResponse(
         event_generator(),
         media_type="text/event-stream",
         headers={

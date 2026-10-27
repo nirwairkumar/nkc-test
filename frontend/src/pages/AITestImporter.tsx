@@ -195,6 +195,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const streamSeqRef = useRef(0);
     const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    abortControllerRef.current = abortController;
+    // Leaving the page mid-upload closes the stream, which makes the server stop the AI run
+    // (an open stream kept it reading, and billing, a result nobody would see).
+    useEffect(() => () => abortControllerRef.current?.abort(), []);
 
     // AI Generation Custom Parameters State
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['default']);
