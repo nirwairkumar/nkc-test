@@ -224,7 +224,8 @@ export default function StudentDetailedResultModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl shadow-2xl">
+            {/* [&>button]:hidden: the dialog's own close button sat under the header's X (two crosses). */}
+            <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl shadow-2xl [&>button]:hidden">
                 {/* ── Header ── */}
                 <div className="relative bg-gradient-to-r from-slate-50 via-white to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
                     <button

@@ -462,15 +462,16 @@ def analyze_test_results(payload: AnalyzeRequest, request: Request):
     # Post-process topicData for performance labels
     formatted_topics = []
     for t in topic_data.values():
-        percentage = 0
+        # Its own name: reusing `percentage` here replaced the candidate's overall score.
+        topic_pct = 0
         if t["maxScore"] > 0:
-            percentage = (t["score"] / t["maxScore"]) * 100
-        
+            topic_pct = (t["score"] / t["maxScore"]) * 100
+
         performance = "Weak"
-        if percentage >= 75: performance = "Strong"
-        elif percentage >= 40: performance = "Moderate"
-        
-        t["percentage"] = round(percentage, 2)
+        if topic_pct >= 75: performance = "Strong"
+        elif topic_pct >= 40: performance = "Moderate"
+
+        t["percentage"] = round(topic_pct, 2)
         t["performance"] = performance
         formatted_topics.append(t)
             
