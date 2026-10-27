@@ -331,9 +331,21 @@ class AudienceFilter(BaseModel):
     joined_within: Optional[int] = Field(None, ge=1, le=3650)
     quiet_for: Optional[int] = Field(None, ge=1, le=3650)
     show: Literal["all", "ready", "skipped"] = "all"
+    # Picked by hand in Compose (20261028150000_email_pick_people.sql): people added by search
+    # on top of the audience, and people unticked for this send.
+    add_ids: List[uuid.UUID] = Field(default_factory=list, max_length=500)
+    skip_ids: List[uuid.UUID] = Field(default_factory=list, max_length=500)
+    # The "Add someone" search: also people who only sat a test.
+    everyone: bool = False
 
     def as_json(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {"show": self.show}
+        if self.add_ids:
+            out["add_ids"] = list(dict.fromkeys(str(i) for i in self.add_ids))
+        if self.skip_ids:
+            out["skip_ids"] = list(dict.fromkeys(str(i) for i in self.skip_ids))
+        if self.everyone:
+            out["everyone"] = True
         if self.template:
             out["template"] = self.template
         stages, whos = _clean_list(self.stages, STAGES), _clean_list(self.whos, AUDIENCES)
@@ -632,9 +644,16 @@ def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depe
     filter_json = filt.as_json()
     filter_json.pop("show", None)
     filter_json.pop("q", None)  # a search narrows the list on screen, never who gets the email
+    filter_json.pop("everyone", None)  # only for finding someone to add
     count = _rpc(db, "email_report_audience", {
         "p_filter": {**filter_json, "show": "ready"}, "p_limit": 1, "p_offset": 0, **_guard_params(),
     }) or {}
+    # Before 20261028150000_email_pick_people.sql the audience ignores add/skip, so an
+    # unticked person would still get the email. Its rows carry `added`; the old ones don't.
+    if (filter_json.get("add_ids") or filter_json.get("skip_ids")) and (count.get("rows") or []) \
+            and "added" not in count["rows"][0]:
+        raise HTTPException(status_code=409, detail="Picking people by hand needs the SQL "
+                            "supabase/migrations/20261028150000_email_pick_people.sql. Run it, then send again.")
     planned = int(count.get("ready") or 0)
     if planned == 0:
         raise HTTPException(status_code=400, detail="Nobody in this audience can get the email right now.")

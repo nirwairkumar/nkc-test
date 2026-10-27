@@ -229,6 +229,45 @@ def test_send_next_sends_marks_bounces_and_finishes(env, monkeypatch):
     assert db.tables["email_campaigns"][0]["status"] == "done"
 
 
+def test_a_send_keeps_the_people_added_and_unticked_by_hand(env, monkeypatch):
+    db, c = env["db"], env["client"]
+    added, unticked = "0b6f7f6e-2c1d-4f7a-9d55-3c2b1f0e9d22", "6f1c2a7e-3b7d-4a1e-9a55-0c2b1f0e9d11"
+    db.tables["email_templates"] = [{"key": "survey-v1-not-sent", "name": "Survey", "archived": False}]
+    asked = []
+
+    def rpc(fn, params):
+        asked.append(params["p_filter"])
+        return SimpleNamespace(execute=lambda: SimpleNamespace(data={"ready": 4, "rows": [{"id": added, "added": True}]}))
+
+    db.rpc = rpc
+    r = c.post("/api/email-broadcast/campaigns", headers={"Authorization": f"Bearer {ADMIN}"}, json={
+        "subject": "What stopped your test?", "body": "Hi {first_name|there}", "template_key": "survey-v1-not-sent",
+        "filter": {"q": "asha", "everyone": True, "add_ids": [added, added], "skip_ids": [unticked]},
+        "audience_label": "Educators · Made a test, Tried it · +1 added · 1 unticked",
+    })
+    assert r.status_code == 200, r.text
+    stored = db.tables["email_campaigns"][0]["filter"]
+    assert stored == {"template": "survey-v1-not-sent", "add_ids": [added], "skip_ids": [unticked]}
+    assert asked[0] == {**stored, "show": "ready"}  # the planned count already leaves the unticked out
+
+    bad = c.post("/api/email-broadcast/audience", headers={"Authorization": f"Bearer {ADMIN}"},
+                 json={"filter": {"add_ids": ["not-a-uuid"]}})
+    assert bad.status_code == 422
+
+
+def test_picking_by_hand_is_refused_until_the_sql_honours_it(env):
+    db, c = env["db"], env["client"]
+    db.tables["email_templates"] = [{"key": "survey-v1-not-sent", "name": "Survey", "archived": False}]
+    old_rows = {"ready": 3, "rows": [{"id": "x", "email": "a@b.in"}]}  # no `added`: the old function
+    db.rpc = lambda fn, params: SimpleNamespace(execute=lambda: SimpleNamespace(data=old_rows))
+    r = c.post("/api/email-broadcast/campaigns", headers={"Authorization": f"Bearer {ADMIN}"}, json={
+        "subject": "Hi", "body": "Hi {first_name|there}", "template_key": "survey-v1-not-sent",
+        "filter": {"skip_ids": ["6f1c2a7e-3b7d-4a1e-9a55-0c2b1f0e9d11"]},
+    })
+    assert r.status_code == 409 and "20261028150000" in r.json()["detail"]
+    assert db.tables["email_campaigns"] == []
+
+
 def test_send_next_waits_when_the_hour_is_used_up(env, monkeypatch):
     db, c = env["db"], env["client"]
     cid = _campaign(db)

@@ -486,6 +486,56 @@ In case you're wondering what TestoZa is for, here it is in three lines:
 {SIGN}""",
     },
 
+    # ── One-off: Survey 1.0 (app.testoza.com/survey/v1, read in admin → Support) ──
+    # Links to app.testoza.com get utm_source=email, which the survey page stores as where
+    # the answer came from. Each person gets each of these once.
+    {
+        "key": "survey-v1-not-sent", "sort": 940, "track": None, "step": 1, "wait_days": 0,
+        "stages": ["drafted", "tried"], "audiences": EDU, "min_days_joined": 2, "min_days_quiet": 0,
+        "name": "Survey: what stopped your test",
+        "subject": "What stopped your test? (1 minute)",
+        "preheader": "A few taps, no name needed. Your answer decides what we fix next.",
+        "why": "For educators who made a test that never reached a whole class (nobody took it, or 1–4 "
+               "answers). Survey 1.0 asks for ONE main reason, then one follow-up, so every reply points "
+               "at a fix. Answers land in admin → Support → Survey 1.0.",
+        "body": f"""Hi {{first_name|there}},
+
+You made {{test_title|a test}} on TestoZa, but it hasn't reached a whole class yet. I'd like to know why.
+
+Not to push you. Your answer decides what we build next, and the teachers who stop are the ones who can tell us what is wrong.
+
+It's a few questions, about one minute, and most are a single tap. You don't need to give your name.
+
+[[Answer in 1 minute]]({{app}}/survey/v1)
+
+"It didn't work for me" is the most useful answer you can give. If you'd rather just reply to this email, that works too.
+
+{SIGN_FOUNDER}""",
+    },
+    {
+        "key": "survey-v1-running", "sort": 941, "track": None, "step": 1, "wait_days": 0,
+        "stages": ["active", "quiet"], "audiences": EDU, "min_days_joined": 2, "min_days_quiet": 0,
+        "name": "Survey: what would help you run more exams",
+        "subject": "One minute to make TestoZa better?",
+        "preheader": "You've run exams on TestoZa. Tell us what to fix first.",
+        "why": "For educators who have run exams with 5 or more students. The same Survey 1.0 asks what "
+               "stopped them giving more tests, or giving them to more students. Answers land in "
+               "admin → Support → Survey 1.0.",
+        "body": f"""Hi {{first_name|there}},
+
+You've run exams on TestoZa, so you know where it helps and where it gets in the way.
+
+We're deciding what to fix next, and I'd like your view. What stopped you giving more tests, or giving them to more students?
+
+It's a few questions, about one minute, and most are a single tap. You don't need to give your name.
+
+[[Answer in 1 minute]]({{app}}/survey/v1)
+
+Thank you for trusting TestoZa with your class. If you'd rather just reply to this email, I read every reply.
+
+{SIGN_FOUNDER}""",
+    },
+
     # ── One-off: product news (edit before every send) ──────────────────────
     {
         "key": "news-monthly", "sort": 950, "track": None, "step": 1, "wait_days": 0,

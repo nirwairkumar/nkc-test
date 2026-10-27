@@ -79,6 +79,12 @@ export interface AudienceFilter {
     joined_within?: number | null;
     quiet_for?: number | null;
     show?: 'all' | 'ready' | 'skipped';
+    /** People added by hand on top of the audience (SQL 20261028150000_email_pick_people.sql). */
+    add_ids?: string[];
+    /** People unticked for this send. */
+    skip_ids?: string[];
+    /** Search everyone, including people who only sat a test ("Add someone"). */
+    everyone?: boolean;
 }
 
 export interface Person {
@@ -100,6 +106,8 @@ export interface Person {
     top_test_results: number;
     last_emailed_at: string | null;
     emails_received: number;
+    /** In the list only because an admin added them (not by the email's own rules). */
+    added?: boolean;
 }
 
 export interface Audience {

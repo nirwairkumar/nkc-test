@@ -4,17 +4,21 @@
  * Opened from the Playbook (a library email) or People (an email written once).
  */
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ChevronDown, Send, Users } from 'lucide-react';
+import { AlertTriangle, Send } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { num, relative } from '../analytics/format';
+import { num } from '../analytics/format';
 import { Chip } from '../analytics/ui';
 import { emailApi, errorText, type AudienceFilter, type EmailDraft, type Overview, type Stage, type TemplateSummary, type Who } from './api';
 import { audienceLabel, sendTimeHint, SKIP_ORDER, STAGE, STAGES, STATUS, WHO, WHOS, WHO_TONE } from './model';
 import { BodyEditor, ChoiceChips, Confirm, EmailPreview, Field, Group, INPUT, PRIMARY_BTN, SOFT_BTN, WideSheet } from './parts';
+import PeoplePicker from './PeoplePicker';
 import { SendProgress, useSender } from './sender';
+
+/** The whole audience is listed with tick boxes (the SQL returns at most 500 rows). */
+const LIST_LIMIT = 500;
 
 export interface ComposeStart {
     template?: TemplateSummary | null;
@@ -38,7 +42,9 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const [fromEmail, setFromEmail] = useState('');
     const [fromName, setFromName] = useState('');
     const [previewAs, setPreviewAs] = useState<string | null>(null);
-    const [showWho, setShowWho] = useState(false);
+    // Picked by hand for this send: added by search, and unticked.
+    const [addIds, setAddIds] = useState<string[]>([]);
+    const [skipIds, setSkipIds] = useState<string[]>([]);
     const [testTo, setTestTo] = useState('');
     const [testing, setTesting] = useState(false);
     const [confirm, setConfirm] = useState(false);
@@ -52,7 +58,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
         setFilter(start.filter ?? {});
         setCampaign(null);
         setPreviewAs(null);
-        setShowWho(false);
+        setAddIds([]);
+        setSkipIds([]);
         setDraft(template ? { subject: template.subject, preheader: template.preheader, body: '' } : EMPTY);
     }, [start]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -69,22 +76,45 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     }, [overview]);
     useEffect(() => setTestTo((v) => v || user?.email || ''), [user?.email]);
 
-    const audFilter: AudienceFilter = template ? { template: template.key } : { ...filter };
+    const baseFilter: AudienceFilter = template ? { template: template.key } : { ...filter };
+    // The list shows the unticked too (so they can be ticked again); only the send leaves them out.
+    const audFilter: AudienceFilter = addIds.length ? { ...baseFilter, add_ids: addIds } : baseFilter;
     const aud = useQuery({
         queryKey: ['email', 'audience', 'compose', audFilter],
-        queryFn: () => emailApi.audience({ ...audFilter, show: 'all' }, 40),
+        queryFn: () => emailApi.audience({ ...audFilter, show: 'all' }, LIST_LIMIT),
         enabled: open,
         placeholderData: keepPreviousData,
         staleTime: 15_000,
     });
-    const ready = aud.data?.ready ?? 0;
+    const rows = useMemo(() => aud.data?.rows ?? [], [aud.data]);
+    const skip = useMemo(() => new Set(skipIds), [skipIds]);
+    // Unticked people who would otherwise get it; the server counts the same way at send time.
+    const leftOut = rows.filter((r) => r.status === 'ready' && skip.has(r.id)).length;
+    const ready = Math.max(0, (aud.data?.ready ?? 0) - leftOut);
+    const added = rows.filter((r) => r.added).length;
     const people = useMemo(
-        () => (aud.data?.rows ?? []).filter((r) => r.status === 'ready').slice(0, 25)
+        () => rows.filter((r) => r.status === 'ready' && !skip.has(r.id)).slice(0, 25)
             .map((r) => ({ id: r.id, label: r.full_name || r.email })),
-        [aud.data],
+        [rows, skip],
     );
 
-    const label = audienceLabel(audFilter, template);
+    const toggle = (id: string) => setSkipIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    const setMany = (ids: string[], ticked: boolean) =>
+        setSkipIds((s) => (ticked ? s.filter((x) => !ids.includes(x)) : Array.from(new Set([...s, ...ids]))));
+    const addPerson = (id: string) => {
+        setAddIds((a) => (a.includes(id) ? a : [...a, id]));
+        setSkipIds((s) => s.filter((x) => x !== id));
+    };
+    const removeAdded = (id: string) => {
+        setAddIds((a) => a.filter((x) => x !== id));
+        setSkipIds((s) => s.filter((x) => x !== id));
+    };
+
+    const label = [
+        audienceLabel(baseFilter, template),
+        added ? `+${added} added` : '',
+        leftOut ? `${leftOut} unticked` : '',
+    ].filter(Boolean).join(' · ');
     const sending = sender.state.phase !== 'idle';
     const hint = sendTimeHint();
     const variables = overview?.variables ?? {};
@@ -110,8 +140,10 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const go = async () => {
         setCreating(true);
         try {
+            const unticked = rows.filter((r) => skip.has(r.id)).map((r) => r.id);
             const c = await emailApi.createCampaign({
-                ...draft, template_key: template?.key ?? null, name: template?.name, filter: audFilter,
+                ...draft, template_key: template?.key ?? null, name: template?.name,
+                filter: unticked.length ? { ...audFilter, skip_ids: unticked } : audFilter,
                 audience_label: label, from_email: fromEmail, from_name: fromName,
             });
             setCampaign({ id: c.id, planned: c.planned });
@@ -217,13 +249,9 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                         <p className="text-[32px] font-semibold leading-none tracking-[-0.02em] text-slate-900 tabular-nums">{aud.data ? num(ready) : '–'}</p>
                                         <p className="mt-1 text-[13px] text-slate-500">
                                             will get it{aud.data ? ` · ${num(aud.data.total)} in this audience` : ''}
+                                            {added ? ` · ${num(added)} added` : ''}{leftOut ? ` · ${num(leftOut)} unticked` : ''}
                                         </p>
                                     </div>
-                                    <button type="button" onClick={() => setShowWho((v) => !v)} aria-expanded={showWho}
-                                        className="inline-flex h-8 items-center gap-1 rounded-full bg-slate-100 px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-200">
-                                        <Users className="h-3.5 w-3.5" /> {showWho ? 'Hide' : 'See who'}
-                                        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showWho && 'rotate-180')} />
-                                    </button>
                                 </div>
                                 {aud.data && (
                                     <ul className="mt-3 space-y-1">
@@ -235,26 +263,23 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                         ))}
                                     </ul>
                                 )}
-                                {showWho && aud.data && (
-                                    <ul className="mt-3 max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-xl ring-1 ring-slate-900/[0.06]">
-                                        {aud.data.rows.map((r) => (
-                                            <li key={r.id} className="flex items-center gap-3 px-3 py-2">
-                                                <span className="min-w-0 flex-1">
-                                                    <span className="block truncate text-[13px] font-medium text-slate-900">{r.full_name || r.email}</span>
-                                                    <span className="block truncate text-[12px] text-slate-500">
-                                                        {WHO[r.who]?.label} · {STAGE[r.stage]?.short}
-                                                        {r.last_emailed_at ? ` · emailed ${relative(r.last_emailed_at)}` : ''}
-                                                    </span>
-                                                </span>
-                                                <Chip tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Chip>
-                                            </li>
-                                        ))}
-                                        {aud.data.total > aud.data.rows.length && (
-                                            <li className="px-3 py-2 text-center text-[12px] text-slate-500">
-                                                and {num(aud.data.total - aud.data.rows.length)} more. People shows everyone.
-                                            </li>
-                                        )}
-                                    </ul>
+                                {aud.data && rows.length > 0 && !rows.some((r) => 'added' in r) ? (
+                                    <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-900 ring-1 ring-inset ring-amber-600/20">
+                                        To tick people and add anyone by search, run
+                                        <span className="font-mono text-[12px]"> 20261028150000_email_pick_people.sql </span>
+                                        in Supabase once.
+                                    </p>
+                                ) : aud.data && (
+                                    <PeoplePicker
+                                        rows={rows}
+                                        skip={skip}
+                                        onToggle={toggle}
+                                        onSetMany={setMany}
+                                        addIds={addIds}
+                                        onAdd={addPerson}
+                                        onRemoveAdded={removeAdded}
+                                        more={Math.max(0, aud.data.total - rows.length)}
+                                    />
                                 )}
                             </div>
                         </Group>
