@@ -73,7 +73,6 @@ async function generateSitemap() {
             { url: '/premium', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/about', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/support', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/survey', changefreq: 'monthly', priority: 0.6, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/privacy-policy', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/terms-and-conditions', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
 

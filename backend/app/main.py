@@ -247,6 +247,9 @@ app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 from app.routers import support
 app.include_router(support.router, prefix="/api/support", tags=["Support"])
 
+from app.routers import survey
+app.include_router(survey.router, prefix="/api/survey", tags=["Survey"])
+
 from app.routers import social
 app.include_router(social.router, prefix="/api/social", tags=["Social"])
 

@@ -114,7 +114,8 @@ const PdfToolsMoved = ({ to }: { to: string }) => {
   }, [to]);
   return <PageLoader />;
 };
-const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
+// Survey 1.0: the link emailed to educators (answers land in admin → Support → Survey 1.0).
+const SurveyV1Page = safeLazy(() => import("./pages/survey/SurveyV1Page"));
 
 // SEO Landing Pages
 // Guides (src/guides): long-form pages on testoza.com; the worker serves their text to crawlers.
@@ -307,7 +308,9 @@ const App = () => (
                     <Route path="/pdf/editor" element={<PdfToolsMoved to="/edit-pdf" />} />
                     <Route path="/pdf/latex-to-pdf" element={<PdfToolsMoved to="/latex-to-pdf" />} />
                     <Route path="/convert" element={<PdfToolsMoved to="/latex-to-pdf" />} />
-                    <Route path="/survey" element={<SurveyPage />} />
+                    {/* The old Google Form survey was removed on 2026-10-28; its link opens Survey 1.0. */}
+                    <Route path="/survey" element={<Navigate to="/survey/v1" replace />} />
+                    <Route path="/survey/v1" element={<SurveyV1Page />} />
 
                     {/* Guides */}
                     <Route path="/create-mock-test-online" element={<CreateMockTestOnline />} />

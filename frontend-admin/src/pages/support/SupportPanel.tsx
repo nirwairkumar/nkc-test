@@ -17,12 +17,17 @@ import { CARD, Chip, Empty, GroupedList, PILL_BTN, Segmented, Skeleton } from '.
 import { feedbackApi, supportApi, TOPIC_LABEL, type SupportMessage, type SupportView } from './api';
 import ConversationSheet, { STATUS_CHIP } from './ConversationSheet';
 import FeedbackPanel, { CountLabel } from './FeedbackPanel';
+import SurveyPanel from './SurveyPanel';
+import { surveyApi, surveyQueryKey } from './surveyApi';
 
 const VIEWS: readonly SupportView[] = ['open', 'replied', 'resolved', 'all'];
 const PAGE = 30;
-/** Messages = Help page conversations; Feedback = notes about TestoZa itself (FeedbackPanel). */
-type Section = 'messages' | 'feedback';
-const SECTIONS: readonly Section[] = ['messages', 'feedback'];
+/**
+ * Messages = Help page conversations; Feedback = notes about TestoZa itself (FeedbackPanel);
+ * Survey 1.0 = the survey at app.testoza.com/survey/v1, no name needed (SurveyPanel).
+ */
+type Section = 'messages' | 'feedback' | 'survey';
+const SECTIONS: readonly Section[] = ['messages', 'feedback', 'survey'];
 
 
 
@@ -32,7 +37,9 @@ export default function SupportPanel() {
     const [savedSection, setSavedSection] = usePersisted<Section>('tz_admin_support_section', 'messages', SECTIONS);
     // A feedback notification links ?tab=support&section=feedback&id=…
     const linkedFeedback = params.get('section') === 'feedback';
-    const section: Section = linkedFeedback ? 'feedback' : savedSection;
+    // A survey notification links ?tab=support&section=survey
+    const linkedSurvey = params.get('section') === 'survey';
+    const section: Section = linkedFeedback ? 'feedback' : linkedSurvey ? 'survey' : savedSection;
     const setSection = (s: Section) => {
         setSavedSection(s);
         if (params.has('section') || params.has('id')) {
@@ -41,7 +48,7 @@ export default function SupportPanel() {
             setParams(params, { replace: true });
         }
     };
-    const deepId = linkedFeedback ? null : params.get('id');
+    const deepId = linkedFeedback || linkedSurvey ? null : params.get('id');
     const [openId, setOpenId] = useState<string | null>(deepId);
 
     // Same keys as the Support badge in AdminDashboard, so the counts share one request.
@@ -56,6 +63,13 @@ export default function SupportPanel() {
         queryFn: async () => (await feedbackApi.list({ view: 'unread', limit: 1 })).counts.unread,
         staleTime: 30_000,
         refetchInterval: 60_000,
+    });
+    // Same key as SurveyPanel, so the badge and the panel share one request.
+    const { data: survey } = useQuery({
+        queryKey: surveyQueryKey(),
+        queryFn: () => surveyApi.get(),
+        staleTime: 30_000,
+        retry: false,
     });
 
     const list = useInfiniteQuery({
@@ -98,7 +112,9 @@ export default function SupportPanel() {
                 <p className="mt-2 hidden text-[15px] text-slate-600 sm:block">
                     {section === 'messages'
                         ? 'Messages from the Help page. Answer fast: a reply within hours is what keeps a new teacher.'
-                        : 'What creators think of TestoZa: from the Feedback page in the app menu and right after they stop an exam.'}
+                        : section === 'survey'
+                            ? 'Survey 1.0 answers: why educators who made a test didn’t send it, sorted into what to fix.'
+                            : 'What creators think of TestoZa: from the Feedback page in the app menu and right after they stop an exam.'}
                 </p>
             </header>
 
@@ -109,10 +125,13 @@ export default function SupportPanel() {
                 options={[
                     { value: 'messages', label: <CountLabel text="Messages" n={waiting} accent /> },
                     { value: 'feedback', label: <CountLabel text="Feedback" n={unreadFeedback} accent /> },
+                    { value: 'survey', label: <CountLabel text="Survey 1.0" n={survey?.total} /> },
                 ]}
             />
 
-            {section === 'feedback' ? (
+            {section === 'survey' ? (
+                <SurveyPanel />
+            ) : section === 'feedback' ? (
                 <FeedbackPanel focusId={linkedFeedback ? params.get('id') : null} />
             ) : (<>
 

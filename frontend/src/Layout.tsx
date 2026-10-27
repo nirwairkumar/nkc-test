@@ -136,6 +136,8 @@ export default function Layout() {
         // Invite links: the invited educator's landing page, and the inviter's phone after the QR
         location.pathname.startsWith('/invite/') ||
         location.pathname.startsWith('/share-invite/') ||
+        // Survey 1.0 and later (/survey/v1): one question per screen, nothing around it
+        location.pathname.startsWith('/survey/') ||
         /^\/exams\/[^/]+\/(present|report-cards)$/.test(location.pathname) ||
         /^\/batches\/[^/]+\/slips$/.test(location.pathname);
 

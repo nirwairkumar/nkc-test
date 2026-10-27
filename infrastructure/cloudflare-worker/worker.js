@@ -533,9 +533,6 @@ function generateMetaTags(url, testData = null, joinData = null) {
   } else if (path === '/terms-and-conditions') {
     title = 'Terms and Conditions | TestoZa';
     description = 'Read the TestoZa Terms and Conditions governing use of the platform for educators and students.';
-  } else if (path === '/survey') {
-    title = 'Community Survey | TestoZa';
-    description = 'Share your feedback and help us improve TestoZa for teachers and students.';
   } else if (path === '/news' || path.startsWith('/news/') || path === '/blog' || path.startsWith('/blog/')) {
     title = 'Education News, Guides & Updates | TestoZa';
     description = 'Stay up to date with the latest exam updates, test creation guides, and education tips from the TestoZa team.';

@@ -84,7 +84,6 @@ STATIC_PAGES = [
     {"loc": "/premium", "priority": "0.8", "changefreq": "monthly"},
     {"loc": "/about", "priority": "0.7", "changefreq": "monthly"},
     {"loc": "/support", "priority": "0.7", "changefreq": "monthly"},
-    {"loc": "/survey", "priority": "0.6", "changefreq": "monthly"},
     {"loc": "/user-guide", "priority": "0.7", "changefreq": "monthly"},
     {"loc": "/privacy-policy", "priority": "0.4", "changefreq": "yearly"},
     {"loc": "/terms-and-conditions", "priority": "0.4", "changefreq": "yearly"},
