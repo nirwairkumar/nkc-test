@@ -8,7 +8,7 @@ import {
     PlusCircle,
     BarChart2,
     History,
-    LifeBuoy,
+    Headset,
     ClipboardList,
     PanelLeftClose,
     PanelLeft,
@@ -245,7 +245,7 @@ Item 2 & Value B & 200 \\\\
         {
             title: 'Help',
             path: '/help',
-            icon: LifeBuoy,
+            icon: Headset,
             matchPaths: ['/help'],
         },
         // About TestoZa itself (pages/FeedbackPage.tsx); the pop-up after stopping an exam minimises here.
