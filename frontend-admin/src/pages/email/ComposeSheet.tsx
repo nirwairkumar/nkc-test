@@ -194,7 +194,7 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                     <div className="space-y-5">
                         {!overview?.smtp.configured && (
                             <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[13px] text-amber-900 ring-1 ring-inset ring-amber-600/20">
-                                Email isn’t connected yet. Close this, open <strong>Settings</strong> and add the Zoho app password.
+                                Email isn’t connected yet. Close this and open <strong>Settings</strong> to see what’s missing.
                             </div>
                         )}
 

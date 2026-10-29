@@ -66,7 +66,7 @@ export interface Overview {
     sent: { hour: number; today: number; day: number; week: number; all: number };
     sending: { id: string; name: string; status: 'sending' | 'paused' }[];
     limits: Limits;
-    smtp: { configured: boolean; user: string | null };
+    smtp: { configured: boolean; user: string | null; service?: string };
     defaults: { from_name: string; reply_to: string; senders: string[]; from_email: string };
     variables: Record<string, Variable>;
 }
@@ -187,7 +187,16 @@ export interface SmtpStatus {
     host?: string;
     port?: number;
     user?: string;
+    from_email?: string;
     from_name?: string;
+    /** "Amazon SES", "Brevo", "Zoho Mail" or the server name. */
+    service?: string;
+    /** Broadcasts have their own connection (BROADCAST_SMTP_*), apart from the platform's emails. */
+    separate?: boolean;
+    /** The connection help replies and submission emails use. */
+    automatic?: { service: string; configured: boolean };
+    /** SES bounces and spam reports reach the never-email list. */
+    bounce_reports?: boolean;
     available_senders: string[];
 }
 

@@ -14,11 +14,12 @@ How a send works:
 Limits (environment, so a new admin can't loosen them):
   EMAIL_COOLDOWN_DAYS=7  · no second broadcast to a person within 7 days
   EMAIL_MONTHLY_CAP=3    · at most 3 broadcasts per person in 30 days
-  EMAIL_HOURLY_LIMIT=40  · Zoho allows 50–500 an hour depending on reputation and forbids
-                           bulk bursts from business mailboxes — stay well under
+  EMAIL_HOURLY_LIMIT=40  · a brand-new sending domain should start slow; raise as the
+                           bounce and spam rates stay low (Amazon SES allows far more)
   EMAIL_DAILY_LIMIT=200
   EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="TestoZa"
-  EMAIL_SENDERS=alias@testoza.com,…  · extra From addresses: aliases of the SMTP mailbox only
+  EMAIL_SENDERS=nirwair@testoza.com,… · extra From addresses for broadcasts; each must be
+                                         allowed by the broadcast service (SES: a verified domain)
 
 SMTP (environment):
   SMTP_HOST, SMTP_PORT (465 = SSL, 587 = STARTTLS), SMTP_USER, SMTP_PASSWORD
@@ -27,11 +28,23 @@ SMTP (environment):
                                     Unset = From the login, as with Zoho.
   Brevo: SMTP_HOST=smtp-relay.brevo.com SMTP_PORT=587 SMTP_USER=<login> SMTP_PASSWORD=<SMTP key>
 
+  BROADCAST_SMTP_HOST / _PORT / _USER / _PASSWORD / _FROM · broadcasts only, so a bad broadcast
+      can't hurt help replies and submission emails (those stay on SMTP_*). Unset = SMTP_*.
+  Amazon SES: BROADCAST_SMTP_HOST=email-smtp.<region>.amazonaws.com BROADCAST_SMTP_PORT=587
+      BROADCAST_SMTP_USER/PASSWORD = SES SMTP credentials (not the AWS access key pair).
+
+Bounces and spam reports (Amazon SES):
+  SES → SNS topic → POST /ses-events. Hard bounces land on the never-email list as 'bounced',
+  spam reports as 'unsubscribed'. SES_SNS_TOPIC_ARN (comma-separated) names the topics we
+  accept: the signature proves a message came from SNS, not that it came from our topic.
+
 runtime_smtp_config and send_smtp_message are also used by services/support_mail.py and
 services/submission_email.py: keep their names and signatures.
 """
 
+import base64
 import html
+import json
 import logging
 import os
 import re
@@ -41,10 +54,16 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate, make_msgid
+from email.utils import formatdate, make_msgid, parseaddr
 from typing import Any, Dict, List, Literal, Optional
+from urllib.parse import urlparse
 
+import httpx
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr, Field
 from supabase import Client
@@ -57,9 +76,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# SMTP settings: environment first; admin → Email Broadcast → Settings can replace them
-# until the next restart (the password is never sent back to the browser).
-# testoza.com mail is in Zoho's India data centre (MX mx.zoho.in), so its SMTP host is smtp.zoho.in.
+# SMTP for everything the platform sends (help replies, submission milestones, referrals),
+# and for broadcasts too unless BROADCAST_SMTP_* is set.
 runtime_smtp_config: Dict[str, Any] = {
     "host": os.getenv("SMTP_HOST", "smtp.zoho.in"),
     "port": int(os.getenv("SMTP_PORT", "465")),
@@ -69,6 +87,31 @@ runtime_smtp_config: Dict[str, Any] = {
     "from_email": os.getenv("SMTP_FROM", "").strip(),
     "use_ssl": True,
 }
+
+# Broadcasts only: environment first; admin → Email Broadcast → Settings can replace it until
+# the next restart (the password is never sent back to the browser).
+broadcast_smtp_config: Dict[str, Any] = {
+    "host": os.getenv("BROADCAST_SMTP_HOST", "").strip(),
+    "port": int(os.getenv("BROADCAST_SMTP_PORT", "587")),
+    "user": os.getenv("BROADCAST_SMTP_USER", "").strip(),
+    "password": os.getenv("BROADCAST_SMTP_PASSWORD", ""),
+    "from_name": os.getenv("SMTP_FROM_NAME", "TestoZa Team"),
+    "from_email": os.getenv("BROADCAST_SMTP_FROM", "").strip(),
+    "use_ssl": os.getenv("BROADCAST_SMTP_PORT", "587") == "465",
+}
+
+
+def broadcast_smtp() -> Dict[str, Any]:
+    """The connection broadcasts go out on: their own when set, else the platform's."""
+    return broadcast_smtp_config if _smtp_ready(broadcast_smtp_config) else runtime_smtp_config
+
+
+def service_name(host: Optional[str]) -> str:
+    h = (host or "").lower()
+    for needle, name in (("amazonaws", "Amazon SES"), ("brevo", "Brevo"), ("zoho", "Zoho Mail")):
+        if needle in h:
+            return name
+    return h
 
 
 def sender_address(cfg: Optional[Dict[str, Any]] = None) -> str:
@@ -94,12 +137,12 @@ DEFAULT_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "TestoZa")
 
 def senders() -> List[str]:
     """
-    From addresses that will work. Zoho only sends From the signed-in mailbox or its aliases
-    ("Relaying disallowed" otherwise), and nirwair@ / support@ are separate mailboxes, so the
-    list is the SMTP mailbox (or SMTP_FROM) plus any aliases named in EMAIL_SENDERS (comma-separated).
-    With Brevo, every address in EMAIL_SENDERS must also be a verified sender there.
+    Broadcast From addresses that will work: the broadcast connection's own address plus any
+    named in EMAIL_SENDERS (comma-separated). Each must be allowed by that service: Zoho only
+    sends From the signed-in mailbox or its aliases, Brevo from verified senders, SES from
+    verified domains.
     """
-    user = sender_address().lower()
+    user = sender_address(broadcast_smtp()).lower()
     extra = [a.strip().lower() for a in os.getenv("EMAIL_SENDERS", "").split(",") if a.strip()]
     out = ([user] if user else []) + [a for a in extra if a != user]
     return out or ["no-reply@testoza.com"]
@@ -107,6 +150,7 @@ def senders() -> List[str]:
 STAGES = ("new", "drafted", "tried", "quiet", "active")
 AUDIENCES = ("educator", "institution", "corporate", "student", "no_role")
 NOT_INSTALLED = "email_broadcast_not_installed"
+NOT_CONNECTED = "Email isn't connected yet. The owner sets BROADCAST_SMTP_* (or SMTP_*) on the server."
 
 
 # ── SMTP ──────────────────────────────────────────────────────────────────────
@@ -117,27 +161,29 @@ class SmtpConfigRequest(BaseModel):
     user: str
     password: str
     from_name: Optional[str] = "TestoZa Team"
-    from_email: Optional[str] = None  # left out = keep SMTP_FROM
+    from_email: Optional[str] = None  # left out = keep the current From address
     use_ssl: Optional[bool] = True
 
 
 def get_active_smtp(override_config: Optional[SmtpConfigRequest] = None) -> Dict[str, Any]:
     if override_config:
         from_email = override_config.from_email
+        if from_email is None:
+            from_email = broadcast_smtp_config.get("from_email") or runtime_smtp_config.get("from_email") or ""
         return {
             "host": override_config.host.strip(),
             "port": override_config.port,
             "user": override_config.user.strip(),
             "password": override_config.password.strip(),
             "from_name": (override_config.from_name or "TestoZa Team").strip(),
-            "from_email": (from_email if from_email is not None else runtime_smtp_config.get("from_email") or "").strip(),
+            "from_email": from_email.strip(),
             "use_ssl": override_config.use_ssl if override_config.use_ssl is not None else (override_config.port == 465),
         }
-    return runtime_smtp_config
+    return broadcast_smtp()
 
 
 def _smtp_ready(cfg: Dict[str, Any]) -> bool:
-    return bool(cfg.get("user") and cfg.get("password"))
+    return bool(cfg.get("host") and cfg.get("user") and cfg.get("password"))
 
 
 def build_message(
@@ -454,23 +500,29 @@ def _template_values(t: TemplateFields, creating: bool) -> Dict[str, Any]:
 @router.get("/smtp-status")
 def get_smtp_status(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
+    cfg = broadcast_smtp()
     return {
-        "configured": _smtp_ready(runtime_smtp_config),
-        "host": runtime_smtp_config.get("host"),
-        "port": runtime_smtp_config.get("port"),
-        "user": runtime_smtp_config.get("user"),
-        "from_email": sender_address(),
-        "from_name": runtime_smtp_config.get("from_name"),
+        "configured": _smtp_ready(cfg),
+        "host": cfg.get("host"),
+        "port": cfg.get("port"),
+        "user": cfg.get("user"),
+        "from_email": sender_address(cfg),
+        "from_name": cfg.get("from_name"),
+        "service": service_name(cfg.get("host")),
+        "separate": cfg is broadcast_smtp_config,
+        "automatic": {"service": service_name(runtime_smtp_config.get("host")),
+                      "configured": _smtp_ready(runtime_smtp_config)},
+        "bounce_reports": bool(_sns_topics()),
         "available_senders": senders(),
     }
 
 
 @router.post("/smtp-config")
 def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: Client = Depends(get_db)):
-    """Replace the SMTP sign-in until the next restart (set SMTP_PASSWORD on the server to keep it)."""
+    """Replace the broadcast sign-in until the next restart (BROADCAST_SMTP_* on the server keeps it)."""
     verify_is_admin(request, db)
-    runtime_smtp_config.update(get_active_smtp(payload))
-    return {"success": True, "smtp_user": runtime_smtp_config["user"]}
+    broadcast_smtp_config.update(get_active_smtp(payload))
+    return {"success": True, "smtp_user": broadcast_smtp_config["user"]}
 
 
 @router.get("/overview")
@@ -481,7 +533,8 @@ def overview(request: Request, db: Client = Depends(get_db)):
     return {
         **data,
         "limits": _limits(db),
-        "smtp": {"configured": _smtp_ready(runtime_smtp_config), "user": runtime_smtp_config.get("user")},
+        "smtp": {"configured": _smtp_ready(broadcast_smtp()), "user": broadcast_smtp().get("user"),
+                 "service": service_name(broadcast_smtp().get("host"))},
         "defaults": {"from_name": DEFAULT_FROM_NAME, "reply_to": REPLY_TO, "senders": senders(),
                      "from_email": senders()[0]},
         "variables": email_render.VARIABLES,
@@ -582,16 +635,17 @@ def preview(payload: PreviewRequest, request: Request, db: Client = Depends(get_
 def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(get_db)):
     """Send the email to one address (yours), filled in with a real person's details if given."""
     verify_is_admin(request, db)
-    if not _smtp_ready(runtime_smtp_config):
-        raise HTTPException(status_code=400, detail="Email isn't connected yet. The owner sets SMTP_PASSWORD on the server.")
-    from_email = payload.from_email or sender_address()
+    cfg = broadcast_smtp()
+    if not _smtp_ready(cfg):
+        raise HTTPException(status_code=400, detail=NOT_CONNECTED)
+    from_email = payload.from_email or sender_address(cfg)
     if not _sender_ok(from_email):
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
     person = _person(db, payload.user_id)
     mail = email_render.render(payload.subject, payload.preheader, payload.body, person,
                                unsubscribe=email_render.unsubscribe_url(str(payload.to)))
     try:
-        send_smtp_message(runtime_smtp_config, from_email, payload.from_name or DEFAULT_FROM_NAME, str(payload.to),
+        send_smtp_message(cfg, from_email, payload.from_name or DEFAULT_FROM_NAME, str(payload.to),
                           f"[Test] {mail['subject']}", mail["html"], reply_to=REPLY_TO, text_body=mail["text"])
     except Exception as exc:
         logger.warning("test email failed: %s", exc)
@@ -713,8 +767,9 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
     camp = _campaign(db, cid_s)
     if camp["status"] != "sending":
         return {"status": camp["status"], "sent": 0, "failed": 0, "remaining": None}
-    if not _smtp_ready(runtime_smtp_config):
-        raise HTTPException(status_code=400, detail="Email isn't connected yet. Open Settings and add the Zoho app password.")
+    cfg = broadcast_smtp()
+    if not _smtp_ready(cfg):
+        raise HTTPException(status_code=400, detail=NOT_CONNECTED)
 
     w = _send_window(db)
     room = min(payload.n, HOURLY_LIMIT - w["hour"], DAILY_LIMIT - w["day"])
@@ -744,7 +799,7 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
         done.add(send_id)
 
     try:
-        server = open_smtp(runtime_smtp_config)
+        server = open_smtp(cfg)
         for r in rows:
             unsub = email_render.unsubscribe_url(r["email"])
             mail = email_render.render(camp["subject"], camp.get("preheader") or "", camp["body"], r,
@@ -759,15 +814,18 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
             )
             try:
                 try:
-                    server.sendmail(sender_address(), [r["email"]], msg.as_string())
+                    server.sendmail(sender_address(cfg), [r["email"]], msg.as_string())
                 except smtplib.SMTPServerDisconnected:
-                    server = open_smtp(runtime_smtp_config)
-                    server.sendmail(sender_address(), [r["email"]], msg.as_string())
+                    server = open_smtp(cfg)
+                    server.sendmail(sender_address(cfg), [r["email"]], msg.as_string())
                 mark(r["send_id"], "sent")
                 sent += 1
             except smtplib.SMTPSenderRefused:
                 raise  # a settings problem, not this person's: stop the whole batch
             except Exception as exc:
+                if isinstance(exc, smtplib.SMTPDataError) and "not verified" in str(exc).lower():
+                    # SES refuses an unverified From only after the message: a settings problem too.
+                    raise smtplib.SMTPSenderRefused(exc.smtp_code, exc.smtp_error, camp["from_email"])
                 failed += 1
                 reason = str(exc)[:300]
                 errors.append(f"{r['email']}: {reason}")
@@ -782,10 +840,11 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
         _table(db, "email_campaigns").update({"status": "paused"}).eq("id", cid_s).execute()
         logger.warning("broadcast %s stopped: %s", cid_s, exc)
         if isinstance(exc, smtplib.SMTPSenderRefused):
-            detail = (f"The mail server refused the From address {camp['from_email']}. Pick {sender_address()} "
-                      "as From, or verify this address as a sender with the mail provider.")
+            detail = (f"{service_name(cfg.get('host'))} refused the From address {camp['from_email']}. "
+                      f"Pick {sender_address(cfg)} as From, or verify this address with the mail service.")
         elif isinstance(exc, smtplib.SMTPAuthenticationError):
-            detail = "The mail server rejected the sign-in. Check SMTP_USER and SMTP_PASSWORD on the server."
+            detail = (f"{service_name(cfg.get('host'))} rejected the sign-in. "
+                      "Check BROADCAST_SMTP_USER and BROADCAST_SMTP_PASSWORD (or SMTP_*) on the server.")
         else:
             detail = f"Couldn't reach the mail server: {str(exc)[:160]}"
         raise HTTPException(status_code=409, detail=detail)
@@ -829,6 +888,100 @@ def remove_suppression(email: str, request: Request, db: Client = Depends(get_db
     verify_is_admin(request, db)
     _table(db, "email_suppressions").delete().eq("email", email.strip().lower()).execute()
     return {"email": email.strip().lower(), "removed": True}
+
+
+# ── Public: bounces and spam reports from Amazon SES (through SNS) ────────────
+
+_SNS_HOST = re.compile(r"^sns\.[a-z0-9-]+\.amazonaws\.com(\.cn)?$")
+_sns_certs: Dict[str, Any] = {}
+
+
+def _sns_topics() -> List[str]:
+    return [t.strip() for t in os.getenv("SES_SNS_TOPIC_ARN", "").split(",") if t.strip()]
+
+
+def _sns_url_ok(url: Optional[str]) -> bool:
+    u = urlparse(url or "")
+    return u.scheme == "https" and bool(_SNS_HOST.match(u.hostname or ""))
+
+
+def _sns_signature_ok(msg: Dict[str, Any]) -> bool:
+    """AWS's documented check: rebuild the signed text and verify it against SNS's certificate."""
+    cert_url = msg.get("SigningCertURL") or ""
+    if not _sns_url_ok(cert_url) or not cert_url.endswith(".pem"):
+        return False
+    if msg.get("Type") == "Notification":
+        keys = ("Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type")
+    else:
+        keys = ("Message", "MessageId", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type")
+    text = "".join(f"{k}\n{msg[k]}\n" for k in keys if msg.get(k) is not None)
+    try:
+        cert = _sns_certs.get(cert_url)
+        if cert is None:
+            res = httpx.get(cert_url, timeout=10)
+            res.raise_for_status()
+            cert = x509.load_pem_x509_certificate(res.content)
+            _sns_certs[cert_url] = cert
+        algo = hashes.SHA256() if str(msg.get("SignatureVersion")) == "2" else hashes.SHA1()
+        cert.public_key().verify(base64.b64decode(msg.get("Signature") or ""), text.encode("utf-8"),
+                                 padding.PKCS1v15(), algo)
+        return True
+    except Exception as exc:
+        logger.warning("SNS signature check failed: %s", exc)
+        return False
+
+
+def apply_ses_event(db: Client, event: Dict[str, Any]) -> int:
+    """Hard bounces → 'bounced', spam reports → 'unsubscribed'. Returns how many addresses it stopped."""
+    kind = event.get("notificationType") or event.get("eventType")  # identity feedback | configuration set
+    stopped = 0
+    if kind == "Bounce":
+        b = event.get("bounce") or {}
+        if b.get("bounceType") != "Permanent":
+            return 0  # mailbox full, server busy: SES already retried, and the next broadcast may arrive
+        for r in b.get("bouncedRecipients") or []:
+            why = (r.get("diagnosticCode") or b.get("bounceSubType") or "").strip()
+            _suppress(db, parseaddr(r.get("emailAddress") or "")[1], "bounced",
+                      note=f"Bounced (Amazon SES){': ' + why[:120] if why else ''}")
+            stopped += 1
+    elif kind == "Complaint":
+        c = event.get("complaint") or {}
+        if c.get("complaintFeedbackType") == "not-spam":
+            return 0
+        for r in c.get("complainedRecipients") or []:
+            _suppress(db, parseaddr(r.get("emailAddress") or "")[1], "unsubscribed", note="Marked our email as spam")
+            stopped += 1
+    return stopped
+
+
+@router.post("/ses-events")
+async def ses_events(request: Request, db: Client = Depends(get_db)):
+    """SNS posts here (HTTPS subscription, raw delivery off). Only SES_SNS_TOPIC_ARN topics count."""
+    try:
+        msg = json.loads(await request.body())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Not an SNS message")
+    if not isinstance(msg, dict) or msg.get("TopicArn") not in _sns_topics():
+        raise HTTPException(status_code=403, detail="Unknown topic")
+    if not await run_in_threadpool(_sns_signature_ok, msg):
+        raise HTTPException(status_code=403, detail="Bad signature")
+
+    if msg.get("Type") == "SubscriptionConfirmation":
+        url = msg.get("SubscribeURL")
+        if not _sns_url_ok(url):
+            raise HTTPException(status_code=403, detail="Bad subscribe link")
+        res = await run_in_threadpool(httpx.get, url, timeout=10)
+        res.raise_for_status()
+        logger.info("SNS subscription confirmed for %s", msg.get("TopicArn"))
+        return {"subscribed": True}
+    if msg.get("Type") != "Notification":
+        return {"ok": True}
+    try:
+        event = json.loads(msg.get("Message") or "{}")
+    except ValueError:
+        return {"ok": True, "stopped": 0}
+    stopped = await run_in_threadpool(apply_ses_event, db, event)
+    return {"ok": True, "stopped": stopped}
 
 
 # ── Public: unsubscribe ───────────────────────────────────────────────────────

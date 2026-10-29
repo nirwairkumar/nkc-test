@@ -64,7 +64,7 @@ export default function EmailPanel() {
 
             {o && !o.smtp.configured && (
                 <Banner tone="amber" title="Email isn’t connected" action="Connect" onAction={() => setSettings(true)}>
-                    Add the Zoho app password in Settings. Until then nothing can be sent, but you can look around and prepare emails.
+                    The owner connects a sending service (Amazon SES) on the server. Until then nothing can be sent, but you can look around and prepare emails.
                 </Banner>
             )}
             {o?.sending.map((c) => (
