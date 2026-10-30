@@ -366,6 +366,67 @@ A long-form guide for teachers, coaching institutes and students on AI test gene
 
 ---
 
+## Guide: Sectional test maker (https://testoza.com/sectional-test-maker)
+
+A guide for SSC, bank and CAT faculty, test-series makers and school teachers on building tests by section, with TestoZa as the worked example. Behaviour checked against the product on 30 October 2026.
+
+- **Two kinds of sectional test:** a sectional drill (one section at the exam’s length and minutes, three or four times a week) and a sectioned full paper (every section on its own rules, once a week).
+- **Four rules a section can carry:** its own minutes (“Time each section”: sections open in the paper’s order, close when their minutes are up, can’t be reopened or left early, spare minutes are lost; a refresh or another phone lands in the open section); an attempt limit (“Students may answer at most N”, hard or soft, counting the first or the best-scoring answers); its own marks and negative marks per question; shuffling that stays inside the section.
+- **Patterns:** SSC CGL and CHSL 2026 Tier 1, four sections of 25 questions, 15 minutes each, +2/−0.5; IBPS PO, SBI PO and IBPS Clerk 2026 prelims, three sections of 20 minutes each, five options, −¼; CAT, three sections of 40 minutes; JEE Main and NEET, subjects as sections on one clock.
+- **Results:** each section’s score with right, wrong and skipped answers; many skips mean a speed problem, many wrong answers a knowledge or guessing problem.
+- **Limits:** sectional cut-offs not applied automatically; the calculator is one switch for the whole test; timed sections open in a fixed order; locks enforced in the browser, marking on the server.
+
+---
+
+## Guide: Online tests for tuition teachers (https://testoza.com/online-test-for-tuition-teachers)
+
+A guide for home tutors and small tuition centres (5 to 60 students, Classes 5 to 12) on running a weekly online test, with TestoZa as the worked example.
+
+- **Why weekly:** recall practice spread over weeks beats rereading and cramming (Roediger and Karpicke 2006; Cepeda et al. 2006); weekly tests show who is lost early, keep parents informed and make students revise.
+- **Making a test:** photograph the exercise or upload a PDF; Extract copies printed questions, Generate writes new ones; check every question; one mark each and no negative marking for school classes; ask for name and roll number.
+- **Sending it:** a test link in the WhatsApp group (no app, no account, students type their name) or a live test with a six-digit code at testoza.com/join; answers saved if the signal drops; rejoin on another phone.
+- **Results:** marks, rank list, who hasn’t taken it, the questions most got wrong; a WhatsApp note for each parent and for absent students, sent by the teacher; report cards and Excel.
+- **Cost:** making tests, sharing them and seeing results cost nothing; ₹49 / 7 days, ₹149 / 30 days, ₹799 / year for exam rules, branding, scheduling and Excel export; no per-student fee.
+- **Not included:** fees, attendance, timetables, video classes, written answers, camera supervision.
+
+---
+
+## Guide: CBSE online test maker (https://testoza.com/cbse-online-test-maker)
+
+A guide for CBSE school teachers, exam cells and tutors on CBSE-style online tests for Classes 6 to 12, with TestoZa as the worked example.
+
+- **The CBSE paper:** objective questions (MCQs, assertion–reason), case-based or source-based questions, and 2-, 3- and 5-mark written answers, in proportions that differ by subject (see the sample papers on cbseacademic.nic.in); Class 10 board exams twice a year from 2026 (February, and an optional May exam); 80 theory and 20 internal marks in most subjects; no negative marking.
+- **Mapping:** MCQ and assertion–reason → Single correct, 1 mark, Wrong 0; case-based → Passage / case study (leave shuffling off); numericals → Numerical answer with a range; internal choice → a section attempt limit; written answers → not marked online.
+- **Through the year:** chapter tests, the objective part of periodic tests, holiday practice, pre-board practice from sample papers, the second Class 10 exam, Hindi-medium classes.
+- **Keep on paper:** written answers, maths working and step marks, drawn diagrams, maps and constructions, and full written papers under exam conditions.
+
+---
+
+## Guide: Scholarship admission test platform (https://testoza.com/scholarship-admission-test-platform)
+
+A guide for coaching institutes on running an admission-cum-scholarship test, with TestoZa as the worked example. Aakash’s ANTHE (Classes 5 to 12, scholarships up to 100%, online and offline) is cited as the best-known example of the format.
+
+- **Goals:** fill batches, find toppers, build the enquiry list.
+- **Formats:** from home in a scheduled window; in the centre on candidates’ phones with a six-digit code and roll number + PIN check-in, PIN slips and walk-ins allowed or refused; at partner schools, one live exam per school; two rounds (online screening, supervised final); one paper per class.
+- **Registration:** Candidate inputs (name, phone, class, school, city, course) become columns in the Excel sheet.
+- **Fairness:** one attempt; a fixed window; exam rules (full screen, tab-switch limit, copy and paste off; paid plans); shuffled questions; results held until released (“When I release them” for live exams, Result Visibility off for links); a tie-break rule published in advance.
+- **Slabs:** applied in the Excel sheet with one IFS formula on a percentage column; candidates look results up at testoza.com/join/result.
+- **Limits:** no fee collection, admit cards, SMS, camera proctoring, identity checks, automatic slabs or written answers.
+
+---
+
+## Guide: Online test with negative marking (https://testoza.com/online-test-with-negative-marking)
+
+A guide to negative marking for coaching faculty, test-series makers and students, with TestoZa as the worked example.
+
+- **How it works:** right answers gain marks, wrong answers lose the penalty, blanks score zero; a penalty of marks ÷ wrong options (a third with four options, a quarter with five) makes a blind guess worth exactly zero.
+- **Schemes (October 2026):** JEE Main +4/−1; NEET UG +4/−1; CUET UG +5/−1; SSC CGL/CHSL Tier 1 +2/−0.5; bank exams −¼ of the question’s marks, five options; GATE −1/3 and −2/3 on MCQs, none on MSQ and NAT; UPSC prelims −⅓ of the marks; CAT +3/−1, none on typed answers; CLAT +1/−0.25; CBSE boards none.
+- **Value of a guess:** JEE/NEET blind +0.25 (one option ruled out +0.67, two +1.5; ten blind guesses end below zero about one time in four); SSC +0.125 (+0.33, +0.75); bank 0 (1/16, 1/6, 3/8 of the marks); CUET +0.5 (+1, +2); GATE and UPSC 0 (+1/9, +1/3 of the marks); CAT 0 (+0.33, +1).
+- **Setting it in TestoZa:** the Marking switch (“No negative marking”, “JEE / NEET (+4, −1)”, Custom); Marks and Wrong on every question, decimals only (0.3333 for a third); multiple-correct questions Proportional or JEE Advanced; numerical answers by range with their own penalty or none; a summary line with the penalty and total marks.
+- **Limits:** fractions can’t be typed; blanks always score zero; no normalisation across shifts; written answers not marked.
+
+---
+
 ## Guide: Best online exam software in India (https://testoza.com/best-online-exam-software-india)
 
 A comparison of 13 online exam platforms used in India, written by TestoZa for coaching institute owners, school exam cells, college exam coordinators and teachers. Every other product is described from its own website, pricing page and help centre, checked 2–25 October 2026; prices seen only on listing sites are labelled third-party.

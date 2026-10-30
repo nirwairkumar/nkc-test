@@ -6,6 +6,7 @@ import 'katex/dist/contrib/mhchem'; // Registers \ce{} and \pu{} on this katex i
 import { cn } from '@/lib/utils';
 import { Maximize2 } from 'lucide-react';
 import { katexTrust, sanitizeHtml } from '@/utils/sanitize';
+import { repairOverEscapedMath, restoreDecodedCommands } from '@/lib/latexFixes';
 import {
     Dialog,
     DialogContent,
@@ -17,29 +18,6 @@ import {
 interface LatexRendererProps {
     children: string;
     className?: string;
-}
-
-// Control characters left where JSON decoded an unescaped LaTeX command
-// ("\frac" -> form feed + "rac", "\text" -> tab + "ext", "\beta" -> backspace + "eta").
-function restoreDecodedCommands(text: string): string {
-    return text
-        // eslint-disable-next-line no-control-regex -- matching these control characters is the point
-        .replace(/\x0c(?=[A-Za-z])/g, '\\f')
-        // eslint-disable-next-line no-control-regex -- as above
-        .replace(/\x08(?=[A-Za-z])/g, '\\b')
-        .replace(/\t(ext|extbf|extit|extrm|imes|heta|an|anh|au|frac|ilde|o|op|riangle|herefore)(?![A-Za-z])/g, '\\t$1')
-        .replace(/\r(ight|ho|ightarrow|angle|ceil|floor|m)(?![A-Za-z])/g, '\\r$1');
-}
-
-/**
- * Math written with every command over-escaped ("\\frac", "47^\\circ") renders as a line
- * break followed by the plain word, or as a red error. When a block has such commands and
- * no correctly escaped ones, halve each even run of backslashes. Mirrors the importer's
- * backend normaliser, so questions saved before that fix display correctly too.
- */
-function repairOverEscapedMath(tex: string): string {
-    if (!/(?<!\\)\\\\[A-Za-z]{2}/.test(tex) || /(?<!\\)\\[A-Za-z]{2}/.test(tex)) return tex;
-    return tex.replace(/\\+/g, run => (run.length % 2 === 0 ? run.slice(0, run.length / 2) : run));
 }
 
 // Only real image addresses become <img>; a tag pointing at nothing ("image_4", "fig")
@@ -251,12 +229,18 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
                     const isInline = !displayMode;
                     const finalTex = isInline ? `\\displaystyle ${texWithoutArrays.trim()}` : texWithoutArrays.trim();
-                    const html = katex.renderToString(finalTex, {
+                    const options = {
                         displayMode,
-                        throwOnError: false,
                         trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                         strict: false,
-                    });
+                    };
+                    let html: string;
+                    try {
+                        html = katex.renderToString(finalTex, { ...options, throwOnError: true });
+                    } catch {
+                        // The red error shows what the creator wrote, without the \displaystyle added above.
+                        html = katex.renderToString(texWithoutArrays.trim(), { ...options, throwOnError: false });
+                    }
 
                     let finalHtml = swapPlaceholders(html);
                     for (const [key, tableHtml] of Object.entries(arrayMap)) {

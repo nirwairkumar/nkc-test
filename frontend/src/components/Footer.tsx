@@ -57,6 +57,11 @@ interface FooterLink {
 
 /** Short labels: a footer column is ~180px wide, and long names wrap to three lines. */
 const GUIDE_LABELS: Record<string, string> = {
+    'sectional-test-maker': 'Sectional test maker',
+    'online-test-for-tuition-teachers': 'Tests for tuition teachers',
+    'cbse-online-test-maker': 'CBSE online test maker',
+    'scholarship-admission-test-platform': 'Scholarship test platform',
+    'online-test-with-negative-marking': 'Negative marking tests',
     'best-online-exam-software-india': 'Best exam software, India',
     'mercer-mettl-alternative': 'Mettl alternative',
     'proprofs-alternative': 'ProProfs alternative',

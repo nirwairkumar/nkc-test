@@ -140,6 +140,11 @@ async function generateSitemap() {
             { url: '/speedexam-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
             { url: '/canvas-quizzes-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
             { url: '/best-online-exam-software-india', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-25T00:00:00.000Z' },
+            { url: '/sectional-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/online-test-for-tuition-teachers', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/cbse-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/scholarship-admission-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/online-test-with-negative-marking', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend

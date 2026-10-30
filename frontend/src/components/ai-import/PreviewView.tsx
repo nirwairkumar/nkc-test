@@ -1,4 +1,4 @@
-import React, { memo, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
     BookOpen,
     Check,
@@ -23,9 +23,12 @@ import {
     Search,
     Sparkles,
     TriangleAlert,
+    Wand2,
     X,
 } from 'lucide-react';
 import LatexRenderer from '@/components/ui/LatexRenderer';
+import LatexFixHints from '@/components/ui/LatexFixHints';
+import { findLatexIssues, getKeptVersion, isKept, subscribeKept } from '@/lib/latexFixes';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -42,6 +45,8 @@ interface PreviewViewProps {
     saving: boolean;
     canGenerateMore: boolean;
     generatingMore: boolean;
+    /** A suggested maths fix was accepted: question `index` (0-based) becomes `next`. */
+    onFixQuestion?: (index: number, next: Question) => void;
     onTryAgain: () => void;
     onEdit: () => void;
     onSave: () => void;
@@ -51,9 +56,11 @@ interface PreviewViewProps {
     onDownloadJSON: () => void;
 }
 
-type Filter = 'all' | 'missing' | 'diagram';
+type Filter = 'all' | 'missing' | 'diagram' | 'maths';
 
 const optionValue = (v: unknown) => (v && typeof v === 'object' ? String((v as { text?: string }).text ?? '') : String(v ?? ''));
+const texts = (q: Question) => [q.question, q.passageContent, ...(q.options ? Object.values(q.options).map(optionValue) : [])];
+const needsMathsFix = (q: Question) => texts(q).some(t => !!t && findLatexIssues(t).some(issue => !isKept(issue.key)));
 const optionImage = (q: Question, key: string, v: unknown) =>
     q.optionImages?.[key] || (v && typeof v === 'object' ? (v as { image?: string | null }).image : null) || null;
 
@@ -90,11 +97,17 @@ const typeOf = (q: Question) => (q.type === 'multiple' || q.type === 'numerical'
 
 // ── Question card ────────────────────────────────────────────────────────────
 
-const QuestionCard = memo(function QuestionCard({ q, n, onZoom }: { q: Question; n: number; onZoom: (src: string, alt: string) => void }) {
+const QuestionCard = memo(function QuestionCard({ q, n, onZoom, onFix }: {
+    q: Question;
+    n: number;
+    onZoom: (src: string, alt: string) => void;
+    onFix?: (index: number, next: Question) => void;
+}) {
     const [raw, setRaw] = useState(false);
     const answered = hasAnswer(q);
     const type = typeOf(q);
     const options = type !== 'numerical' && q.options ? Object.entries(q.options) : [];
+    const fix = onFix ? (next: Question) => onFix(n - 1, next) : null;
 
     return (
         <article id={`aix-q-${n}`} className="aix-card aix-qc" aria-labelledby={`aix-q-${n}-label`}>
@@ -128,6 +141,7 @@ const QuestionCard = memo(function QuestionCard({ q, n, onZoom }: { q: Question;
                     </summary>
                     <div className="aix-passage-body aix-tex">
                         {raw ? <pre className="aix-raw">{q.passageContent}</pre> : <LatexRenderer>{q.passageContent}</LatexRenderer>}
+                        {fix && <LatexFixHints text={q.passageContent} onApply={t => fix({ ...q, passageContent: t })} className="mt-2" />}
                     </div>
                 </details>
             ) : null}
@@ -139,6 +153,7 @@ const QuestionCard = memo(function QuestionCard({ q, n, onZoom }: { q: Question;
                     {q.question ? <LatexRenderer>{q.question}</LatexRenderer> : <span className="aix-opt-empty">No question text</span>}
                 </div>
             )}
+            {fix && q.question && <LatexFixHints text={q.question} onApply={t => fix({ ...q, question: t })} className="mt-2" />}
 
             {q.image ? (
                 <figure className="aix-figure">
@@ -167,6 +182,16 @@ const QuestionCard = memo(function QuestionCard({ q, n, onZoom }: { q: Question;
                                         !img && <span className="aix-opt-empty">Empty option</span>
                                     )}
                                     {img ? <img src={img} alt={`Option ${key}`} loading="lazy" /> : null}
+                                    {fix && text && (
+                                        <LatexFixHints
+                                            text={text}
+                                            onApply={t => fix({
+                                                ...q,
+                                                options: { ...q.options, [key]: value && typeof value === 'object' ? { ...value, text: t } : t },
+                                            })}
+                                            className="mt-1.5"
+                                        />
+                                    )}
                                 </div>
                                 {correct && (
                                     <span className="aix-opt-seal"><Check /><span className="aix-sr">Correct answer</span></span>
@@ -273,6 +298,7 @@ export default function PreviewView({
     saving,
     canGenerateMore,
     generatingMore,
+    onFixQuestion,
     onTryAgain,
     onEdit,
     onSave,
@@ -298,6 +324,14 @@ export default function PreviewView({
 
     const missing = useMemo(() => questions.filter(q => !hasAnswer(q)).length, [questions]);
     const diagrams = useMemo(() => questions.filter(hasDiagram).length, [questions]);
+    // Recounted when a fix is kept as written (×) as well as when one is taken.
+    const keptVersion = useSyncExternalStore(subscribeKept, getKeptVersion);
+    const mathsFlags = useMemo(
+        () => (onFixQuestion ? questions.map(needsMathsFix) : questions.map(() => false)),
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- keptVersion re-runs it
+        [questions, onFixQuestion, keptVersion],
+    );
+    const mathsFixes = mathsFlags.filter(Boolean).length;
     const typeCounts = useMemo(() => {
         const counts: Record<string, number> = {};
         questions.forEach(q => { counts[typeOf(q)] = (counts[typeOf(q)] || 0) + 1; });
@@ -316,9 +350,10 @@ export default function PreviewView({
             .filter(({ q, n }) => {
                 if (filter === 'missing' && hasAnswer(q)) return false;
                 if (filter === 'diagram' && !hasDiagram(q)) return false;
+                if (filter === 'maths' && !mathsFlags[n - 1]) return false;
                 return !needle || haystack[n - 1].includes(needle);
             });
-    }, [questions, filter, deferredQuery, haystack]);
+    }, [questions, filter, deferredQuery, haystack, mathsFlags]);
 
     // Keep "viewing" in sync with the card nearest the top of the screen.
     useEffect(() => {
@@ -360,11 +395,12 @@ export default function PreviewView({
         return () => window.clearTimeout(id);
     }, [pendingJump, visible]);
 
-    const showMissing = () => {
-        setFilter('missing');
+    const showOnly = (next: Filter) => {
+        setFilter(next);
         setQuery('');
         listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+    const showMissing = () => showOnly('missing');
 
     const onZoom = useMemo(() => (src: string, alt: string) => setZoom({ src, alt }), []);
 
@@ -482,6 +518,11 @@ export default function PreviewView({
                                         Diagrams <em>{diagrams}</em>
                                     </button>
                                 )}
+                                {(mathsFixes > 0 || filter === 'maths') && (
+                                    <button type="button" className="is-warn" aria-pressed={filter === 'maths'} onClick={() => setFilter('maths')}>
+                                        Maths fixes <em>{mathsFixes}</em>
+                                    </button>
+                                )}
                             </div>
                             <label className="aix-search">
                                 <Search aria-hidden="true" />
@@ -512,13 +553,32 @@ export default function PreviewView({
                             </div>
                         )}
 
+                        {mathsFixes > 0 && filter !== 'maths' && (
+                            <div className="aix-banner" role="note">
+                                <Wand2 />
+                                <p><b>{mathsFixes} question{mathsFixes === 1 ? '' : 's'}</b> {mathsFixes === 1 ? 'has' : 'have'} maths that won't show properly. Tap a suggested fix to use it, or × to keep it as written.</p>
+                                <button type="button" className="aix-btn aix-btn--plain" style={{ height: 34 }} onClick={() => showOnly('maths')}>Show</button>
+                            </div>
+                        )}
+
                         <div className="aix-qlist">
                             {visible.map(({ q, n }) => (
                                 <div key={n} data-n={n}>
-                                    <QuestionCard q={q} n={n} onZoom={onZoom} />
+                                    <QuestionCard q={q} n={n} onZoom={onZoom} onFix={onFixQuestion} />
                                 </div>
                             ))}
-                            {visible.length === 0 && (
+                            {visible.length === 0 && filter === 'maths' && !query ? (
+                                <div className="aix-card aix-empty">
+                                    <CheckCircle2 />
+                                    <b>All maths checked</b>
+                                    Every formula is fixed or kept as written.
+                                    <div style={{ marginTop: 14 }}>
+                                        <button type="button" className="aix-btn aix-btn--tinted" onClick={() => setFilter('all')}>
+                                            Show all {questions.length}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : visible.length === 0 && (
                                 <div className="aix-card aix-empty">
                                     <Search />
                                     <b>No matching questions</b>

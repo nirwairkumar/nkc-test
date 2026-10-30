@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import LatexRenderer from '@/components/ui/LatexRenderer';
+import LatexFixHints from '@/components/ui/LatexFixHints';
 import { getLanguage } from '@/lib/typingLanguages';
 
 interface IMEInputProps {
@@ -14,7 +15,7 @@ interface IMEInputProps {
     className?: string;
     placeholder?: string;
     enablePreview?: boolean;
-    /** While editing, show the rendered maths under the box (question builder). */
+    /** While editing, show the rendered maths under the box, and fixes for maths that won't display (question builder). */
     livePreview?: boolean;
     [key: string]: any;
 }
@@ -365,6 +366,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                     )}
                 </>
             )}
+            {livePreview && <LatexFixHints text={value} onApply={next => emit(next, null)} delay={700} className="px-2 pb-1.5 pt-1" />}
         </div>
     );
 });

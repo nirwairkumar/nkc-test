@@ -1233,6 +1233,27 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         document.body.removeChild(link);
     };
 
+    // A maths fix taken on the review screen. A sectioned paper is saved from
+    // sections[].questions, which hold their own copy of each question, and a passage is
+    // repeated on every question under it, so the fix goes to all of those.
+    const handleFixQuestion = useCallback((index: number, next: Question) => {
+        setParsedData(prev => {
+            const old = prev?.questions[index];
+            if (!prev || !old) return prev;
+            const passage = old.passageContent;
+            const samePassage = (q: Question) =>
+                passage && next.passageContent !== passage && q.passageContent === passage ? { ...q, passageContent: next.passageContent } : q;
+            return {
+                ...prev,
+                questions: prev.questions.map((q, i) => (i === index ? next : samePassage(q))),
+                sections: prev.sections?.map(sec => ({
+                    ...sec,
+                    questions: sec.questions?.map(q => (q.id === old.id && q.question === old.question ? next : samePassage(q))),
+                })),
+            };
+        });
+    }, []);
+
     const handleImport = useCallback(() => {
         if (!parsedData || !onImport) return;
 
@@ -2247,6 +2268,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     saving={savingTest}
                     canGenerateMore={files.length > 0 && !!mode}
                     generatingMore={generatingMore}
+                    onFixQuestion={handleFixQuestion}
                     onTryAgain={() => { setParsedData(null); setMode(null); }}
                     onEdit={handleImport}
                     onSave={handleDirectSave}

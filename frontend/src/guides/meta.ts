@@ -1029,8 +1029,175 @@ export const BEST_EXAM_INDIA_META: GuideMeta = {
     cta: { label: 'Build your first test, free', href: '/create-test' },
 };
 
+// ── Five guides of 30 October 2026 on the "how to" shell (data in testMakerData.ts) ──
+
+export const SECTIONAL_META: GuideMeta = {
+    slug: 'sectional-test-maker',
+    path: '/sectional-test-maker',
+    title: 'Sectional test maker: sections with their own clocks, limits and marks',
+    seoTitle: 'Sectional Test Maker: Section-wise Timer and Marks (2026)',
+    description:
+        'Make sectional tests online: one-section drills or full papers split into sections, each with its own timer, attempt limit and marks. Section-wise results.',
+    dek:
+        'In Indian exam preparation, a “sectional test” means two things: a short drill on one section, and a full paper divided into sections that each run on their own rules. This guide covers both: when each one helps, how to set section clocks, attempt limits and marks, which exams use them, and how to read a section-wise result.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-30T12:00:00+05:30',
+    dateModified: '2026-10-30T12:00:00+05:30',
+    readMinutes: 11,
+    cover: {
+        src: '/guides/sectional-test-maker/cover.png',
+        alt: 'Sectional test maker: a paper split into sections, each with its own minutes, attempt limit and marks, and a section-wise result',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'sectional test maker',
+        'sectional test online',
+        'sectional mock test',
+        'test with sectional timing',
+        'section wise timer online test',
+        'create test with sections',
+        'sectional test for SSC',
+        'sectional test for bank exams',
+        'attempt any questions in a section',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a sectional test, free', href: '/create-test' },
+};
+
+export const TUITION_META: GuideMeta = {
+    slug: 'online-test-for-tuition-teachers',
+    path: '/online-test-for-tuition-teachers',
+    title: 'Online tests for tuition teachers: a weekly test your students take on their phones',
+    seoTitle: 'Online Test for Tuition Teachers: Weekly Tests on Phones',
+    description:
+        'How a home tutor or small tuition centre can run weekly online tests: questions from a textbook photo, a WhatsApp link, and marks and parent messages the same day.',
+    dek:
+        'You teach twenty students after school, in a front room or a rented hall. You don’t need institute software or an app with your name on it. You need this week’s chapter turned into a test tonight, a link students open on their phones, and marks you can show parents. This guide sets that up, step by step, with what it costs.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-30T12:00:00+05:30',
+    dateModified: '2026-10-30T12:00:00+05:30',
+    readMinutes: 11,
+    cover: {
+        src: '/guides/online-test-for-tuition-teachers/cover.png',
+        alt: 'Online tests for tuition teachers: a textbook page turned into a test, shared on WhatsApp, with marks and a parent message the same evening',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'online test for tuition teachers',
+        'online test for tuition',
+        'online test for tution classes',
+        'test app for tuition teachers',
+        'weekly test for tuition students',
+        'online test for home tutors',
+        'how to take online test of students',
+        'online test on WhatsApp',
+        'TestoZa',
+    ],
+    cta: { label: 'Make this week’s test', href: '/generate-with-ai' },
+};
+
+export const CBSE_META: GuideMeta = {
+    slug: 'cbse-online-test-maker',
+    path: '/cbse-online-test-maker',
+    title: 'CBSE online test maker: MCQs, assertion–reason and case-based questions for Classes 6 to 12',
+    seoTitle: 'CBSE Online Test Maker for Classes 6 to 12 (2026-27)',
+    description:
+        'Make CBSE online tests from NCERT chapters and sample papers: MCQs, assertion–reason and case-based questions, no negative marking, in English or Hindi.',
+    dek:
+        'CBSE papers now carry many objective and competency-based questions: MCQs, assertion and reason, and case studies built on a passage. Those are exactly the parts an online test can set and mark for you. This guide shows how to build CBSE-style tests from NCERT chapters, how to use them through the school year, and what to keep on paper.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-30T12:00:00+05:30',
+    dateModified: '2026-10-30T12:00:00+05:30',
+    readMinutes: 10,
+    cover: {
+        src: '/guides/cbse-online-test-maker/cover.png',
+        alt: 'CBSE online test maker: MCQs, assertion–reason, case-based questions and numericals marked online; written answers kept on paper',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'CBSE online test maker',
+        'CBSE online test',
+        'CBSE MCQ test maker',
+        'online test for CBSE class 10',
+        'case based questions online test',
+        'assertion reason questions online test',
+        'NCERT chapter test online',
+        'CBSE periodic test online',
+        'TestoZa',
+    ],
+    cta: { label: 'Make a CBSE chapter test', href: '/generate-with-ai' },
+};
+
+export const SCHOLARSHIP_META: GuideMeta = {
+    slug: 'scholarship-admission-test-platform',
+    path: '/scholarship-admission-test-platform',
+    title: 'Scholarship admission test platform: run your institute’s scholarship test online',
+    seoTitle: 'Scholarship Admission Test Platform for Coaching Institutes',
+    description:
+        'Run an admission-cum-scholarship test online or in your centre: registration details, one attempt, results on your day, scholarship slabs and a lead list.',
+    dek:
+        'Every admission season, coaching institutes run a scholarship test: part entrance exam, part open day, part the best enquiry list of the year. This guide covers how to run one at home, in your centre or at partner schools, how to keep it fair, how to turn scores into scholarship slabs, and how to follow up with every family who took it.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-30T12:00:00+05:30',
+    dateModified: '2026-10-30T12:00:00+05:30',
+    readMinutes: 11,
+    cover: {
+        src: '/guides/scholarship-admission-test-platform/cover.png',
+        alt: 'Scholarship admission test platform: candidates register and join with a code; the institute gets a rank list, scholarship slabs and every phone number',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'scholarship admission test platform',
+        'scholarship test online',
+        'admission cum scholarship test',
+        'conduct scholarship test online',
+        'scholarship test for coaching institute',
+        'online admission test software',
+        'entrance test platform for coaching',
+        'TestoZa',
+    ],
+    cta: { label: 'Set up a scholarship test', href: '/create-test' },
+};
+
+export const NEGATIVE_MARKING_META: GuideMeta = {
+    slug: 'online-test-with-negative-marking',
+    path: '/online-test-with-negative-marking',
+    title: 'Online test with negative marking: set any scheme, and know when a guess pays',
+    seoTitle: 'Online Test with Negative Marking: −1, −0.5, −0.25, −1/3',
+    description:
+        'Create online tests with negative marking: −1, −0.5, −0.25 or a third, per question, with partial marks. Every Indian exam’s scheme, and when to guess.',
+    dek:
+        'Negative marking takes two numbers to set and months to teach. This guide covers both halves: how to set +4/−1, a quarter or a third of a mark on any question, what each major Indian exam uses, the arithmetic of when to guess, and how to show students the marks they are throwing away.',
+    author: 'TestoZa Team',
+    datePublished: '2026-10-30T12:00:00+05:30',
+    dateModified: '2026-10-30T12:00:00+05:30',
+    readMinutes: 11,
+    cover: {
+        src: '/guides/online-test-with-negative-marking/cover.png',
+        alt: 'Online test with negative marking: Marks and Wrong boxes on each question, and the negative marking schemes of JEE, NEET, SSC, bank exams, GATE and UPSC',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'online test with negative marking',
+        'negative marking online test',
+        'create test with negative marking',
+        'negative marking in exams',
+        'quiz maker with negative marking',
+        'negative marking calculator',
+        'should I guess in negative marking',
+        'mock test with negative marking',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a test with negative marking', href: '/create-test' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [BEST_EXAM_INDIA_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [SECTIONAL_META, TUITION_META, CBSE_META, SCHOLARSHIP_META, NEGATIVE_MARKING_META, BEST_EXAM_INDIA_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

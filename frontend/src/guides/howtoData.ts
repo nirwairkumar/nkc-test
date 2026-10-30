@@ -34,7 +34,18 @@
  *     inviteText / rankListText / parentText. The WhatsApp messages below mirror them.
  */
 
-export type HowtoKey = 'mobile' | 'embed' | 'fullLength' | 'whatsapp' | 'bestIndia';
+export type HowtoKey =
+    | 'mobile'
+    | 'embed'
+    | 'fullLength'
+    | 'whatsapp'
+    | 'bestIndia'
+    // the five pages of 30 October 2026, whose data lives in testMakerData.ts
+    | 'sectional'
+    | 'tuition'
+    | 'cbse'
+    | 'scholarship'
+    | 'negative';
 
 /** A row in a grouped list (hero card, widget lists). */
 export interface HwRow {
@@ -1235,7 +1246,7 @@ const BEST_INDIA: HowtoPage = {
     },
 };
 
-export const HOWTO_PAGES: Record<HowtoKey, HowtoPage> = {
+export const HOWTO_PAGES: Record<Exclude<HowtoKey, 'sectional' | 'tuition' | 'cbse' | 'scholarship' | 'negative'>, HowtoPage> = {
     mobile: MOBILE,
     embed: EMBED,
     fullLength: FULL_LENGTH,
