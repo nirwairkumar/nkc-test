@@ -10,7 +10,7 @@ import type { FontInfo } from '../../engine/fonts';
 import type { Rect } from '../../engine/matrix';
 import { useEditor, rgbCss } from '../EditorContext';
 import FormatBar, { ColorDots, Divider, IconButton, type Fmt } from '../FormatBar';
-import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics } from '../fonts';
+import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics, usesEditorFont } from '../fonts';
 import type { View } from '../geometry';
 import GuideLines from '../GuideLines';
 import { buildTargets, shiftBox, snapMove, toBox, type Baseline, type Box, type Guide, type SnapSpec } from '../guides';
@@ -461,15 +461,15 @@ function AddTextBox({
     const css = familyCss(f.family, docFonts);
     // Web fonts change metrics once loaded; re-measure then.
     useEffect(() => {
-        if (!f.family.startsWith('noto') || !document.fonts) return;
+        if (!usesEditorFont(css) || !document.fonts) return;
         document.fonts
-            .load(`${f.bold ? 700 : 400} 16px ${css}`, text || 'a')
+            .load(`${f.italic ? 'italic ' : ''}${f.bold ? 700 : 400} 16px ${css}`, text || 'a')
             .then(() => {
                 resetFontMetrics();
                 bump((n) => n + 1);
             })
             .catch(() => {});
-    }, [css, f.bold]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [css, f.bold, f.italic]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fontSize = f.size * view.scale;
     const lh = f.size * (o.lineHeight || 1.25) * view.scale;

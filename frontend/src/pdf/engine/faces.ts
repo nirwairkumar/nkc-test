@@ -231,12 +231,21 @@ export const CUSTOM_FONTS: Record<string, { file: string; label: string; bold: b
     'noto-serif-bi': { file: 'NotoSerif-BoldItalic.ttf', label: 'Noto Serif', bold: true, italic: true },
     'noto-devanagari': { file: 'NotoSansDevanagari-Regular.ttf', label: 'Noto Sans Devanagari', bold: false, italic: false },
     'noto-devanagari-b': { file: 'NotoSansDevanagari-Bold.ttf', label: 'Noto Sans Devanagari', bold: true, italic: false },
+    // Full copies of typefaces PDFs often embed only a few letters of (see FontInfo.webFamily).
+    playfair: { file: 'PlayfairDisplay-Regular.ttf', label: 'Playfair Display', bold: false, italic: false },
+    'playfair-b': { file: 'PlayfairDisplay-Bold.ttf', label: 'Playfair Display', bold: true, italic: false },
+    'playfair-i': { file: 'PlayfairDisplay-Italic.ttf', label: 'Playfair Display', bold: false, italic: true },
+    'playfair-bi': { file: 'PlayfairDisplay-BoldItalic.ttf', label: 'Playfair Display', bold: true, italic: true },
 };
+
+/** Family ids (as in edits and the font menu) drawn with the files in CUSTOM_FONTS. */
+const CUSTOM_FAMILIES = new Set(['noto-sans', 'noto-serif', 'noto-devanagari', 'playfair']);
+export const isCustomFamily = (family: string | undefined): family is string => !!family && CUSTOM_FAMILIES.has(family);
 
 export type FontLoader = (file: string) => Promise<Uint8Array>;
 
-/** Id of a Noto face in CUSTOM_FONTS for a family + style. */
-export function notoId(family: string, bold: boolean, italic: boolean): string {
+/** Id of a face in CUSTOM_FONTS for a family + style. */
+export function customFontId(family: string, bold: boolean, italic: boolean): string {
     if (family === 'noto-devanagari') return bold ? 'noto-devanagari-b' : 'noto-devanagari';
     return family + (bold && italic ? '-bi' : bold ? '-b' : italic ? '-i' : '');
 }
@@ -314,16 +323,23 @@ export class FaceRegistry {
         }
     }
 
-    /** Best fallback face for a character given the style it should resemble. */
-    fallbackFor(ch: string, cls: FontClass, bold: boolean, italic: boolean): Face | null {
+    /**
+     * Best fallback face for a character given the style it should resemble.
+     * `own` is the custom family of the text's own typeface, when Panna has it in full.
+     */
+    fallbackFor(ch: string, cls: FontClass, bold: boolean, italic: boolean, own?: string | null): Face | null {
         if (isDevanagari(ch)) {
-            const f = this.customFace(notoId('noto-devanagari', bold, false));
+            const f = this.customFace(customFontId('noto-devanagari', bold, false));
             return f && f.supports(ch) ? f : null;
+        }
+        if (own) {
+            const f = this.customFace(customFontId(own, bold, italic));
+            if (f?.supports(ch)) return f;
         }
         const stdFam = cls === 'mono' ? 'courier' : cls === 'serif' ? 'times' : 'helvetica';
         const s = this.stdFace(stdFam, bold, italic);
         if (s.supports(ch)) return s;
-        const noto = this.customFace(notoId(cls === 'serif' ? 'noto-serif' : 'noto-sans', bold, italic));
+        const noto = this.customFace(customFontId(cls === 'serif' ? 'noto-serif' : 'noto-sans', bold, italic));
         if (noto?.supports(ch)) return noto;
         const plain = this.customFace('noto-sans');
         return plain?.supports(ch) ? plain : null;
@@ -333,9 +349,9 @@ export class FaceRegistry {
     static neededCustomFonts(text: string, cls: FontClass, bold: boolean, italic: boolean): string[] {
         const ids = new Set<string>();
         for (const ch of text) {
-            if (isDevanagari(ch)) ids.add(notoId('noto-devanagari', bold, false));
+            if (isDevanagari(ch)) ids.add(customFontId('noto-devanagari', bold, false));
             else if (ch.codePointAt(0)! > 0xff && !WIN_ANSI_EXTRA.has(ch)) {
-                ids.add(notoId(cls === 'serif' ? 'noto-serif' : 'noto-sans', bold, italic));
+                ids.add(customFontId(cls === 'serif' ? 'noto-serif' : 'noto-sans', bold, italic));
                 ids.add('noto-sans');
             }
         }

@@ -27,7 +27,7 @@ import {
     type PDFRef,
 } from 'pdf-lib';
 import { emitGlyphs } from '../engine/emit';
-import { CustomFace, FaceRegistry, notoId, type Face, type ShapedGlyph } from '../engine/faces';
+import { CustomFace, FaceRegistry, customFontId, type Face, type ShapedGlyph } from '../engine/faces';
 import type { Color } from '../engine/interpreter';
 import { encodeLatin1 } from '../engine/lexer';
 import type { PlannedGlyph } from '../engine/planner';
@@ -476,7 +476,7 @@ function faceChain(families: string[], bold: boolean, italic: boolean): string[]
     const add = (key: string | null) => {
         if (key && !out.includes(key)) out.push(key);
     };
-    const noto = (fam: string) => 'noto:' + notoId(fam, bold, italic);
+    const noto = (fam: string) => 'noto:' + customFontId(fam, bold, italic);
     for (const f of families) {
         const low = f.toLowerCase();
         if (f.startsWith('KaTeX_')) add(katexKey(f, bold, italic));

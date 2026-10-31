@@ -15,7 +15,7 @@ import type { Rect } from '../engine/matrix';
 import { textBox, type TextPlan } from '../engine/planner';
 import { useEditor, rgbCss } from './EditorContext';
 import FormatBar, { type Fmt } from './FormatBar';
-import { baselineOffset, familyCss } from './fonts';
+import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics, usesEditorFont } from './fonts';
 import type { View } from './geometry';
 import GuideLines from './GuideLines';
 import { shiftBox, snapEdge, type Box, type Guide, type Item, type Targets } from './guides';
@@ -156,6 +156,24 @@ export default function InlineTextEditor({
     const fontSize = fmt.size * view.scale;
     const lineHeight = block.paragraph ? block.lineGap * sizeScale * view.scale : fontSize * 1.25;
     const cssFont = `${fmt.italic ? 'italic ' : ''}${fmt.bold ? 700 : 400} ${fontSize}px ${cssFamily}`;
+    // Bundled fonts (e.g. the full Playfair Display) arrive after the box first draws: re-measure then.
+    const [, bump] = useState(0);
+    useEffect(() => {
+        ensureEditorFonts();
+        if (!usesEditorFont(cssFamily) || !document.fonts) return;
+        let live = true;
+        document.fonts
+            .load(`${fmt.italic ? 'italic ' : ''}${fmt.bold ? 700 : 400} 16px ${cssFamily}`, text || 'a')
+            .then(() => {
+                if (!live) return;
+                resetFontMetrics();
+                bump((n) => n + 1);
+            })
+            .catch(() => {});
+        return () => {
+            live = false;
+        };
+    }, [cssFamily, fmt.bold, fmt.italic]); // eslint-disable-line react-hooks/exhaustive-deps
     const box = boxW !== null ? textBox(block, boxW) : null;
     /** The text wraps: paragraphs always, single lines once given a width. */
     const wraps = block.paragraph || box !== null;
@@ -237,7 +255,10 @@ export default function InlineTextEditor({
                         y: by + off[1],
                         angle: block.angle,
                         text,
-                        family: fmt.family === 'original' ? (main.font.fontClass === 'serif' ? 'times' : main.font.fontClass === 'mono' ? 'courier' : 'helvetica') : fmt.family,
+                        family:
+                            fmt.family !== 'original'
+                                ? fmt.family
+                                : (main.font.webFamily ?? (main.font.fontClass === 'serif' ? 'times' : main.font.fontClass === 'mono' ? 'courier' : 'helvetica')),
                         size: fmt.size,
                         color: fmt.color,
                         bold: fmt.bold,

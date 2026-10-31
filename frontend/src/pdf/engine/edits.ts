@@ -19,6 +19,7 @@ export const pageIndexOf = (key: PageKey): number => (/^p\d+$/.test(key) ? Numbe
  *  'original' — keep the text's own embedded fonts (default)
  *  'helvetica' | 'times' | 'courier' — PDF standard fonts (no embedding needed)
  *  'noto-sans' | 'noto-serif' | 'noto-devanagari' — embedded Unicode fonts
+ *  'playfair' — Playfair Display, embedded (also completes PDFs that carry only some of its letters)
  *  `doc:<ref>` — another font already used in this document
  */
 export type FamilyId = string;

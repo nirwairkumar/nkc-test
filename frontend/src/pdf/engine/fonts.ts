@@ -109,6 +109,16 @@ export function glyphNameToUnicode(name: string, dingbats = false): string {
 
 export type FontClass = 'serif' | 'sans' | 'mono' | 'script' | 'symbol';
 
+/**
+ * Typefaces Panna ships in full (CUSTOM_FONTS in faces.ts). PDFs usually embed
+ * only the letters they use, so typing anything else needs the full font — and
+ * the editor shows it while typing. `match` runs on the BaseFont, lower-case letters only.
+ */
+const WEB_FAMILIES: { id: string; match: RegExp; css: string }[] = [
+    // Not "Playfair Display SC": small caps would come out as plain lower case.
+    { id: 'playfair', match: /^playfairdisplay(?!sc)/, css: `'Panna Playfair Display', 'Playfair Display', Georgia, serif` },
+];
+
 export class FontInfo {
     readonly subtype: string;
     readonly baseFont: string;
@@ -122,6 +132,8 @@ export class FontInfo {
     readonly bold: boolean;
     readonly italic: boolean;
     readonly fontClass: FontClass;
+    /** Custom family id of the full version of this typeface, when Panna ships it (else null). */
+    readonly webFamily: string | null;
     /** Ascent/descent per 1-unit font size (text space). */
     readonly ascent: number;
     readonly descent: number;
@@ -195,9 +207,14 @@ export class FontInfo {
                     ? 'script'
                     : /sans|arial|helvetica|calibri|verdana|tahoma|segoe|gothic|futura|roboto|open ?sans|lato|inter|nirmala|mangal|trebuchet|candara|corbel|aptos/.test(lname)
                       ? 'sans'
-                      : flags & 2 || /times|serif|roman|georgia|garamond|cambria|book|minion|palatino|kokila|aparajita|cmr|lmroman|nimbusrom/.test(lname)
+                      : flags & 2 ||
+                          /times|serif|roman|georgia|garamond|cambria|book|minion|palatino|kokila|aparajita|cmr|lmroman|nimbusrom|playfair|merriweather|lora|baskerville|bodoni|didot|caslon|crimson|cormorant|spectral|cinzel|prata|constantia/.test(
+                              lname,
+                          )
                         ? 'serif'
                         : 'sans';
+        const letters = lname.replace(/[^a-z]/g, '');
+        this.webFamily = WEB_FAMILIES.find((w) => w.match.test(letters))?.id ?? null;
 
         this.std14 = !this.isEmbedded && !this.isComposite ? standardFontFor(this.baseFont) : null;
 
@@ -479,6 +496,8 @@ export class FontInfo {
 
     /** CSS font stack that looks close to this font while the user is typing. */
     get cssFamily(): string {
+        const web = WEB_FAMILIES.find((w) => w.id === this.webFamily);
+        if (web) return web.css;
         const n = this.baseFont.toLowerCase();
         const q = (s: string) => `'${s}'`;
         const stacks: [RegExp, string][] = [

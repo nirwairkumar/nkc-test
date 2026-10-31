@@ -13,7 +13,7 @@ import { analyzeText, type PageText } from './layout';
 import { concatBytes, encodeLatin1, num } from './lexer';
 import type { Rect } from './matrix';
 import { N, resolve } from './pdfobj';
-import { customFontsFor, customFontsForEdit, planAddText, planTextEdit, type TextPlan } from './planner';
+import { customFontsForAdd, customFontsForEdit, planAddText, planTextEdit, type TextPlan } from './planner';
 import { rewriteContent } from './rewrite';
 
 export interface PageEnv {
@@ -59,8 +59,6 @@ function cloneDict(doc: PDFDocument, d: PDFDict | undefined): PDFDict {
     return out;
 }
 
-const addTextClass = (family: string) => (family === 'times' || family === 'noto-serif' ? 'serif' : family === 'courier' ? 'mono' : 'sans');
-
 export async function applyPageEdits(doc: PDFDocument, page: PDFPage, edits: PageEdit[], env: PageEnv): Promise<PageReport> {
     const ctx = doc.context;
     const { model, text } = analyzePage(doc, page, env.fonts);
@@ -69,14 +67,14 @@ export async function applyPageEdits(doc: PDFDocument, page: PDFPage, edits: Pag
     const report: PageReport = { plans: new Map(), missingBlocks: [] };
     if (!edits.length) return report;
 
-    // Custom (Noto) fonts must be loaded before planning.
+    // Custom (Noto, full typeface) fonts must be loaded before planning.
     const needed = new Set<string>();
     for (const e of edits) {
         if (e.kind === 'text') {
             const b = blocks.get(e.blockId);
-            if (b) customFontsForEdit(b, e).forEach((id) => needed.add(id));
+            if (b) customFontsForEdit(b, e, docFonts).forEach((id) => needed.add(id));
         } else if (e.kind === 'add-text') {
-            customFontsFor(e.text, e.family, addTextClass(e.family), e.bold, e.italic).forEach((id) => needed.add(id));
+            customFontsForAdd(e, docFonts).forEach((id) => needed.add(id));
         }
     }
     await env.faces.prepare(needed);

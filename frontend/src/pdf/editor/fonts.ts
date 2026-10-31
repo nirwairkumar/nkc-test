@@ -20,6 +20,7 @@ export const FAMILIES: FamilyOption[] = [
     { id: 'noto-sans', label: 'Noto Sans', css: '"Panna Noto Sans", "Noto Sans", sans-serif', sample: '₹ Ω ā' },
     { id: 'noto-serif', label: 'Noto Serif', css: '"Panna Noto Serif", "Noto Serif", serif', sample: '₹ Ω ā' },
     { id: 'noto-devanagari', label: 'Noto Sans Devanagari', css: '"Panna Noto Devanagari", "Noto Sans Devanagari", Mangal, sans-serif', sample: 'हिन्दी' },
+    { id: 'playfair', label: 'Playfair Display', css: '"Panna Playfair Display", "Playfair Display", Georgia, serif' },
 ];
 
 export function familyCss(id: string, docFonts: FontInfo[] = []): string {
@@ -31,7 +32,10 @@ export function familyCss(id: string, docFonts: FontInfo[] = []): string {
 }
 
 let injected = false;
-/** Registers the Noto files as web fonts (downloaded lazily, only when used). */
+/** True when a CSS stack starts with one of the fonts registered below (they load late). */
+export const usesEditorFont = (css: string) => /^["']Panna /.test(css.trim());
+
+/** Registers the bundled font files as web fonts (downloaded lazily, only when used). */
 export function ensureEditorFonts() {
     if (injected || typeof document === 'undefined') return;
     injected = true;
@@ -46,6 +50,10 @@ export function ensureEditorFonts() {
         ['Panna Noto Serif', 'NotoSerif-BoldItalic.ttf', 700, 'italic'],
         ['Panna Noto Devanagari', 'NotoSansDevanagari-Regular.ttf', 400, 'normal'],
         ['Panna Noto Devanagari', 'NotoSansDevanagari-Bold.ttf', 700, 'normal'],
+        ['Panna Playfair Display', 'PlayfairDisplay-Regular.ttf', 400, 'normal'],
+        ['Panna Playfair Display', 'PlayfairDisplay-Bold.ttf', 700, 'normal'],
+        ['Panna Playfair Display', 'PlayfairDisplay-Italic.ttf', 400, 'italic'],
+        ['Panna Playfair Display', 'PlayfairDisplay-BoldItalic.ttf', 700, 'italic'],
     ];
     const el = document.createElement('style');
     el.dataset.panna = 'fonts';

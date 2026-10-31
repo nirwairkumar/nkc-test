@@ -12,8 +12,8 @@
  *  4. Only missing glyphs fall back to a close standard/Noto font, and the plan
  *     reports every substitution so the UI can be honest about it.
  */
-import { FaceRegistry, notoId, type Face } from './faces';
-import type { FontInfo } from './fonts';
+import { FaceRegistry, customFontId, isComplexScript, isCustomFamily, type Face } from './faces';
+import type { FontClass, FontInfo } from './fonts';
 import { diff } from './diff';
 import type { AddTextEdit, RGB, TextEdit } from './edits';
 import { BLACK, type Color, type GlyphRec } from './interpreter';
@@ -62,8 +62,11 @@ export interface TextPlan {
 type Tok =
     | { t: 'atom'; atom: Atom; line: number; idx: number }
     | { t: 'char'; ch: string; style: number; line: number }
-    /** `width`/`glyphs` are set for an unchanged original space: keep its exact gap and glyph. */
-    | { t: 'space'; style: number; line: number; width?: number; glyphs?: GlyphRec[] }
+    /**
+     * `width`/`glyphs` are set for an unchanged original space: keep its exact gap and glyph.
+     * `join` marks the space a paragraph's line wrap stands for.
+     */
+    | { t: 'space'; style: number; line: number; width?: number; glyphs?: GlyphRec[]; join?: boolean }
     | { t: 'break'; line: number };
 
 const rgbColor = (c: RGB): Color => ({ space: 'rgb', c: [...c] });
@@ -110,25 +113,65 @@ export function textBox(block: TextBlock, width: number): { left: number; right:
     return { left: l, right: l + width };
 }
 
+/** The PDF font a `doc:<ref>` family names. */
+export function docFontOf(family: string | undefined, docFonts: FontInfo[]): FontInfo | null {
+    if (!family?.startsWith('doc:')) return null;
+    return docFonts.find((d) => d.ref?.toString() === family.slice(4)) ?? null;
+}
+
+/** Look (for fallbacks) of a new text box's family. */
+export function familyClass(family: string, docFonts: FontInfo[]): FontClass {
+    if (family === 'times' || family === 'noto-serif' || family === 'playfair') return 'serif';
+    if (family === 'courier') return 'mono';
+    return docFontOf(family, docFonts)?.fontClass ?? 'sans';
+}
+
+/**
+ * The full version of a PDF font's typeface (when Panna ships it) if `text` in
+ * this style needs letters the PDF's copy — usually a subset — does not have.
+ */
+function fullFontFor(font: FontInfo | null, text: string, bold: boolean, italic: boolean): string | null {
+    if (!font?.webFamily) return null;
+    const restyled = bold !== font.bold || italic !== font.italic;
+    // Spaces count too: a subset made from text without spaces has no space glyph.
+    if (!restyled && Array.from(text).every((ch) => ch === '\n' || isComplexScript(ch) || font.encodeChar(ch))) return null;
+    return customFontId(font.webFamily, bold, italic);
+}
+
 /** Custom fonts the planner may reach for — prepare these on the registry first. */
-export function customFontsForEdit(block: TextBlock, edit: TextEdit): string[] {
+export function customFontsForEdit(block: TextBlock, edit: TextEdit, docFonts: FontInfo[] = []): string[] {
     const st = block.styles[block.mainStyle];
-    return customFontsFor(edit.text, edit.family, st.font.fontClass, edit.bold ?? st.font.bold, edit.italic ?? st.font.italic);
+    const ids = new Set(customFontsFor(edit.text, edit.family, st.font.fontClass, edit.bold ?? st.font.bold, edit.italic ?? st.font.italic));
+    // Every font the block is drawn in can run out of letters (see planTextEdit's faceFor).
+    const family = edit.family && edit.family !== 'original' ? edit.family : undefined;
+    const fonts = family ? [docFontOf(family, docFonts)] : [...new Set(block.lines.flatMap((l) => l.atoms.map((a) => block.styles[a.style].font)))];
+    for (const f of fonts) {
+        const id = f && fullFontFor(f, edit.text, edit.bold ?? f.bold, edit.italic ?? f.italic);
+        if (id) ids.add(id);
+    }
+    return [...ids];
+}
+
+export function customFontsForAdd(edit: AddTextEdit, docFonts: FontInfo[]): string[] {
+    const ids = new Set(customFontsFor(edit.text, edit.family, familyClass(edit.family, docFonts), edit.bold, edit.italic));
+    const full = fullFontFor(docFontOf(edit.family, docFonts), edit.text, edit.bold, edit.italic);
+    if (full) ids.add(full);
+    return [...ids];
 }
 
 export function customFontsFor(text: string, family: string | undefined, cls: FontInfo['fontClass'], bold: boolean, italic: boolean): string[] {
     const ids = new Set<string>(FaceRegistry.neededCustomFonts(text, cls, bold, italic));
-    if (family?.startsWith('noto-')) ids.add(notoId(family, bold, italic));
+    if (isCustomFamily(family)) ids.add(customFontId(family, bold, italic));
     return [...ids];
 }
 
 export function familyFace(faces: FaceRegistry, family: string, bold: boolean, italic: boolean, docFonts: FontInfo[]): Face | null {
     if (family.startsWith('doc:')) {
-        const f = docFonts.find((d) => d.ref?.toString() === family.slice(4));
+        const f = docFontOf(family, docFonts);
         return f ? faces.origFace(f) : null;
     }
     if (family === 'helvetica' || family === 'times' || family === 'courier') return faces.stdFace(family, bold, italic);
-    if (family.startsWith('noto-')) return faces.customFace(notoId(family, bold, italic));
+    if (isCustomFamily(family)) return faces.customFace(customFontId(family, bold, italic));
     return faces.stdFace('helvetica', bold, italic);
 }
 
@@ -217,7 +260,7 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
         if (oldIdx >= 0) {
             const u = units[oldIdx];
             if (u.join) {
-                toks.push({ t: 'space', style: u.style, line: u.line + 1 });
+                toks.push({ t: 'space', style: u.style, line: u.line + 1, join: true });
                 continue;
             }
             const srcLine = block.lines[u.line];
@@ -281,8 +324,13 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
         // Neutral chars (digits, punctuation) stay in the current run's font to avoid flip-flopping.
         if (current && /^[\s\d\p{P}\p{S}]$/u.test(ch) && current.supports(ch)) return current;
         if (pref?.supports(ch)) return pref;
-        const fb = faces.fallbackFor(ch, st.font.fontClass, ov.bold ?? st.font.bold, ov.italic ?? st.font.italic);
-        if (fb) substituted.set(ch, fb.label);
+        const bold = ov.bold ?? st.font.bold;
+        const italic = ov.italic ?? st.font.italic;
+        // Letters the PDF's copy of its typeface lacks come from the full typeface when Panna has it.
+        const own = (ov.family ? docFontOf(ov.family, docFonts) : st.font)?.webFamily ?? null;
+        const fb = faces.fallbackFor(ch, st.font.fontClass, bold, italic, own);
+        // The same typeface, only complete, is not a substitute worth warning about.
+        if (fb && !(own && fb === faces.customFace(customFontId(own, bold, italic)))) substituted.set(ch, fb.label);
         return fb;
     };
 
@@ -294,8 +342,10 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
     interface Word {
         glyphs: PieceGlyph[];
         width: number;
+        /** Total width of the spaces after the word. */
         spaceAfter: number;
-        spaceGlyph: PieceGlyph | null;
+        /** Each of those spaces (a run of them is kept as typed), with its glyph when there is one. */
+        spaces: { glyph: PieceGlyph | null; width: number }[];
         breakAfter: boolean;
         line: number;
         /** Original line this word begins, when it is that line's unchanged first word. */
@@ -309,7 +359,7 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
     const words: Word[] = [];
     let curWord: Word | null = null;
     const newWord = (line: number): Word => {
-        const w: Word = { glyphs: [], width: 0, spaceAfter: 0, spaceGlyph: null, breakAfter: false, line, startsLine: -1, fresh: false };
+        const w: Word = { glyphs: [], width: 0, spaceAfter: 0, spaces: [], breakAfter: false, line, startsLine: -1, fresh: false };
         words.push(w);
         return w;
     };
@@ -426,7 +476,10 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
     };
 
     const spaceGlyphFor = (st: TextStyle): PieceGlyph | null => {
-        const f = runFace?.space ? runFace : null;
+        // A font without a space glyph borrows one, so the PDF's text still has every space.
+        const f = runFace?.space
+            ? runFace
+            : faces.fallbackFor(' ', st.font.fontClass, ov.bold ?? st.font.bold, ov.italic ?? st.font.italic, (ov.family ? docFontOf(ov.family, docFonts) : st.font)?.webFamily);
         if (!f || !f.space) return null;
         const tf = st.fontSize * ov.scale;
         return {
@@ -471,18 +524,23 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
     const fromTok = toks.findIndex((t) => t.line >= k0);
     const layoutToks = fromTok < 0 ? [] : toks.slice(fromTok);
 
+    /** Word the spaces just laid out follow: a run of spaces all goes after it. */
+    let spaceHost: Word | null = null;
     for (const tok of layoutToks) {
         if (tok.t === 'space') {
             flushPending();
-            if (curWord) {
+            // Every space counts, as typed. Spaces at the start of a line indent it (an
+            // empty word carries them) — except a wrap's space, which has nothing to separate there.
+            const host = curWord ?? spaceHost ?? (tok.join ? null : newWord(tok.line));
+            if (host) {
                 const st = block.styles[tok.style];
                 const keepOriginal = tok.width !== undefined && !ov.family;
-                curWord.spaceAfter += keepOriginal ? tok.width! * ov.scale : spaceWidthFor(st);
-                if (!curWord.spaceGlyph) {
-                    const og = keepOriginal ? tok.glyphs?.[0] : undefined;
-                    curWord.spaceGlyph = og ? pieceFromGlyph(og, 0, 0) : spaceGlyphFor(st);
-                }
+                const width = keepOriginal ? tok.width! * ov.scale : spaceWidthFor(st);
+                const og = keepOriginal ? tok.glyphs?.[0] : undefined;
+                host.spaces.push({ glyph: og ? pieceFromGlyph(og, 0, 0) : spaceGlyphFor(st), width });
+                host.spaceAfter += width;
             }
+            spaceHost = host;
             curWord = null;
             prevAtom = null;
             continue;
@@ -492,11 +550,13 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
             if (!curWord) curWord = newWord(tok.line);
             curWord.breakAfter = true;
             curWord = null;
+            spaceHost = null;
             prevAtom = null;
             continue;
         }
         if (!curWord) {
             curWord = newWord(tok.line);
+            spaceHost = null;
             if (tok.t === 'atom' && tok.idx === firstWordAtom[tok.line]) curWord.startsLine = tok.line;
         }
         if (tok.t === 'char') {
@@ -533,7 +593,12 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
             for (const g of w.glyphs) out.push({ ...g, u: u + g.du + ov.du, v: v + g.dv + ov.dv });
             u += w.width;
             if (i < ws.length - 1) {
-                if (w.spaceGlyph) out.push({ ...w.spaceGlyph, u: u + ov.du, v: v + ov.dv });
+                // One glyph per space, so copying the text (or editing it again) gives back every space.
+                let su = u;
+                for (const s of w.spaces) {
+                    if (s.glyph) out.push({ ...s.glyph, u: su + ov.du, v: v + ov.dv });
+                    su += s.width;
+                }
                 u += w.spaceAfter + extra;
             }
         });
@@ -702,7 +767,10 @@ export function planAddText(edit: AddTextEdit, faces: FaceRegistry, docFonts: Fo
     const lin: [number, number, number, number] = [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle)];
     const fill = rgbColor(edit.color);
     const pref = familyFace(faces, edit.family, edit.bold, edit.italic, docFonts);
-    const cls = edit.family === 'times' || edit.family === 'noto-serif' ? 'serif' : edit.family === 'courier' ? 'mono' : 'sans';
+    const cls = familyClass(edit.family, docFonts);
+    // A font from the PDF: letters its copy lacks come from the full typeface when Panna has it.
+    const own = docFontOf(edit.family, docFonts)?.webFamily ?? null;
+    const full = own ? faces.customFace(customFontId(own, edit.bold, edit.italic)) : null;
     const missing: string[] = [];
     const substituted = new Map<string, string>();
     const [u0, v0] = toFrame(angle, edit.x, edit.y);
@@ -711,8 +779,8 @@ export function planAddText(edit: AddTextEdit, faces: FaceRegistry, docFonts: Fo
     const choose = (ch: string, current: Face | null): Face | null => {
         if (current && /^[\d\p{P}\p{S}]$/u.test(ch) && current.supports(ch)) return current;
         if (pref?.supports(ch)) return pref;
-        const fb = faces.fallbackFor(ch, cls, edit.bold, edit.italic);
-        if (fb) substituted.set(ch, fb.label);
+        const fb = faces.fallbackFor(ch, cls, edit.bold, edit.italic, own);
+        if (fb && fb !== full) substituted.set(ch, fb.label);
         return fb;
     };
 
@@ -742,18 +810,28 @@ export function planAddText(edit: AddTextEdit, faces: FaceRegistry, docFonts: Fo
         return w;
     };
 
-    const spaceW = (pref?.space?.xAdvance ?? 0.278) * size;
+    // A real space glyph in every gap, so the PDF's text keeps each space typed
+    // (borrowed from the fallback font when this one has none).
+    const spaceFace = pref?.space ? pref : faces.fallbackFor(' ', cls, edit.bold, edit.italic, own);
+    const spaceW = (spaceFace?.space?.xAdvance ?? 0.278) * size;
+    const space = spaceFace?.space
+        ? { face: spaceFace, bytes: spaceFace.space.bytes, adv: spaceFace.space.advance * size, tf: size, lin, hScale: 1, renderMode: 0, fill, stroke: BLACK, ascent: spaceFace.ascent, descent: spaceFace.descent }
+        : null;
     const lineGap = size * (edit.lineHeight || 1.25);
     const out: PlannedGlyph[] = [];
     let lineNo = 0;
     for (const para of edit.text.split('\n')) {
-        const words = para.split(/ +/).map(shapeWord);
+        // Split on each space: a run of spaces leaves empty words between them, so every space keeps its width.
+        const words = para.split(' ').map(shapeWord);
         const lines: W[][] = [];
         let cur: W[] = [];
         let curW = 0;
         for (const w of words) {
             const add = (cur.length ? spaceW : 0) + w.width;
             if (edit.width > 0 && cur.length && curW + add > edit.width + 0.01) {
+                // Spaces where the line wraps hang off its end (as in the text box), not start the next line.
+                if (!w.glyphs.length) continue;
+                while (cur.length > 1 && !cur[cur.length - 1].glyphs.length) cur.pop();
                 lines.push(cur);
                 cur = [];
                 curW = 0;
@@ -774,7 +852,10 @@ export function planAddText(edit: AddTextEdit, faces: FaceRegistry, docFonts: Fo
             ws.forEach((w, i) => {
                 w.glyphs.forEach((g, k) => out.push({ ...g, u: u + w.offs[k][0], v: v + w.offs[k][1] }));
                 u += w.width;
-                if (i < ws.length - 1) u += spaceW + extra;
+                if (i < ws.length - 1) {
+                    if (space) out.push({ ...space, u, v });
+                    u += spaceW + extra;
+                }
             });
             lineNo++;
         }
