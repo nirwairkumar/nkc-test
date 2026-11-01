@@ -1020,7 +1020,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             title,
             description,
             revision_notes: revisionNotes,
-            duration: timedTotal || time,
+            duration: timedTotal || (Number(time) >= 1 ? time : 30),
             is_public: isPublic,
             total_questions: totalQs,
             // If section mode, we can either save empty questions or flat map them.
@@ -1142,6 +1142,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (!title.trim()) {
             toast.error("Test Title is required");
             document.getElementById('test-title')?.focus();
+            return;
+        }
+
+        // An emptied "Time limit" box is NaN, which would save as no duration
+        // ("N/A mins" on the candidate's start page).
+        if (!timedTotal && !(Number(time) >= 1)) {
+            toast.error("Set a time limit of at least 1 minute");
+            document.querySelector<HTMLInputElement>('input[aria-label="Time limit in minutes"]')?.focus();
             return;
         }
 

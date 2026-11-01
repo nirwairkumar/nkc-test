@@ -162,6 +162,14 @@ def update_test(
 
         # Filter payload to only valid columns to avoid PostgREST column errors
         payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
+        # An emptied time-limit box arrives as null; keep the saved duration
+        # instead of wiping it (the start page would show "N/A mins").
+        if "duration" in payload:
+            try:
+                if not float(payload["duration"]) >= 1:
+                    payload.pop("duration")
+            except (TypeError, ValueError):
+                payload.pop("duration")
         externalize_images(db, payload)
 
         # Enforce private visibility for example template, user example, or cloned tests on update

@@ -20,7 +20,7 @@ import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { runBrowserDiagnosticsAndVacateStorage, SystemCheckResult } from '@/lib/browserCheck';
 import { sanitizeHtml, safeJsonLd } from '@/utils/sanitize';
-import { formatSectionMinutes, sectionMinutes } from '@/utils/sectionTiming';
+import { formatSectionMinutes, sectionMinutes, sectionMinutesTotal } from '@/utils/sectionTiming';
 
 const formatDateCustom = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -770,7 +770,7 @@ export default function TestIntroPage() {
                             <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
                                 <Clock className="h-4 w-4 text-amber-500 mb-1" />
                                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Duration</span>
-                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white mt-0.5 leading-none">{test.duration || "N/A"} mins</span>
+                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white mt-0.5 leading-none">{sectionMinutesTotal(test) || test.duration || questionCount || "N/A"} mins</span>
                             </div>
                             <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
                                 <Trophy className="h-4 w-4 text-emerald-500 mb-1" />

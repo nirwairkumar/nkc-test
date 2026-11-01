@@ -2098,7 +2098,7 @@ export default function TestPage() {
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-center space-y-1">
               <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Duration</span>
               <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                {test?.duration ? `${test.duration}m` : "N/A"}
+                {(sectionMinutesTotal(test) || test?.duration || test?.questions?.length) ? `${sectionMinutesTotal(test) || test?.duration || test?.questions?.length}m` : "N/A"}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-center space-y-1">
