@@ -3,7 +3,7 @@ import { Navigate, useParams, useNavigate, useOutletContext } from 'react-router
 import { resultViewOn } from '@/lib/resultView';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle, XCircle, MinusCircle, Timer } from 'lucide-react';
-import { fetchTestById, fetchSolutions } from '@/lib/testsApi';
+import { fetchTestById, fetchSolutions, fetchAdvancedAnalysis } from '@/lib/testsApi';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Badge } from '@/components/ui/badge';
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
@@ -40,6 +40,19 @@ export default function SolutionsViewPage() {
             try {
                 const { data: testD, error: testErr } = await fetchTestById(testId);
                 if (testErr) throw new Error(testErr);
+                // A candidate without a login gets the test with no correctAnswer (the server
+                // can't tell they submitted from a login). The analysis call carries their
+                // submit receipt and returns the key, so the correct option shows, not "undefined".
+                const qs: any[] = testD?.enable_section_mode && testD?.sections
+                    ? testD.sections.flatMap((s: any) => s.questions || [])
+                    : testD?.questions || [];
+                if (qs.some((q: any) => q?.correctAnswer == null)) {
+                    const { data: analysis } = await fetchAdvancedAnalysis(testD, answers);
+                    const key: Record<string, any> = analysis?.answerKey || {};
+                    for (const q of qs) {
+                        if (q && q.correctAnswer == null && key[String(q.id)] != null) q.correctAnswer = key[String(q.id)];
+                    }
+                }
                 setTest(testD);
 
                 const solRes = await fetchSolutions(testId);

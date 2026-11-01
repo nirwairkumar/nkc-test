@@ -191,6 +191,24 @@ export async function importTestJson(file: File) {
     }
 }
 
+// Proof that this browser submitted a test, for candidates without a login (most of them).
+// The server only returns the answer key to the creator, an admin, or someone who submitted.
+const RECEIPT_KEY = (testId: string) => `tz_attempt_receipt_${testId}`;
+
+export function rememberAttemptReceipt(testId: string | undefined, attemptId: string | undefined) {
+    if (!testId || !attemptId) return;
+    try { localStorage.setItem(RECEIPT_KEY(testId), attemptId); } catch { /* private mode */ }
+}
+
+function attemptProof(testId: string | undefined) {
+    if (!testId) return {};
+    let attempt_id: string | undefined;
+    let candidate_id: string | undefined;
+    try { attempt_id = localStorage.getItem(RECEIPT_KEY(testId)) || undefined; } catch { /* blocked */ }
+    try { candidate_id = sessionStorage.getItem(`anon_user_id_${testId}`) || undefined; } catch { /* blocked */ }
+    return { attempt_id, candidate_id };
+}
+
 export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>) {
     try {
         const response = await apiClient.post('results/analyze', {
@@ -199,7 +217,8 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, a
             question_times,
             // C4: the browser no longer receives correctAnswer, so the server reloads
             // the answer key by id and scores the attempt itself.
-            test_id: test?.id
+            test_id: test?.id,
+            ...attemptProof(test?.id),
         });
         return { data: response.data, error: null };
     } catch (error: any) {

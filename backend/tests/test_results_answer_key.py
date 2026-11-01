@@ -10,6 +10,10 @@ Two real failures this guards against:
 2. 12 Oct - 2 Nov 2026: the fix for (1) returned `answerKey` to anyone, signed in or
    not, given only the test's id or the slug from the exam link. A student mid-exam
    could read every answer. Nobody who has not submitted may get the key.
+
+3. 2 Nov 2026: the fix for (2) demanded a login, and most candidates take exams without
+   one, so they all got "Failed to process results". A candidate without a login proves
+   they submitted with the attempt id the save returned, or their per-tab candidate id.
 """
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -60,9 +64,18 @@ class _Query:
         return SimpleNamespace(data=hit)
 
 
-def analyze(monkeypatch, requester, settings=None, answers=None):
+GUEST = "9f1c2b7e-1111-4222-8333-444455556666"          # no login: the browser's random id
+GUEST_ATTEMPT = "a7e3d1c0-aaaa-4bbb-8ccc-ddddeeeeffff"  # what the save returned to that browser
+OTHER_TEST_ATTEMPT = "b0b0b0b0-1111-4222-8333-444455556666"
+
+
+def analyze(monkeypatch, requester, settings=None, answers=None, attempt_id=None, candidate_id=None):
     test = stored_test(settings)
-    attempts = [{"id": "attempt-1", "user_id": STUDENT, "test_id": TEST_ID}]
+    attempts = [
+        {"id": "attempt-1", "user_id": STUDENT, "test_id": TEST_ID},
+        {"id": GUEST_ATTEMPT, "user_id": GUEST, "test_id": TEST_ID},
+        {"id": OTHER_TEST_ATTEMPT, "user_id": STRANGER, "test_id": "some-other-test"},
+    ]
     monkeypatch.setattr(results, "_load_authoritative_test", lambda _id: test)
     monkeypatch.setattr(results, "get_optional_user_id", lambda _req: requester)
     monkeypatch.setattr(results, "is_admin_user", lambda uid, *_a: uid == ADMIN)
@@ -70,7 +83,7 @@ def analyze(monkeypatch, requester, settings=None, answers=None):
     # The browser's copy, as the exam page holds it: no correctAnswer anywhere.
     browser_copy = {"id": TEST_ID, "questions": [{"id": int(i), "type": "single"} for i in KEY]}
     payload = results.AnalyzeRequest(test=browser_copy, answers=answers or {"1": "D", "2": "A"},
-                                     test_id=TEST_ID)
+                                     test_id=TEST_ID, attempt_id=attempt_id, candidate_id=candidate_id)
     return results.analyze_test_results(payload, SimpleNamespace(headers={}))
 
 
@@ -82,6 +95,13 @@ def test_submitted_student_gets_the_key_for_every_question(monkeypatch):
     assert out["correctCount"] == 1 and out["wrongCount"] == 1  # scored against the stored key
 
 
+def test_student_without_login_gets_the_key_with_their_submit_receipt(monkeypatch):
+    # 2 Nov 2026: requiring a login refused every candidate who took the exam without one
+    # ("Failed to process results — Sign in to see this result"). Most candidates have no login.
+    assert analyze(monkeypatch, None, attempt_id=GUEST_ATTEMPT)["answerKey"] == KEY
+    assert analyze(monkeypatch, None, candidate_id=GUEST)["answerKey"] == KEY
+
+
 def test_creator_and_admin_get_the_key_without_an_attempt(monkeypatch):
     assert analyze(monkeypatch, CREATOR)["answerKey"] == KEY
     assert analyze(monkeypatch, ADMIN)["answerKey"] == KEY
@@ -89,10 +109,23 @@ def test_creator_and_admin_get_the_key_without_an_attempt(monkeypatch):
 
 # ── (2) nobody else gets it ──────────────────────────────────────────────────
 
-def test_not_signed_in_gets_401_and_no_key(monkeypatch):
+def test_no_login_and_no_receipt_gets_403_and_no_key(monkeypatch):
+    # 403, not 401: a 401 would send a login-less candidate into the app's login recovery.
     with pytest.raises(HTTPException) as e:
         analyze(monkeypatch, None)
-    assert e.value.status_code == 401
+    assert e.value.status_code == 403
+
+
+@pytest.mark.parametrize("attempt_id,candidate_id", [
+    (OTHER_TEST_ATTEMPT, None),                       # a real receipt, but for another test
+    ("00000000-0000-4000-8000-000000000000", None),   # made up
+    (None, "00000000-0000-4000-8000-000000000000"),   # made-up candidate id
+    ("indian-regulatory-fr-pcx7ggfj", "not-a-uuid"),  # junk
+])
+def test_a_receipt_that_is_not_for_this_test_gets_403(monkeypatch, attempt_id, candidate_id):
+    with pytest.raises(HTTPException) as e:
+        analyze(monkeypatch, None, attempt_id=attempt_id, candidate_id=candidate_id)
+    assert e.value.status_code == 403
 
 
 def test_signed_in_without_submitting_gets_403_and_no_key(monkeypatch):

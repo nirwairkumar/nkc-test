@@ -81,6 +81,10 @@ class AnalyzeRequest(BaseModel):
     answers: dict
     question_times: Optional[dict] = None
     test_id: Optional[str] = None
+    # Proof of a submitted attempt for candidates without a login: the attempt id the
+    # save returned, or the per-tab candidate id the attempt was saved under.
+    attempt_id: Optional[str] = None
+    candidate_id: Optional[str] = None
 
 def parse_mark(value: Any, default_val: float = 0.0) -> float:
     if isinstance(value, (int, float)):
@@ -118,22 +122,45 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
         return None
 
 
-def _may_score_against_stored_key(stored_test: Dict[str, Any], requester: Optional[str]) -> bool:
+def _is_uuid(value: Optional[str]) -> bool:
+    import uuid as _uuid
+    try:
+        _uuid.UUID(str(value))
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def _may_score_against_stored_key(stored_test: Dict[str, Any], requester: Optional[str],
+                                  attempt_id: Optional[str] = None,
+                                  candidate_id: Optional[str] = None) -> bool:
     """Scoring against the stored key is an answer oracle: send any answers, read back which
     are right (and, since 2026-10-12, the whole `answerKey`). Only the creator, an admin, or
     someone who has already submitted this test may do it. A student mid-exam has no
-    submitted attempt yet, so the exam link's slug alone no longer opens the key."""
-    if not requester:
-        return False
-    if requester == stored_test.get("created_by") or is_admin_user(requester):
+    submitted attempt yet, so the exam link's slug alone does not open the key.
+
+    Most candidates take exams WITHOUT a login (the browser makes a random id and the save
+    creates a hidden guest account), so "submitted" is proven by any one of: the signed-in
+    user's attempt, the attempt id the save returned, or the candidate id it was saved under."""
+    if requester and (requester == stored_test.get("created_by") or is_admin_user(requester)):
         return True
-    try:
-        attempt = supabase.table("user_tests").select("id") \
-            .eq("user_id", requester).eq("test_id", stored_test.get("id")).limit(1).execute()
-        return bool(attempt.data)
-    except Exception as e:
-        logger.error(f"analyze: could not check attempt for {stored_test.get('id')}: {e}")
-        return False
+    test_id = stored_test.get("id")
+    checks = []
+    if requester:
+        checks.append(("user_id", requester))
+    if _is_uuid(attempt_id):
+        checks.append(("id", attempt_id))
+    if _is_uuid(candidate_id):
+        checks.append(("user_id", candidate_id))
+    for column, value in checks:
+        try:
+            attempt = supabase.table("user_tests").select("id") \
+                .eq(column, value).eq("test_id", test_id).limit(1).execute()
+            if attempt.data:
+                return True
+        except Exception as e:
+            logger.error(f"analyze: could not check attempt for {test_id}: {e}")
+    return False
 
 
 @router.post("/analyze")
@@ -143,11 +170,10 @@ def analyze_test_results(payload: AnalyzeRequest, request: Request):
     # still pass a full test object (e.g. the creator analysis view, which is allowed it).
     stored_test = _load_authoritative_test(payload.test_id or (payload.test or {}).get("id"))
     requester = get_optional_user_id(request)
-    if stored_test and not _may_score_against_stored_key(stored_test, requester):
-        # 401 lets the app refresh an expired login and retry; 403 means signed in but
-        # this person has not submitted the test.
-        if not requester:
-            raise HTTPException(status_code=401, detail="Sign in to see this result.")
+    if stored_test and not _may_score_against_stored_key(
+            stored_test, requester, payload.attempt_id, payload.candidate_id):
+        # 403, never 401: a 401 sends the app into login recovery, and most candidates
+        # have no login at all.
         raise HTTPException(status_code=403, detail="Submit the test to see its result.")
     if stored_test and (stored_test.get("questions") or stored_test.get("sections")):
         test = {**(payload.test or {}), **{k: v for k, v in stored_test.items() if v is not None}}

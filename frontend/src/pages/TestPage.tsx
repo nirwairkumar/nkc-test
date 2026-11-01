@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { fetchTestById, Test } from '@/lib/testsApi';
+import { fetchTestById, Test, rememberAttemptReceipt } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
 import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1602,6 +1602,9 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
+      // Keep the receipt: a candidate without a login proves with it that they submitted,
+      // which is what lets the result page show them the correct answers.
+      rememberAttemptReceipt(test.id, savedAttempt?.id);
       clearLocalTestSession(effectiveUserId, id, test.id);
       // Mark both route ID (slug/custom_id) and test UUID as submitted
       try {
