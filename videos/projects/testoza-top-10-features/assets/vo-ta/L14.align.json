@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.301,
+  "score": 0.556
+ },
+ {
+  "w": "five:",
+  "r": "five",
+  "start": 0.361,
+  "end": 1.063,
+  "score": 0.174
+ },
+ {
+  "w": "ஒரே",
+  "r": "oree",
+  "start": 1.103,
+  "end": 1.283,
+  "score": 0.818
+ },
+ {
+  "w": "click-ல",
+  "r": "clickla",
+  "start": 1.323,
+  "end": 1.664,
+  "score": 0.651
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 1.764,
+  "end": 2.366,
+  "score": 0.51
+ },
+ {
+  "w": "anti-cheating",
+  "r": "anticheating",
+  "start": 2.406,
+  "end": 3.068,
+  "score": 0.578
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 3.128,
+  "end": 3.429,
+  "score": 0.739
+ },
+ {
+  "w": "room-க்குள்ள.",
+  "r": "roomkkulla",
+  "start": 3.509,
+  "end": 3.91,
+  "score": 0.674
+ }
+]

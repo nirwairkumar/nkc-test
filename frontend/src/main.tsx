@@ -2,9 +2,14 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { cleanupStorageQuota } from '@/utils/safeStorage'
+import { finishSignInPopup } from '@/utils/signInPopup'
+import { noteCandidateEntry } from '@/lib/candidateExit'
 
 // Run storage cleanup to purge legacy transient items from localStorage
 cleanupStorageQuota();
+
+// Opened through a test link or join code? Back then stays inside the exam (CandidateBackGuard).
+noteCandidateEntry();
 
 // WebMCP tool registration for Agentic Browsing (Lighthouse Audit compatibility)
 try {
@@ -48,8 +53,8 @@ try {
         required: ['query']
       }
     }, async (params: any) => {
-      window.location.href = `/dashboard?search=${encodeURIComponent(params.query)}${params.category ? `&category=${encodeURIComponent(params.category)}` : ''}`;
-      return { status: 'success', message: `Navigating to dashboard with query: ${params.query}` };
+      window.location.href = `/more-tests?q=${encodeURIComponent(params.query)}${params.category ? `&category=${encodeURIComponent(params.category)}` : ''}`;
+      return { status: 'success', message: `Navigating to test search with query: ${params.query}` };
     });
 
     // 3. View Pricing/Premium Plans tool
@@ -83,4 +88,7 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+const renderApp = () => createRoot(document.getElementById("root")!).render(<App />);
+
+// In the Google sign-in popup: hand the login back and close, without loading the app.
+if (!finishSignInPopup(renderApp)) renderApp();

@@ -7,6 +7,10 @@ from app.routers.tests.schemas import *
 import uuid
 from app.utils.google_indexing import notify_test_created, notify_test_updated
 from app.routers.tests.cache_config import bust_test_cache
+from app.services.question_images import externalize_images
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -61,7 +65,7 @@ VALID_TEST_COLUMNS = {
 
 
 @router.post("/")
-async def create_test(
+def create_test(
     payload: CreateTestRequest,
     request: Request,
     background_tasks: BackgroundTasks,
@@ -72,7 +76,9 @@ async def create_test(
         data = payload.dict(exclude_unset=True)
         # Filter to valid DB columns to prevent column not found errors
         data = {k: v for k, v in data.items() if k in VALID_TEST_COLUMNS}
-        
+        # Pasted pictures go to Storage; the row keeps only their URLs.
+        externalize_images(db, data)
+
         # Enforce private visibility for example template, user example, or cloned tests
         sett = data.get("settings") or {}
         if sett.get("is_example_template") == True or sett.get("is_user_example") == True or data.get("is_cloned") == True:
@@ -85,9 +91,22 @@ async def create_test(
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                try:
+                    from app.utils.notifications import send_notification
+                    test_title = result.get("title", "Untitled Test")
+                    send_notification(
+                        user_id=result.get("created_by"),
+                        title="Test Created",
+                        message=f'Your test "{test_title}" was created successfully.',
+                        link=f'/edit-test/{result.get("id")}',
+                        custom_test_id=result.get("id"),
+                        db=db
+                    )
+                except Exception as ne:
+                    logger.error(f"Failed to send test creation notification: {ne}")
             return result
         except Exception as e:
-            print(f"Full insert failed: {e}. Retrying with legacy fields only.")
+            logger.error(f"Full insert failed: {e}. Retrying with legacy fields only.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "is_public", "visibility", "revision_notes", 
@@ -99,21 +118,34 @@ async def create_test(
             }
             safe_data = {k: v for k, v in data.items() if k in legacy_keys}
             response = db.table("tests").insert(safe_data).execute()
-            print("Legacy insert successful.")
+            logger.debug("Legacy insert successful.")
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                try:
+                    from app.utils.notifications import send_notification
+                    test_title = result.get("title", "Untitled Test")
+                    send_notification(
+                        user_id=result.get("created_by"),
+                        title="Test Created",
+                        message=f'Your test "{test_title}" was created successfully.',
+                        link=f'/edit-test/{result.get("id")}',
+                        custom_test_id=result.get("id"),
+                        db=db
+                    )
+                except Exception as ne:
+                    logger.error(f"Failed to send test creation notification: {ne}")
             return result
             
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error creating test: {e}")
+        logger.error(f"Error creating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{test_id}")
-async def update_test(
+def update_test(
     test_id: str,
     payload: Dict[str, Any],
     request: Request,
@@ -130,6 +162,7 @@ async def update_test(
 
         # Filter payload to only valid columns to avoid PostgREST column errors
         payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
+        externalize_images(db, payload)
 
         # Enforce private visibility for example template, user example, or cloned tests on update
         try:
@@ -141,21 +174,28 @@ async def update_test(
                     payload["is_public"] = False
                     payload["visibility"] = "private"
         except Exception as e:
-            print(f"Warning: could not verify test example status on update: {e}")
+            logger.error(f"Warning: could not verify test example status on update: {e}")
 
-        # Check if we need to update total_max_marks
+        # Check if we need to update total_max_marks and total_questions
         needs_marks_calc = any(k in payload for k in ["questions", "sections", "enable_section_mode"])
         if needs_marks_calc:
             try:
                 # Do not select marks_per_question as it is not a database column
-                existing = db.table("tests").select("questions, sections, enable_section_mode, settings").eq("id", test_id).single().execute()
+                existing = db.table("tests").select("questions, sections, enable_section_mode, settings, total_questions").eq("id", test_id).single().execute()
                 if existing.data:
                     merged = {**existing.data, **payload}
                     from app.utils.attempt_control import calculate_test_max_marks
                     calc = calculate_test_max_marks(merged)
                     payload["total_max_marks"] = calc.get("total_max_marks", 0)
+                    if "questions" in payload or "sections" in payload:
+                        secs = merged.get("sections")
+                        if merged.get("enable_section_mode") and secs and isinstance(secs, list):
+                            payload["total_questions"] = sum(len(s.get("questions") or []) for s in secs)
+                        else:
+                            qs = merged.get("questions") or []
+                            payload["total_questions"] = len(qs) if isinstance(qs, list) else 0
             except Exception as e:
-                print(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
+                logger.error(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
         
         # 1. Update Test
         try:
@@ -163,10 +203,34 @@ async def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
+                
+                # Check if conduct exam transitioned from active/enabled to finished/disabled
+                try:
+                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
+                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
+                    new_sett = payload.get("settings") or {}
+                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
+                    
+                    if old_conduct and not new_conduct:
+                        from app.utils.notifications import send_notification
+                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
+                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
+                        test_title = response.data[0].get("title", "Exam")
+                        send_notification(
+                            user_id=owner_id,
+                            title="Exam Concluded",
+                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
+                            link="/my-tests",
+                            custom_test_id=test_id,
+                            db=db
+                        )
+                except Exception as ne:
+                    logger.error(f"Failed to send exam concluded notification: {ne}")
+
                 return response.data[0]
             return None
         except Exception as e:
-            print(f"Full update failed: {e}. Retrying with legacy fields.")
+            logger.error(f"Full update failed: {e}. Retrying with legacy fields.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "is_public", "visibility", "revision_notes", 
@@ -181,18 +245,41 @@ async def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
+                
+                try:
+                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
+                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
+                    new_sett = safe_payload.get("settings") or {}
+                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
+                    
+                    if old_conduct and not new_conduct:
+                        from app.utils.notifications import send_notification
+                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
+                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
+                        test_title = response.data[0].get("title", "Exam")
+                        send_notification(
+                            user_id=owner_id,
+                            title="Exam Concluded",
+                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
+                            link="/my-tests",
+                            custom_test_id=test_id,
+                            db=db
+                        )
+                except Exception as ne:
+                    logger.error(f"Failed to send exam concluded notification: {ne}")
+
                 return response.data[0]
             return None
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating test: {e}")
+        logger.error(f"Error updating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{test_id}")
-async def delete_test(
+def delete_test(
     test_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -211,7 +298,7 @@ async def delete_test(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting test: {e}")
+        logger.error(f"Error deleting test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -241,7 +328,8 @@ async def import_json(
             mapped_q["question"] = q.get("question") or q.get("questionText", "")
             mapped_q["typingMode"] = "en"
             mapped_q["marks"] = str(q.get("marks", 4))
-            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 1))
+            # Never stamp a penalty the teacher did not ask for.
+            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 0))
             mapped_q["passageContent"] = q.get("passageContent", "")
             mapped_q["groupId"] = q.get("groupId", "")
             mapped_q["image"] = q.get("image", None)
@@ -323,7 +411,7 @@ async def import_json(
 
 
 @router.post("/{test_id}/clone")
-async def clone_test(
+def clone_test(
     test_id: str,
     payload: CloneTestRequest,
     request: Request,
@@ -414,14 +502,39 @@ async def clone_test(
                 new_tc_rows = [{"test_id": clone_id, "category_id": tc["category_id"]} for tc in tc_res.data]
                 db.table("test_categories").insert(new_tc_rows).execute()
         except Exception as cat_err:
-            print(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
+            logger.error(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
 
-        print(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
+        logger.debug(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
+
+        # Send notifications for test cloning
+        try:
+            from app.utils.notifications import send_notification
+            orig_author = src.get("created_by")
+            if orig_author:
+                send_notification(
+                    user_id=orig_author,
+                    title="Test Cloned",
+                    message=f'Another creator cloned your public test "{src.get("title", "Untitled")}".',
+                    link="/my-tests",
+                    custom_test_id=test_id,
+                    db=db
+                )
+            send_notification(
+                user_id=payload.cloner_id,
+                title="Test Cloned",
+                message=f'Successfully cloned "{src.get("title", "Untitled")}" into your workspace.',
+                link=f'/edit-test/{clone_id}',
+                custom_test_id=clone_id,
+                db=db
+            )
+        except Exception as ne:
+            logger.error(f"Failed to send clone notifications: {ne}")
+
         return cloned_test
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error cloning test: {e}")
+        logger.error(f"Error cloning test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

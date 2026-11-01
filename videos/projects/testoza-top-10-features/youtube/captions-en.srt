@@ -1,0 +1,439 @@
+1
+00:00:00,350 --> 00:00:03,070
+A question paper becomes an online test.
+
+2
+00:00:03,070 --> 00:00:05,310
+Equations, typed in seconds.
+
+3
+00:00:05,310 --> 00:00:07,630
+Students join from any phone.
+
+4
+00:00:07,630 --> 00:00:09,470
+Cheating gets caught.
+
+5
+00:00:09,470 --> 00:00:12,430
+And every result lands, ranked.
+
+6
+00:00:12,430 --> 00:00:16,190
+This is TestoZa — and these are its top ten features,
+
+7
+00:00:16,190 --> 00:00:18,605
+with exactly how to use each one.
+
+8
+00:00:19,705 --> 00:00:22,220
+Number one: Generate with AI.
+
+9
+00:00:22,870 --> 00:00:26,150
+Got your question paper as a PDF, or just photos?
+
+10
+00:00:26,150 --> 00:00:28,790
+Open Generate with AI, choose the file —
+
+11
+00:00:28,790 --> 00:00:31,510
+a three-page PDF, answer key included —
+
+12
+00:00:31,510 --> 00:00:33,459
+and tap Extract Questions.
+
+13
+00:00:33,559 --> 00:00:34,439
+Now watch.
+
+14
+00:00:34,439 --> 00:00:37,879
+The AI reads every single page, and the questions
+
+15
+00:00:37,879 --> 00:00:40,679
+start arriving one by one — options,
+
+16
+00:00:40,679 --> 00:00:42,519
+maths, everything.
+
+17
+00:00:42,519 --> 00:00:45,421
+In about half a minute, all twelve are done.
+
+18
+00:00:45,521 --> 00:00:48,081
+It even read the answer key on the last page,
+
+19
+00:00:48,081 --> 00:00:50,561
+so every answer is already marked.
+
+20
+00:00:50,561 --> 00:00:53,488
+Have a quick look, save, and your paper is now a test.
+
+21
+00:00:54,053 --> 00:00:57,531
+Number two: maths and science, typed properly.
+
+22
+00:00:58,341 --> 00:01:00,901
+Open the test in the builder — all twelve questions
+
+23
+00:01:00,901 --> 00:01:01,941
+are already here.
+
+24
+00:01:01,941 --> 00:01:04,741
+Add a question, and type the words as usual.
+
+25
+00:01:04,741 --> 00:01:07,381
+For the formula, open Maths and symbols —
+
+26
+00:01:07,381 --> 00:01:08,893
+this is Sy Pad.
+
+27
+00:01:09,073 --> 00:01:13,153
+Type h equals u t minus, tap the fraction key,
+
+28
+00:01:13,153 --> 00:01:17,793
+one over two, then the power key, for t squared.
+
+29
+00:01:17,793 --> 00:01:20,513
+A proper formula — no code to learn.
+
+30
+00:01:20,513 --> 00:01:23,533
+Insert, and it sits right inside the question.
+
+31
+00:01:24,098 --> 00:01:27,173
+Number three: type in Hindi — or any of a hundred
+
+32
+00:01:27,173 --> 00:01:28,643
+and nineteen languages.
+
+33
+00:01:29,324 --> 00:01:31,643
+Tap the language switch, pick Hindi,
+
+34
+00:01:31,643 --> 00:01:33,643
+and just type in English letters.
+
+35
+00:01:33,643 --> 00:01:37,084
+Every word turns into Hindi the moment you hit space
+
+36
+00:01:37,084 --> 00:01:38,843
+no Hindi keyboard needed.
+
+37
+00:01:38,843 --> 00:01:40,923
+Now the question is in both languages,
+
+38
+00:01:40,923 --> 00:01:43,039
+and the options go in just like before.
+
+39
+00:01:43,577 --> 00:01:46,863
+Number four: real exam patterns.
+
+40
+00:01:47,673 --> 00:01:50,313
+Plus four, minus one, on every question.
+
+41
+00:01:50,313 --> 00:01:52,553
+Need JEE Advanced style?
+
+42
+00:01:52,553 --> 00:01:56,233
+Make it multiple correct, choose JEE Advanced partial
+
+43
+00:01:56,233 --> 00:01:58,309
+marks, and mark the right answer.
+
+44
+00:01:58,409 --> 00:02:01,609
+Now split the paper into sections, and give every
+
+45
+00:02:01,609 --> 00:02:04,809
+section its own timer, the way SSC does.
+
+46
+00:02:04,809 --> 00:02:08,569
+Split it anywhere: questions seven to thirteen become
+
+47
+00:02:08,569 --> 00:02:09,609
+Section B.
+
+48
+00:02:09,609 --> 00:02:11,769
+Ten minutes here, ten minutes there…
+
+49
+00:02:11,769 --> 00:02:12,552
+save.
+
+50
+00:02:13,096 --> 00:02:15,576
+Number five: go live in one click —
+
+51
+00:02:15,576 --> 00:02:17,700
+inside an anti-cheating exam room.
+
+52
+00:02:18,380 --> 00:02:21,420
+When the test is ready, tap Conduct exam.
+
+53
+00:02:21,420 --> 00:02:23,500
+You get a secure exam link.
+
+54
+00:02:23,500 --> 00:02:26,224
+Start conducting, and the exam is live.
+
+55
+00:02:26,404 --> 00:02:28,484
+TestoZa even tells you the next step:
+
+56
+00:02:28,484 --> 00:02:30,004
+set up the exam room.
+
+57
+00:02:30,004 --> 00:02:31,364
+Force full screen.
+
+58
+00:02:31,364 --> 00:02:34,084
+Catch every tab or app switch, set a limit —
+
+59
+00:02:34,084 --> 00:02:36,964
+say three warnings — and the test submits itself.
+
+60
+00:02:36,964 --> 00:02:40,071
+Block copy-paste, right-click, and the back button.
+
+61
+00:02:40,171 --> 00:02:43,451
+On the Results tab, you decide what candidates see
+
+62
+00:02:43,451 --> 00:02:44,731
+after the exam.
+
+63
+00:02:44,731 --> 00:02:48,011
+And shuffle the questions, so no two candidates get
+
+64
+00:02:48,011 --> 00:02:49,131
+the same order.
+
+65
+00:02:49,131 --> 00:02:49,892
+Save.
+
+66
+00:02:50,513 --> 00:02:52,776
+Number six: share it anywhere.
+
+67
+00:02:53,456 --> 00:02:56,016
+Next tip: send it to your candidates.
+
+68
+00:02:56,016 --> 00:02:58,416
+Copy the link, or share it straight to your class
+
+69
+00:02:58,416 --> 00:02:59,456
+WhatsApp group.
+
+70
+00:02:59,456 --> 00:03:00,656
+No phones in class?
+
+71
+00:03:00,656 --> 00:03:01,936
+Get a join code.
+
+72
+00:03:01,936 --> 00:03:02,816
+Six digits.
+
+73
+00:03:02,816 --> 00:03:05,126
+Write it on the board, and students type it at testoza
+
+74
+00:03:05,126 --> 00:03:07,255
+dot com slash join.
+
+75
+00:03:07,810 --> 00:03:10,541
+Number seven: collect the details you need.
+
+76
+00:03:11,271 --> 00:03:12,951
+Name is asked by default.
+
+77
+00:03:12,951 --> 00:03:14,951
+Add Roll Number, or anything else —
+
+78
+00:03:14,951 --> 00:03:16,951
+batch, school, phone.
+
+79
+00:03:16,951 --> 00:03:19,170
+Candidates fill it in before they start.
+
+80
+00:03:19,708 --> 00:03:22,508
+Number eight: an exam room on any phone.
+
+81
+00:03:22,508 --> 00:03:24,266
+No app, no sign-up.
+
+82
+00:03:24,946 --> 00:03:27,826
+Here's a student on her phone, at testoza dot com
+
+83
+00:03:27,826 --> 00:03:28,866
+slash join.
+
+84
+00:03:28,866 --> 00:03:31,986
+She types the six digits, and her exam opens.
+
+85
+00:03:31,986 --> 00:03:34,263
+Name, roll number, start.
+
+86
+00:03:34,363 --> 00:03:37,083
+Full screen, clean, and easy to read.
+
+87
+00:03:37,083 --> 00:03:39,720
+Tap an answer, save and next.
+
+88
+00:03:40,200 --> 00:03:43,160
+Now she switches to another app — and the exam catches
+
+89
+00:03:43,160 --> 00:03:43,560
+it.
+
+90
+00:03:43,560 --> 00:03:45,160
+Warning one of three.
+
+91
+00:03:45,160 --> 00:03:46,597
+Straight back to the paper.
+
+92
+00:03:46,697 --> 00:03:48,537
+Let's fast-forward to the end.
+
+93
+00:03:48,537 --> 00:03:50,110
+Submit, and confirm.
+
+94
+00:03:50,666 --> 00:03:53,582
+Number nine: watch the exam live.
+
+95
+00:03:54,262 --> 00:03:57,222
+Back on your dashboard: thirty students writing right
+
+96
+00:03:57,222 --> 00:03:59,302
+now, two already submitted.
+
+97
+00:03:59,302 --> 00:04:02,502
+Open Results — started, writing, submitted,
+
+98
+00:04:02,502 --> 00:04:03,302
+dropped.
+
+99
+00:04:03,302 --> 00:04:06,742
+Tap any tile to see exactly who, and how far they've
+
+100
+00:04:06,742 --> 00:04:07,209
+got.
+
+101
+00:04:07,748 --> 00:04:11,058
+And number ten: results, the moment they submit.
+
+102
+00:04:11,738 --> 00:04:14,858
+She sees her score instantly — seventy-five percent
+
+103
+00:04:14,858 --> 00:04:17,137
+with the solution key, if you allow it.
+
+104
+00:04:17,872 --> 00:04:20,752
+And when everyone's done, all thirty-two results are
+
+105
+00:04:20,752 --> 00:04:21,232
+in.
+
+106
+00:04:21,232 --> 00:04:23,632
+Turn on ranks, scroll the whole batch,
+
+107
+00:04:23,632 --> 00:04:26,338
+and download everything to Excel, in one click.
+
+108
+00:04:27,192 --> 00:04:30,392
+That's ten features — from a question paper to ranked
+
+109
+00:04:30,392 --> 00:04:32,472
+results, all in one place.
+
+110
+00:04:32,472 --> 00:04:35,790
+Try it at testoza dot com, and subscribe for more.

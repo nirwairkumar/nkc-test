@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.34,
+  "end": 0.521,
+  "score": 0.753
+ },
+ {
+  "w": "screen,",
+  "r": "screen",
+  "start": 0.621,
+  "end": 0.941,
+  "score": 0.824
+ },
+ {
+  "w": "clean,",
+  "r": "clean",
+  "start": 1.302,
+  "end": 1.622,
+  "score": 0.597
+ },
+ {
+  "w": "ಓದೋಕೆ",
+  "r": "oodooke",
+  "start": 2.103,
+  "end": 2.483,
+  "score": 0.702
+ },
+ {
+  "w": "easy.",
+  "r": "easy",
+  "start": 2.844,
+  "end": 3.104,
+  "score": 0.309
+ },
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 3.845,
+  "end": 4.186,
+  "score": 0.667
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 4.266,
+  "end": 4.446,
+  "score": 0.974
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 4.506,
+  "end": 4.727,
+  "score": 0.698
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 5.087,
+  "end": 5.307,
+  "score": 0.453
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 5.307,
+  "end": 5.387,
+  "score": 0.234
+ },
+ {
+  "w": "next.",
+  "r": "next",
+  "start": 5.447,
+  "end": 5.768,
+  "score": 0.733
+ }
+]

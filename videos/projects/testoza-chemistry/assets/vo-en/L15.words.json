@@ -1,0 +1,206 @@
+[
+  {
+    "id": "w0",
+    "text": "Insert",
+    "start": 0,
+    "end": 0.72
+  },
+  {
+    "id": "w1",
+    "text": "and",
+    "start": 0.8,
+    "end": 1.04
+  },
+  {
+    "id": "w2",
+    "text": "there",
+    "start": 1.04,
+    "end": 1.36
+  },
+  {
+    "id": "w3",
+    "text": "it",
+    "start": 1.36,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "is",
+    "start": 1.52,
+    "end": 1.76
+  },
+  {
+    "id": "w5",
+    "text": "a",
+    "start": 2,
+    "end": 2.16
+  },
+  {
+    "id": "w6",
+    "text": "clean",
+    "start": 2.16,
+    "end": 2.64
+  },
+  {
+    "id": "w7",
+    "text": "two",
+    "start": 2.64,
+    "end": 2.88
+  },
+  {
+    "id": "w8",
+    "text": "column",
+    "start": 2.96,
+    "end": 3.36
+  },
+  {
+    "id": "w9",
+    "text": "table",
+    "start": 3.36,
+    "end": 3.92
+  },
+  {
+    "id": "w10",
+    "text": "right",
+    "start": 3.92,
+    "end": 4.24
+  },
+  {
+    "id": "w11",
+    "text": "inside",
+    "start": 4.24,
+    "end": 4.64
+  },
+  {
+    "id": "w12",
+    "text": "the",
+    "start": 4.64,
+    "end": 4.8
+  },
+  {
+    "id": "w13",
+    "text": "question",
+    "start": 4.8,
+    "end": 5.28
+  },
+  {
+    "id": "w14",
+    "text": "just",
+    "start": 5.44,
+    "end": 5.68
+  },
+  {
+    "id": "w15",
+    "text": "like",
+    "start": 5.68,
+    "end": 5.92
+  },
+  {
+    "id": "w16",
+    "text": "the",
+    "start": 5.92,
+    "end": 6.08
+  },
+  {
+    "id": "w17",
+    "text": "paper.",
+    "start": 6.08,
+    "end": 6.72
+  },
+  {
+    "id": "w18",
+    "text": "Type",
+    "start": 6.72,
+    "end": 7.12
+  },
+  {
+    "id": "w19",
+    "text": "the",
+    "start": 7.12,
+    "end": 7.28
+  },
+  {
+    "id": "w20",
+    "text": "four",
+    "start": 7.28,
+    "end": 7.52
+  },
+  {
+    "id": "w21",
+    "text": "options",
+    "start": 7.52,
+    "end": 8
+  },
+  {
+    "id": "w22",
+    "text": "A",
+    "start": 8.24,
+    "end": 8.56
+  },
+  {
+    "id": "w23",
+    "text": "two,",
+    "start": 8.64,
+    "end": 9.12
+  },
+  {
+    "id": "w24",
+    "text": "B",
+    "start": 9.12,
+    "end": 9.44
+  },
+  {
+    "id": "w25",
+    "text": "one",
+    "start": 9.52,
+    "end": 9.68
+  },
+  {
+    "id": "w26",
+    "text": "and",
+    "start": 9.84,
+    "end": 10.08
+  },
+  {
+    "id": "w27",
+    "text": "so",
+    "start": 10.08,
+    "end": 10.32
+  },
+  {
+    "id": "w28",
+    "text": "on,",
+    "start": 10.32,
+    "end": 10.64
+  },
+  {
+    "id": "w29",
+    "text": "and",
+    "start": 10.64,
+    "end": 10.88
+  },
+  {
+    "id": "w30",
+    "text": "B",
+    "start": 10.88,
+    "end": 11.2
+  },
+  {
+    "id": "w31",
+    "text": "is",
+    "start": 11.2,
+    "end": 11.28
+  },
+  {
+    "id": "w32",
+    "text": "the",
+    "start": 11.44,
+    "end": 11.52
+  },
+  {
+    "id": "w33",
+    "text": "answer.",
+    "start": 11.52,
+    "end": 11.92
+  }
+]

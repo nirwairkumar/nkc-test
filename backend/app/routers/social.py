@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.core.database import get_db
+from app.core.auth import verify_auth_token, verify_owner_or_admin
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -21,14 +25,12 @@ class NotificationCreate(BaseModel):
     sender_name: Optional[str] = None
     sender_email: Optional[str] = None
 
-class VoteRequest(BaseModel):
-    user_id: str
-    vote_type: int  # 1 for upvote, -1 for downvote
-
 # --- Follows ---
 
 @router.post("/follows/follow")
-async def follow_user(payload: FollowRequest, db: Client = Depends(get_db)):
+def follow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
+    # C5: was unguarded — anyone could make any user follow anyone.
+    verify_owner_or_admin(payload.follower_id, request, db)
     try:
         response = db.table("follows").insert(payload.dict()).execute()
         return response.data
@@ -36,7 +38,8 @@ async def follow_user(payload: FollowRequest, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/follows/unfollow")
-async def unfollow_user(payload: FollowRequest, db: Client = Depends(get_db)):
+def unfollow_user(payload: FollowRequest, request: Request, db: Client = Depends(get_db)):
+    verify_owner_or_admin(payload.follower_id, request, db)
     try:
         response = db.table("follows").delete()\
             .eq("follower_id", payload.follower_id)\
@@ -47,7 +50,7 @@ async def unfollow_user(payload: FollowRequest, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/check")
-async def check_follow(follower_id: str, following_id: str, db: Client = Depends(get_db)):
+def check_follow(follower_id: str, following_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("follows").select("*")\
             .eq("follower_id", follower_id)\
@@ -58,7 +61,7 @@ async def check_follow(follower_id: str, following_id: str, db: Client = Depends
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/stats/{user_id}")
-async def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
+def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
     try:
         followers = db.table("follows").select("*", count="exact").eq("following_id", user_id).execute()
         following = db.table("follows").select("*", count="exact").eq("follower_id", user_id).execute()
@@ -70,23 +73,23 @@ async def get_follow_stats(user_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/followers/{user_id}")
-async def get_followers(user_id: str, db: Client = Depends(get_db)):
+def get_followers(user_id: str, db: Client = Depends(get_db)):
     try:
         # Fetch followers of user_id
-        response = db.table("follows").select("follower_id, created_at, follower:profiles!follows_follower_id_fkey(*)")\
+        response = db.table("follows").select("follower_id, created_at, follower:profiles!follows_follower_id_fkey(id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator)")\
             .eq("following_id", user_id)\
             .execute()
         return response.data
     except Exception as e:
         # Fallback if FK name issue?
-        # print(e)
+        # logger.debug(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/following/{user_id}")
-async def get_following(user_id: str, db: Client = Depends(get_db)):
+def get_following(user_id: str, db: Client = Depends(get_db)):
     try:
         # Fetch who user_id is following
-        response = db.table("follows").select("following_id, created_at, following:profiles!follows_following_id_fkey(*)")\
+        response = db.table("follows").select("following_id, created_at, following:profiles!follows_following_id_fkey(id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator)")\
             .eq("follower_id", user_id)\
             .execute()
         return response.data
@@ -96,7 +99,9 @@ async def get_following(user_id: str, db: Client = Depends(get_db)):
 # --- Notifications ---
 
 @router.get("/notifications/{user_id}")
-async def get_notifications(user_id: str, limit: int = 50, db: Client = Depends(get_db)):
+def get_notifications(user_id: str, request: Request, limit: int = 50, db: Client = Depends(get_db)):
+    # C5: was unguarded — /notifications/{user_id} let anyone read any user's inbox.
+    verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").select("*")\
             .eq("user_id", user_id)\
@@ -108,17 +113,28 @@ async def get_notifications(user_id: str, limit: int = 50, db: Client = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/notifications/create")
-async def create_notification(payload: NotificationCreate, db: Client = Depends(get_db)):
+def create_notification(payload: NotificationCreate, request: Request, db: Client = Depends(get_db)):
+    # C5: was unguarded — anonymous callers could push arbitrary notifications to any
+    # user, with any sender name/email. Require a login and stamp the real sender.
+    sender_id = verify_auth_token(request, db)
     try:
         # payload.dict() works for simple inserts
         data = payload.dict(exclude_unset=True)
+        sender_res = db.table("profiles").select("full_name, email").eq("id", sender_id).limit(1).execute()
+        if sender_res.data:
+            data["sender_name"] = sender_res.data[0].get("full_name")
+            data["sender_email"] = sender_res.data[0].get("email")
+        else:
+            data.pop("sender_name", None)
+            data.pop("sender_email", None)
         response = db.table("notifications").insert(data).execute()
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/notifications/{id}/read")
-async def mark_read(id: str, user_id: str, db: Client = Depends(get_db)):
+def mark_read(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
+    verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").update({"read": True, "is_read": True})\
             .eq("id", id)\
@@ -129,7 +145,8 @@ async def mark_read(id: str, user_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/notifications/mark-all-read/{user_id}")
-async def mark_all_read(user_id: str, db: Client = Depends(get_db)):
+def mark_all_read(user_id: str, request: Request, db: Client = Depends(get_db)):
+    verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").update({"read": True, "is_read": True})\
             .eq("user_id", user_id)\
@@ -139,7 +156,8 @@ async def mark_all_read(user_id: str, db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/notifications/{id}")
-async def delete_notification(id: str, user_id: str, db: Client = Depends(get_db)):
+def delete_notification(id: str, user_id: str, request: Request, db: Client = Depends(get_db)):
+    verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").delete()\
             .eq("id", id)\
@@ -150,7 +168,9 @@ async def delete_notification(id: str, user_id: str, db: Client = Depends(get_db
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/notifications/clear/{user_id}")
-async def clear_all_notifications(user_id: str, db: Client = Depends(get_db)):
+def clear_all_notifications(user_id: str, request: Request, db: Client = Depends(get_db)):
+    # C5: was unguarded — anyone could wipe any user's notifications.
+    verify_owner_or_admin(user_id, request, db)
     try:
         response = db.table("notifications").delete()\
             .eq("user_id", user_id)\
@@ -158,106 +178,4 @@ async def clear_all_notifications(user_id: str, db: Client = Depends(get_db)):
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-# --- Test Votes ---
 
-@router.post("/tests/{test_id}/vote")
-async def toggle_test_vote(test_id: str, payload: VoteRequest, db: Client = Depends(get_db)):
-    try:
-        user_id = payload.user_id
-        vote_type = payload.vote_type
-        
-        existing = db.table("test_votes").select("id, vote_type")\
-            .eq("test_id", test_id)\
-            .eq("user_id", user_id)\
-            .maybe_single().execute()
-        
-        # Safely extract data
-        existing_data = None
-        if existing and hasattr(existing, 'data'):
-            existing_data = existing.data
-        elif isinstance(existing, dict):
-            existing_data = existing.get("data", existing)
-            
-        if existing_data:
-            if existing_data.get("vote_type") == vote_type:
-                # Remove vote if clicking the same button again
-                db.table("test_votes").delete().eq("id", existing_data["id"]).execute()
-                return {"vote": 0}
-            else:
-                # Change vote (up to down, or down to up)
-                db.table("test_votes").update({"vote_type": vote_type}).eq("id", existing_data["id"]).execute()
-                return {"vote": vote_type}
-        else:
-            # New vote
-            db.table("test_votes").insert({"test_id": test_id, "user_id": user_id, "vote_type": vote_type}).execute()
-            return {"vote": vote_type}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/tests/{test_id}/vote-count")
-async def get_test_vote_count(test_id: str, db: Client = Depends(get_db)):
-    try:
-        # Get upvotes
-        upvotes = db.table("test_votes").select("*", count="exact").eq("test_id", test_id).eq("vote_type", 1).execute()
-        # Get downvotes
-        downvotes = db.table("test_votes").select("*", count="exact").eq("test_id", test_id).eq("vote_type", -1).execute()
-        
-        return {
-            "upvotes": upvotes.count or 0,
-            "downvotes": downvotes.count or 0
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/tests/{test_id}/vote-status")
-async def get_test_vote_status(test_id: str, user_id: str, db: Client = Depends(get_db)):
-    try:
-        response = db.table("test_votes").select("vote_type")\
-            .eq("test_id", test_id)\
-            .eq("user_id", user_id)\
-            .maybe_single().execute()
-            
-        response_data = None
-        if response and hasattr(response, 'data'):
-            response_data = response.data
-        elif isinstance(response, dict):
-            response_data = response.get("data", response)
-            
-        if response_data:
-            return {"vote": response_data.get("vote_type")}
-        return {"vote": 0}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/tests/batch/votes")
-async def get_batch_test_votes(ids: str, user_id: str = None, db: Client = Depends(get_db)):
-    try:
-        id_list = [i.strip() for i in ids.split(",") if i.strip()]
-        if not id_list:
-            return []
-            
-        # Get all votes for these tests in one query
-        res = db.table("test_votes").select("test_id, user_id, vote_type").in_("test_id", id_list).execute()
-        votes_data = res.data or []
-        
-        # Aggregate manually
-        stats = {tid: {"upvotes": 0, "downvotes": 0, "user_vote": 0} for tid in id_list}
-        
-        for v in votes_data:
-            tid = v["test_id"]
-            if tid not in stats:
-                continue
-                
-            v_type = v.get("vote_type")
-            if v_type == 1:
-                stats[tid]["upvotes"] += 1
-            elif v_type == -1:
-                stats[tid]["downvotes"] += 1
-                
-            if user_id and v.get("user_id") == user_id:
-                stats[tid]["user_vote"] = v_type
-                
-        # Format as list
-        return [{"test_id": k, **v} for k, v in stats.items()]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

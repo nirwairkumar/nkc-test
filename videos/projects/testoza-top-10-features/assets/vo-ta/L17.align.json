@@ -1,0 +1,128 @@
+[
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 0.06,
+  "end": 0.401,
+  "score": 0.413
+ },
+ {
+  "w": "tab-ல,",
+  "r": "tabla",
+  "start": 0.501,
+  "end": 0.822,
+  "score": 0.635
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 0.923,
+  "end": 1.243,
+  "score": 0.714
+ },
+ {
+  "w": "முடிஞ்சதும்",
+  "r": "mudinycatum",
+  "start": 1.283,
+  "end": 1.705,
+  "score": 0.896
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 1.745,
+  "end": 2.186,
+  "score": 0.411
+ },
+ {
+  "w": "என்ன",
+  "r": "enna",
+  "start": 2.226,
+  "end": 2.386,
+  "score": 0.953
+ },
+ {
+  "w": "பார்க்கணும்னு",
+  "r": "paarkkanumnu",
+  "start": 2.447,
+  "end": 2.928,
+  "score": 0.73
+ },
+ {
+  "w": "நீங்கதான்",
+  "r": "niingkataan",
+  "start": 2.968,
+  "end": 3.329,
+  "score": 0.804
+ },
+ {
+  "w": "முடிவு",
+  "r": "mudivu",
+  "start": 3.349,
+  "end": 3.57,
+  "score": 0.789
+ },
+ {
+  "w": "பண்றீங்க.",
+  "r": "panriingka",
+  "start": 3.63,
+  "end": 4.051,
+  "score": 0.717
+ },
+ {
+  "w": "Questions-ஐ",
+  "r": "questionsai",
+  "start": 4.532,
+  "end": 5.034,
+  "score": 0.353
+ },
+ {
+  "w": "shuffle",
+  "r": "shuffle",
+  "start": 5.054,
+  "end": 5.355,
+  "score": 0.344
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 5.375,
+  "end": 5.736,
+  "score": 0.891
+ },
+ {
+  "w": "யாருக்கும்",
+  "r": "yaarukkum",
+  "start": 6.077,
+  "end": 6.498,
+  "score": 0.923
+ },
+ {
+  "w": "ஒரே",
+  "r": "oree",
+  "start": 6.558,
+  "end": 6.758,
+  "score": 0.784
+ },
+ {
+  "w": "order",
+  "r": "order",
+  "start": 6.799,
+  "end": 7.039,
+  "score": 0.446
+ },
+ {
+  "w": "வராது.",
+  "r": "varaatu",
+  "start": 7.079,
+  "end": 7.42,
+  "score": 0.881
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 7.801,
+  "end": 7.982,
+  "score": 0.088
+ }
+]

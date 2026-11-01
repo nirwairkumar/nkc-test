@@ -1,0 +1,92 @@
+[
+  {
+    "id": "w0",
+    "text": "Your",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "institute's",
+    "start": 0.32,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "logo",
+    "start": 0.88,
+    "end": 1.28
+  },
+  {
+    "id": "w3",
+    "text": "and",
+    "start": 1.28,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "name",
+    "start": 1.52,
+    "end": 1.84
+  },
+  {
+    "id": "w5",
+    "text": "on",
+    "start": 1.84,
+    "end": 2.08
+  },
+  {
+    "id": "w6",
+    "text": "every",
+    "start": 2.08,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "online",
+    "start": 2.4,
+    "end": 2.72
+  },
+  {
+    "id": "w8",
+    "text": "test.",
+    "start": 2.8,
+    "end": 3.36
+  },
+  {
+    "id": "w9",
+    "text": "Here's",
+    "start": 3.36,
+    "end": 3.76
+  },
+  {
+    "id": "w10",
+    "text": "exactly",
+    "start": 3.76,
+    "end": 4.16
+  },
+  {
+    "id": "w11",
+    "text": "how,",
+    "start": 4.16,
+    "end": 4.48
+  },
+  {
+    "id": "w12",
+    "text": "step",
+    "start": 4.48,
+    "end": 4.8
+  },
+  {
+    "id": "w13",
+    "text": "by",
+    "start": 4.8,
+    "end": 4.96
+  },
+  {
+    "id": "w14",
+    "text": "step.",
+    "start": 4.96,
+    "end": 5.28
+  }
+]

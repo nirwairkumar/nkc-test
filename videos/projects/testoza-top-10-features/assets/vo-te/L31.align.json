@@ -1,0 +1,156 @@
+[
+ {
+  "w": "అందరూ",
+  "r": "amdaruu",
+  "start": 0.02,
+  "end": 0.381,
+  "score": 0.762
+ },
+ {
+  "w": "పూర్తి",
+  "r": "puurti",
+  "start": 0.401,
+  "end": 0.681,
+  "score": 0.979
+ },
+ {
+  "w": "చేశాక,",
+  "r": "ceeshaaka",
+  "start": 0.721,
+  "end": 1.142,
+  "score": 0.802
+ },
+ {
+  "w": "ముప్పై",
+  "r": "muppai",
+  "start": 1.582,
+  "end": 1.903,
+  "score": 0.918
+ },
+ {
+  "w": "రెండు",
+  "r": "remddu",
+  "start": 1.943,
+  "end": 2.143,
+  "score": 0.78
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 2.183,
+  "end": 2.464,
+  "score": 0.368
+ },
+ {
+  "w": "వచ్చేస్తాయి.",
+  "r": "vacceestaayi",
+  "start": 2.524,
+  "end": 3.125,
+  "score": 0.983
+ },
+ {
+  "w": "Ranks",
+  "r": "ranks",
+  "start": 3.565,
+  "end": 3.866,
+  "score": 0.709
+ },
+ {
+  "w": "on",
+  "r": "on",
+  "start": 3.966,
+  "end": 4.146,
+  "score": 0.397
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 4.186,
+  "end": 4.607,
+  "score": 0.974
+ },
+ {
+  "w": "మొత్తం",
+  "r": "mottam",
+  "start": 5.008,
+  "end": 5.348,
+  "score": 0.969
+ },
+ {
+  "w": "batch",
+  "r": "batch",
+  "start": 5.428,
+  "end": 5.689,
+  "score": 0.499
+ },
+ {
+  "w": "scroll",
+  "r": "scroll",
+  "start": 5.789,
+  "end": 6.109,
+  "score": 0.655
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 6.169,
+  "end": 6.57,
+  "score": 0.96
+ },
+ {
+  "w": "అన్నీ",
+  "r": "annii",
+  "start": 6.971,
+  "end": 7.251,
+  "score": 0.809
+ },
+ {
+  "w": "ఒక్క",
+  "r": "okka",
+  "start": 7.291,
+  "end": 7.492,
+  "score": 0.986
+ },
+ {
+  "w": "click",
+  "r": "click",
+  "start": 7.532,
+  "end": 7.752,
+  "score": 0.594
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 7.812,
+  "end": 7.932,
+  "score": 0.99
+ },
+ {
+  "w": "Excel",
+  "r": "excel",
+  "start": 8.293,
+  "end": 8.593,
+  "score": 0.618
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 8.633,
+  "end": 8.713,
+  "score": 0.578
+ },
+ {
+  "w": "download",
+  "r": "download",
+  "start": 8.773,
+  "end": 9.154,
+  "score": 0.496
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 9.174,
+  "end": 9.555,
+  "score": 0.932
+ }
+]

@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.221,
+  "score": 0.982
+ },
+ {
+  "w": "ಗೆ",
+  "r": "ge",
+  "start": 0.281,
+  "end": 0.361,
+  "score": 0.484
+ },
+ {
+  "w": "ಹೆಸರು",
+  "r": "hesaru",
+  "start": 0.401,
+  "end": 0.682,
+  "score": 0.77
+ },
+ {
+  "w": "ಕೊಟ್ಟು,",
+  "r": "kottttu",
+  "start": 0.702,
+  "end": 0.943,
+  "score": 0.397
+ },
+ {
+  "w": "Institution",
+  "r": "institution",
+  "start": 1.103,
+  "end": 1.565,
+  "score": 0.615
+ },
+ {
+  "w": "branding",
+  "r": "branding",
+  "start": 1.605,
+  "end": 1.986,
+  "score": 0.862
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 2.046,
+  "end": 2.267,
+  "score": 0.722
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 2.307,
+  "end": 2.548,
+  "score": 0.445
+ }
+]

@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+/* B · Product: what the channel teaches — a PDF page becomes a live, auto-graded question. */
+.stage{background:
+  radial-gradient(900px 560px at 72% 50%,rgba(76,64,214,.30),transparent 70%),
+  radial-gradient(1000px 620px at 30% 50%,rgba(14,116,184,.24),transparent 70%),
+  #060b1a}
+.grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(125,211,252,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(125,211,252,.06) 1px,transparent 1px);
+  background-size:56px 56px;background-position:center;
+  -webkit-mask-image:radial-gradient(1600px 640px at 50% 50%,#000 25%,transparent 75%)}
+/* Left wing: the OMR texture from banner A, fading out before the headline. */
+.wing{position:absolute;left:0;top:0;width:507px;height:1440px;
+  -webkit-mask-image:linear-gradient(to right,#000 30%,transparent 92%)}
+.wing>div{position:absolute;inset:0;-webkit-mask-image:linear-gradient(to bottom,transparent 8%,#000 32%,#000 68%,transparent 92%)}
+.col{position:absolute;top:-14px;display:flex;flex-direction:column;gap:22px}
+.row{display:flex;align-items:center;gap:14px}
+.row s{width:52px;text-decoration:none;font-weight:500;font-size:24px;color:rgba(148,163,184,.42);text-align:right;margin-right:6px}
+.row i{width:42px;height:42px;border-radius:50%;border:2px solid rgba(148,163,184,.26);
+  display:grid;place-items:center;font-style:normal;font-weight:600;font-size:19px;color:rgba(148,163,184,.42)}
+.row i.on{background:rgba(56,189,248,.62);border-color:transparent;color:#06213a}
+.row i.gold{background:rgba(244,184,56,.75);border-color:transparent;color:#3a2500}
+
+/* Right wing: where the flow ends — results, in dark glass so it sits behind the main card. */
+.res{position:absolute;left:2112px;top:584px;width:372px;padding:26px 28px 28px;border-radius:22px;transform:rotate(-3deg);
+  background:rgba(15,23,42,.82);border:2px solid rgba(148,163,184,.18);box-shadow:0 30px 70px rgba(0,0,0,.5);color:#e2e8f0}
+.res .rh{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:28px}
+.res .live{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:#fca5a5;background:rgba(239,68,68,.16);padding:4px 12px;border-radius:999px}
+.res .live i{width:10px;height:10px;border-radius:50%;background:#ef4444}
+.res .rs{margin-top:6px;font-weight:500;font-size:20px;color:#94a3b8}
+.res .bars{margin-top:20px;height:110px;display:flex;align-items:flex-end;gap:12px;border-bottom:2px solid rgba(148,163,184,.2)}
+.res .bars i{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(#7dd3fc,#3b82f6)}
+.res .avg{margin-top:16px;font-weight:500;font-size:21px;color:#94a3b8}
+.res .avg b{color:#F4B838;font-weight:800;margin-left:6px}
+
+.copy{position:absolute;left:56px;top:0;width:760px;height:423px;display:flex;flex-direction:column;justify-content:center}
+.wm{height:116px;align-self:flex-start}
+h1{margin-top:38px;font-weight:800;font-size:68px;line-height:1.06;letter-spacing:-.025em;color:#fff}
+h1 em{font-style:normal;background:linear-gradient(100deg,#bae6fd,#7dd3fc 45%,#a5b4fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.copy p{margin-top:26px;font-weight:500;font-size:36px;color:#94a3b8;white-space:nowrap}
+.copy p b{font-weight:600;color:#e2e8f0}
+.copy p span{color:#F4B838;margin:0 14px}
+
+.paper{position:absolute;left:836px;top:22px;width:300px;height:390px;background:#f8fafc;border-radius:14px;
+  transform:rotate(-7deg);box-shadow:0 30px 60px rgba(0,0,0,.5);padding:34px 28px}
+.paper .tag{display:inline-block;background:#ef4444;color:#fff;font-weight:800;font-size:22px;padding:4px 12px;border-radius:6px}
+.paper i{display:block;height:11px;border-radius:6px;background:#cbd5e1;margin-top:16px}
+.paper .fig{height:90px;margin-top:20px;border-radius:8px;background:
+  linear-gradient(135deg,transparent 48%,#94a3b8 48%,#94a3b8 52%,transparent 52%) no-repeat 20px 10px/120px 70px,#e2e8f0}
+
+.card{position:absolute;left:928px;top:46px;width:560px;background:#fff;border-radius:26px;padding:30px 32px 32px;
+  transform:rotate(2.5deg);box-shadow:0 40px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.6)}
+.head{display:flex;align-items:center;gap:14px}
+.qn{background:#eef2ff;color:#4f46e5;font-weight:700;font-size:24px;padding:6px 14px;border-radius:10px}
+.meta{font-weight:500;font-size:22px;color:#64748b}
+.timer{margin-left:auto;display:flex;align-items:center;gap:8px;background:#fffbeb;color:#b45309;font-weight:700;font-size:23px;padding:6px 14px;border-radius:10px}
+.q{margin-top:22px;font-weight:600;font-size:28px;line-height:1.32;color:#0f172a}
+.opts{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt{display:flex;align-items:center;gap:14px;border:2px solid #e2e8f0;border-radius:14px;padding:10px 14px;font-weight:600;font-size:27px;color:#334155}
+.opt b{width:38px;height:38px;border-radius:50%;background:#f1f5f9;display:grid;place-items:center;font-size:20px;color:#64748b}
+.opt.ok{border-color:#10b981;background:#ecfdf5;color:#065f46}
+.opt.ok b{background:#10b981}
+
+.chip{position:absolute;display:flex;align-items:center;gap:12px;font-weight:700;font-size:26px;padding:12px 22px;border-radius:14px;
+  box-shadow:0 16px 36px rgba(0,0,0,.45);white-space:nowrap}
+.chip.ai{left:846px;top:-2px;background:linear-gradient(135deg,#FFE885,#F4B838 60%,#d99a1e);color:#3a2500;transform:rotate(-2deg)}
+.chip.graded{left:1282px;top:352px;background:#0f172a;color:#e2e8f0;border:2px solid rgba(16,185,129,.55);transform:rotate(2.5deg)}
+.chip.graded svg{color:#34d399}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+  <div class="wing"><div id="wl"></div></div>
+  <div class="res">
+    <div class="rh">Results<span class="live"><i></i>Live</span></div>
+    <div class="rs">42 of 45 submitted</div>
+    <div class="bars"><i style="height:34%"></i><i style="height:58%"></i><i style="height:92%"></i><i style="height:74%"></i><i style="height:46%"></i><i style="height:22%"></i></div>
+    <div class="avg">Class average<b>71%</b></div>
+  </div>
+  <div class="safe">
+    <div class="copy">
+      <img class="wm" src="wordmark.png" alt="TestoZa">
+      <h1>Turn any PDF or photo<br>into an <em>online test</em></h1>
+      <p>Free for teachers &amp; institutes<span>·</span><b>testoza.com</b></p>
+    </div>
+    <div class="paper">
+      <div class="tag">PDF</div>
+      <i style="width:62%;height:16px;background:#94a3b8"></i>
+      <i></i><i style="width:88%"></i><i style="width:94%"></i>
+      <div class="fig"></div>
+      <i></i><i style="width:76%"></i><i style="width:90%"></i>
+    </div>
+    <div class="card">
+      <div class="head">
+        <span class="qn">Q 1</span><span class="meta">Physics · Single correct</span>
+        <span class="timer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg>59:42</span>
+      </div>
+      <div class="q">A ball is thrown straight up at 20 m/s. Find its maximum height. (g = 10 m/s²)</div>
+      <div class="opts">
+        <div class="opt"><b>A</b>10 m</div>
+        <div class="opt ok"><b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></b>20 m</div>
+        <div class="opt"><b>C</b>30 m</div>
+        <div class="opt"><b>D</b>40 m</div>
+      </div>
+    </div>
+    <div class="chip ai"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.2 6.3 6.3 2.2-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-2.2z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z"/></svg>Made by AI from your PDF</div>
+    <div class="chip graded"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Auto-graded</div>
+  </div>
+  <div class="grain"></div>
+</div>
+<script>
+// Same OMR columns as banner A.
+function column(host, left, firstQ) {
+  const col = document.createElement('div');
+  col.className = 'col';
+  col.style.left = left + 'px';
+  for (let r = 0; r < 23; r++) {
+    const q = firstQ + r, pick = (q * 7 + 3) % 5;  // 4 = left blank
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<s>' + String(q).padStart(2, '0') + '</s>' +
+      'ABCD'.split('').map((l, i) => '<i class="' + (i === pick ? (q % 9 === 4 ? 'gold' : 'on') : '') + '">' + l + '</i>').join('');
+    col.appendChild(row);
+  }
+  host.appendChild(col);
+}
+column(wl, -170, 1);  column(wl, 150, 24);
+</script>
+<script src="guides.js"></script>
+</body></html>

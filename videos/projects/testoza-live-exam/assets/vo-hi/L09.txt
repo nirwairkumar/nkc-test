@@ -1,0 +1,2 @@
+Disable Copy-Paste — ताकि कोई आपका सवाल Google या ChatGPT में पेस्ट न कर सके।
+Disable Right Click — ना मेनू, ना क्विक सर्च, ना ट्रांसलेट।

@@ -5,14 +5,17 @@ import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
     Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
-    Radio, BarChart2
+    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink, KeyRound
 } from 'lucide-react';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide'));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide'));
 const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide'));
+const LiveExamSessionsGuide = React.lazy(() => import('@/components/docs/LiveExamSessionsGuide'));
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
+import { AI_TEST_GENERATOR_META, BEST_PLATFORM_META, CBT_META, JEE_META } from '@/guides/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -61,6 +64,12 @@ const DOC_SECTIONS: DocSection[] = [
         title: "Platform Overview",
         items: [
             {
+                slug: "live-exam-sessions",
+                title: "Live Exams with a Join Code",
+                description: "Let candidates join with a 6-digit code: a quick code for any live exam, or a full exam room with candidate lists, PINs, a live monitor, rank lists and report cards.",
+                icon: <KeyRound className="h-4 w-4" />
+            },
+            {
                 slug: "conduct-exam",
                 title: "Conduct Exams",
                 description: "Step-by-step guide with screenshots on how to activate, configure, and conduct exams on TestoZa.",
@@ -71,6 +80,17 @@ const DOC_SECTIONS: DocSection[] = [
                 title: "Viewing Results",
                 description: "Step-by-step guide with screenshots on how to view, sort, download, and analyze student results on TestoZa.",
                 icon: <BarChart2 className="h-4 w-4" />
+            }
+        ]
+    },
+    {
+        title: "Free PDF Tools",
+        items: [
+            {
+                slug: "pdf-tools",
+                title: "Panna PDF Tools",
+                description: "Edit PDF text in its own font, erase for real, sign, and turn ChatGPT or LaTeX maths into a PDF. Free, and your file never leaves your device.",
+                icon: <PenLine className="h-4 w-4" />
             }
         ]
     },
@@ -149,6 +169,16 @@ const DOC_SECTIONS: DocSection[] = [
             },
         ]
     }
+];
+
+// --- Panna (free PDF tools on pdf.testoza.com) ---
+const PANNA_URL = 'https://pdf.testoza.com/';
+const PANNA_GUIDE_URL = staticArticleUrl(WHITE_BOXES_META.slug);
+const PANNA_TOOLS = [
+    { href: `${PANNA_URL}edit-pdf`, title: 'Edit PDF', text: 'Change existing text in the PDF’s own font, erase for real, sign, highlight and organise pages.', icon: PenLine },
+    { href: `${PANNA_URL}edit-hindi-pdf`, title: 'Edit Hindi PDF', text: 'Edit Hindi forms and documents with matras and conjuncts shaped correctly, and keep the text searchable.', icon: Languages },
+    { href: `${PANNA_URL}latex-to-pdf`, title: 'LaTeX to PDF', text: 'Paste a LaTeX document or maths and download a clean, paged PDF with selectable text.', icon: Sigma },
+    { href: `${PANNA_URL}chatgpt-to-pdf`, title: 'ChatGPT to PDF', text: 'Save ChatGPT, Gemini or Claude answers as a PDF with every equation intact.', icon: Bot },
 ];
 
 // Helper SVGs to avoid extra lucide-react dependencies
@@ -443,6 +473,89 @@ export default function UserGuidePage() {
                                 </p>
                             </button>
                         </div>
+
+                        <AlertBlock type="tip" title="Free PDF tools">
+                            Need to fix a PDF before you turn it into a test? Panna, TestoZa’s free PDF editor, changes text in the document’s own font, erases for real and works in your browser.{' '}
+                            <button type="button" onClick={() => navigate('/user-guide/pdf-tools')} className="font-semibold underline underline-offset-2">
+                                See the PDF tools guide
+                            </button>
+                            .
+                        </AlertBlock>
+
+                        <AlertBlock type="info" title="Choosing a test platform?">
+                            Our guide covers what an online test platform has to get right, how TestoZa compares with Google Forms and Moodle, and how students can turn a textbook photo into a timed mock.{' '}
+                            <button type="button" onClick={() => navigate(BEST_PLATFORM_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the guide
+                            </button>
+                            .
+                        </AlertBlock>
+                    </div>
+                );
+
+            case 'pdf-tools':
+                return (
+                    <div className="space-y-6">
+                        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                            Panna is TestoZa’s free set of PDF tools at{' '}
+                            <a href={PANNA_URL} target="_blank" rel="noopener" className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                pdf.testoza.com
+                            </a>
+                            . It edits the existing text of a PDF in the document’s own font, deletes erased text from the file, and turns ChatGPT, Gemini or LaTeX maths into a clean PDF. Everything runs in your browser, so files are never uploaded, and there’s no sign-up or watermark.
+                        </p>
+
+                        <AlertBlock type="info" title="The complete guide">
+                            Every tool, how Panna keeps the original font, and how it compares with other PDF editors, in one article on the TestoZa Blog:{' '}
+                            <a href={PANNA_GUIDE_URL} className="font-semibold underline underline-offset-2">
+                                Stop painting white boxes on your PDFs
+                            </a>
+                            .
+                        </AlertBlock>
+
+                        <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-200">The tools</h3>
+                        <div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {PANNA_TOOLS.map(({ href, title, text, icon: Icon }) => (
+                                <a
+                                    key={href}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener"
+                                    className="p-5 text-left border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/50 bg-white dark:bg-[#121316] rounded-xl transition-all duration-200 group no-underline"
+                                >
+                                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 w-fit rounded-lg mb-3">
+                                        <Icon className="h-5 w-5" />
+                                    </div>
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
+                                        {title} <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{text}</p>
+                                </a>
+                            ))}
+                        </div>
+
+                        <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-200">Edit a PDF in three steps</h3>
+                        <ol className="list-decimal pl-5 space-y-2 text-slate-600 dark:text-slate-400">
+                            <li>
+                                Open{' '}
+                                <a href={`${PANNA_URL}edit-pdf`} target="_blank" rel="noopener" className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    pdf.testoza.com/edit-pdf
+                                </a>{' '}
+                                and drop your PDF on the page. It opens in your browser; nothing is uploaded.
+                            </li>
+                            <li>Click any line of text and type. Your words are written in the PDF’s own font, in the same place. If a letter isn’t in that font, Panna tells you which one before you finish.</li>
+                            <li>Press Download PDF or Ctrl+S. There’s no watermark and no account.</li>
+                        </ol>
+
+                        <AlertBlock type="tip" title="Teaching from a PDF?">
+                            Once the PDF is right, turn its questions into an online test with automatic grading:{' '}
+                            <button type="button" onClick={() => navigate('/pdf-to-quiz')} className="font-semibold underline underline-offset-2">
+                                PDF to quiz
+                            </button>
+                            .
+                        </AlertBlock>
+
+                        <AlertBlock type="warning" title="Scanned PDFs">
+                            A scan is a picture with no text layer, and Panna doesn’t do OCR yet. Use White-out to cover the old words and Add text to type new ones. White-out covers a scanned image but doesn’t remove it from the file, so it isn’t a substitute for proper redaction.
+                        </AlertBlock>
                     </div>
                 );
 
@@ -453,6 +566,13 @@ export default function UserGuidePage() {
                             <TestUploadFormatGuide isInline />
                         </React.Suspense>
                     </div>
+                );
+
+            case 'live-exam-sessions':
+                return (
+                    <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+                        <LiveExamSessionsGuide />
+                    </React.Suspense>
                 );
 
             case 'solution-upload-guide':
@@ -468,19 +588,23 @@ export default function UserGuidePage() {
                 return (
                     <div className="space-y-6">
                         <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                            We are building an fully integrated AI panel that will allow test creators to drag and drop PDFs, scanned images, or word files directly inside the platform dashboard to convert them to TestoZa exam schemas dynamically.
+                            The AI test generator turns a PDF or photos (PNG, JPG or WEBP) into a test. Save Word and PowerPoint files as PDF first. You need to be signed in.
                         </p>
+                        <ol className="list-decimal pl-5 space-y-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                            <li>Open <button type="button" onClick={() => navigate('/generate-with-ai')} className="font-semibold underline underline-offset-2">Generate with AI</button> and choose your file. Add an answer key if you have one.</li>
+                            <li>Pick the language (same as the material, English, Hindi or both), the difficulty and any instructions such as marks or the number of questions.</li>
+                            <li>Choose <strong>Extract Questions</strong> to keep an existing paper exactly, or <strong>Generate New Questions</strong> to write new ones from a chapter or notes.</li>
+                            <li>Watch the questions arrive, then review them. Set any answer marked orange before you save.</li>
+                            <li>Press <strong>Save &amp; continue</strong>, or <strong>Edit</strong> to fine-tune the test in the builder first.</li>
+                        </ol>
 
-                        <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/10">
-                            <Sparkles className="h-12 w-12 text-purple-500 animate-pulse mb-4" />
-                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">Interactive AI Generator</h4>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-2 leading-relaxed">
-                                Our engineering team is currently testing this feature. It is scheduled to release in the next major system update. Stay tuned!
-                            </p>
-                            <span className="mt-5 text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-800">
-                                Release Stage: Private Beta
-                            </span>
-                        </div>
+                        <AlertBlock type="info" title="The full guide">
+                            How Extract and Generate differ, what each setting changes, what the AI can read and how to check its work in two minutes.{' '}
+                            <button type="button" onClick={() => navigate(AI_TEST_GENERATOR_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the AI test generator guide
+                            </button>
+                            .
+                        </AlertBlock>
                     </div>
                 );
 
@@ -660,6 +784,13 @@ export default function UserGuidePage() {
             case 'notation-matching':
                 return (
                     <div className="space-y-4">
+                        <AlertBlock type="info" title="Rather not type LaTeX at all?">
+                            The Sy Pad keyboard in the test builder writes this code for you as you tap keys, and the AI writes it when it reads your PDFs and photos. Our JEE guide has a working Sy Pad you can try.{' '}
+                            <button type="button" onClick={() => navigate(JEE_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the JEE mock test guide
+                            </button>
+                            .
+                        </AlertBlock>
                         <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
                             <ScientificNotationGuide isInline />
                         </React.Suspense>
@@ -873,7 +1004,7 @@ export default function UserGuidePage() {
                                     Turn on the <strong>Attempt Limit</strong> toggles to restrict students to a single attempt.
                                 </p>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Enable the <strong>Start Form</strong> to collect student credentials (e.g. Roll No, Name) before they are allowed to initiate the exam.
+                                    Turn on <strong>Candidate inputs</strong> to ask for details (e.g. Name, Roll No) before the exam starts. You can also edit them straight from a live exam's card on My Tests.
                                 </p>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                                     Now expand the <strong>Result & Timing</strong> section header.
@@ -943,6 +1074,16 @@ export default function UserGuidePage() {
                                     After selecting either option, your test will return to the inactive state.
                                 </p>
                             </div>
+                        </div>
+
+                        <div className="pt-8">
+                            <AlertBlock type="info" title="Running a computer-based test (CBT)?">
+                                Our CBT guide covers the NTA-style exam screen, marking schemes for JEE Main, NEET, CUET, SSC and GATE, and a full exam day from paper to rank list.{' '}
+                                <button type="button" onClick={() => navigate(CBT_META.path)} className="font-semibold underline underline-offset-2">
+                                    Read the CBT guide
+                                </button>
+                                .
+                            </AlertBlock>
                         </div>
                     </div>
                 );
@@ -1067,11 +1208,11 @@ export default function UserGuidePage() {
                                         </tr>
                                         <tr>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Name</td>
-                                            <td className="p-3">Full name entered by the candidate in the Start Form.</td>
+                                            <td className="p-3">Full name entered by the candidate in Candidate inputs.</td>
                                         </tr>
                                         <tr>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Roll number</td>
-                                            <td className="p-3">Roll number or candidate ID entered in the Start Form.</td>
+                                            <td className="p-3">Roll number or candidate ID entered in Candidate inputs.</td>
                                         </tr>
 
                                         <tr>

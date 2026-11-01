@@ -2,15 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
+import CandidateBackGuard from "@/components/CandidateBackGuard";
+import { WHITE_BOXES_META } from "@/blog/articles/meta";
+import { isBlogHost } from "@/lib/blog";
+import { AI_TEST_GENERATOR_META, BANK_META, BEST_EXAM_INDIA_META, SECTIONAL_META, TUITION_META, CBSE_META, SCHOLARSHIP_META, NEGATIVE_MARKING_META, CLASSPLUS_META, KAHOOT_META, TEACHMINT_META, TESTPORTAL_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, BEST_PLATFORM_META, CBT_META, CHEMISTRY_META, CONDUCT_META, HINDI_META, JEE_ADVANCED_META, JEE_META, MATH_TEST_MAKER_META, MOODLE_META, NEET_META, PREVENT_CHEATING_META, SSC_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -51,8 +54,20 @@ const GoogleAdsLanding = safeLazy(() => import("./pages/GoogleAdsLanding"));
 const AITestImporter = safeLazy(() => import("./pages/AITestImporter"));
 
 const CategoryPage = safeLazy(() => import("./pages/CategoryPage"));
-const TestList = safeLazy(() => import("./pages/TestList"));
 const TestPage = safeLazy(() => import("./pages/TestPage"));
+// Exam sessions: join codes, live monitor, batches
+const JoinPage = safeLazy(() => import("./pages/join/JoinPage"));
+const ShareExamPage = safeLazy(() => import("./pages/ShareExamPage"));
+// Invite links: educators bring educators
+const InvitePage = safeLazy(() => import("./pages/InvitePage"));
+const ShareInvitePage = safeLazy(() => import("./pages/ShareInvitePage"));
+const ExamsPage = safeLazy(() => import("./pages/exams/ExamsPage"));
+const ExamSessionPage = safeLazy(() => import("./pages/exams/ExamSessionPage"));
+const ExamPresentPage = safeLazy(() => import("./pages/exams/ExamPresentPage"));
+const ReportCardsPage = safeLazy(() => import("./pages/exams/ReportCardsPage"));
+const BatchesPage = safeLazy(() => import("./pages/exams/BatchesPage"));
+const BatchPage = safeLazy(() => import("./pages/exams/BatchPage"));
+const PinSlipsPage = safeLazy(() => import("./pages/exams/PinSlipsPage"));
 const TestIntroPage = safeLazy(() => import("./pages/TestIntroPage"));
 const TestHistory = safeLazy(() => import("./pages/TestHistory"));
 const ResultsLayout = safeLazy(() => import("./components/layout/ResultsLayout"));
@@ -71,8 +86,9 @@ const NotificationsPage = safeLazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = safeLazy(() => import("./pages/UserTestManager"));
 const AllSubmissionsPage = safeLazy(() => import("./pages/AllSubmissionsPage"));
 const RewardsPage = safeLazy(() => import("./pages/RewardsPage"));
-const MaterialsManager = safeLazy(() => import("./pages/MaterialsManager"));
 const SupportPage = safeLazy(() => import("./pages/SupportPage"));
+const HelpPage = safeLazy(() => import("./pages/HelpPage"));
+const FeedbackPage = safeLazy(() => import("./pages/FeedbackPage"));
 const UserGuidePage = safeLazy(() => import("./pages/UserGuidePage"));
 const NotFound = safeLazy(() => import("./pages/NotFound"));
 const CreateTestPage = safeLazy(() => import("./pages/CreateTestPage"));
@@ -90,8 +106,23 @@ const CombinedIntroPage = safeLazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = safeLazy(() => import("./pages/CombinedBreakScreen"));
 const CreateCombinedTestPage = safeLazy(() => import("./pages/CreateCombinedTestPage"));
 const MoreTestsPage = safeLazy(() => import("./pages/MoreTestsPage"));
-const ConvertPage = safeLazy(() => import("./pages/ConvertPage"));
-const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
+// Panna (PDF tools) moved to https://pdf.testoza.com. The Cloudflare edge answers old
+// URLs with real 301s; this covers in-app links and the app./blog. hosts.
+const PdfToolsMoved = ({ to }: { to: string }) => {
+  useEffect(() => {
+    window.location.replace(`https://pdf.testoza.com${to}`);
+  }, [to]);
+  return <PageLoader />;
+};
+// Survey 1.0: the link emailed to educators (answers land in admin → Support → Survey 1.0).
+const SurveyV1Page = safeLazy(() => import("./pages/survey/SurveyV1Page"));
+
+// SEO Landing Pages
+// Guides (src/guides): long-form pages on testoza.com; the worker serves their text to crawlers.
+const CreateMockTestOnline = safeLazy(() => import("./pages/guides/CreateMockTestOnline"));
+const UseCaseLandingPage = safeLazy(() => import("./pages/UseCaseLandingPage"));
+const SubjectLandingPage = safeLazy(() => import("./pages/SubjectLandingPage"));
+const ComparisonLandingPage = safeLazy(() => import("./pages/ComparisonPage"));
 
 // News & Posts
 const NewsFeed = safeLazy(() => import("./pages/NewsFeed"));
@@ -99,31 +130,92 @@ const NewsPostView = safeLazy(() => import("./pages/NewsPostView"));
 const NewsPostEditor = safeLazy(() => import("./pages/NewsPostEditor"));
 const MyPosts = safeLazy(() => import("./pages/MyPosts"));
 
+// Static blog articles (src/blog/articles): long-form pages the post editor can't
+// build. They share the post URLs, so the router picks them by slug.
+const StopPaintingWhiteBoxes = safeLazy(() => import("./pages/blog/StopPaintingWhiteBoxes"));
+const STATIC_ARTICLE_PAGES: Record<string, React.ComponentType> = {
+  [WHITE_BOXES_META.slug]: StopPaintingWhiteBoxes,
+};
+const BlogPostRoute = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const StaticArticle = slug ? STATIC_ARTICLE_PAGES[slug] : undefined;
+  if (StaticArticle) return <StaticArticle />;
+  // Post slugs never contain a dot; "/inputs.php" and "/pricing.html" are missing pages.
+  if (slug?.includes('.') && !isBlogHost) return <NotFound />;
+  return <NewsPostView />;
+};
+
+// Guides (src/guides): long-form pages on testoza.com, served to crawlers by the worker.
+const BestOnlineTestPlatform = safeLazy(() => import("./pages/guides/BestOnlineTestPlatform"));
+const CbtExamSoftware = safeLazy(() => import("./pages/guides/CbtExamSoftware"));
+const JeeMockTestPlatform = safeLazy(() => import("./pages/guides/JeeMockTestPlatform"));
+const AiTestGenerator = safeLazy(() => import("./pages/guides/AiTestGenerator"));
+const NeetOnlineTestSoftware = safeLazy(() => import("./pages/guides/neet/NeetOnlineTestSoftware"));
+const MoodleAlternative = safeLazy(() => import("./pages/guides/moodle/MoodleAlternative"));
+const ConductOnlineExam = safeLazy(() => import("./pages/guides/conduct/ConductOnlineExam"));
+const HindiOnlineTestMaker = safeLazy(() => import("./pages/guides/hindi/HindiOnlineTestMaker"));
+const PreventCheating = safeLazy(() => import("./pages/guides/cheating/PreventCheating"));
+const MathTestMaker = safeLazy(() => import("./pages/guides/math/MathTestMaker"));
+const ChemistryQuestionPaperMaker = safeLazy(() => import("./pages/guides/chem/ChemistryQuestionPaperMaker"));
+const JeeAdvancedMockTestSoftware = safeLazy(() => import("./pages/guides/jadv/JeeAdvancedMockTestSoftware"));
+const SscMockTestPlatform = safeLazy(() => import("./pages/guides/ssc/SscMockTestPlatform"));
+const BankExamMockTestPlatform = safeLazy(() => import("./pages/guides/bank/BankExamMockTestPlatform"));
+// The four "alternative" guides share one shell (pages/guides/alt/AlternativePage.tsx).
+const ClassplusAlternative = safeLazy(() => import("./pages/guides/alt/ClassplusAlternative"));
+const TeachmintAlternative = safeLazy(() => import("./pages/guides/alt/TeachmintAlternative"));
+const KahootAlternative = safeLazy(() => import("./pages/guides/alt/KahootAlternative"));
+const TestportalAlternative = safeLazy(() => import("./pages/guides/alt/TestportalAlternative"));
+const MettlAlternative = safeLazy(() => import("./pages/guides/alt/MettlAlternative"));
+const ProprofsAlternative = safeLazy(() => import("./pages/guides/alt/ProprofsAlternative"));
+const SocrativeAlternative = safeLazy(() => import("./pages/guides/alt/SocrativeAlternative"));
+const SpeedexamAlternative = safeLazy(() => import("./pages/guides/alt/SpeedexamAlternative"));
+const CanvasQuizzesAlternative = safeLazy(() => import("./pages/guides/alt/CanvasQuizzesAlternative"));
+// The four "how to" guides share one shell (pages/guides/howto/HowToPage.tsx).
+const MobileFriendlyOnlineExam = safeLazy(() => import("./pages/guides/howto/MobileFriendlyOnlineExam"));
+const EmbedTestOnWebsite = safeLazy(() => import("./pages/guides/howto/EmbedTestOnWebsite"));
+const FullLengthOnlineTestMaker = safeLazy(() => import("./pages/guides/howto/FullLengthOnlineTestMaker"));
+const ShareTestOnWhatsapp = safeLazy(() => import("./pages/guides/howto/ShareTestOnWhatsapp"));
+const BestOnlineExamSoftwareIndia = safeLazy(() => import("./pages/guides/howto/BestOnlineExamSoftwareIndia"));
+const SectionalTestMaker = safeLazy(() => import("./pages/guides/howto/SectionalTestMaker"));
+const OnlineTestForTuitionTeachers = safeLazy(() => import("./pages/guides/howto/OnlineTestForTuitionTeachers"));
+const CbseOnlineTestMaker = safeLazy(() => import("./pages/guides/howto/CbseOnlineTestMaker"));
+const ScholarshipAdmissionTestPlatform = safeLazy(() => import("./pages/guides/howto/ScholarshipAdmissionTestPlatform"));
+const OnlineTestWithNegativeMarking = safeLazy(() => import("./pages/guides/howto/OnlineTestWithNegativeMarking"));
+const GuidesIndex = safeLazy(() => import("./pages/GuidesIndex"));
+
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
 import { useAuth } from "@/contexts/AuthContext";
 
+// /dashboard is the educator workspace only (rendered inside PrivateRoute, so user is set).
+// Everyone else goes to their own results.
 const DashboardRoute = () => {
-  const { user, profile, loading, isAdmin } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-      </div>
-    );
-  }
+  const { user, profile, isAdmin } = useAuth();
 
   const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
   const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution') || (isAdmin && designation !== 'Student');
 
-  if (user && isTeacherOrInstitution) {
+  if (isTeacherOrInstitution) {
     return <TeacherDashboard />;
   }
-  return <TestList />;
+  return <Navigate to="/history" replace />;
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+/** testoza.com/j/482913 — the short link inside the QR code and WhatsApp message. */
+const ShortJoinRedirect = () => {
+  const { code } = useParams<{ code: string }>();
+  return <Navigate to={`/join/${code || ''}`} replace />;
+};
 
 const AIImportRoute = () => {
   const navigate = useNavigate();
@@ -156,22 +248,28 @@ const App = () => (
               <ErrorBoundary>
                 <BrowserRouter>
                 <SubdomainGuard />
+                <CandidateBackGuard />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route element={<Layout />}>
                     <Route path="/" element={<HomeRoute />} />
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
-                    <Route path="/dashboard" element={<DashboardRoute />} />
+                    <Route path="/dashboard" element={<PrivateRoute><DashboardRoute /></PrivateRoute>} />
+                    {/* The old public test library; removed 2026-10-15. */}
+                    <Route path="/explore" element={<Navigate to="/" replace />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
                     {/* News & Blog Routes */}
                     <Route path="/blog" element={<NewsFeed />} />
-                    <Route path="/blog/:slug" element={<NewsPostView />} />
+                    <Route path="/blog/:slug" element={<BlogPostRoute />} />
                     <Route path="/news" element={<NewsFeed />} />
-                    <Route path="/news/:slug" element={<NewsPostView />} />
+                    <Route path="/news/:slug" element={<BlogPostRoute />} />
                     <Route path="/posts" element={<NewsFeed />} />
-                    <Route path="/posts/:slug" element={<NewsPostView />} />
+                    <Route path="/posts/:slug" element={<BlogPostRoute />} />
+                    {/* On blog.testoza.com posts live at /<slug> (their canonical URL);
+                        static paths like /pricing still win over this pattern. */}
+                    {isBlogSubdomain && <Route path="/:slug" element={<BlogPostRoute />} />}
                     <Route path="/news/create" element={
                       <PrivateRoute>
                         <NewsPostEditor />
@@ -197,6 +295,8 @@ const App = () => (
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/support" element={<SupportPage />} />
+                    <Route path="/help" element={<HelpPage />} />
+                    <Route path="/feedback" element={<FeedbackPage />} />
                     <Route path="/user-guide" element={<UserGuidePage />} />
                     <Route path="/user-guide/:slug" element={<UserGuidePage />} />
                     <Route path="/create-test" element={<CreateTestPage />} />
@@ -208,8 +308,73 @@ const App = () => (
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/about" element={<AboutPage />} />
-                    <Route path="/convert" element={<ConvertPage />} />
-                    <Route path="/survey" element={<SurveyPage />} />
+                    {/* Panna — PDF tools now live on pdf.testoza.com */}
+                    <Route path="/pdf" element={<PdfToolsMoved to="/" />} />
+                    <Route path="/pdf/editor" element={<PdfToolsMoved to="/edit-pdf" />} />
+                    <Route path="/pdf/latex-to-pdf" element={<PdfToolsMoved to="/latex-to-pdf" />} />
+                    <Route path="/convert" element={<PdfToolsMoved to="/latex-to-pdf" />} />
+                    {/* The old Google Form survey was removed on 2026-10-28; its link opens Survey 1.0. */}
+                    <Route path="/survey" element={<Navigate to="/survey/v1" replace />} />
+                    <Route path="/survey/v1" element={<SurveyV1Page />} />
+
+                    {/* Guides */}
+                    <Route path="/create-mock-test-online" element={<CreateMockTestOnline />} />
+
+                    {/* SEO Use-Case Landing Pages */}
+                    <Route path="/online-test-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/online-exam-software" element={<UseCaseLandingPage />} />
+                    <Route path="/online-quiz-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/mcq-test-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/ai-question-generator" element={<UseCaseLandingPage />} />
+                    <Route path="/pdf-to-quiz" element={<UseCaseLandingPage />} />
+                    <Route path="/youtube-to-quiz" element={<UseCaseLandingPage />} />
+                    <Route path="/online-test-for-coaching" element={<UseCaseLandingPage />} />
+                    <Route path="/exam-software-for-schools" element={<UseCaseLandingPage />} />
+                    <Route path="/white-label-test-platform" element={<UseCaseLandingPage />} />
+                    <Route path="/auto-grading-software" element={<UseCaseLandingPage />} />
+                    <Route path="/online-proctoring-software" element={<UseCaseLandingPage />} />
+
+                    {/* Guides */}
+                    <Route path={BEST_PLATFORM_META.path} element={<BestOnlineTestPlatform />} />
+                    <Route path={CBT_META.path} element={<CbtExamSoftware />} />
+                    <Route path={JEE_META.path} element={<JeeMockTestPlatform />} />
+                    <Route path={AI_TEST_GENERATOR_META.path} element={<AiTestGenerator />} />
+                    <Route path={NEET_META.path} element={<NeetOnlineTestSoftware />} />
+                    <Route path={MOODLE_META.path} element={<MoodleAlternative />} />
+                    <Route path={CONDUCT_META.path} element={<ConductOnlineExam />} />
+                    <Route path={HINDI_META.path} element={<HindiOnlineTestMaker />} />
+                    <Route path={PREVENT_CHEATING_META.path} element={<PreventCheating />} />
+                    <Route path={MATH_TEST_MAKER_META.path} element={<MathTestMaker />} />
+                    <Route path={CHEMISTRY_META.path} element={<ChemistryQuestionPaperMaker />} />
+                    <Route path={JEE_ADVANCED_META.path} element={<JeeAdvancedMockTestSoftware />} />
+                    <Route path={SSC_META.path} element={<SscMockTestPlatform />} />
+                    <Route path="/guides" element={<GuidesIndex />} />
+                    <Route path={BANK_META.path} element={<BankExamMockTestPlatform />} />
+                    <Route path={CLASSPLUS_META.path} element={<ClassplusAlternative />} />
+                    <Route path={TEACHMINT_META.path} element={<TeachmintAlternative />} />
+                    <Route path={KAHOOT_META.path} element={<KahootAlternative />} />
+                    <Route path={TESTPORTAL_META.path} element={<TestportalAlternative />} />
+                    <Route path={METTL_META.path} element={<MettlAlternative />} />
+                    <Route path={PROPROFS_META.path} element={<ProprofsAlternative />} />
+                    <Route path={SOCRATIVE_META.path} element={<SocrativeAlternative />} />
+                    <Route path={SPEEDEXAM_META.path} element={<SpeedexamAlternative />} />
+                    <Route path={CANVAS_QUIZZES_META.path} element={<CanvasQuizzesAlternative />} />
+                    <Route path={MOBILE_EXAM_META.path} element={<MobileFriendlyOnlineExam />} />
+                    <Route path={EMBED_META.path} element={<EmbedTestOnWebsite />} />
+                    <Route path={FULL_LENGTH_META.path} element={<FullLengthOnlineTestMaker />} />
+                    <Route path={WHATSAPP_META.path} element={<ShareTestOnWhatsapp />} />
+                    <Route path={BEST_EXAM_INDIA_META.path} element={<BestOnlineExamSoftwareIndia />} />
+                    <Route path={SECTIONAL_META.path} element={<SectionalTestMaker />} />
+                    <Route path={TUITION_META.path} element={<OnlineTestForTuitionTeachers />} />
+                    <Route path={CBSE_META.path} element={<CbseOnlineTestMaker />} />
+                    <Route path={SCHOLARSHIP_META.path} element={<ScholarshipAdmissionTestPlatform />} />
+                    <Route path={NEGATIVE_MARKING_META.path} element={<OnlineTestWithNegativeMarking />} />
+
+                    {/* SEO Subject Hub Pages */}
+                    <Route path="/create-test/:subject" element={<SubjectLandingPage />} />
+
+                    {/* SEO Comparison Pages */}
+                    <Route path="/compare/:slug" element={<ComparisonLandingPage />} />
 
 
                     {/* Protected Routes */}
@@ -238,14 +403,6 @@ const App = () => (
                         </PrivateRoute>
                       }
                     />
-                    <Route
-                      path="/materials"
-                      element={
-                        <PrivateRoute>
-                          <MaterialsManager />
-                        </PrivateRoute>
-                      }
-                    />
 
                     {/* SEO & Test Routes */}
                     <Route
@@ -268,6 +425,27 @@ const App = () => (
                       path="/live/:id"
                       element={<TestPage />}
                     />
+
+                    {/* Exam sessions — students join with a 6-digit code (no account) */}
+                    {/* Where the "Scan to share" QR on a live exam card lands, on the examiner's phone. */}
+                    <Route path="/share-exam/:key" element={<ShareExamPage />} />
+                    {/* An educator's invite link, and where its "Scan to share" QR lands on their phone */}
+                    <Route path="/invite/:code" element={<InvitePage />} />
+                    <Route path="/share-invite/:code" element={<ShareInvitePage />} />
+                    <Route path="/join" element={<JoinPage />} />
+                    <Route path="/join/result" element={<JoinPage />} />
+                    <Route path="/join/result/:code" element={<JoinPage />} />
+                    <Route path="/join/:code" element={<JoinPage />} />
+                    <Route path="/join/:code/exam" element={<TestPage />} />
+                    <Route path="/j/:code" element={<ShortJoinRedirect />} />
+                    {/* …and teachers run them */}
+                    <Route path="/exams" element={<PrivateRoute><ExamsPage /></PrivateRoute>} />
+                    <Route path="/exams/:id" element={<PrivateRoute><ExamSessionPage /></PrivateRoute>} />
+                    <Route path="/exams/:id/present" element={<PrivateRoute><ExamPresentPage /></PrivateRoute>} />
+                    <Route path="/exams/:id/report-cards" element={<PrivateRoute><ReportCardsPage /></PrivateRoute>} />
+                    <Route path="/batches" element={<PrivateRoute><BatchesPage /></PrivateRoute>} />
+                    <Route path="/batches/:id" element={<PrivateRoute><BatchPage /></PrivateRoute>} />
+                    <Route path="/batches/:id/slips" element={<PrivateRoute><PinSlipsPage /></PrivateRoute>} />
 
                     {/* Combined Session Routes */}
                     <Route path="/create-combined-test" element={<PrivateRoute><CreateCombinedTestPage /></PrivateRoute>} />

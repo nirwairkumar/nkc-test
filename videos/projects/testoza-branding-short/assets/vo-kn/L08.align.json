@@ -1,0 +1,58 @@
+[
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 0.06,
+  "end": 0.261,
+  "score": 0.998
+ },
+ {
+  "w": "institute.",
+  "r": "institute",
+  "start": 0.341,
+  "end": 0.843,
+  "score": 0.858
+ },
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 1.104,
+  "end": 1.325,
+  "score": 0.969
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 1.385,
+  "end": 1.706,
+  "score": 0.99
+ },
+ {
+  "w": "ಇವತ್ತೇ",
+  "r": "ivattee",
+  "start": 1.947,
+  "end": 2.308,
+  "score": 0.818
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 2.308,
+  "end": 2.529,
+  "score": 0.974
+ },
+ {
+  "w": "testoza.com",
+  "r": "testozacom",
+  "start": 2.77,
+  "end": 3.553,
+  "score": 0.738
+ },
+ {
+  "w": "ನಲ್ಲಿ.",
+  "r": "nalli",
+  "start": 3.573,
+  "end": 3.774,
+  "score": 0.956
+ }
+]

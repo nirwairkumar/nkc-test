@@ -3,6 +3,10 @@ from app.core.database import get_db
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
+from app.routers.tests.utils import exam_window_still_open, result_view_allows
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -10,7 +14,7 @@ class UpdateSolutionsRequest(BaseModel):
     solutions: Dict[str, str]
 
 @router.put("/{test_id}/solutions")
-async def save_test_solutions(
+def save_test_solutions(
     test_id: str,
     payload: UpdateSolutionsRequest,
     request: Request,
@@ -55,34 +59,52 @@ async def save_test_solutions(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error saving solutions for test {test_id}: {e}")
+        logger.error(f"Error saving solutions for test {test_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{test_id}/solutions")
-async def get_test_solutions(
+def get_test_solutions(
     test_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     """
     Fetch the solutions for a specific test.
-    This is requested by students after submission, so no auth check is enforced here 
-    since standard endpoint GET /tests/:id intentionally strips or doesn't fetch solutions.
+
+    C4: solutions are part of the answer key, so they are released only to the test
+    owner, to admins, and to a candidate who has already submitted an attempt — the
+    same rule GET /api/tests/{id} applies to `correctAnswer`.
     """
+    from app.core.auth import get_optional_user_id, is_admin_user
+
     try:
-        test_resp = db.table("tests").select("solutions").eq("id", test_id).execute()
+        test_resp = db.table("tests").select("id, created_by, solutions, settings").eq("id", test_id).execute()
         
         if not test_resp.data:
             raise HTTPException(status_code=404, detail="Test not found")
-            
-        solutions = test_resp.data[0].get("solutions")
+
+        test_row = test_resp.data[0]
+        requesting_user_id = get_optional_user_id(request, db)
+        allowed = False
+        if requesting_user_id:
+            if test_row.get("created_by") == requesting_user_id or is_admin_user(requesting_user_id, db):
+                allowed = True
+            elif not exam_window_still_open(test_row.get("settings")) and result_view_allows(test_row.get("settings"), "solutions"):
+                attempt = db.table("user_tests").select("id")                    .eq("user_id", requesting_user_id).eq("test_id", test_id).limit(1).execute()
+                allowed = bool(attempt.data)
+        if not allowed:
+            return {"has_solutions": False, "solutions": {}}
+
+        solutions = test_row.get("solutions")
         
+        # A cleared editor saves empty strings, which is not "uploaded".
         return {
-            "has_solutions": solutions is not None and len(solutions) > 0,
+            "has_solutions": isinstance(solutions, dict) and any(str(v or "").strip() for v in solutions.values()),
             "solutions": solutions or {}
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching solutions for test {test_id}: {e}")
+        logger.error(f"Error fetching solutions for test {test_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

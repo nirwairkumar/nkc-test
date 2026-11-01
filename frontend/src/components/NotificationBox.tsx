@@ -12,11 +12,11 @@ import { useNotifications } from '@/hooks/useNotifications';
 const NotificationList = React.lazy(() => import('./NotificationList'));
 
 export default function NotificationBox() {
-    const { notifications, unreadCount, handleDelete, handleClearAll, markAsRead } = useNotifications();
+    const { notifications, unreadCount, handleDelete, handleClearAll, markAsRead, freshen } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <Popover open={isOpen} onOpenChange={(next) => { if (next) freshen(); setIsOpen(next); }}>
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />

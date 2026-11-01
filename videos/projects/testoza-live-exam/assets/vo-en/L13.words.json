@@ -1,0 +1,284 @@
+[
+  {
+    "id": "w0",
+    "text": "Assigned",
+    "start": 0.08,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "to",
+    "start": 0.48,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "class",
+    "start": 0.64,
+    "end": 0.96
+  },
+  {
+    "id": "w3",
+    "text": "keeps",
+    "start": 0.96,
+    "end": 1.28
+  },
+  {
+    "id": "w4",
+    "text": "this",
+    "start": 1.28,
+    "end": 1.44
+  },
+  {
+    "id": "w5",
+    "text": "exam's",
+    "start": 1.44,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "results",
+    "start": 1.92,
+    "end": 2.24
+  },
+  {
+    "id": "w7",
+    "text": "with",
+    "start": 2.24,
+    "end": 2.4
+  },
+  {
+    "id": "w8",
+    "text": "the",
+    "start": 2.4,
+    "end": 2.48
+  },
+  {
+    "id": "w9",
+    "text": "right",
+    "start": 2.48,
+    "end": 2.64
+  },
+  {
+    "id": "w10",
+    "text": "batch.",
+    "start": 2.8,
+    "end": 3.52
+  },
+  {
+    "id": "w11",
+    "text": "Attempt",
+    "start": 3.52,
+    "end": 3.92
+  },
+  {
+    "id": "w12",
+    "text": "limit,",
+    "start": 3.92,
+    "end": 4.48
+  },
+  {
+    "id": "w13",
+    "text": "one",
+    "start": 4.48,
+    "end": 4.64
+  },
+  {
+    "id": "w14",
+    "text": "exam,",
+    "start": 4.8,
+    "end": 5.36
+  },
+  {
+    "id": "w15",
+    "text": "one",
+    "start": 5.36,
+    "end": 5.52
+  },
+  {
+    "id": "w16",
+    "text": "attempt.",
+    "start": 5.68,
+    "end": 6.32
+  },
+  {
+    "id": "w17",
+    "text": "No",
+    "start": 6.32,
+    "end": 6.56
+  },
+  {
+    "id": "w18",
+    "text": "retakes",
+    "start": 6.56,
+    "end": 7.36
+  },
+  {
+    "id": "w19",
+    "text": "after",
+    "start": 7.36,
+    "end": 7.68
+  },
+  {
+    "id": "w20",
+    "text": "seeing",
+    "start": 7.68,
+    "end": 8.08
+  },
+  {
+    "id": "w21",
+    "text": "the",
+    "start": 8.08,
+    "end": 8.16
+  },
+  {
+    "id": "w22",
+    "text": "paper.",
+    "start": 8.16,
+    "end": 8.72
+  },
+  {
+    "id": "w23",
+    "text": "And",
+    "start": 8.72,
+    "end": 8.96
+  },
+  {
+    "id": "w24",
+    "text": "require",
+    "start": 8.96,
+    "end": 9.52
+  },
+  {
+    "id": "w25",
+    "text": "candidate",
+    "start": 9.52,
+    "end": 9.92
+  },
+  {
+    "id": "w26",
+    "text": "login",
+    "start": 9.92,
+    "end": 10.32
+  },
+  {
+    "id": "w27",
+    "text": "stays",
+    "start": 10.48,
+    "end": 10.8
+  },
+  {
+    "id": "w28",
+    "text": "off",
+    "start": 10.8,
+    "end": 10.96
+  },
+  {
+    "id": "w29",
+    "text": "for",
+    "start": 10.96,
+    "end": 11.12
+  },
+  {
+    "id": "w30",
+    "text": "a",
+    "start": 11.12,
+    "end": 11.2
+  },
+  {
+    "id": "w31",
+    "text": "class",
+    "start": 11.2,
+    "end": 11.52
+  },
+  {
+    "id": "w32",
+    "text": "test,",
+    "start": 11.52,
+    "end": 12
+  },
+  {
+    "id": "w33",
+    "text": "students",
+    "start": 12,
+    "end": 12.56
+  },
+  {
+    "id": "w34",
+    "text": "just",
+    "start": 12.56,
+    "end": 12.8
+  },
+  {
+    "id": "w35",
+    "text": "open",
+    "start": 12.8,
+    "end": 13.12
+  },
+  {
+    "id": "w36",
+    "text": "the",
+    "start": 13.12,
+    "end": 13.2
+  },
+  {
+    "id": "w37",
+    "text": "link,",
+    "start": 13.2,
+    "end": 13.76
+  },
+  {
+    "id": "w38",
+    "text": "type",
+    "start": 13.76,
+    "end": 14.08
+  },
+  {
+    "id": "w39",
+    "text": "their",
+    "start": 14.08,
+    "end": 14.24
+  },
+  {
+    "id": "w40",
+    "text": "name,",
+    "start": 14.24,
+    "end": 14.64
+  },
+  {
+    "id": "w41",
+    "text": "and",
+    "start": 14.64,
+    "end": 14.88
+  },
+  {
+    "id": "w42",
+    "text": "start.",
+    "start": 14.88,
+    "end": 15.52
+  },
+  {
+    "id": "w43",
+    "text": "No",
+    "start": 15.52,
+    "end": 15.76
+  },
+  {
+    "id": "w44",
+    "text": "accounts,",
+    "start": 15.76,
+    "end": 16.24
+  },
+  {
+    "id": "w45",
+    "text": "no",
+    "start": 16.24,
+    "end": 16.4
+  },
+  {
+    "id": "w46",
+    "text": "app.",
+    "start": 16.4,
+    "end": 16.72
+  }
+]

@@ -1,0 +1,1 @@
+Name default ಆಗಿ ಕೇಳುತ್ತೆ. ರೋಲ್ ನಂಬರ್ add ಮಾಡಿ, ಅಥವಾ ಬೇರೆ ಏನಾದರೂ — batch, school, phone. Start ಮಾಡೋ ಮುಂಚೆ candidates ಇದನ್ನ fill ಮಾಡ್ತಾರೆ.

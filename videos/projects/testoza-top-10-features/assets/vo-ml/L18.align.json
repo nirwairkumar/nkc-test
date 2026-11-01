@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.303,
+  "score": 0.594
+ },
+ {
+  "w": "six:",
+  "r": "six",
+  "start": 0.364,
+  "end": 0.546,
+  "score": 0.469
+ },
+ {
+  "w": "എവിടെയും",
+  "r": "evitteyum",
+  "start": 0.889,
+  "end": 1.273,
+  "score": 0.439
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 1.354,
+  "end": 1.657,
+  "score": 0.593
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 1.657,
+  "end": 1.92,
+  "score": 0.505
+ }
+]

@@ -1,0 +1,156 @@
+[
+ {
+  "w": "बाक़ी",
+  "r": "baaqii",
+  "start": 0.04,
+  "end": 0.3,
+  "score": 0.776
+ },
+ {
+  "w": "बटन",
+  "r": "battan",
+  "start": 0.3,
+  "end": 0.54,
+  "score": 0.983
+ },
+ {
+  "w": "भी",
+  "r": "bhii",
+  "start": 0.58,
+  "end": 0.7,
+  "score": 0.974
+ },
+ {
+  "w": "ऐसे",
+  "r": "aise",
+  "start": 0.76,
+  "end": 0.961,
+  "score": 0.992
+ },
+ {
+  "w": "ही:",
+  "r": "hii",
+  "start": 1.021,
+  "end": 1.121,
+  "score": 0.991
+ },
+ {
+  "w": "gas",
+  "r": "gas",
+  "start": 1.501,
+  "end": 1.721,
+  "score": 0.939
+ },
+ {
+  "w": "given",
+  "r": "given",
+  "start": 1.781,
+  "end": 2.001,
+  "score": 0.8
+ },
+ {
+  "w": "off,",
+  "r": "off",
+  "start": 2.061,
+  "end": 2.181,
+  "score": 0.297
+ },
+ {
+  "w": "precipitate,",
+  "r": "precipitate",
+  "start": 2.361,
+  "end": 2.862,
+  "score": 0.785
+ },
+ {
+  "w": "heat,",
+  "r": "heat",
+  "start": 3.162,
+  "end": 3.422,
+  "score": 0.535
+ },
+ {
+  "w": "डिग्री",
+  "r": "ddigrii",
+  "start": 3.662,
+  "end": 3.962,
+  "score": 0.738
+ },
+ {
+  "w": "सेल्सियस,",
+  "r": "selsiyas",
+  "start": 3.982,
+  "end": 4.443,
+  "score": 0.767
+ },
+ {
+  "w": "aqueous,",
+  "r": "aqueous",
+  "start": 4.683,
+  "end": 5.103,
+  "score": 0.311
+ },
+ {
+  "w": "solid,",
+  "r": "solid",
+  "start": 5.363,
+  "end": 5.803,
+  "score": 0.78
+ },
+ {
+  "w": "liquid,",
+  "r": "liquid",
+  "start": 6.103,
+  "end": 6.544,
+  "score": 0.554
+ },
+ {
+  "w": "K",
+  "r": "k",
+  "start": 6.824,
+  "end": 6.844,
+  "score": 0.985
+ },
+ {
+  "w": "a,",
+  "r": "a",
+  "start": 7.144,
+  "end": 7.164,
+  "score": 0.194
+ },
+ {
+  "w": "K",
+  "r": "k",
+  "start": 7.444,
+  "end": 7.464,
+  "score": 0.98
+ },
+ {
+  "w": "b,",
+  "r": "b",
+  "start": 7.684,
+  "end": 7.704,
+  "score": 0.983
+ },
+ {
+  "w": "pH",
+  "r": "ph",
+  "start": 8.005,
+  "end": 8.385,
+  "score": 0.544
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 8.565,
+  "end": 8.665,
+  "score": 0.992
+ },
+ {
+  "w": "mol।",
+  "r": "mol",
+  "start": 8.725,
+  "end": 8.925,
+  "score": 0.992
+ }
+]

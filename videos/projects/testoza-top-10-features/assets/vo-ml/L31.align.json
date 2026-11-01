@@ -1,0 +1,128 @@
+[
+ {
+  "w": "എല്ലാവരും",
+  "r": "ellaavarum",
+  "start": 0.02,
+  "end": 0.48,
+  "score": 0.808
+ },
+ {
+  "w": "തീർത്താൽ,",
+  "r": "tiirrattaala",
+  "start": 0.52,
+  "end": 0.901,
+  "score": 0.898
+ },
+ {
+  "w": "മുപ്പത്തിരണ്ട്",
+  "r": "muppattiranntt",
+  "start": 0.961,
+  "end": 1.481,
+  "score": 0.726
+ },
+ {
+  "w": "results-ഉം",
+  "r": "resultsum",
+  "start": 1.501,
+  "end": 1.921,
+  "score": 0.647
+ },
+ {
+  "w": "വരും.",
+  "r": "varum",
+  "start": 1.961,
+  "end": 2.162,
+  "score": 0.995
+ },
+ {
+  "w": "Ranks",
+  "r": "ranks",
+  "start": 2.742,
+  "end": 3.022,
+  "score": 0.759
+ },
+ {
+  "w": "on",
+  "r": "on",
+  "start": 3.042,
+  "end": 3.202,
+  "score": 0.395
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 3.242,
+  "end": 3.483,
+  "score": 0.842
+ },
+ {
+  "w": "മുഴുവൻ",
+  "r": "mullluvana",
+  "start": 3.703,
+  "end": 4.043,
+  "score": 0.887
+ },
+ {
+  "w": "batch",
+  "r": "batch",
+  "start": 4.063,
+  "end": 4.283,
+  "score": 0.471
+ },
+ {
+  "w": "scroll",
+  "r": "scroll",
+  "start": 4.283,
+  "end": 4.603,
+  "score": 0.586
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 4.644,
+  "end": 4.924,
+  "score": 0.856
+ },
+ {
+  "w": "എല്ലാം",
+  "r": "ellaam",
+  "start": 5.204,
+  "end": 5.504,
+  "score": 0.946
+ },
+ {
+  "w": "ഒറ്റ",
+  "r": "orrrra",
+  "start": 5.504,
+  "end": 5.764,
+  "score": 0.904
+ },
+ {
+  "w": "click-ൽ",
+  "r": "clickla",
+  "start": 5.844,
+  "end": 6.145,
+  "score": 0.575
+ },
+ {
+  "w": "Excel-ലേക്ക്",
+  "r": "excelleekk",
+  "start": 6.165,
+  "end": 6.625,
+  "score": 0.684
+ },
+ {
+  "w": "download",
+  "r": "download",
+  "start": 6.745,
+  "end": 7.065,
+  "score": 0.256
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 7.085,
+  "end": 7.306,
+  "score": 0.837
+ }
+]

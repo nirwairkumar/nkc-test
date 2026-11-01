@@ -12,6 +12,9 @@ class SaveAttemptRequest(BaseModel):
 class RegisterRequest(BaseModel):
     user_id: Optional[str] = None
     test_id: str
+    # What the candidate typed on the start form (Name, Roll no…), so the examiner
+    # can see who is writing before anyone submits.
+    start_form: Optional[Dict[str, Any]] = None
 
 class ProgressUpdateRequest(BaseModel):
     user_id: Optional[str] = None

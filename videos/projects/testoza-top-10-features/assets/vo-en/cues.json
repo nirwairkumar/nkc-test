@@ -1,0 +1,403 @@
+{
+  "L01": {
+    "duration": 18.055417,
+    "cues": {
+      "m1": 0,
+      "m2": 2.72,
+      "m3": 4.96,
+      "m4": 7.28,
+      "m5": 9.12,
+      "title": 12.08
+    },
+    "dist": 1,
+    "words": 41,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L02": {
+    "duration": 2.31425,
+    "cues": {},
+    "dist": 0,
+    "words": 5,
+    "missing": []
+  },
+  "L03": {
+    "duration": 10.389042,
+    "cues": {
+      "upload": 3.28,
+      "choose": 5.04,
+      "extract": 8.64
+    },
+    "dist": 0,
+    "words": 28,
+    "missing": []
+  },
+  "L04": {
+    "duration": 11.662,
+    "cues": {
+      "reading": 0,
+      "q1": 3.44,
+      "preview": 8.96
+    },
+    "dist": 0,
+    "words": 28,
+    "missing": []
+  },
+  "L05": {
+    "duration": 7.767333,
+    "cues": {
+      "answers": 0,
+      "save": 6,
+      "newcard": 6.4
+    },
+    "dist": 1,
+    "words": 28,
+    "missing": [
+      "read"
+    ]
+  },
+  "L06": {
+    "duration": 3.277875,
+    "cues": {},
+    "dist": 0,
+    "words": 7,
+    "missing": []
+  },
+  "L07": {
+    "duration": 10.512042,
+    "cues": {
+      "edit": 0.16,
+      "addq": 3.76,
+      "q13text": 4.56,
+      "sypad": 6.56
+    },
+    "dist": 3,
+    "words": 32,
+    "missing": [
+      "twelve",
+      "sy",
+      "pad"
+    ]
+  },
+  "L08": {
+    "duration": 14.33975,
+    "cues": {
+      "h": 0.08,
+      "frac": 2.56,
+      "power": 5.68,
+      "formula": 8.8,
+      "insert": 11.52
+    },
+    "dist": 3,
+    "words": 35,
+    "missing": [
+      "u",
+      "t",
+      "for"
+    ]
+  },
+  "L09": {
+    "duration": 4.345958,
+    "cues": {},
+    "dist": 4,
+    "words": 13,
+    "missing": [
+      "a",
+      "hundred",
+      "and",
+      "nineteen"
+    ]
+  },
+  "L10": {
+    "duration": 13.515208,
+    "cues": {
+      "lang": 0,
+      "hindi": 1.36,
+      "hitype": 2.32,
+      "hindone": 9.52,
+      "opts": 11.6
+    },
+    "dist": 0,
+    "words": 41,
+    "missing": []
+  },
+  "L11": {
+    "duration": 3.085708,
+    "cues": {},
+    "dist": 0,
+    "words": 5,
+    "missing": []
+  },
+  "L12": {
+    "duration": 10.596875,
+    "cues": {
+      "marks": 0.16,
+      "qtype": 2.8,
+      "multi": 5.04,
+      "jeeadv": 6.72,
+      "correct": 9.2
+    },
+    "dist": 3,
+    "words": 25,
+    "missing": [
+      "four",
+      "one",
+      "jee"
+    ]
+  },
+  "L13": {
+    "duration": 13.942875,
+    "cues": {
+      "sections": 0,
+      "timed": 2.16,
+      "gap": 6.4,
+      "split": 7.92,
+      "mina": 11.2,
+      "minb": 12.32,
+      "save": 13.36
+    },
+    "dist": 1,
+    "words": 34,
+    "missing": [
+      "questions"
+    ]
+  },
+  "L14": {
+    "duration": 4.403667,
+    "cues": {},
+    "dist": 1,
+    "words": 13,
+    "missing": [
+      "five"
+    ]
+  },
+  "L15": {
+    "duration": 7.644292,
+    "cues": {
+      "card": 0,
+      "conduct": 1.36,
+      "link": 3.04,
+      "start": 5.12,
+      "live": 6.32
+    },
+    "dist": 0,
+    "words": 21,
+    "missing": []
+  },
+  "L16": {
+    "duration": 13.547042,
+    "cues": {
+      "tip1": 0.08,
+      "settings": 2.16,
+      "fs": 3.68,
+      "tab": 5.04,
+      "count": 7.04,
+      "threepick": 7.76,
+      "copyoff": 10.64,
+      "right": 11.92,
+      "back": 12.64
+    },
+    "dist": 1,
+    "words": 41,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L17": {
+    "duration": 9.521417,
+    "cues": {
+      "results": 0,
+      "resultview": 1.36,
+      "shuffle": 4.56,
+      "saveset": 8.96
+    },
+    "dist": 0,
+    "words": 25,
+    "missing": []
+  },
+  "L18": {
+    "duration": 2.143458,
+    "cues": {},
+    "dist": 0,
+    "words": 5,
+    "missing": []
+  },
+  "L19": {
+    "duration": 13.598542,
+    "cues": {
+      "tip2": 0,
+      "copy": 2.56,
+      "share": 3.36,
+      "menu": 6,
+      "getcode": 7.2,
+      "code": 8.48
+    },
+    "dist": 5,
+    "words": 44,
+    "missing": [
+      "whatsapp",
+      "group",
+      "testoza",
+      "dot",
+      "com"
+    ]
+  },
+  "L20": {
+    "duration": 2.531708,
+    "cues": {},
+    "dist": 1,
+    "words": 7,
+    "missing": [
+      "seven"
+    ]
+  },
+  "L21": {
+    "duration": 7.77875,
+    "cues": {
+      "inputs": 0.08,
+      "roll": 1.76,
+      "inputsdone": 2.88
+    },
+    "dist": 0,
+    "words": 21,
+    "missing": []
+  },
+  "L22": {
+    "duration": 4.357667,
+    "cues": {},
+    "dist": 1,
+    "words": 13,
+    "missing": [
+      "eight"
+    ]
+  },
+  "L23": {
+    "duration": 9.1175,
+    "cues": {
+      "join": 0,
+      "code6": 3.92,
+      "details": 5.52,
+      "name": 7.04,
+      "rollin": 7.76,
+      "go": 8.64
+    },
+    "dist": 3,
+    "words": 25,
+    "missing": [
+      "testoza",
+      "dot",
+      "com"
+    ]
+  },
+  "L24": {
+    "duration": 5.157167,
+    "cues": {
+      "exam": 0,
+      "ans1": 2.72,
+      "next1": 3.92
+    },
+    "dist": 1,
+    "words": 13,
+    "missing": [
+      "an"
+    ]
+  },
+  "L25": {
+    "duration": 6.197292,
+    "cues": {
+      "violation": 0,
+      "warnok": 4.96
+    },
+    "dist": 0,
+    "words": 20,
+    "missing": []
+  },
+  "L26": {
+    "duration": 3.212792,
+    "cues": {
+      "rush": 0,
+      "submit": 1.84,
+      "yes": 2.48
+    },
+    "dist": 0,
+    "words": 9,
+    "missing": []
+  },
+  "L27": {
+    "duration": 2.715958,
+    "cues": {},
+    "dist": 1,
+    "words": 6,
+    "missing": [
+      "nine"
+    ]
+  },
+  "L28": {
+    "duration": 12.747208,
+    "cues": {
+      "dash": 0,
+      "writing": 1.52,
+      "subm": 3.44,
+      "panel": 5.04,
+      "started": 6.16,
+      "writ": 6.88,
+      "two": 7.52,
+      "zero": 8.24,
+      "names": 9.04
+    },
+    "dist": 1,
+    "words": 30,
+    "missing": [
+      "thirty"
+    ]
+  },
+  "L29": {
+    "duration": 3.11,
+    "cues": {},
+    "dist": 0,
+    "words": 8,
+    "missing": []
+  },
+  "L30": {
+    "duration": 5.198333,
+    "cues": {
+      "score": 0,
+      "solkey": 3.12
+    },
+    "dist": 0,
+    "words": 16,
+    "missing": []
+  },
+  "L31": {
+    "duration": 8.266042,
+    "cues": {
+      "all": 0,
+      "rank": 3.36,
+      "scrolllist": 4.4,
+      "export": 5.76
+    },
+    "dist": 2,
+    "words": 25,
+    "missing": [
+      "thirty",
+      "two"
+    ]
+  },
+  "L32": {
+    "duration": 8.398167,
+    "cues": {
+      "endurl": 5.28,
+      "thanks": 7.28
+    },
+    "dist": 5,
+    "words": 24,
+    "missing": [
+      "ten",
+      "ranked",
+      "testoza",
+      "dot",
+      "com"
+    ]
+  }
+}

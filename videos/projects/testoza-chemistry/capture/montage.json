@@ -1,0 +1,46 @@
+{
+  "m1": {
+    "take": "b",
+    "after": "correct3",
+    "dt": 0.8,
+    "box": {
+      "x": 333,
+      "y": 92,
+      "width": 520,
+      "height": 135
+    }
+  },
+  "m2": {
+    "take": "a",
+    "after": "correct1",
+    "dt": 0.8,
+    "box": {
+      "x": 333,
+      "y": 178,
+      "width": 835,
+      "height": 84
+    }
+  },
+  "m3": {
+    "take": "c",
+    "after": "correct4",
+    "dt": 0.8,
+    "box": {
+      "x": 333,
+      "y": 98,
+      "width": 270,
+      "height": 230
+    }
+  },
+  "m4": {
+    "take": "d",
+    "after": "four",
+    "dt": 1,
+    "box": {
+      "x": 335,
+      "y": 155,
+      "width": 820,
+      "height": 295
+    }
+  }
+}

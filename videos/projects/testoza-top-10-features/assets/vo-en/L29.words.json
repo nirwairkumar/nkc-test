@@ -1,0 +1,50 @@
+[
+  {
+    "id": "w0",
+    "text": "And",
+    "start": 0,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "number",
+    "start": 0.24,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "ten,",
+    "start": 0.56,
+    "end": 1.04
+  },
+  {
+    "id": "w3",
+    "text": "results.",
+    "start": 1.04,
+    "end": 1.84
+  },
+  {
+    "id": "w4",
+    "text": "The",
+    "start": 1.84,
+    "end": 2.08
+  },
+  {
+    "id": "w5",
+    "text": "moment",
+    "start": 2.08,
+    "end": 2.16
+  },
+  {
+    "id": "w6",
+    "text": "they",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w7",
+    "text": "submit.",
+    "start": 2.56,
+    "end": 3.04
+  }
+]

@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.361,
+  "score": 0.592
+ },
+ {
+  "w": "eight:",
+  "r": "eight",
+  "start": 0.401,
+  "end": 0.621,
+  "score": 0.347
+ },
+ {
+  "w": "ఏ",
+  "r": "ee",
+  "start": 0.962,
+  "end": 1.062,
+  "score": 0.985
+ },
+ {
+  "w": "phone",
+  "r": "phone",
+  "start": 1.122,
+  "end": 1.382,
+  "score": 0.775
+ },
+ {
+  "w": "లోనైనా",
+  "r": "loonainaa",
+  "start": 1.382,
+  "end": 1.783,
+  "score": 0.861
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.863,
+  "end": 2.224,
+  "score": 0.711
+ },
+ {
+  "w": "room.",
+  "r": "room",
+  "start": 2.304,
+  "end": 2.464,
+  "score": 0.52
+ },
+ {
+  "w": "App",
+  "r": "app",
+  "start": 3.225,
+  "end": 3.425,
+  "score": 0.662
+ },
+ {
+  "w": "అక్కర్లేదు,",
+  "r": "akkarleedu",
+  "start": 3.445,
+  "end": 3.966,
+  "score": 0.993
+ },
+ {
+  "w": "sign-up",
+  "r": "signup",
+  "start": 4.467,
+  "end": 4.828,
+  "score": 0.509
+ },
+ {
+  "w": "అక్కర్లేదు.",
+  "r": "akkarleedu",
+  "start": 4.848,
+  "end": 5.228,
+  "score": 0.651
+ }
+]

@@ -1,0 +1,72 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.301,
+  "score": 0.352
+ },
+ {
+  "w": "five:",
+  "r": "five",
+  "start": 0.361,
+  "end": 0.723,
+  "score": 0.036
+ },
+ {
+  "w": "ಒಂದೇ",
+  "r": "omdee",
+  "start": 1.104,
+  "end": 1.365,
+  "score": 0.425
+ },
+ {
+  "w": "click",
+  "r": "click",
+  "start": 1.405,
+  "end": 1.586,
+  "score": 0.519
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 1.666,
+  "end": 1.907,
+  "score": 0.978
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 2.368,
+  "end": 2.83,
+  "score": 0.742
+ },
+ {
+  "w": "anti-cheating",
+  "r": "anticheating",
+  "start": 2.87,
+  "end": 3.492,
+  "score": 0.58
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 3.593,
+  "end": 3.934,
+  "score": 0.754
+ },
+ {
+  "w": "room",
+  "r": "room",
+  "start": 4.014,
+  "end": 4.155,
+  "score": 0.539
+ },
+ {
+  "w": "ಒಳಗೆ.",
+  "r": "ollage",
+  "start": 4.155,
+  "end": 4.456,
+  "score": 0.924
+ }
+]

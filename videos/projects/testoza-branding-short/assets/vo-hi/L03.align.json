@@ -1,0 +1,93 @@
+[
+ {
+  "w": "Logo",
+  "r": "logo",
+  "start": 0.14,
+  "end": 0.401,
+  "score": 0.995
+ },
+ {
+  "w": "डालिए,",
+  "r": "ddaalie",
+  "start": 0.461,
+  "end": 0.803,
+  "score": 0.972
+ },
+ {
+  "w": "institute",
+  "r": "institute",
+  "start": 1.003,
+  "end": 1.465,
+  "score": 0.815
+ },
+ {
+  "w": "का",
+  "r": "kaa",
+  "start": 1.465,
+  "end": 1.565,
+  "score": 0.912
+ },
+ {
+  "w": "नाम",
+  "r": "naam",
+  "start": 1.585,
+  "end": 1.786,
+  "score": 0.998
+ },
+ {
+  "w": "लिखिए,",
+  "r": "likhie",
+  "start": 1.846,
+  "end": 2.127,
+  "score": 0.98
+ },
+ {
+  "w": "colour",
+  "r": "colour",
+  "start": 2.408,
+  "end": 2.668,
+  "score": 0.333
+ },
+ {
+  "w": "चुनिए,",
+  "r": "cunie",
+  "start": 2.729,
+  "end": 3.05,
+  "score": 0.992
+ },
+ {
+  "w": "font",
+  "r": "font",
+  "start": 3.31,
+  "end": 3.611,
+  "score": 0.539
+ },
+ {
+  "w": "भी।",
+  "r": "bhii",
+  "start": 3.651,
+  "end": 3.792,
+  "score": 0.941
+ },
+ {
+  "w": "बस",
+  "r": "bas",
+  "start": 4.093,
+  "end": 4.293,
+  "score": 0.991
+ },
+ {
+  "w": "brand",
+  "r": "brand",
+  "start": 4.474,
+  "end": 4.735,
+  "score": 0.56
+ },
+ {
+  "w": "तैयार।",
+  "r": "taiyaar",
+  "start": 4.775,
+  "end": 5.116,
+  "score": 0.791
+ }
+]

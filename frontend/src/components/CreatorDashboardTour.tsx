@@ -303,7 +303,7 @@ export default function CreatorDashboardTour({
       case 3:
         return {
           title: "⚙️ Security Settings",
-          desc: "Nice! Your test is now live in Active Exams. Let's customize the cheating protection. Click Settings.",
+          desc: "Nice! Your test is now live under Live exams. Let's customize the cheating protection. Click Settings.",
           inst: "Click Settings",
           num: 3,
           max: 11
@@ -350,9 +350,9 @@ export default function CreatorDashboardTour({
         };
       case 9:
         return {
-          title: "📋 Student Entry Form",
-          desc: "Enable Start Form to collect candidate details like Name, Roll No., and Email before starting the test.",
-          inst: "Toggle Start Form to ON",
+          title: "📋 Candidate inputs",
+          desc: "Turn on Candidate inputs to ask for details like Name, Roll No. and Email before the test starts.",
+          inst: "Toggle Candidate inputs to ON",
           num: 9,
           max: 11
         };

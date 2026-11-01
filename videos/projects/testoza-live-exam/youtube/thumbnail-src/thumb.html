@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- YouTube thumbnail (1280×720) for the live-exam tutorial. Real UI crops from capture/rec. Render: node shot.mjs -->
+<style>
+@font-face{font-family:Outfit;font-weight:700;src:url(../../assets/fonts/Outfit-700.woff2)}
+@font-face{font-family:Outfit;font-weight:800;src:url(../../assets/fonts/Outfit-800.woff2)}
+@font-face{font-family:Outfit;font-weight:900;src:url(../../assets/fonts/Outfit-900.woff2)}
+*{margin:0;box-sizing:border-box}
+body{width:1280px;height:720px;overflow:hidden;background:#0a1430;font-family:Outfit,sans-serif}
+.stage{position:relative;width:1280px;height:720px;overflow:hidden;
+  background:radial-gradient(700px 520px at 18% 28%,#16306a 0%,rgba(10,20,48,0) 70%),
+             radial-gradient(620px 520px at 88% 46%,rgba(239,68,68,.30) 0%,rgba(10,20,48,0) 65%),#0a1430}
+.grid{position:absolute;inset:0;opacity:.07;
+  background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%);mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%)}
+.copy{position:absolute;left:56px;top:44px;width:1000px}
+.kicker{display:inline-block;background:#22d3ee;color:#06203a;font-weight:800;font-size:30px;padding:6px 18px;border-radius:10px;letter-spacing:.5px}
+h1{color:#fff;font-weight:900;font-size:118px;line-height:1;margin-top:18px;letter-spacing:-2px;text-shadow:0 6px 24px rgba(0,0,0,.45);white-space:nowrap}
+h1 em{font-style:normal;color:#facc15;display:block;font-size:92px;letter-spacing:-1px}
+.card{position:absolute;background:#fff;border-radius:18px;overflow:hidden;border:5px solid #fff}
+.card img{display:block}
+/* The real tab-switch warning, big, with a red alarm glow. */
+.pop{left:676px;top:352px;width:566px;transform:rotate(3deg);border:0;border-radius:14px;
+  box-shadow:0 0 0 6px rgba(239,68,68,.9),0 0 90px 22px rgba(239,68,68,.55),0 26px 60px rgba(0,0,0,.6)}
+.pop img{width:566px}
+/* Live results tiles from the teacher's Results panel. */
+.tiles{left:40px;top:478px;width:630px;transform:rotate(-3deg);border:0;border-radius:16px;
+  box-shadow:0 0 0 5px #fff,0 26px 60px rgba(0,0,0,.6)}
+.tiles img{width:630px}
+.tag{position:absolute;color:#fff;font-weight:800;font-size:30px;padding:5px 16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.45);white-space:nowrap}
+.t1{left:880px;top:310px;background:#ef4444;transform:rotate(3deg)}
+.t2{left:56px;top:436px;background:#16a34a;transform:rotate(-3deg)}
+.t2 i{display:inline-block;width:14px;height:14px;border-radius:50%;background:#fff;margin-right:10px;vertical-align:2px;box-shadow:0 0 0 5px rgba(255,255,255,.3)}
+.logo{position:absolute;right:44px;top:40px;height:58px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
+.free{position:absolute;left:560px;top:596px;background:#facc15;color:#1a1300;font-weight:900;font-size:44px;padding:4px 22px;border-radius:12px;transform:rotate(-4deg);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+  <img class="logo" src="../../assets/img/wordmark.png" alt="">
+  <div class="copy">
+    <span class="kicker">ONLINE EXAM · STEP BY STEP</span>
+    <h1>Stop Cheating <em>in Online Exams</em></h1>
+  </div>
+  <div class="card pop"><img src="popup.png" alt=""></div>
+  <div class="tag t1">TAB SWITCH CAUGHT!</div>
+  <div class="card tiles"><img src="tilesbar.png" alt=""></div>
+  <div class="tag t2"><i></i>LIVE RESULTS</div>
+  <div class="free">FREE</div>
+</div></body></html>

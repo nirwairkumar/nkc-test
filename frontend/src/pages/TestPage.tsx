@@ -33,6 +33,13 @@ import { analyticsApi } from '@/lib/analyticsApi';
 import { Progress } from '@/components/ui/progress';
 import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
 import VirtualNumericPad from '@/components/test/VirtualNumericPad';
+import CorporateTestView from '@/components/test/CorporateTestView';
+import { joinApi, problemOf, seatStore } from '@/lib/examSessionsApi';
+import { isNumericalCorrect } from '@/utils/numericalAnswer';
+import { multiPartialScore } from '@/utils/multiCorrect';
+import { formatSectionMinutes, openSection, sectionMinutes, sectionMinutesTotal, sectionRanges } from '@/utils/sectionTiming';
+import { preloadTestImages } from '@/utils/preloadTestImages';
+import { isCandidateVisit } from '@/lib/candidateExit';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -71,11 +78,32 @@ const clearLocalTestSession = (userId: string, paramId?: string | null, testUuid
 };
 
 export default function TestPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId, code: joinCode } = useParams<{ id?: string; code?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  // Exam-session mode: a student who joined with a 6-digit code at /join/:code/exam.
+  // They have no account; the server knows them by the device token in their seat, and
+  // their seat id keys every local draft below in place of a user id.
+  const examSeat = useMemo(() => (joinCode ? seatStore.get(joinCode) : null), [joinCode]);
+  const id = examSeat ? `join-${joinCode}` : routeId;
+  const user = useMemo(() => (examSeat ? ({ id: examSeat.participantId } as any) : authUser), [examSeat, authUser]);
+  // Candidates from a test link leave to /join, never into the rest of the site.
+  const exitPath = examSeat ? `/join/${joinCode}` : isCandidateVisit() ? '/join' : '/';
+  const sessionClockRef = useRef<{ skewMs: number; deadline: number | null }>({ skewMs: 0, deadline: null });
+  const sessionAutoSubmitRef = useRef(false);
+  const confirmSubmitRef = useRef<() => void>(() => { });
+  const [seatProblem, setSeatProblem] = useState<string | null>(null);
+  const sessionSecondsLeft = () => {
+    const { deadline, skewMs } = sessionClockRef.current;
+    return deadline ? Math.max(0, Math.floor((deadline - (Date.now() + skewMs)) / 1000)) : 0;
+  };
+
+  useEffect(() => {
+    if (joinCode && !examSeat) navigate(`/join/${joinCode}`, { replace: true });
+  }, [joinCode, examSeat]);
 
   // Combined mode state (from CombinedIntroPage navigation)
   const combinedState = (location.state as any) || {};
@@ -90,11 +118,18 @@ export default function TestPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [fontSize, setFontSize] = useState(18);
 
+  // Assessment UI Interface Mode: Derived directly from Creator Settings (default 'nta')
+  const uiMode: 'nta' | 'corporate' = (test?.settings?.exam_interface_mode === 'corporate') ? 'corporate' : 'nta';
+
   // State
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
   const [markedForReview, setMarkedForReview] = useState<Set<number>>(new Set());
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
+  const questionTimesRef = useRef<Record<number, number>>({});
+  const activeQuestionEnterTimeRef = useRef<number | null>(null);
+  const currentQuestionIdRef = useRef<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -113,7 +148,8 @@ export default function TestPage() {
 
   // Track delayed proctoring start state
   const [isExamStarted, setIsExamStarted] = useState(() => {
-    return !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+    // Session students pressed "Start exam" in the lobby, which is their intro page.
+    return !!examSeat || !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
   });
 
   // Reporting State
@@ -132,6 +168,10 @@ export default function TestPage() {
 
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
+    if (examSeat) {
+      toast.info("Tell your examiner about this question after the exam.");
+      return;
+    }
     if (!user) {
       toast.error("Please login to report a question.");
       return;
@@ -170,9 +210,9 @@ export default function TestPage() {
   const isResizingRef = useRef(false);
 
   // 1. Browser Back Button Prevention
-  // 1. Browser Back Button Prevention
+  // (Candidates from a test link or join code get CandidateBackGuard's "Leave?" instead.)
   useEffect(() => {
-    if (!test?.settings?.block_back_button) return;
+    if (!test?.settings?.block_back_button || isCandidateVisit()) return;
 
     // Push current state to history stack
     window.history.pushState(null, "", window.location.href);
@@ -236,7 +276,7 @@ export default function TestPage() {
 
 
   const [isTimeHidden, setIsTimeHidden] = useState(false);
-  const [isTimerDisabled] = useState(() => sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
+  const [isTimerDisabled] = useState(() => !examSeat && sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -289,6 +329,89 @@ export default function TestPage() {
     };
   }, [timeRemaining, isTimeUp, isExamStarted]);
 
+  // ── Timed sections (SSC CGL / CHSL 2026): every section has its own minutes, they open
+  // one after another and close when the minutes run out (utils/sectionTiming.ts). The
+  // open section comes from the time left, so refreshes and session deadlines just work.
+  // Off with the flexible "no time limit" timer.
+  const timedMinutes = useMemo(() => (isTimerDisabled ? null : sectionMinutes(test)), [test, isTimerDisabled]);
+  const timedRanges = useMemo(() => (timedMinutes && test?.sections ? sectionRanges(test.sections) : null), [timedMinutes, test]);
+  const [sectionFloor, setSectionFloor] = useState(0);
+  const timedOpen = timedMinutes ? openSection(timedMinutes, timeRemaining, sectionFloor) : null;
+  const openRange = timedOpen && timedRanges ? timedRanges[timedOpen.index] : null;
+  const announcedSectionRef = useRef<number | null>(null);
+  const sectionName = (index: number) => test?.sections?.[index]?.name || `Section ${index + 1}`;
+
+  useEffect(() => {
+    if (!timedOpen || !openRange || !isExamStarted) return;
+    if (timedOpen.index > sectionFloor) setSectionFloor(timedOpen.index);
+    if (currentQuestionIndex < openRange.start || currentQuestionIndex > openRange.end) setCurrentQuestionIndex(openRange.start);
+    const previous = announcedSectionRef.current;
+    announcedSectionRef.current = timedOpen.index;
+    if (previous !== null && timedOpen.index > previous) {
+      toast.info(`${sectionName(previous)} is closed. ${sectionName(timedOpen.index)} has started: ${formatSectionMinutes(timedMinutes![timedOpen.index])}.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timedOpen?.index, openRange?.start, isExamStarted, currentQuestionIndex]);
+
+  // ── Helper to flush active question's elapsed seconds into questionTimesRef ──
+  const flushActiveQuestionTime = (resetEnterTime: boolean = true) => {
+    const qId = currentQuestionIdRef.current;
+    const enterTime = activeQuestionEnterTimeRef.current;
+    if (qId != null && enterTime != null && isExamStarted && !isSubmitting && !isTimeUp) {
+      const now = Date.now();
+      const deltaSeconds = Math.max(0, Math.floor((now - enterTime) / 1000));
+      if (deltaSeconds > 0) {
+        questionTimesRef.current[qId] = (questionTimesRef.current[qId] || 0) + deltaSeconds;
+        setQuestionTimes(prev => ({
+          ...prev,
+          [qId]: questionTimesRef.current[qId]
+        }));
+      }
+      if (resetEnterTime) {
+        activeQuestionEnterTimeRef.current = now;
+      }
+    }
+  };
+
+  // ── Track Per-Question Active Time on Question Switch / Load ──
+  useEffect(() => {
+    if (!isExamStarted || !test?.questions?.length) return;
+    const nextQ = test.questions[currentQuestionIndex];
+    if (!nextQ) return;
+
+    if (currentQuestionIdRef.current !== nextQ.id) {
+      if (currentQuestionIdRef.current != null && activeQuestionEnterTimeRef.current != null) {
+        const deltaSeconds = Math.max(0, Math.floor((Date.now() - activeQuestionEnterTimeRef.current) / 1000));
+        if (deltaSeconds > 0) {
+          const prevId = currentQuestionIdRef.current;
+          questionTimesRef.current[prevId] = (questionTimesRef.current[prevId] || 0) + deltaSeconds;
+          setQuestionTimes(prev => ({ ...prev, [prevId]: questionTimesRef.current[prevId] }));
+        }
+      }
+      currentQuestionIdRef.current = nextQ.id;
+      activeQuestionEnterTimeRef.current = Date.now();
+    } else if (activeQuestionEnterTimeRef.current === null) {
+      activeQuestionEnterTimeRef.current = Date.now();
+    }
+  }, [currentQuestionIndex, test, isExamStarted]);
+
+  // ── Handle visibility changes (Tab Switch / Window Hide) ──
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!isExamStarted) return;
+      if (document.visibilityState === 'hidden') {
+        flushActiveQuestionTime(false);
+        activeQuestionEnterTimeRef.current = null;
+      } else if (document.visibilityState === 'visible') {
+        activeQuestionEnterTimeRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isExamStarted]);
+
   // Mark current question as visited
   // Save progress to localStorage
   useEffect(() => {
@@ -299,6 +422,14 @@ export default function TestPage() {
     // Only persist if user is logged in
     if (!user) return;
 
+    // Compute live question times including ongoing seconds for active question
+    const currentQId = test?.questions?.[currentQuestionIndex]?.id;
+    const liveQuestionTimes = { ...questionTimesRef.current };
+    if (currentQId != null && activeQuestionEnterTimeRef.current != null) {
+      const liveDelta = Math.max(0, Math.floor((Date.now() - activeQuestionEnterTimeRef.current) / 1000));
+      liveQuestionTimes[currentQId] = (liveQuestionTimes[currentQId] || 0) + liveDelta;
+    }
+
     // Create session object
     const sessionData = {
       answers,
@@ -306,6 +437,8 @@ export default function TestPage() {
       visited: Array.from(visited),
       currentQuestionIndex,
       timeRemaining,
+      sectionFloor,
+      questionTimes: liveQuestionTimes,
       timestamp: Date.now()
     };
 
@@ -317,7 +450,7 @@ export default function TestPage() {
     } catch (e) {
       console.warn("Storage quota exceeded, could not save session draft", e);
     }
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, sectionFloor, user, id, test?.id, isExamStarted, questionTimes]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -334,7 +467,7 @@ export default function TestPage() {
 
   // ─── Proactive token refresh: start when test loads, stop on unmount ────────
   useEffect(() => {
-    if (!test || !user) return;
+    if (!test || !user || examSeat) return;
     const apiBase = getApiUrl().replace(/\/$/, '') + '/';
     tokenRefreshCleanupRef.current = startProactiveTokenRefresh(apiBase);
     return () => { tokenRefreshCleanupRef.current?.(); };
@@ -352,7 +485,7 @@ export default function TestPage() {
 
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !user || isSubmitting) return;
+    if (!test || !user || isSubmitting || examSeat) return; // sessions sync through their heartbeat
     const syncInterval = setInterval(async () => {
       if (submittedRef.current) return;
       try {
@@ -384,63 +517,81 @@ export default function TestPage() {
   // ─── Analytics: Progress Tracking & Abandon Detection ───────
   const submittedRef = useRef(false);
 
-  // On test load: register anonymous start
+  // On test load: register anonymous start (only for non-conduct exams)
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id) return;
-    if (!user) {
+    if (!test || examSeat) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    if (!user && !isConductExam) {
       // Anonymous user starts — track in dedicated anon table
-      analyticsApi.startAnonAttempt(id);
+      analyticsApi.startAnonAttempt(test.id);
     }
   }, [test?.id, isExamStarted]);
 
-  // Periodic progress ping (every 60 seconds)
+  // Periodic progress ping (every 60 seconds). It reads answers through a ref: with
+  // `answers` as a dependency the timer restarted on every answer, so a candidate who
+  // answered faster than once a minute never pinged and looked gone to the examiner.
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id || isSubmitting) return;
-    const interval = setInterval(() => {
+    if (!test || isSubmitting || examSeat) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+
+    const ping = () => {
       if (submittedRef.current) return;
+      const current = answersRef.current;
       const totalQ = test.questions?.length || 1;
-      const answeredQ = Object.keys(answers).length;
+      const answeredQ = Object.keys(current).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      if (user) {
-        // Registered user
-        analyticsApi.updateProgress(user.id, id, Math.min(pct, 99));
+      // Read at ping time: the intro page stores the guest id just before navigating here.
+      const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
+
+      if (user || isConductExam) {
+        if (effectiveUserId) {
+          analyticsApi.updateProgress(effectiveUserId, test.id, Math.min(pct, 99), current);
+        }
       } else {
-        // Anonymous user — use dedicated anon endpoint
-        analyticsApi.updateAnonProgress(id, Math.min(pct, 99));
+        // Standard anonymous user — use dedicated anon endpoint
+        analyticsApi.updateAnonProgress(test.id, Math.min(pct, 99));
       }
-    }, 60000); // every 60 seconds
-    return () => clearInterval(interval);
-  }, [test, user, id, answers, isSubmitting, isExamStarted]);
+    };
+    // One early ping, so a page refresh (which reported "tab closed") reads as writing again.
+    const first = setTimeout(ping, 8000);
+    const interval = setInterval(ping, 60000); // every 60 seconds
+    return () => { clearTimeout(first); clearInterval(interval); };
+  }, [test, user, isSubmitting, isExamStarted]);
 
   // Abandon detection on tab close / navigation away
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id) return;
+    if (!test || examSeat) return; // a session draft lives on the server; closing the tab is not "abandoned"
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
+
     const handleBeforeUnload = () => {
       if (submittedRef.current) return; // already submitted, don't mark abandoned
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      if (user) {
-        // Emergency vault save on unload — synchronous fallback
-        try {
-          const draft = JSON.stringify({ key: `${user.id}_${test.id}`, answers, savedAt: new Date().toISOString() });
-          sessionStorage.setItem(`vault_emergency_${user.id}_${test.id}`, draft);
-        } catch { /**/ }
-        analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
+      
+      if (user || isConductExam) {
+        if (effectiveUserId) {
+          try {
+            const draft = JSON.stringify({ key: `${effectiveUserId}_${test.id}`, answers, savedAt: new Date().toISOString() });
+            sessionStorage.setItem(`vault_emergency_${effectiveUserId}_${test.id}`, draft);
+          } catch { /**/ }
+          analyticsApi.markAbandoned(effectiveUserId, test.id, 'tab_closed', pct);
+        }
       } else {
-        analyticsApi.abandonAnonAttempt(id, 'tab_closed', pct);
+        analyticsApi.abandonAnonAttempt(test.id, 'tab_closed', pct);
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [test, user, id, answers, isExamStarted]);
+  }, [test, user, answers, isExamStarted]);
 
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
-    if (!id || !user) return;
+    if (!id || !user || examSeat) return; // the server decides whether a session student may re-enter
     const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) return; // Handled in session mount effect below
 
@@ -457,7 +608,8 @@ export default function TestPage() {
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!id || !user) return;
+    // Session students never get "Resume / Start over": loadTest restores their draft silently.
+    if (!id || !user || examSeat) return;
 
     const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) {
@@ -522,7 +674,15 @@ export default function TestPage() {
     setMarkedForReview(new Set(resumeData.markedForReview || []));
     setVisited(new Set(resumeData.visited || [0]));
     setCurrentQuestionIndex(resumeData.currentQuestionIndex || 0);
-    if (resumeData.timeRemaining) {
+    setSectionFloor(resumeData.sectionFloor || 0);
+    if (resumeData.questionTimes) {
+      setQuestionTimes(resumeData.questionTimes);
+      questionTimesRef.current = { ...resumeData.questionTimes };
+    }
+    if (examSeat) {
+      // A session's clock is the server's, not the saved local countdown.
+      setTimeRemaining(sessionSecondsLeft());
+    } else if (resumeData.timeRemaining) {
       setTimeRemaining(resumeData.timeRemaining);
     }
     setIsExamStarted(true);
@@ -559,7 +719,77 @@ export default function TestPage() {
       }
     }
   }, [warnings, test?.id, user?.id]);
-  const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
+  // null = warn only; 0 = Strict (submit at the first violation); 2–5 = warnings, then submit.
+  // `??`, not `||`: with `||` a limit of 0 became null and Strict only warned.
+  const MAX_WARNINGS: number | null = test?.settings?.violation_limit ?? null;
+
+  // ── Exam session heartbeat (every 20 s and when the tab comes back) ──────────
+  // Sends progress, violations and an answer draft (so a dead phone can continue on
+  // another device), and receives the teacher's controls: extra time, "submit now",
+  // "exam ended", or that this seat moved to another device.
+  const warningsRef = useRef(warnings);
+  useEffect(() => { warningsRef.current = warnings; }, [warnings]);
+  useEffect(() => {
+    if (!examSeat || !test || !isExamStarted) return;
+    let stopped = false;
+    const beat = async () => {
+      if (stopped || submittedRef.current) return;
+      const totalQ = test.questions?.length || 1;
+      const current = answersRef.current as Record<string, any>;
+      const answered = Object.values(current).filter(v => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0)).length;
+      try {
+        const res = await joinApi.heartbeat(examSeat.token, {
+          answers: current,
+          answered,
+          progress: Math.min(99, Math.round((visitedRef.current.size / totalQ) * 100)),
+          violations: warningsRef.current,
+        });
+        sessionClockRef.current.skewMs = new Date(res.server_time).getTime() - Date.now();
+        if (res.deadline) {
+          const next = new Date(res.deadline).getTime();
+          const previous = sessionClockRef.current.deadline;
+          sessionClockRef.current.deadline = next;
+          if (previous && next - previous >= 60_000) {
+            const added = Math.round((next - previous) / 60_000);
+            toast.success(`Your examiner gave you ${added} more minute${added === 1 ? '' : 's'}.`);
+            setIsTimeUp(false);
+          }
+          setTimeRemaining(sessionSecondsLeft());
+        }
+        if ((res.force_submit || res.ended) && !sessionAutoSubmitRef.current) {
+          sessionAutoSubmitRef.current = true;
+          toast.info(res.ended ? 'Your examiner ended the exam. Submitting your answers…' : 'Your examiner asked everyone to submit. Submitting your answers…');
+          confirmSubmitRef.current();
+        }
+      } catch (err) {
+        const problem = problemOf(err);
+        if (problem.code === 'device_replaced' || problem.code === 'removed') {
+          stopped = true;
+          setSeatProblem(problem.message);
+        }
+        // Network trouble: the next beat tries again; answers are safe on this device.
+      }
+    };
+    beat();
+    const interval = setInterval(beat, 20_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') beat(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [examSeat, test?.id, isExamStarted]);
+
+  // Session exams submit by themselves when time runs out (nobody to press the button for a dead phone).
+  useEffect(() => {
+    if (!examSeat || !isTimeUp || isSubmitting || sessionAutoSubmitRef.current) return;
+    const timer = setTimeout(() => {
+      sessionAutoSubmitRef.current = true;
+      confirmSubmitRef.current();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [examSeat, isTimeUp, isSubmitting]);
 
   // ── Screen Wake Lock: prevent screen sleep during conduct-exam tests ─────────
   // Uses the W3C Screen Wake Lock API (supported in Chrome 84+, Edge 84+, Firefox 126+).
@@ -567,7 +797,7 @@ export default function TestPage() {
   useEffect(() => {
     if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
-    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled || !!examSeat;
     if (!isConductExam) return; // Only apply wake lock for proctored conduct-exam tests
 
     const acquireWakeLock = async () => {
@@ -610,19 +840,17 @@ export default function TestPage() {
     if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
 
-    // Safety guard: Never intercept or disrupt interactions for search engine crawlers or Google Ad review bots
-    const isBot = /googlebot|adsbot|bingbot|crawler|spider/i.test(navigator.userAgent || '');
-    if (isBot) return;
-
+    // No user-agent exceptions here: every visitor, people and crawlers alike, gets the same
+    // page. Code that behaves differently for Google's crawlers is cloaking under Google Ads'
+    // "Circumventing systems" policy. Crawlers never reach this point (it needs a started exam).
     const settings = test.settings;
     if (!settings) return;
 
-    // Only conduct-exam tests have proctoring violations
-    const isConductExam = !!settings.conduct_exam?.enabled;
+    // Only conduct-exam tests (and exam sessions) have proctoring violations
+    const isConductExam = !!settings.conduct_exam?.enabled || !!examSeat;
 
     // 1. Action Blocking (applies to all test types if enabled)
     const handleContextMenu = (e: Event) => {
-      if (isBot) return;
       if (settings.disable_actions) {
         e.preventDefault();
         return false;
@@ -630,7 +858,6 @@ export default function TestPage() {
     };
 
     const handleCopyPaste = (e: ClipboardEvent) => {
-      if (isBot) return;
       if (settings.disable_copy_paste) {
         e.preventDefault();
         toast.error("Copy/Paste is disabled for this test.");
@@ -657,7 +884,15 @@ export default function TestPage() {
     };
 
     // 3. Full Screen Check — violations ONLY for conduct-exam tests
+    // Safari on iPhone can't put a web page in full screen at all. Requiring it there
+    // would count a violation and leave the candidate stuck behind "Return to Full
+    // Screen", so the rule is skipped; app-switch detection still applies.
+    const fullScreenSupported = !!(document.fullscreenEnabled || (document as any).webkitFullscreenEnabled);
     const checkFullScreenState = () => {
+      if (!fullScreenSupported) {
+        setShowFullScreenWarning(false);
+        return;
+      }
       const currentFullScreen = !!(
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
@@ -795,16 +1030,29 @@ export default function TestPage() {
       // Randomize questions if setting is enabled
       const settings = data.settings;
       if (settings?.shuffle_questions && data.questions && data.questions.length > 0) {
-        // Fisher-Yates shuffle
-        for (let i = data.questions.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [data.questions[i], data.questions[j]] = [data.questions[j], data.questions[i]];
+        // Fisher-Yates shuffle of questions[from..to]
+        const shuffle = (from: number, to: number) => {
+          for (let i = to; i > from; i--) {
+            const j = from + Math.floor(Math.random() * (i - from + 1));
+            [data.questions[i], data.questions[j]] = [data.questions[j], data.questions[i]];
+          }
+        };
+        const ranges = data.enable_section_mode && Array.isArray(data.sections) ? sectionRanges(data.sections) : null;
+        if (ranges && ranges.length && ranges[ranges.length - 1].end === data.questions.length - 1) {
+          // Sections: shuffle inside each one, so questions stay in their section (its marks,
+          // its tab, its timer), and keep each section's own list in the same order.
+          ranges.forEach(r => shuffle(r.start, r.end));
+          data.sections = data.sections.map((s: any, i: number) => ({ ...s, questions: data.questions.slice(ranges[i].start, ranges[i].end + 1) }));
+        } else {
+          shuffle(0, data.questions.length - 1);
         }
       }
 
       setTest(data);
-      // Initialize timer: Use test duration if available, else calc from question count
-      const durationMins = data.duration || (data.questions?.length || 0);
+      preloadTestImages(data);
+      // Initialize timer: timed sections add up their minutes; otherwise the test duration,
+      // else a minute per question
+      const durationMins = sectionMinutesTotal(data) || data.duration || (data.questions?.length || 0);
       setTimeRemaining(durationMins * 60);
 
       // Save start time if not already stored
@@ -817,6 +1065,50 @@ export default function TestPage() {
         }
       }
     };
+
+    if (examSeat) {
+      // The paper comes from the session (it may be a private test), answers stripped.
+      setLoading(true);
+      try {
+        const paper = await joinApi.start(examSeat.token);
+        sessionClockRef.current = {
+          skewMs: new Date(paper.server_time).getTime() - Date.now(),
+          deadline: paper.deadline ? new Date(paper.deadline).getTime() : null,
+        };
+        // Read this device's own draft BEFORE the test is set (the autosave effect would overwrite it).
+        let local: any = null;
+        try { local = JSON.parse(localStorage.getItem(`test_session_${examSeat.participantId}_${testId}`) || 'null'); } catch { /* ignore */ }
+        processTestData(paper.test);
+        setTimeRemaining(sessionSecondsLeft());
+        seatStore.set({ ...examSeat, testId: paper.test.id });
+
+        const draft = paper.draft_answers || {};
+        if (local?.answers && Object.keys(local.answers).length > 0) {
+          // Refreshed or reopened on this device: carry on exactly where they were.
+          setAnswers(local.answers);
+          setMarkedForReview(new Set(local.markedForReview || []));
+          setVisited(new Set(local.visited || [0]));
+          setCurrentQuestionIndex(local.currentQuestionIndex || 0);
+          setSectionFloor(local.sectionFloor || 0);
+          if (local.questionTimes) {
+            setQuestionTimes(local.questionTimes);
+            questionTimesRef.current = { ...local.questionTimes };
+          }
+        } else if (Object.keys(draft).length > 0) {
+          // Started on another phone: bring back what was saved there.
+          setAnswers(draft as any);
+          toast.success('Your saved answers are back. Carry on from where you stopped.');
+        }
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 300);
+      } catch (err) {
+        const problem = problemOf(err);
+        toast.error(problem.message);
+        navigate(`/join/${joinCode}`, { replace: true });
+        setLoading(false);
+      }
+      return;
+    }
 
     setLoading(true);
     try {
@@ -943,18 +1235,34 @@ export default function TestPage() {
     });
   };
 
+  /** With timed sections only the open section's questions can be reached. */
+  const canReach = (index: number) => !openRange || (index >= openRange.start && index <= openRange.end);
+
   const jumpToQuestion = (index: number) => {
+    if (!canReach(index)) {
+      const target = timedRanges?.findIndex(r => index >= r.start && index <= r.end) ?? -1;
+      if (target >= 0 && timedOpen) {
+        toast.info(target < timedOpen.index
+          ? `${sectionName(target)} is closed. Its time is over.`
+          : `${sectionName(target)} opens when ${sectionName(timedOpen.index)}’s time is over.`);
+      }
+      return;
+    }
     setCurrentQuestionIndex(index);
   };
 
   const handleNext = () => {
+    if (openRange && timedOpen && currentQuestionIndex >= openRange.end) {
+      toast.info(`This is the last question of ${sectionName(timedOpen.index)}. ${sectionName(timedOpen.index + 1)} opens when this section’s time is over.`);
+      return;
+    }
     if (test && currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
+    if (currentQuestionIndex > (openRange?.start ?? 0)) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
@@ -997,6 +1305,10 @@ export default function TestPage() {
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
+    // Flush active time for current question
+    flushActiveQuestionTime(false);
+    const finalQuestionTimes = { ...questionTimesRef.current };
+
     const unattemptedCountOriginal = test.questions.filter(q => !answers[q.id]).length;
 
     let score = 0;
@@ -1036,19 +1348,17 @@ export default function TestPage() {
                 // Simple score calculation (reusing logic from below but simplified)
                 let itemScore = 0;
                 const sectionMarks = parseMark((section as any).marks_per_question, 4);
-                const sectionNegative = parseMark((section as any).negative_marks, 1);
+                const sectionNegative = parseMark((section as any).negative_marks, 0);
 
                 if (q.type === 'numerical') {
-                  const numAns = parseFloat(item.ans as string);
-                  const range = q.correctAnswer as { min: number, max: number };
-                  if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) itemScore = sectionMarks;
+                  if (isNumericalCorrect(q.correctAnswer, item.ans)) itemScore = sectionMarks;
                   else itemScore = -sectionNegative;
                 } else if (q.type === 'multiple') {
                   const correctArr = (Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String).sort();
                   const userArr = (Array.isArray(item.ans) ? item.ans : [item.ans]).map(String).sort();
                   if (userArr.some(ans => !correctArr.includes(ans))) itemScore = -sectionNegative;
                   else if (userArr.length === correctArr.length) itemScore = sectionMarks;
-                  else if (userArr.length > 0) itemScore = (userArr.length / correctArr.length) * sectionMarks;
+                  else if (userArr.length > 0) itemScore = multiPartialScore(q, userArr.length, correctArr.length, sectionMarks);
                 } else {
                   if (item.ans === q.correctAnswer) itemScore = sectionMarks;
                   else itemScore = -sectionNegative;
@@ -1087,7 +1397,9 @@ export default function TestPage() {
       }
 
       let sectionMarks = test.marks_per_question ? parseMark(test.marks_per_question, 4) : 4;
-      let sectionNegative = test.negative_marks !== undefined ? parseMark(test.negative_marks, 1) : 1;
+      // A paper that never says "minus one" must not quietly deduct one. The old default
+      // of 1 is why teachers' own trial runs came back negative.
+      let sectionNegative = parseMark(test.negative_marks, 0);
 
       // Section-specific marks overrides
       if (test.enable_section_mode && test.sections) {
@@ -1096,7 +1408,7 @@ export default function TestPage() {
           // We can rely on the current question index 'index'
           if (index >= runningCount && index < runningCount + section.questions.length) {
             sectionMarks = parseMark(section.marks_per_question, 4);
-            sectionNegative = parseMark(section.negative_marks, 1);
+            sectionNegative = parseMark(section.negative_marks, 0);
             break;
           }
           runningCount += section.questions.length;
@@ -1108,9 +1420,7 @@ export default function TestPage() {
       if (q.negativeMarks !== undefined) sectionNegative = parseMark(q.negativeMarks, sectionNegative);
 
       if (q.type === 'numerical') {
-        const numAns = parseFloat(userAns as string);
-        const range = q.correctAnswer as { min: number, max: number };
-        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+        if (isNumericalCorrect(q.correctAnswer, userAns)) {
           isCorrect = true;
           score += sectionMarks;
           positiveScore += sectionMarks;
@@ -1142,8 +1452,7 @@ export default function TestPage() {
             correctCount++;
           } else if (userArr.length > 0) {
             // Partial Correct
-            const fraction = userArr.length / correctArr.length;
-            const partialScore = fraction * sectionMarks;
+            const partialScore = multiPartialScore(q, userArr.length, correctArr.length, sectionMarks);
             score += partialScore;
             positiveScore += partialScore;
             partialCount++;
@@ -1193,13 +1502,19 @@ export default function TestPage() {
         unattemptedCount,
         totalQuestions: test.questions.length
       },
+      question_times: finalQuestionTimes,
+      time_spent_per_question: finalQuestionTimes,
       submittedAt: new Date().toISOString(),
       startedAt: startTimeStr
     };
 
-    // Tag as conduct exam attempt so creator dashboard can filter correctly
-    if (test.settings?.conduct_exam?.enabled) {
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const hasStartForm = !!(test.settings?.start_form?.enabled || startFormData);
+
+    // Tag as conduct/candidate attempt so creator dashboard can filter and display candidate details correctly
+    if (isConductExam || hasStartForm) {
       metadata.conduct_exam = true;
+      metadata.is_conducted_attempt = true;
     }
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
@@ -1208,44 +1523,54 @@ export default function TestPage() {
     const totalQ = test.questions?.length || 1;
     const finalCompletionPercentage = Math.round((visited.size / totalQ) * 100);
 
-    // ANONYMOUS SUBMISSION
-    if (!user) {
-      // Submit to dedicated anon table — correctly marks this session as submitted
-      await analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore);
-      toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
-
-      // Exit Full Screen if active
-      if (document.fullscreenElement) {
-        try {
-          await document.exitFullscreen();
-        } catch (err) {
-          console.error("Error exiting full screen:", err);
+    // ── EXAM SESSION: submit through the session, then back to the join page ──
+    if (examSeat) {
+      let retryToast: string | number | undefined;
+      const { error: sessionError } = await joinApi.submit(
+        examSeat.token,
+        { user_id: examSeat.participantId, test_id: test.id, answers: finalAnswers, score: finalScore, metadata, completion_percentage: finalCompletionPercentage },
+        (attempt) => {
+          if (retryToast) toast.dismiss(retryToast);
+          retryToast = toast.loading(`Connection issue — trying again (${attempt}/5). Keep this page open.`, { duration: 15_000 });
+        },
+      );
+      if (retryToast) toast.dismiss(retryToast);
+      if (sessionError) {
+        const problem = problemOf(sessionError);
+        toast.error(problem.message, { duration: 10_000 });
+        sessionAutoSubmitRef.current = false;
+        setIsSubmitting(false);
+        if (problem.code === 'device_replaced' || problem.code === 'removed' || problem.code === 'time_over') {
+          setSeatProblem(problem.message);
         }
+        return;
       }
-
-      // Handle Result Visibility
-      if (test.settings?.show_results_immediate === false) {
-        navigate('/test-submitted', { replace: true });
-      } else {
-        navigate('/results', {
-          state: {
-            test: test,
-            answers: answers,
-            score: score,
-            totalQuestions: test.questions.length,
-            marksPerQuestion: test.marks_per_question || 4,
-            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
-            justSubmitted: true
-          },
-          replace: true
-        });
+      clearLocalTestSession(examSeat.participantId, id, test.id);
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch { /* ignore */ }
       }
+      toast.success('Submitted. Well done!');
+      navigate(`/join/${joinCode}`, { replace: true });
       return;
     }
 
+    const effectiveUserId = user?.id || (() => {
+      let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
+      if (!anonId) {
+        anonId = crypto.randomUUID();
+        sessionStorage.setItem(`anon_user_id_${test.id}`, anonId);
+      }
+      return anonId;
+    })();
+
+    // Also record anonymous analytics session in background if unauthenticated
+    if (!user) {
+      analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore).catch(() => {});
+    }
+
     let retryToastId: string | number | undefined;
-    const { error } = await saveAttemptWithRetry(
-      user.id, test.id, answers, finalScore, metadata, finalCompletionPercentage,
+    const { data: savedAttempt, error } = await saveAttemptWithRetry(
+      effectiveUserId, test.id, answers, finalScore, metadata, finalCompletionPercentage,
       (attempt) => {
         // Show a "Retrying..." toast on 2nd attempt onwards
         const msg = `Connection issue — retrying submission (${attempt}/5)...`;
@@ -1254,6 +1579,14 @@ export default function TestPage() {
       }
     );
     if (retryToastId) toast.dismiss(retryToastId);
+
+    // C4: the exam payload no longer carries correctAnswer, so the tally computed above
+    // is only a placeholder. The backend recomputes the score from the stored answer key
+    // and returns the authoritative row — display that.
+    const serverScore = typeof savedAttempt?.score === 'number' ? savedAttempt.score : finalScore;
+    if (savedAttempt?.metadata?.stats) {
+      metadata.stats = savedAttempt.metadata.stats;
+    }
 
     if (error) {
       console.error("Save Attempt Error:", error);
@@ -1269,15 +1602,13 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
-      if (user) {
-        clearLocalTestSession(user.id, id, test.id);
-        // Mark both route ID (slug/custom_id) and test UUID as submitted
-        try {
-          localStorage.setItem(`test_submitted_${user.id}_${id}`, 'true');
-          localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
-        } catch (e) {
-          console.warn("Storage quota exceeded, could not save submission marker", e);
-        }
+      clearLocalTestSession(effectiveUserId, id, test.id);
+      // Mark both route ID (slug/custom_id) and test UUID as submitted
+      try {
+        localStorage.setItem(`test_submitted_${effectiveUserId}_${id}`, 'true');
+        localStorage.setItem(`test_submitted_${effectiveUserId}_${test.id}`, 'true');
+      } catch (e) {
+        console.warn("Storage quota exceeded, could not save submission marker", e);
       }
 
       // Exit Full Screen if active
@@ -1312,11 +1643,12 @@ export default function TestPage() {
           navigate(`/combined-break/${combinedSessionId}`, {
             state: {
               paper1Answers: finalAnswers,
-              paper1Score: finalScore,
+              paper1Score: serverScore,
               paper1TotalMarks: totalMaxMarks,
               paper1TestId: test.id,
               paper1TestTitle: test.title,
               paper1Test: test,
+              paper1QuestionTimes: finalQuestionTimes,
               paper2TestId: sessionCtx?.test2Id,
               sessionTitle: sessionCtx?.sessionTitle || combinedState.sessionTitle,
               paper2Label: sessionCtx?.paper2Label || combinedState.paper2Label,
@@ -1332,7 +1664,15 @@ export default function TestPage() {
           if (!p1Data) {
             toast.warning('Could not retrieve Paper I results. Showing Paper II results only.');
             navigate('/results', {
-              state: { test, answers: finalAnswers, score: finalScore, justSubmitted: true },
+              state: {
+                test,
+                answers: finalAnswers,
+                score: serverScore,
+                questionTimes: finalQuestionTimes,
+                timeSpentPerQuestion: finalQuestionTimes,
+                metadata: metadata,
+                justSubmitted: true
+              },
               replace: true
             });
             return;
@@ -1350,15 +1690,17 @@ export default function TestPage() {
                 score: p1Data.score,
                 total_marks: p1Data.total_marks,
                 test_title: p1Data.test_title,
+                question_times: p1Data.question_times || p1Data.questionTimes || p1Data.paper1QuestionTimes,
               },
               paper2_data: {
                 test_id: test.id,
                 answers: finalAnswers,
-                score: finalScore,
+                score: serverScore,
                 total_marks: totalMaxMarks,
                 test_title: test.title,
+                question_times: finalQuestionTimes,
               },
-              total_score: (p1Data.score || 0) + finalScore,
+              total_score: (p1Data.score || 0) + serverScore,
             });
           } catch (saveErr) {
             console.error('Failed to save combined attempt:', saveErr);
@@ -1381,13 +1723,17 @@ export default function TestPage() {
                 answers: p1Data.answers,
                 score: p1Data.score,
                 totalMarks: p1Data.total_marks,
+                questionTimes: p1Data.question_times || p1Data.questionTimes || p1Data.paper1QuestionTimes,
               },
               p2: {
                 test,
                 answers: finalAnswers,
-                score: finalScore,
+                score: serverScore,
                 totalMarks: totalMaxMarks,
+                questionTimes: finalQuestionTimes,
               },
+              questionTimes: finalQuestionTimes,
+              timeSpentPerQuestion: finalQuestionTimes,
               justSubmitted: true,
             },
             replace: true
@@ -1407,10 +1753,13 @@ export default function TestPage() {
           state: {
             test: test,
             answers: answers,
-            score: score,
+            score: serverScore,
             totalQuestions: test.questions.length,
             marksPerQuestion: test.marks_per_question || 4,
             negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
+            questionTimes: finalQuestionTimes,
+            timeSpentPerQuestion: finalQuestionTimes,
+            metadata: metadata,
             justSubmitted: true
           },
           replace: true
@@ -1418,6 +1767,8 @@ export default function TestPage() {
       }
     }
   };
+
+  confirmSubmitRef.current = confirmSubmit;
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -1610,13 +1961,18 @@ export default function TestPage() {
                     if (isCurrent) {
                       baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
                     }
+                    // Timed sections: a closed or not-yet-open section's questions are dimmed.
+                    if (!canReach(globalIdx)) {
+                      baseClasses += " opacity-40 cursor-not-allowed";
+                    }
 
                     return (
                       <button
                         key={q.id}
                         onClick={() => {
                           jumpToQuestion(globalIdx);
-                          onQuestionClick?.();
+                          // A locked question keeps the sheet open, so the toast is seen.
+                          if (canReach(globalIdx)) onQuestionClick?.();
                         }}
                         className={`${baseClasses} ${colorClasses}`}
                       >
@@ -1769,6 +2125,16 @@ export default function TestPage() {
                   <span className="font-semibold text-slate-800 dark:text-slate-200">Continuous Timer:</span> Once started, the countdown timer cannot be paused or stopped under any circumstances.
                 </div>
               </div>
+              {timedMinutes && (
+                <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                  <Layers className="w-5 h-5 text-sky-500 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Timed Sections:</span>{' '}
+                    {(test?.sections || []).map((s: any, i: number) => `${s.name || `Section ${i + 1}`} (${formatSectionMinutes(timedMinutes[i])})`).join(', then ')}.
+                    {' '}Each section opens when the one before it ends. You cannot go back to a section, and time left in one is not added to the next.
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
                 <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
@@ -1781,7 +2147,7 @@ export default function TestPage() {
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(exitPath)}
               className="w-full sm:w-1/3 py-6 text-sm font-bold rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
             >
               Exit Portal
@@ -1807,18 +2173,60 @@ export default function TestPage() {
   }
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
-      {/* Institution Branding Bar */}
-      {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
-          {test.institution_logo && (
-            <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
+    <>
+      {uiMode === 'corporate' ? (
+        <CorporateTestView
+          test={test}
+          currentQuestion={currentQuestion}
+          currentQuestionIndex={currentQuestionIndex}
+          setCurrentQuestionIndex={jumpToQuestion}
+          firstQuestionIndex={openRange?.start ?? 0}
+          isSectionOpen={(sIdx: number) => !timedOpen || sIdx === timedOpen.index}
+          answers={answers}
+          setAnswers={setAnswers}
+          markedForReview={markedForReview}
+          visited={visited}
+          handleAnswerSelect={handleAnswerSelect}
+          handleClearResponse={handleClearResponse}
+          toggleMarkForReview={toggleMarkForReview}
+          handleSaveAndMarkReview={handleSaveAndMarkReview}
+          handleSaveAndNext={handleSaveAndNext}
+          handlePrevious={handlePrevious}
+          handleNumericKeypadPress={handleNumericKeypadPress}
+          checkAttemptLimit={checkAttemptLimit}
+          timeRemaining={timedOpen ? timedOpen.secondsLeft : timeRemaining}
+          criticalSeconds={timedOpen ? Math.min(300, Math.round(timedOpen.seconds * 0.2)) : 300}
+          isTimerDisabled={isTimerDisabled}
+          isTimeHidden={isTimeHidden}
+          setIsTimeHidden={setIsTimeHidden}
+          formatTime={formatTime}
+          warnings={warnings}
+          isCalculatorOpen={isCalculatorOpen}
+          setIsCalculatorOpen={setIsCalculatorOpen}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          connectionStatus={connectionStatus}
+          setShowExitDialog={setShowExitDialog}
+          attemptSubmit={attemptSubmit}
+          isSubmitting={isSubmitting}
+          renderReportQuestionButton={renderReportQuestionButton}
+          theme={theme}
+          setTheme={setTheme}
+          parseMark={parseMark}
+        />
+      ) : (
+        <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+          {/* Institution Branding Bar */}
+          {(test.institution_name || test.institution_logo) && (
+            <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
+              {test.institution_logo && (
+                <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
+              )}
+              {test.institution_name && (
+                <span className="text-xl font-bold" style={{ color: test.institution_color || '#475569', fontFamily: test.institution_font || 'inherit' }}>{test.institution_name}</span>
+              )}
+            </div>
           )}
-          {test.institution_name && (
-            <span className="text-xl font-bold" style={{ color: test.institution_color || '#475569', fontFamily: test.institution_font || 'inherit' }}>{test.institution_name}</span>
-          )}
-        </div>
-      )}
 
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2.5 md:px-5 md:py-2.5 relative md:sticky top-0 z-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         {/* Left Side: Test Title (Dim, grayish, aesthetic) */}
@@ -1857,7 +2265,9 @@ export default function TestPage() {
 
           {/* Timer Block */}
           {(() => {
-            const isCriticalTime = timeRemaining < 300;
+            // Timed sections show the open section's time; its last fifth (at most 5 min) is critical.
+            const clockSeconds = timedOpen ? timedOpen.secondsLeft : timeRemaining;
+            const isCriticalTime = clockSeconds < (timedOpen ? Math.min(300, Math.round(timedOpen.seconds * 0.2)) : 300);
             const shouldShow = !isTimeHidden || isCriticalTime;
 
             if (isTimerDisabled) {
@@ -1875,13 +2285,13 @@ export default function TestPage() {
               <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-semibold border transition-colors ${isCriticalTime ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50/80 text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'}`}>
                 <Clock className={`w-3.5 h-3.5 ${isCriticalTime ? 'animate-pulse text-red-500' : 'text-slate-400'}`} />
                 <span className="min-w-[40px] md:min-w-[45px] text-center font-mono">
-                  {shouldShow ? formatTime(timeRemaining) : '**:**'}
+                  {shouldShow ? formatTime(clockSeconds) : '**:**'}
                 </span>
                 <button
                   className="flex items-center justify-center p-0.5 rounded-full text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
                   onClick={() => setIsTimeHidden(!isTimeHidden)}
                   disabled={isCriticalTime}
-                  title={isCriticalTime ? "Time cannot be hidden (less than 5m left)" : (isTimeHidden ? "Show Time" : "Hide Time")}
+                  title={isCriticalTime ? (timedOpen ? "Time cannot be hidden (section ending)" : "Time cannot be hidden (less than 5m left)") : (isTimeHidden ? "Show Time" : "Hide Time")}
                 >
                   {shouldShow ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -1894,10 +2304,8 @@ export default function TestPage() {
             <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
               <TriangleAlert className={`w-3.5 h-3.5 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
               <span>
-                {test.settings?.tab_switch_mode === 'strict'
-                  ? `${warnings}/1`
-                  : `${warnings}/3`
-                }
+                {/* Warnings so far, out of the limit set on the paper (warn only: no limit). */}
+                {MAX_WARNINGS === null ? warnings : `${warnings}/${MAX_WARNINGS}`}
               </span>
             </div>
           )}
@@ -1977,17 +2385,20 @@ export default function TestPage() {
                     runningIndex += count;
 
                     const isActive = currentQuestionIndex >= startIndex && currentQuestionIndex <= endIndex;
+                    const isLocked = !canReach(startIndex);
 
                     return (
                       <button
                         key={section.id}
-                        onClick={() => setCurrentQuestionIndex(startIndex)}
+                        onClick={() => jumpToQuestion(startIndex)}
                         title={section.name}
+                        aria-disabled={isLocked || undefined}
                         className={`
                                 flex items-center justify-between gap-2 px-4 py-2 text-sm font-bold border transition-colors whitespace-nowrap min-w-[140px]
                                 ${isActive
                             ? 'bg-[#0073E6] text-white border-[#0073E6]'
                             : 'bg-white text-[#0073E6] border-slate-300 hover:bg-blue-50'}
+                                ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
                       >
                         <span className="truncate">{section.name}</span>
@@ -2000,6 +2411,9 @@ export default function TestPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-2 text-sm max-w-[200px]" side="top">
                               <p className="font-semibold text-center">{section.name}</p>
+                              {timedMinutes && (
+                                <p className="text-xs text-slate-500 text-center mt-0.5">{formatSectionMinutes(timedMinutes[idx])}</p>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -2092,7 +2506,7 @@ export default function TestPage() {
                         {(() => {
                           // 1. Determine Fallback Pattern (Section Default or Test Default)
                           let fallbackMarks = 4;
-                          let fallbackNeg = 1;
+                          let fallbackNeg = 0;
                           let targetQ = currentQuestion; // Default to flat question
                           let forceSectionMarks = false;
 
@@ -2106,7 +2520,7 @@ export default function TestPage() {
                             for (const section of test.sections) {
                               if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
                                 fallbackMarks = parseMark(section.marks_per_question, 4);
-                                fallbackNeg = parseMark(section.negative_marks, 1);
+                                fallbackNeg = parseMark(section.negative_marks, 0);
                                 const localIdx = currentQuestionIndex - runningCount;
                                 if (section.questions[localIdx]) {
                                   targetQ = section.questions[localIdx];
@@ -2117,7 +2531,7 @@ export default function TestPage() {
                             }
                           } else {
                             fallbackMarks = parseMark(test.marks_per_question, 4);
-                            fallbackNeg = parseMark(test.negative_marks, 1);
+                            fallbackNeg = parseMark(test.negative_marks, 0);
                           }
 
                           const marksVal = forceSectionMarks
@@ -2524,7 +2938,7 @@ export default function TestPage() {
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentQuestionIndex === 0}
+                  disabled={currentQuestionIndex === (openRange?.start ?? 0)}
                   size={window.innerWidth < 768 ? "default" : "icon"}
                   className="h-9 w-9 md:w-9 flex-1 md:flex-none"
                   title="Previous Question"
@@ -2660,6 +3074,8 @@ export default function TestPage() {
           </Card>
         </div>
       </div>
+    </div>
+  )}
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
@@ -2901,8 +3317,23 @@ export default function TestPage() {
         onOpenChange={setShowExitDialog}
         testId={id || test.id}
         userId={user?.id}
-        onConfirmExit={() => navigate('/')}
+        onConfirmExit={() => navigate(exitPath)}
       />
+
+      {/* Exam session: this seat moved to another device, or the teacher removed the student */}
+      <AlertDialog open={!!seatProblem}>
+        <AlertDialogContent className="max-w-[min(400px,calc(100vw-32px))] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exam paused on this device</AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-relaxed">{seatProblem}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => navigate(exitPath, { replace: true })} className="h-11 rounded-xl">
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isSubmitting && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all animate-in fade-in duration-300">
@@ -2913,6 +3344,6 @@ export default function TestPage() {
           </div>
         </div>
       )}
-    </div >
+    </>
   );
 }

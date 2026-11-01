@@ -1,0 +1,268 @@
+[
+ {
+  "w": "తర్వాతి",
+  "r": "tarvaati",
+  "start": 0.02,
+  "end": 0.42,
+  "score": 0.926
+ },
+ {
+  "w": "tip:",
+  "r": "tip",
+  "start": 0.46,
+  "end": 0.64,
+  "score": 0.966
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 0.94,
+  "end": 1.5,
+  "score": 0.56
+ },
+ {
+  "w": "కి",
+  "r": "ki",
+  "start": 1.54,
+  "end": 1.6,
+  "score": 0.993
+ },
+ {
+  "w": "పంపండి.",
+  "r": "pampamddi",
+  "start": 1.681,
+  "end": 2.101,
+  "score": 0.964
+ },
+ {
+  "w": "Link",
+  "r": "link",
+  "start": 2.481,
+  "end": 2.741,
+  "score": 0.734
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 2.881,
+  "end": 3.161,
+  "score": 0.313
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 3.241,
+  "end": 3.641,
+  "score": 0.991
+ },
+ {
+  "w": "లేదా",
+  "r": "leedaa",
+  "start": 4.141,
+  "end": 4.481,
+  "score": 0.976
+ },
+ {
+  "w": "నేరుగా",
+  "r": "neerugaa",
+  "start": 4.841,
+  "end": 5.302,
+  "score": 0.807
+ },
+ {
+  "w": "class",
+  "r": "class",
+  "start": 5.482,
+  "end": 5.762,
+  "score": 0.599
+ },
+ {
+  "w": "WhatsApp",
+  "r": "whatsapp",
+  "start": 5.842,
+  "end": 6.162,
+  "score": 0.374
+ },
+ {
+  "w": "group",
+  "r": "group",
+  "start": 6.202,
+  "end": 6.362,
+  "score": 0.7
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 6.422,
+  "end": 6.522,
+  "score": 0.972
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 6.542,
+  "end": 6.802,
+  "score": 0.552
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 6.802,
+  "end": 7.182,
+  "score": 0.954
+ },
+ {
+  "w": "Class",
+  "r": "class",
+  "start": 7.522,
+  "end": 7.802,
+  "score": 0.627
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 7.862,
+  "end": 7.982,
+  "score": 0.972
+ },
+ {
+  "w": "phones",
+  "r": "phones",
+  "start": 8.002,
+  "end": 8.282,
+  "score": 0.79
+ },
+ {
+  "w": "లేవా?",
+  "r": "leevaa",
+  "start": 8.343,
+  "end": 8.623,
+  "score": 0.888
+ },
+ {
+  "w": "Join",
+  "r": "join",
+  "start": 9.103,
+  "end": 9.423,
+  "score": 0.613
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 9.463,
+  "end": 9.683,
+  "score": 0.466
+ },
+ {
+  "w": "తీసుకోండి.",
+  "r": "tiisukoomddi",
+  "start": 9.703,
+  "end": 10.203,
+  "score": 0.874
+ },
+ {
+  "w": "ఆరు",
+  "r": "aaru",
+  "start": 10.523,
+  "end": 10.723,
+  "score": 0.968
+ },
+ {
+  "w": "digits.",
+  "r": "digits",
+  "start": 10.803,
+  "end": 11.163,
+  "score": 0.746
+ },
+ {
+  "w": "Board",
+  "r": "board",
+  "start": 11.623,
+  "end": 11.884,
+  "score": 0.759
+ },
+ {
+  "w": "మీద",
+  "r": "miida",
+  "start": 11.924,
+  "end": 12.064,
+  "score": 0.853
+ },
+ {
+  "w": "రాయండి,",
+  "r": "raayamddi",
+  "start": 12.104,
+  "end": 12.484,
+  "score": 0.94
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 12.884,
+  "end": 13.404,
+  "score": 0.868
+ },
+ {
+  "w": "దాన్ని",
+  "r": "daanni",
+  "start": 13.444,
+  "end": 13.704,
+  "score": 0.99
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 14.044,
+  "end": 14.464,
+  "score": 0.837
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 14.584,
+  "end": 14.724,
+  "score": 0.635
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 14.784,
+  "end": 14.924,
+  "score": 0.556
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 14.985,
+  "end": 15.225,
+  "score": 0.75
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 15.245,
+  "end": 15.485,
+  "score": 0.61
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 15.525,
+  "end": 15.645,
+  "score": 0.991
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 15.805,
+  "end": 16.025,
+  "score": 0.499
+ },
+ {
+  "w": "చేస్తారు.",
+  "r": "ceestaaru",
+  "start": 16.025,
+  "end": 16.485,
+  "score": 0.997
+ }
+]

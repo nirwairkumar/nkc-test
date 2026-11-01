@@ -9,10 +9,41 @@ from pydantic import BaseModel
 
 # this is a test of branch change. I am editing in gcp-migration.
 
+import logging
 import os
+import uuid as _uuid
+from contextlib import asynccontextmanager
+
+import anyio.to_thread
+
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.logging_config import configure_logging, request_id_ctx
+
+# M3/M4: install redacting, request-correlated logging before anything else runs.
+configure_logging()
+logger = logging.getLogger("app")
+
+# L5: refuse to boot a production deployment that is missing its service-role key,
+# rather than silently falling back to the anon key and returning empty data everywhere.
+from app.core.config import validate_runtime_config
+validate_runtime_config()
 
 # Disable API docs in production to prevent information disclosure
 _is_dev = os.getenv("ENVIRONMENT", "production").lower() in ("development", "dev", "local")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Route handlers are plain `def` because the Supabase client is synchronous, so
+    # FastAPI runs each request on a worker thread while it waits on the database.
+    # The default pool of 40 threads would cap an exam-hour burst below Cloud Run's
+    # 80 concurrent requests per instance.
+    anyio.to_thread.current_default_thread_limiter().total_tokens = 100
+    yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -20,6 +51,7 @@ app = FastAPI(
     openapi_url="/api/openapi.json" if _is_dev else None,
     docs_url="/api/docs" if _is_dev else None,
     redoc_url="/api/redoc" if _is_dev else None,
+    lifespan=lifespan,
 )
 
 # GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
@@ -29,18 +61,9 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def read_root():
     return {"message": "TestoZa Backend is running on Google Cloud Run!"}
 
-# CORS Middleware — explicit origins only, NO wildcard
-origins = [
-    "https://testoza.com",
-    "https://www.testoza.com",
-    "https://app.testoza.com",
-    "https://admin.testoza.com",
-    "https://blog.testoza.com",
-    "https://news.testoza.com",
-    "https://testing.testoza.com",
-    "http://localhost:5173", # Local dev
-    "http://localhost:8081", # Local dev
-]
+# CORS Middleware — explicit origins only, NO wildcard.
+# Shared with the password-reset redirect allow-list so the two cannot drift apart.
+from app.core.config import ALLOWED_ORIGINS as origins
 
 
 app.add_middleware(
@@ -49,9 +72,84 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Browsers may reuse a preflight answer this long (Chrome caps it at 2 hours;
+    # the default is 10 minutes). Every preflight is a billed Cloudflare Worker
+    # request, about a fifth of all API traffic on an exam day.
+    max_age=7200,
 )
 
 from fastapi import Request
+
+
+# ── M3: request correlation + safe error responses ───────────────────────────
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """
+    Give every request an id, echo it back, and put it on every log record.
+
+    When a user reports "it failed", the id in their error response is enough to
+    find the real exception in the logs — which is what lets the response itself
+    stay generic.
+    """
+    incoming = request.headers.get("x-request-id") or request.headers.get("cf-ray")
+    rid = (incoming or _uuid.uuid4().hex)[:64]
+    token = request_id_ctx.set(rid)
+    try:
+        response = await call_next(request)
+    finally:
+        request_id_ctx.reset(token)
+    response.headers["X-Request-ID"] = rid
+    return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    M3: 4xx messages are written for users and pass through unchanged.
+
+    5xx details are NOT — dozens of handlers raise `detail=str(e)`, which hands the
+    client raw database/library internals. Those are logged in full and replaced with
+    a generic message plus the request id.
+    """
+    rid = request_id_ctx.get()
+    if exc.status_code >= 500:
+        logger.error(
+            "unhandled server error %s %s -> %s: %s",
+            request.method, request.url.path, exc.status_code, exc.detail,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": "Something went wrong. Please try again.", "request_id": rid},
+            headers=getattr(exc, "headers", None) or {},
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "request_id": rid},
+        headers=getattr(exc, "headers", None) or {},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Validation errors echo the submitted body back by default; strip that."""
+    rid = request_id_ctx.get()
+    logger.info("validation error %s %s: %s", request.method, request.url.path, exc.errors())
+    safe = [
+        {"loc": e.get("loc"), "msg": e.get("msg"), "type": e.get("type")}
+        for e in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": safe, "request_id": rid})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Last resort: never let a raw traceback or exception string reach the client."""
+    rid = request_id_ctx.get()
+    logger.exception("unhandled exception %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong. Please try again.", "request_id": rid},
+    )
 
 @app.middleware("http")
 async def add_security_headers_middleware(request: Request, call_next):
@@ -63,16 +161,32 @@ async def add_security_headers_middleware(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data: blob: https:; "
-        "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://apigcp.testoza.com; "
-        "frame-ancestors 'none'"
-    )
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    # M7: this API serves JSON, never an HTML document, so it needs no script/style
+    # sources at all. The previous policy copied the frontend's (with 'unsafe-inline'
+    # and 'unsafe-eval'), which bought nothing here and advertised a weak policy.
+    # The document CSP that actually matters lives in the Cloudflare worker that
+    # serves the SPA (infrastructure/cloudflare-worker/worker.js -> securityHeaders()).
+    #
+    # Swagger/ReDoc need inline scripts from a CDN, so they get a scoped exception;
+    # docs are disabled in production anyway.
+    if request.url.path in ("/docs", "/redoc") or request.url.path.startswith("/docs"):
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://fastapi.tiangolo.com; "
+            "frame-ancestors 'none'; base-uri 'self'"
+        )
+    else:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'none'; "
+            "form-action 'none'"
+        )
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-site"
 
     # Secure API endpoints by default against CDN/Edge caching
     # If the response already has a Cache-Control header, respect it
@@ -127,14 +241,14 @@ app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 from app.routers import classes
 app.include_router(classes.router, prefix="/api/classes", tags=["Classes"])
 
-from app.routers import materials
-app.include_router(materials.router, prefix="/api/materials", tags=["Materials"])
-
 from app.routers import pricing
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 
 from app.routers import support
 app.include_router(support.router, prefix="/api/support", tags=["Support"])
+
+from app.routers import survey
+app.include_router(survey.router, prefix="/api/survey", tags=["Survey"])
 
 from app.routers import social
 app.include_router(social.router, prefix="/api/social", tags=["Social"])
@@ -162,13 +276,39 @@ app.include_router(combined_sessions.router, prefix="/api/combined-sessions", ta
 from app.routers import email_broadcast
 app.include_router(email_broadcast.router, prefix="/api/email-broadcast", tags=["Email Broadcast"])
 
+# Exam sessions: join codes (/join), live monitor, batch rosters and PINs
+from app.routers import exam_sessions, join, batches
+app.include_router(exam_sessions.router, prefix="/api/exam-sessions", tags=["Exam Sessions"])
+app.include_router(join.router, prefix="/api/join", tags=["Join"])
+app.include_router(batches.router, prefix="/api/batches", tags=["Batches"])
+
+# Invite links: educators bring educators (/invite/<code>, Settings → Invite educators)
+from app.routers import referrals
+app.include_router(referrals.router, prefix="/api/referrals", tags=["Referrals"])
+
+# Visitor's country/state for the test builder's typing-language menu
+from app.routers import locale
+app.include_router(locale.router, prefix="/api/locale", tags=["Locale"])
+
+from app.routers import sitemap
+app.include_router(sitemap.router, prefix="/api", tags=["Sitemap"])
+app.include_router(sitemap.router, prefix="", tags=["Sitemap"])
+
+@app.get("/sitemap.xml", response_class=sitemap.XMLResponse, tags=["Sitemap"])
+@app.get("/api/sitemap.xml", response_class=sitemap.XMLResponse, tags=["Sitemap"])
+async def get_root_sitemap():
+    return await sitemap.get_sitemap_index()
+
 @app.get("/api/health")
 def health_check():
-    return {
-        "status": "healthy",
-        "project": settings.PROJECT_NAME,
-        "version": settings.PROJECT_VERSION
-    }
+    # L6: `status` is the stable contract uptime monitors and Cloud Run check.
+    # Project name and version are build details — useful locally, needless
+    # fingerprinting for an unauthenticated public endpoint in production.
+    payload = {"status": "healthy"}
+    if _is_dev:
+        payload["project"] = settings.PROJECT_NAME
+        payload["version"] = settings.PROJECT_VERSION
+    return payload
 
 @app.get("/api/me")
 def read_users_me(user = Depends(get_current_user)):

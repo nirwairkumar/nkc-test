@@ -1,0 +1,152 @@
+[
+  {
+    "id": "w0",
+    "text": "When",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "the",
+    "start": 0.32,
+    "end": 0.4
+  },
+  {
+    "id": "w2",
+    "text": "exam",
+    "start": 0.4,
+    "end": 0.8
+  },
+  {
+    "id": "w3",
+    "text": "ends,",
+    "start": 0.8,
+    "end": 1.44
+  },
+  {
+    "id": "w4",
+    "text": "all",
+    "start": 1.44,
+    "end": 1.76
+  },
+  {
+    "id": "w5",
+    "text": "twenty",
+    "start": 1.76,
+    "end": 2.16
+  },
+  {
+    "id": "w6",
+    "text": "seven",
+    "start": 2.16,
+    "end": 2.56
+  },
+  {
+    "id": "w7",
+    "text": "submitted,",
+    "start": 2.56,
+    "end": 3.2
+  },
+  {
+    "id": "w8",
+    "text": "scored,",
+    "start": 3.2,
+    "end": 3.84
+  },
+  {
+    "id": "w9",
+    "text": "and",
+    "start": 3.84,
+    "end": 4
+  },
+  {
+    "id": "w10",
+    "text": "ranked",
+    "start": 4,
+    "end": 4.72
+  },
+  {
+    "id": "w11",
+    "text": "automatically.",
+    "start": 4.88,
+    "end": 6.16
+  },
+  {
+    "id": "w12",
+    "text": "No",
+    "start": 6.16,
+    "end": 6.48
+  },
+  {
+    "id": "w13",
+    "text": "checking",
+    "start": 6.48,
+    "end": 7.04
+  },
+  {
+    "id": "w14",
+    "text": "copies,",
+    "start": 7.04,
+    "end": 7.68
+  },
+  {
+    "id": "w15",
+    "text": "no",
+    "start": 7.68,
+    "end": 7.92
+  },
+  {
+    "id": "w16",
+    "text": "totaling",
+    "start": 7.92,
+    "end": 8.56
+  },
+  {
+    "id": "w17",
+    "text": "marks,",
+    "start": 8.56,
+    "end": 9.04
+  },
+  {
+    "id": "w18",
+    "text": "and",
+    "start": 9.04,
+    "end": 9.28
+  },
+  {
+    "id": "w19",
+    "text": "one",
+    "start": 9.28,
+    "end": 9.44
+  },
+  {
+    "id": "w20",
+    "text": "click",
+    "start": 9.44,
+    "end": 9.84
+  },
+  {
+    "id": "w21",
+    "text": "exports",
+    "start": 9.84,
+    "end": 10.48
+  },
+  {
+    "id": "w22",
+    "text": "everything",
+    "start": 10.48,
+    "end": 10.8
+  },
+  {
+    "id": "w23",
+    "text": "to",
+    "start": 10.8,
+    "end": 10.96
+  },
+  {
+    "id": "w24",
+    "text": "Excel.",
+    "start": 10.96,
+    "end": 11.36
+  }
+]

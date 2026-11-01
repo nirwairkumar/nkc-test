@@ -356,7 +356,7 @@ export default function NewsPostEditor() {
                     {/* Editor Area */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mt-8">
                         {editor && <PostToolbar editor={editor} />}
-                        <div className="min-h-[500px] p-4 md:p-8 prose prose-slate dark:prose-invert max-w-none focus-within:outline-none placeholder:text-slate-300">
+                        <div className="tiptap-editorial-canvas min-h-[500px] p-4 md:p-8 max-w-none focus-within:outline-none placeholder:text-slate-300">
                             <EditorContent editor={editor} />
                         </div>
                     </div>

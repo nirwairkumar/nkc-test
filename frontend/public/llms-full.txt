@@ -315,6 +315,488 @@ Testoza's security is built on multiple layers:
 
 ---
 
+## Free PDF Tools (Panna)
+
+Panna (https://pdf.testoza.com) is TestoZa's free set of PDF tools. Every tool runs in the browser, so files are processed on the user's device and never uploaded. There is no sign-up and no watermark.
+
+- **Edit PDF** (https://pdf.testoza.com/edit-pdf): changes existing PDF text using the font embedded in the document, and says which characters (if any) are missing from that font. Erased text is deleted from the file rather than covered with a white box. Also adds text, images, signatures (draw, type or upload), highlights, freehand ink and shapes; find and replace across pages; reorders, rotates, duplicates, inserts and deletes pages; opens password-protected PDFs when the user knows the password.
+- **Edit Hindi PDF** (https://pdf.testoza.com/edit-hindi-pdf): edits Unicode Hindi (Devanagari) with correct matras and conjuncts; new Hindi text is set in Noto Sans Devanagari and stays searchable. Legacy fonts such as Kruti Dev are erased and retyped.
+- **LaTeX to PDF** (https://pdf.testoza.com/latex-to-pdf) and **ChatGPT to PDF** (https://pdf.testoza.com/chatgpt-to-pdf): convert LaTeX documents, Markdown and maths copied from ChatGPT, Gemini or Claude into an A4 or Letter vector PDF with selectable text, repairing formulas damaged by copying.
+- Not yet available: OCR for scanned PDFs, merge, split, compress and PDF to Word.
+
+Complete guide: https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs
+
+---
+
+## Guide: The best online test platform (https://testoza.com/best-online-test-platform)
+
+A long-form guide for teachers, coaching institutes and students on choosing an online test platform.
+
+- **What a platform must do:** get questions in quickly (PDFs, old papers, photos, video lessons); look like the real computer-based exam (countdown, question palette, sections); follow the exam's marking scheme, including negative marking; keep the test fair (full screen, tab-switch limits, no copy and paste, shuffling); work in a phone browser on patchy data; show useful results (time per question, topic accuracy, rank list); and cost what the job is worth.
+- **Other tools:** Google Forms has no built-in timer or negative marking and its locked mode works only on managed Chromebooks; Microsoft Forms has a 1–999 minute quiz timer; Moodle is capable but must be hosted and configured; game-style apps (Kahoot, Wayground, formerly Quizizz) are built for engagement rather than formal exams.
+- **Teachers:** the AI test generator accepts PDF, Word, PowerPoint and photos (including the phone camera). Extract mode copies an existing paper's questions, options and diagrams; Generate mode writes new questions. English, Hindi or bilingual papers; per-question marks and negative marks; sections with "attempt any N" rules; students need no app or account.
+- **Coaching institutes:** any test can run as a live exam with its own link and private results. Paid weekly, monthly and yearly plans add exam rules (full screen, tab-switch limits with auto-submit, copy-paste block, shuffling), scheduling, start forms, institute branding and Excel export. Combined papers can run as one session with breaks.
+- **Students:** photograph textbook pages or an old question paper, choose Extract or Generate, set a timer and marking, keep the test private and take it like the real exam. Results show score, accuracy, time per question and strong/moderate/weak topics, with an AI mentor chat and, for exams such as JEE, NEET, SSC, RRB and GATE, a rough AI rank estimate.
+
+---
+
+## Guide: CBT exam software (https://testoza.com/cbt-exam-software)
+
+A long-form guide for coaching institutes, schools and teachers on computer-based testing (CBT).
+
+- **Which exams are CBTs (September 2026):** JEE Main, CUET UG, GATE and SSC CGL Tier 1 are computer-based; NEET-UG was pen-and-paper (OMR) in 2026 and NTA told the Supreme Court it will move to CBT from 2027.
+- **The exam screen:** TestoZa tests open in Standard Mode by default ("traditional JEE / NEET / government exam format with right-side question palette"): palette states Not Visited, Not Answered, Answered, Review and Ans & Review; Save & Next, Review, Ans & Review and Clear buttons; a virtual numeric keypad (digits, decimal point, minus) on numerical questions; subject sections; an A−/A+ text-size control; an optional scientific calculator per test. A cleaner Modern Mode is available on paid plans.
+- **Marking:** marks and negative marks per test, per section or per question (fractions such as 1/3 accepted); numerical answers can accept a min–max range; multi-correct questions give partial credit, proportional by default or JEE Advanced's +1 per correct option, and any wrong option costs the negative mark; section attempt control ("attempt any N") either blocks extra answers or counts the best N or first N. Scores are calculated on the server.
+- **Running a CBT:** build a paper with the AI generator or upload a full paper (sections and solutions) as JSON; Conduct gives the test its own exam link and private results; progress is kept on the student's device with a resume prompt for signed-in students; when time is up answering locks and the student submits; results show immediately or can be held; combined tests link two papers with a timed break (30 minutes by default).
+- **Paid plans** add exam-security rules (full screen, tab-switch limits, copy-paste block), scheduling, start forms, branding and Excel export.
+- **Limits:** section timers (optional, as SSC CGL uses) are enforced in the browser; a browser cannot lock down a device like a test centre; the student confirms submission when time is up.
+
+---
+
+## Guide: AI test generator (https://testoza.com/ai-test-generator)
+
+A long-form guide for teachers, coaching institutes and students on AI test generators in general and TestoZa's in particular (testoza.com/generate-with-ai).
+
+- **What it is:** software that reads material you already have (PDFs, scanned papers, photos of pages) and writes it into a structured, editable test: question type, options in order, the correct answer, marks, passages and diagrams. Unlike a chatbot it ends with a test that can be timed, marked and shared; unlike a question bank it works from your own material.
+- **Two modes:** Extract keeps an existing paper exactly (wording, every digit, options, diagrams, questions that run across pages, passages with their questions) and takes answers only from the document or an uploaded answer key; a question without one is flagged "No correct answer detected", never solved. Generate writes original questions from a chapter or notes, usually 15 to 25 per run, with distractors based on common misconceptions, an answer key, a title, a description and revision notes; "Generate more" adds further questions.
+- **Inputs and settings:** PDF, PNG, JPG and WEBP, several files at once, plus an optional answer key. Word and PowerPoint files must be saved as PDF first. Language output: same as the material, English, Hindi, or both (bilingual: every question and option in English with the Hindi beneath). Target difficulty for generated questions: Easy, Moderate or Tough (default). Free-text custom instructions (marks, negative marking, counts, topics, sections). High Accuracy (default, page by page in order) or Fast Mode (batches in parallel).
+- **Under the hood:** digital PDFs' text layer is read directly; scanned pages are read by a vision model at 150 to 300 DPI depending on scan quality; diagrams are cropped from the page and attached; solution diagrams are skipped; maths is written as LaTeX and chemistry as mhchem.
+- **Live and review screens:** four stages (Upload, Read pages, Find or Write questions, Final touches), percent, elapsed time, an estimate, questions appearing as they are read, progress in the tab title. Review shows question count, answers missing, types and processing time; filters for Needs answer and Diagrams; search; a jump grid; a Raw switch showing the LaTeX. Save & continue stores a private test (one minute per question to start); Edit opens the full builder.
+- **Limits:** sign-in required; 30 AI runs per account per hour; a run is capped at about ten minutes, so very long books should go in chapters; generated answer keys should be spot-checked; a question saved without an answer gets a placeholder (option A), so missing answers should be set first. The AI generator is included on the free plan.
+
+---
+
+## Guide: Sectional test maker (https://testoza.com/sectional-test-maker)
+
+A guide for SSC, bank and CAT faculty, test-series makers and school teachers on building tests by section, with TestoZa as the worked example. Behaviour checked against the product on 30 October 2026.
+
+- **Two kinds of sectional test:** a sectional drill (one section at the exam’s length and minutes, three or four times a week) and a sectioned full paper (every section on its own rules, once a week).
+- **Four rules a section can carry:** its own minutes (“Time each section”: sections open in the paper’s order, close when their minutes are up, can’t be reopened or left early, spare minutes are lost; a refresh or another phone lands in the open section); an attempt limit (“Students may answer at most N”, hard or soft, counting the first or the best-scoring answers); its own marks and negative marks per question; shuffling that stays inside the section.
+- **Patterns:** SSC CGL and CHSL 2026 Tier 1, four sections of 25 questions, 15 minutes each, +2/−0.5; IBPS PO, SBI PO and IBPS Clerk 2026 prelims, three sections of 20 minutes each, five options, −¼; CAT, three sections of 40 minutes; JEE Main and NEET, subjects as sections on one clock.
+- **Results:** each section’s score with right, wrong and skipped answers; many skips mean a speed problem, many wrong answers a knowledge or guessing problem.
+- **Limits:** sectional cut-offs not applied automatically; the calculator is one switch for the whole test; timed sections open in a fixed order; locks enforced in the browser, marking on the server.
+
+---
+
+## Guide: Online tests for tuition teachers (https://testoza.com/online-test-for-tuition-teachers)
+
+A guide for home tutors and small tuition centres (5 to 60 students, Classes 5 to 12) on running a weekly online test, with TestoZa as the worked example.
+
+- **Why weekly:** recall practice spread over weeks beats rereading and cramming (Roediger and Karpicke 2006; Cepeda et al. 2006); weekly tests show who is lost early, keep parents informed and make students revise.
+- **Making a test:** photograph the exercise or upload a PDF; Extract copies printed questions, Generate writes new ones; check every question; one mark each and no negative marking for school classes; ask for name and roll number.
+- **Sending it:** a test link in the WhatsApp group (no app, no account, students type their name) or a live test with a six-digit code at testoza.com/join; answers saved if the signal drops; rejoin on another phone.
+- **Results:** marks, rank list, who hasn’t taken it, the questions most got wrong; a WhatsApp note for each parent and for absent students, sent by the teacher; report cards and Excel.
+- **Cost:** making tests, sharing them and seeing results cost nothing; ₹49 / 7 days, ₹149 / 30 days, ₹799 / year for exam rules, branding, scheduling and Excel export; no per-student fee.
+- **Not included:** fees, attendance, timetables, video classes, written answers, camera supervision.
+
+---
+
+## Guide: CBSE online test maker (https://testoza.com/cbse-online-test-maker)
+
+A guide for CBSE school teachers, exam cells and tutors on CBSE-style online tests for Classes 6 to 12, with TestoZa as the worked example.
+
+- **The CBSE paper:** objective questions (MCQs, assertion–reason), case-based or source-based questions, and 2-, 3- and 5-mark written answers, in proportions that differ by subject (see the sample papers on cbseacademic.nic.in); Class 10 board exams twice a year from 2026 (February, and an optional May exam); 80 theory and 20 internal marks in most subjects; no negative marking.
+- **Mapping:** MCQ and assertion–reason → Single correct, 1 mark, Wrong 0; case-based → Passage / case study (leave shuffling off); numericals → Numerical answer with a range; internal choice → a section attempt limit; written answers → not marked online.
+- **Through the year:** chapter tests, the objective part of periodic tests, holiday practice, pre-board practice from sample papers, the second Class 10 exam, Hindi-medium classes.
+- **Keep on paper:** written answers, maths working and step marks, drawn diagrams, maps and constructions, and full written papers under exam conditions.
+
+---
+
+## Guide: Scholarship admission test platform (https://testoza.com/scholarship-admission-test-platform)
+
+A guide for coaching institutes on running an admission-cum-scholarship test, with TestoZa as the worked example. Aakash’s ANTHE (Classes 5 to 12, scholarships up to 100%, online and offline) is cited as the best-known example of the format.
+
+- **Goals:** fill batches, find toppers, build the enquiry list.
+- **Formats:** from home in a scheduled window; in the centre on candidates’ phones with a six-digit code and roll number + PIN check-in, PIN slips and walk-ins allowed or refused; at partner schools, one live exam per school; two rounds (online screening, supervised final); one paper per class.
+- **Registration:** Candidate inputs (name, phone, class, school, city, course) become columns in the Excel sheet.
+- **Fairness:** one attempt; a fixed window; exam rules (full screen, tab-switch limit, copy and paste off; paid plans); shuffled questions; results held until released (“When I release them” for live exams, Result Visibility off for links); a tie-break rule published in advance.
+- **Slabs:** applied in the Excel sheet with one IFS formula on a percentage column; candidates look results up at testoza.com/join/result.
+- **Limits:** no fee collection, admit cards, SMS, camera proctoring, identity checks, automatic slabs or written answers.
+
+---
+
+## Guide: Online test with negative marking (https://testoza.com/online-test-with-negative-marking)
+
+A guide to negative marking for coaching faculty, test-series makers and students, with TestoZa as the worked example.
+
+- **How it works:** right answers gain marks, wrong answers lose the penalty, blanks score zero; a penalty of marks ÷ wrong options (a third with four options, a quarter with five) makes a blind guess worth exactly zero.
+- **Schemes (October 2026):** JEE Main +4/−1; NEET UG +4/−1; CUET UG +5/−1; SSC CGL/CHSL Tier 1 +2/−0.5; bank exams −¼ of the question’s marks, five options; GATE −1/3 and −2/3 on MCQs, none on MSQ and NAT; UPSC prelims −⅓ of the marks; CAT +3/−1, none on typed answers; CLAT +1/−0.25; CBSE boards none.
+- **Value of a guess:** JEE/NEET blind +0.25 (one option ruled out +0.67, two +1.5; ten blind guesses end below zero about one time in four); SSC +0.125 (+0.33, +0.75); bank 0 (1/16, 1/6, 3/8 of the marks); CUET +0.5 (+1, +2); GATE and UPSC 0 (+1/9, +1/3 of the marks); CAT 0 (+0.33, +1).
+- **Setting it in TestoZa:** the Marking switch (“No negative marking”, “JEE / NEET (+4, −1)”, Custom); Marks and Wrong on every question, decimals only (0.3333 for a third); multiple-correct questions Proportional or JEE Advanced; numerical answers by range with their own penalty or none; a summary line with the penalty and total marks.
+- **Limits:** fractions can’t be typed; blanks always score zero; no normalisation across shifts; written answers not marked.
+
+---
+
+## Guide: Best online exam software in India (https://testoza.com/best-online-exam-software-india)
+
+A comparison of 13 online exam platforms used in India, written by TestoZa for coaching institute owners, school exam cells, college exam coordinators and teachers. Every other product is described from its own website, pricing page and help centre, checked 2–25 October 2026; prices seen only on listing sites are labelled third-party.
+
+- **Sorted by what the exam decides:** a quick check in class (Kahoot, Wayground, Socrative, Google Forms); weekly tests and mocks for your own students (TestoZa; Classplus or Testpress when tests sit inside your own app; Teachmint for schools buying classroom panels; Moodle for colleges already running it); exams that decide a job, a degree or a licence (SpeedExam, Mercer Mettl, Eklavvya, TCS iON). ProProfs and Testportal are global quiz and assessment tools.
+- **Eight checks:** runs on the phone a student owns (Android is 93.9% of Indian mobile phones, Statcounter); marks like the real paper (negative marks to the decimal, partial credit, numerical answers); sections on their own clock; Hindi or bilingual; getting questions in from PDFs or photos; proctoring that matches the stakes; results the same evening; a findable price and a meter that fits your volume.
+- **Each platform in one line:** TestoZa: phone browser, no app, six-digit join code, +4/−1 and JEE Advanced partial marks, numerical ranges, timed sections, Hindi, AI import from PDFs and photos, rank list and report cards; no camera proctoring, ID checks, essays or branded app; free to build and run, ₹49 / 7 days, ₹149 / 30 days, ₹799 / year. Classplus: branded coaching app with courses and fees, tests a module, price by demo. Testpress (Chennai): tests with video hosting, live classes and course selling, 1,000+ institutes, no price on its home page. Teachmint: Teachmint X panels (65/75/86 inch) with attendance, grading and EduAI, price by demo. Moodle: open source, 147,000+ sites, negative marks as a percentage per option, you host it. SpeedExam: attempts a month incl. retakes; free 25, $240/year for 500, $1,500/year for 3,500. Mercer Mettl: webcam, AI and live proctoring, ID checks, secure browser, hiring tests; proctored tests not supported on phones or tablets; quote only. Eklavvya: university exams, AI marking of descriptive and handwritten answers, 30+ languages; per exam credit, 25 free, paid quoted. TCS iON: Digital Exams and Digital Marking for exam bodies, iON Digital Zone test centres, by enquiry. ProProfs: $19.99 per 100 active quiz takers a month, free plan 8 questions. Testportal: business first, English and Polish interface, metered by results. Google Forms: free, no timer or negative marks built in. Kahoot: speed points, can’t be switched off in live games.
+- **Price meters, worked through:** 360 students × about 5 sittings a month = 1,800 sittings a month. TestoZa ₹799 a year for any number; SpeedExam needs Ultimate ($1,500 a year); ProProfs Business about $160 a month; Eklavvya about 21,600 credits a year, quoted; Mettl, TCS iON, Classplus and Teachmint quote after a demo.
+- **When TestoZa is the wrong pick:** webcam or screen proctoring, identity checks for strangers, descriptive or handwritten answers, a branded app or course selling, a full course system, psychometric or coding tests for hiring.
+
+---
+
+## Guide: Mercer Mettl alternative (https://testoza.com/mercer-mettl-alternative)
+
+A long-form guide for coaching institutes, school exam cells and college departments on when an enterprise proctoring suite is the right tool and when everyday tests need something smaller, with TestoZa as the worked example. Mettl facts are from mettl.com and Mettl’s help centre, checked 15 October 2026.
+
+- **Two jobs called “online exam”:** a high-stakes sitting (a hire, a degree, a licence; strangers with a reason to cheat; camera, ID checks and a locked computer are worth their cost) and everyday testing (your own students every week; volume, low friction and exam-pattern marking matter; a camera adds little and a laptop requirement removes half the batch).
+- **The device:** Mettl’s system requirements say its proctored assessments are not supported on mobile devices, phones or tablets, and need a laptop or desktop with a webcam, Chrome, Firefox or Safari (not Edge) and 512 kbps; locked-down tests can need the Mettl Secure Browser on Windows or macOS. TestoZa is phone-first: testoza.com/join in the existing browser, answers saved every 20 seconds, rejoin on another device.
+- **Proctoring:** Mettl has AI proctoring, live proctors, record and review, dual-camera monitoring, three-point identity checks and a Credibility Index. TestoZa uses no camera or microphone: forced full screen, a tab-switch limit that can submit the paper, copy, paste and right-click off, back button blocked, shuffled questions and a live list. A deterrent, not a guarantee; a supervised room for exams that decide something.
+- **Marking:** both set negative marks and timed sections (Mettl: Correct Marks and Incorrect Marks fields, 26+ formats, 20+ languages). TestoZa adds JEE Advanced or proportional partial marks, numerical ranges, sections that lock, Hindi and bilingual papers, an NTA-style screen, and papers read by AI from a PDF or photo.
+- **Cost:** Mettl publishes no price (demo and quote); listing sites show a start around $2,990 a year, a third-party figure. A mid-sized institute runs about 1,800 sittings a month. TestoZa: building and running tests free for any number of candidates; ₹49 for 7 days, ₹149 for 30 days or ₹799 a year for exam rules and extras.
+- **Where Mettl wins:** camera and live proctoring, identity checks, a lockdown browser, hiring, psychometric and coding tests, 200,000+ exams a day and enterprise compliance, 26+ question formats. TestoZa is not a recruitment platform, a proctoring service or an LMS.
+
+---
+
+## Guide: ProProfs alternative (https://testoza.com/proprofs-alternative)
+
+A long-form guide for coaching institutes and teachers comparing a global quiz maker priced per quiz taker with an exam platform that has no per-student fee. ProProfs prices and features are from proprofs.com, checked 15 October 2026.
+
+- **What ProProfs already does well:** negative marking, regular, partial and custom grading, multi-section quizzes timed per section, 20+ question types, 70+ languages, certificates, screenshot and webcam proctoring, a million-plus ready questions.
+- **The price meter:** Essentials $19.99 per 100 active quiz takers a month up to 300; Business $39.99 per 100 up to 500; Business Complete Elite $0.83 per taker a month, billed yearly; Certifications & Exams $1 per candidate a month, minimum 100, billed yearly; K-12 Teacher $4 a month up to 150 students for teachers at recognised schools; School & District $0.25 per student a month. At 400 students Elite is about $332 a month. A scholarship test for 2,000 outside students is counted too. TestoZa has no head count.
+- **The free plan:** 12 questions per quiz (8 quiz + 4 lead fields) and 90 days of reports, so a full chapter test or mock can’t be trialled. TestoZa’s free plan runs full-length papers live for a whole batch with rank lists and report cards.
+- **The screen and question types:** the NTA-style screen (palette, Mark for review, Save & Next), numerical answers within a range, JEE Advanced partial marks, sections that lock, Hindi typed with English letters and bilingual questions.
+- **Exam day and parents:** a six-digit join code, lobby, live list, extra time, answers saved every 20 seconds; rank list, per-question analysis, report cards, a WhatsApp message for parents, Excel.
+- **Where ProProfs wins:** staff training and compliance, certificates, lead-capture quizzes, essays, uploads and video answers, 70+ languages, a huge question library, screenshot and webcam proctoring.
+
+---
+
+## Guide: Socrative alternative (https://testoza.com/socrative-alternative)
+
+A long-form guide for teachers and coaching faculty on where a lesson check-in stops and a marked test starts. Socrative facts are from socrative.com and its help centre, checked 15 October 2026.
+
+- **Two jobs:** a check-in is for the teacher (change tomorrow’s lesson; a percentage is right); a test is for the record (measure fairly, marked like the real exam, sat alone, ranked).
+- **Scoring:** Socrative scores a quiz as a percentage with ticks and crosses; a short answer is correct only on an exact match, with manual regrading a paid feature; a wrong answer counts the same as a blank, and no negative marking is described. Under +4/−1 four wrong guesses cancel a right answer. TestoZa has Marks and Wrong on every question.
+- **Question types:** Socrative has three (multiple choice, true/false, short answer). Entrance papers add negative-marked MCQs, multiple-correct with partial marks, numerical answers within a range, comprehension passages, equations and diagrams, Hindi and bilingual questions.
+- **Rooms and plans:** Free: 1 room of up to 50 students, 5 quizzes, 30 days of reports; Essentials $120 a year per seat, 5 rooms of 50; Pro $200.04 a year per seat (minimum 2), 30 rooms of 300; Organization through sales. A TestoZa live exam takes a whole batch with one code on the free plan, no student accounts.
+- **Using both:** Socrative during lessons; a short marked test on Friday; a full mock monthly; then Monday’s quick questions built from the mock’s worst five questions.
+- **Where Socrative wins:** speed in a lesson, instant feedback with explanations, Space Race and team play, exit tickets and polls, younger classes, rostered rooms and Google Drive exports.
+
+---
+
+## Guide: SpeedExam alternative (https://testoza.com/speedexam-alternative)
+
+A long-form guide for coaching institutes and exam coordinators comparing an exam service metered by attempts with an exam platform that has no attempt meter and no logins. SpeedExam facts are from speedexam.net, checked 15 October 2026.
+
+- **The attempt meter:** Free 25 exam attempts a month; Professional $20 a month or $240 a year for 500; Ultimate $125 a month or $1,500 a year for 3,500; attempts include incomplete attempts and retakes. One batch of 120 with a weekly test uses about 480 before retakes; six batches with a monthly mock pass 3,500. TestoZa has no meter on attempts, candidates or tests.
+- **Logins or a join code:** SpeedExam student accounts are managed by the test administrator (self-registration is available). TestoZa: a six-digit code at testoza.com/join, name or roll number, optional PIN, a lobby, a live list, extra time, rejoin on another device.
+- **Indian papers:** both set negative marks and sections; TestoZa adds an NTA-style screen, JEE Advanced partial marks, numerical ranges, locking sections, Hindi and bilingual papers, and papers read by AI from a PDF or photo.
+- **Proctoring:** SpeedExam has ProctorLite image capture, audio and video proctoring, and AI proctoring that can stop an exam. TestoZa uses browser rules without a camera, and recommends a supervised room for exams that decide something.
+- **Where SpeedExam wins:** camera and AI proctoring, certificates, GDPR, ISO 27001, ISO 9001 and SOC 2, essays, scenario, matching and audio or video questions, per-candidate history, SMS integration and self-registration.
+
+---
+
+## Guide: Canvas quizzes alternative (https://testoza.com/canvas-quizzes-alternative)
+
+A long-form guide for teachers who used Canvas mainly to run quizzes, tutors and coaching faculty. Canvas facts are from Instructure’s announcements and guides and from university Canvas teams, checked 15 October 2026.
+
+- **After Free-for-Teacher:** Canvas Free-for-Teacher was shut down in May 2026 and closed after a final export window ending 6 October 2026. Canvas Lite opened 30 September 2026: free, five courses, 50 learners per course, 500 MB per course, an identity check for every teacher with a government ID and a selfie through Veriff, no analytics, attendance or API access, New Quizzes only.
+- **Marking:** Instructure’s New Quizzes guides describe partial credit with a penalty on multiple-answer questions, with zero as the lowest possible score, and “vary points by answer” on multiple choice. A −1 for a wrong single-answer question, as JEE Main and NEET mark, is not a setting the guides describe. TestoZa has Marks and Wrong on every question, partial marks, numerical ranges.
+- **Classic and New Quizzes:** Classic Quizzes is being retired; universities set cut-over dates between 2025 and 2027; converted quizzes need checking question by question.
+- **Getting students in:** Canvas quizzes are taken by enrolled students with logins; a one-off mock for an outside batch means building a course. TestoZa: a six-digit code, name or roll number, no account or app.
+- **Using both:** teach in Canvas, post the join code in the course, run the exam in TestoZa, and bring marks back to the gradebook by Excel; there is no LTI integration.
+- **Where Canvas wins:** whole courses, assignments with rubrics and SpeedGrader, discussions, a gradebook, integrations, mobile apps, and richer quiz types inside a course.
+
+---
+
+## Guide: Mobile-friendly online exam (https://testoza.com/mobile-friendly-online-exam)
+
+A long-form guide for teachers and coaching institutes whose candidates write on their own phones, with TestoZa as the worked example. Product behaviour checked against the exam screen's code on 13 October 2026.
+
+- **What mobile-friendly has to mean for an exam:** nothing to install; no account to remember (a code and a name or roll number); one question at a time at a readable size; navigation within thumb reach; answers that survive a dropped connection; a paper that survives a dead phone; a clock that belongs to the exam; rules that work in a phone's browser.
+- **The screen on a phone:** join at testoza.com/join with a six-digit code (or a QR code) and check in by name, roll number, or roll number and PIN; a lobby until the start; a top bar with the countdown, a connection dot ("No internet — answers saved locally" when offline), warnings and a text-size control; question text at 18px; options as whole tappable rows; typeset equations; an on-screen keypad for numericals; Back, Clear, Mark for review and Save & Next along the bottom; the palette in a Questions panel that slides in from the screen's edge.
+- **When things go wrong:** answers are kept on the phone and, on a live exam, sent to the server every 20 seconds and when the page comes back into view; each candidate's deadline is kept on the server (own start + duration + extra time, capped by the exam's closing time); a dead phone means rejoining on any device with the same details, the first device signed out and "Changed device" shown; papers submit themselves at time-up; the page asks the browser to keep the screen awake on live exams.
+- **Rules on phones:** leaving the exam screen is counted against a limit that can submit the paper; full screen where the browser allows it (Android), skipped on iPhone where Safari cannot do it; copy, paste and right-click can be switched off; one device per seat; batch lists and PINs. Nothing in a browser can see a second device or stop screenshots, and TestoZa never uses the camera or microphone.
+- **Limits:** no offline exams, no native app, no full screen on iPhone, very old browsers may struggle, and long data sets are better in a lab.
+
+---
+
+## Guide: Embed a test on your website (https://testoza.com/embed-test-on-website)
+
+A long-form guide for teachers, institutes and bloggers on putting a test on their own site. Framing headers checked live on testoza.com and app.testoza.com on 13 October 2026.
+
+- **No iframe:** every TestoZa page sends X-Frame-Options: SAMEORIGIN and Content-Security-Policy frame-ancestors 'self', so browsers refuse to show a test inside another website's frame. The page explains why that also suits exams: the whole screen on a phone, full-screen and tab-switch rules that work, storage that browsers don't partition, and a light host page.
+- **The launcher pattern:** a generator writes HTML (inline styles only, no script or plugin) for a button, a card with the title and facts, a code box for live exams that always opens testoza.com/join, or a QR code; every one opens the test in a new tab.
+- **Where to paste:** WordPress Custom HTML block or Buttons block (Elementor: HTML widget); Google Sites Insert → Button, or Insert → Embed → Embed code; Wix Add Elements → Embed Code → Embed HTML; Blogger Layout → Add a Gadget → HTML/JavaScript, or HTML view in a post; Squarespace Code block (plans with custom code) or Button block; Webflow Code Embed; Shopify Custom Liquid; plain HTML. Notion, Google Classroom and Moodle take the link.
+- **Which link:** a Public test's link (created once, unchanged when the test is edited) for practice; a code box for live exams, whose codes change every sitting. Private tests have no share link.
+- **Results and limits:** results go to the TestoZa dashboard (rank list, per-question numbers, Excel, report cards), never to the host website; no API, webhooks or single sign-on; the address is app.testoza.com.
+
+---
+
+## Guide: Full-length online test maker (https://testoza.com/full-length-online-test-maker)
+
+A long-form guide for coaching institutes running test series. Exam figures from NTA, JEE Advanced, SSC and IBPS notices as used in TestoZa's exam-specific guides; product facts checked on 13 October 2026.
+
+- **Full-length means:** every question, the full duration on the same kind of clock (one clock, or sections that close on their own), the exam's sections, its marking (negative and partial marks), its question types and its screen (palette, Mark for review), ideally at its time of day.
+- **Patterns:** JEE Main — 75 questions (25 each in Physics, Chemistry, Mathematics; 20 multiple-choice and 5 numerical), 180 minutes, 300 marks, +4/−1 on multiple-choice. NEET UG — 180 questions (45 each in Physics, Chemistry, Botany, Zoology), 180 minutes, 720 marks, +4/−1. JEE Advanced — announced in each paper; the 2024 Paper 1 had 17 questions a subject and 180 marks. SSC CGL 2026 Tier 1 — 4 sections of 25 questions, 15 minutes each, 200 marks, +2/−0.5. IBPS PO 2026 Prelims — 30/35/35 questions in three 20-minute sections, five options, a quarter of the marks off.
+- **Building it in TestoZa:** upload the paper as a PDF or photos (AI reads questions, options, key, diagrams, equations) or as JSON; Split into sections; Marks and Wrong set once and copied to each new question, overridable per section or question; Partial marks (proportional or JEE Advanced); numerical ranges; Time each section; Combine two papers with a 0–180 minute break (30 by default) and one combined score.
+- **Google Forms for a three-hour paper:** no built-in timer, no negative marking, all-or-nothing checkbox grading, no palette or Mark for review, drafts saved only for signed-in respondents.
+- **Running and reading it:** live exam with a code, lobby, late entry (15 minutes by default), answers every 20 seconds, rejoin on another device, extra time per candidate or for all, automatic submission; then section scores, attempts against accuracy, time per question, the wrong option chosen, and accuracy in the last hour.
+- **Limits:** no ready-made paper bank, no normalisation across batches, section locks enforced in the browser, the break between papers not enforced and no merged faculty rank list across two papers, no descriptive answers, no offline mode.
+
+---
+
+## Guide: Share a test on WhatsApp (https://testoza.com/share-test-on-whatsapp)
+
+A long-form guide for teachers whose batches live in WhatsApp groups. Every message quoted is the product's own text, checked on 13 October 2026.
+
+- **Link or code:** a test link for practice anyone can take any time (Public tests only); a live exam with a six-digit code for a paper the batch sits together, with a lobby and, with a batch list, only listed names or roll numbers admitted.
+- **The invitation:** the test's name in bold, the facts on one line, one link on one address (never a backup link), and "No app and no account needed — just type your name" (or a sign-in line when sign-in is on). Live exams: open testoza.com/join, enter the code in bold with a space in the middle, check in, plus a direct link.
+- **Sending:** Share link opens the phone's share sheet or, on a computer, copies the whole message; live exams have WhatsApp, Copy and projector buttons. Send the evening before and 15 minutes before the start.
+- **Preview cards:** a test link's card is the test's name and description with the question count; a join link's card names the test and institute and says to enter the code. Join links are not indexed.
+- **Afterwards:** Send rank list on WhatsApp (medals for the top three, average, absentees); a Parent button per student whose parent's number is on the batch list, and Tell parent for the absent (shown on tablet and computer screens); candidates look up their own result with the code once results are released.
+- **Limits:** nothing is sent automatically; no WhatsApp Business API or bot; messages are in English and editable before sending.
+
+---
+
+## Guide: Classplus alternative (https://testoza.com/classplus-alternative)
+
+A long-form guide for coaching institute owners weighing an app platform against a dedicated exam platform, with TestoZa as the worked example. Classplus facts are from its own website and public listings, checked 10 October 2026.
+
+- **The two halves:** an app platform sells a business platform (a branded app on Play Store, a storefront for batches and courses, fee collection with instalments and reminders, live and recorded lectures, parent announcements) and an exam engine (question bank, paper, clock, marking scheme, exam screen, mark sheet) in one yearly contract. Only the second half is replaceable by a test platform; the guide says so plainly and points app shoppers at the app-builder category.
+- **Why institutes look:** no price on the website (a form and a sales call; reseller and listing sites quote roughly ₹8,000–₹50,000 a year with mentions of a setup fee and a commission on course sales, numbers that contradict each other and are not the company's own); a yearly platform contract rather than per-test pricing; a login for every student, which becomes a support call on exam day; marking that is not the exam's marking; and teacher-evenings spent typing questions into a form.
+- **Marking:** TestoZa puts Marks and Wrong on every question card (+4/−1, +2/−0.5, +1/−0.25), with proportional or JEE Advanced partial marks on multiple-correct questions, numerical answers as a range, sections with their own clock, and scoring on the server. The guide gives a four-part demo script to run in any vendor's sales call.
+- **Exam day:** a six-digit code at testoza.com/join with check-in by name, roll number or roll plus a four-digit PIN; a lobby; Start; a live list with minutes left, questions answered and flags; +5/+10 minutes for one candidate or 5–30 for everyone; answers saved every 20 seconds; rejoin on another device; a projector view with the code, QR and countdown.
+- **Getting questions in:** AI reads PDFs, PNG, JPG and WEBP, including photographed printed and handwritten pages, with diagrams cropped and equations typeset rather than screenshotted; Hindi, English or bilingual; every question still read once (about eight minutes for thirty).
+- **Results:** rank list with class average, highest and lowest; per-question attempted, correct, time spent and the wrong option the batch chose; report cards to print or PDF; a WhatsApp message you send yourself; Excel; results released on end, immediately or by hand; candidates can look their own result up with the code.
+- **Honest limits:** no branded app, no course selling, no fee collection, no live classes, no attendance or admissions, no essays or file uploads, no LTI/ERP integration (the bridge is an Excel download). Recommended arrangement for institutes that need both: keep the app, put the link or join code inside it.
+- **Price:** building and running tests free; ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year; no setup fee, no per-student charge, no commission.
+
+---
+
+## Guide: Teachmint alternative (https://testoza.com/teachmint-alternative)
+
+A long-form guide for coaching institutes, school exam cells and teachers who want the exam half on its own, with TestoZa as the worked example. Teachmint facts are from teachmint.com as it stood on 10 October 2026.
+
+- **What the product is in 2026:** the homepage leads with Teachmint X, an "AI-Powered Connected Classroom® Device" — interactive flat panels at 65, 75 and 86 inches — with Vision X for managing devices across campuses, Share X and Click X clickers, and a connected-classroom platform that automates attendance and grading, plus EduAI (quiz generator, homework generator, class recap). Solutions cover Schools, Higher Education and Coaching. No prices are published; the call to action is Book a Demo, with an order link for the devices.
+- **Administration versus assessment:** registers, receipts, admission forms and term report cards are a system of record; a paper, a clock, a marking scheme and a mark sheet are a tool. The guide's first widget separates them and often answers "keep the school platform".
+- **The device question:** classroom hardware improves teaching and does nothing for an exam, which happens on one device per candidate — in India, usually a mid-range Android on mobile data. Answers saved to the server every 20 seconds, rejoining on another device, an exam screen built for a small display with a text-size control, typeset equations, nothing to install, and exam rules (forced full screen, counted tab switches with an auto-submit limit, copy and right-click off) in an ordinary browser. Suggested buying test: borrow a student's phone, turn off Wi-Fi, sit five questions.
+- **Marking:** "automated grading" says a machine checked the answers, not under which scheme. Unit tests are +1/0; entrance papers are +4/−1 (JEE Main, NEET), +2/−0.5 with 15-minute sections (SSC Tier 1, 2026) and −0.25 with 20-minute sections (bank prelims). TestoZa sets this as two fields per question, with partial marks, numerical ranges and sectional clocks.
+- **Exam day:** one period, one six-digit code, no accounts — code on the board or the projector view, a lobby, Start, a live list, extra time per candidate or for everyone, automatic submission at time-up, rank list before the bell.
+- **Results:** a rank list and per-question numbers for the teacher; printable or PDF report cards and a WhatsApp message for the parent; the paper and key for the student; Excel for the school's own records (there is no ERP integration).
+- **Honest limits:** no hardware, no attendance register, no fees, admissions or timetables, no parent portal, no term gradebook, no lessons or live classes, no essays or file uploads, no LTI.
+
+---
+
+## Guide: Kahoot alternative (https://testoza.com/kahoot-alternative)
+
+A long-form guide for teachers and coaching faculty on where a quiz game stops being a test, with TestoZa as the worked example. Kahoot's scoring and plan limits are from its own help centre and pricing pages, checked 10 October 2026.
+
+- **How Kahoot scores:** up to 1000 points for a correct answer on a single-select question and up to 500 per correct answer on multi-select, with the host able to set no points or double points; the number falls with response time on the published formula 1 − (response time ÷ time limit) ÷ 2 times the points possible, so Kahoot's own example scores 967 of 1000 for a 2-second answer on a 30-second timer. The speed reduction cannot be switched off in live games (Accuracy mode scores on correctness alone) and answer streaks add bonus points.
+- **Why that is wrong for a mock:** JEE Main and NEET are +4/−1, SSC Tier 1 is +2/−0.5, bank papers take off a quarter mark. A fast wrong answer is the most expensive thing a candidate can do, and a slow right answer is worth the same as a quick one. A game that pays nothing for a wrong answer teaches the opposite instinct twice a week.
+- **Player caps:** live games are capped per plan — the free tier commonly around 10 players, paid personal, teacher and business tiers rising through 50, 100, 200 and higher, with names and numbers changing over time. Check the cap on the plan you hold before promising a mock to a batch. A TestoZa live exam has no per-session player tier.
+- **What an exam screen carries that a game screen does not:** a colour-coded question palette, Mark for review, one clock for the whole paper (or sections that close on their own), numerical answers accepted within a range, multiple-correct questions with partial marks, comprehension passages, two-decimal answers, exam rules, and silence — a test is sat alone on the candidate's own phone.
+- **A whole batch:** a six-digit code at testoza.com/join, check-in by name or roll number, a lobby, a live list, extra time, answers saved every 20 seconds, rejoining on another device, automatic submission at time-up.
+- **After the test:** a rank list with class average, highest and lowest; per-question attempted, correct, average time and the wrong option the batch chose; report cards and Excel. A podium is not a mark sheet.
+- **Using both in one week:** Kahoot for 8 minutes at the end of class Monday to Thursday; a short, properly marked paper on Friday; a full mock monthly with exam rules on; then one Kahoot built from the five questions the per-question analysis says the batch got worst.
+- **Where Kahoot wins:** a room coming alive (music, countdown, leaderboard, podium), icebreakers and training sessions, zero setup for five questions, millions of ready public kahoots, younger classes, and polls, word clouds and brainstorms. TestoZa has none of these and no game modes.
+
+---
+
+## Guide: Testportal alternative (https://testoza.com/testportal-alternative)
+
+A long-form guide for institutes and training managers choosing between a business assessment tool and software built for Indian student exams, with TestoZa as the worked example. Testportal facts are from testportal.com as it stood on 10 October 2026; plan figures are from third-party listings and are described as such.
+
+- **Who it is for:** its own site splits customers into Business (Human Resources, training companies and departments, certification, sales and customer service, language schools) and Education (teachers, schools, universities), with Business first and the pricing link going to business plans. The interface language switch offers English and Polski. Listed features include self-grading open-ended and choice questions, automatic grading, an AI generator that writes choice questions from uploaded material or a topic, and proctoring and security.
+- **Two trades under one word:** deciding whether a person is good enough (one candidate, a pass mark, identity the hard part) versus ranking people against each other (a batch, a position, marking fidelity the hard part).
+- **The marking gap:** the feature list does not name negative marking, partial credit on multiple-correct questions, or sections with their own clock. TestoZa sets Marks and Wrong per question (+4/−1, +2/−0.5, +1/−0.25, decimal marks such as 0.857), proportional or JEE Advanced partial marks, numerical answers as a range, two-decimal answers, and sections that close themselves, scored on the server.
+- **What the price meter counts:** listings describe Standard, PRO and MAX tiers roughly $29–$35 at entry and $99–$159 at the top, metered by test results a month (about 30 on the cheapest, a few thousand at the top, a custom tier above). A per-result meter is generous for recruitment and punishing for a test series, where one mock for 150 students is 150 results. The guide gives a two-line method for working out cost per sitting. TestoZa caps nothing: no limit on results, candidates, tests or sittings; ₹49 for 7 days, ₹149 for 30 days, ₹799 for a year, billed in rupees.
+- **The device:** camera and desktop recordings, a secure browser, up to 150 test-takers per proctor in live mode and a Microsoft Teams app suit an invigilated desktop test; an Indian coaching batch is on mid-range Androids on mobile data, where answers saved every 20 seconds, rejoining on another device, browser exam rules, a live list and a projector view are the honest answer. No browser rule makes cheating impossible.
+- **Results:** a batch rank list with class average, highest and lowest and per-section averages; per-question attempted, correct, time spent and the wrong option chosen; printable report cards, a WhatsApp message you send, Excel. No certificates.
+- **Where Testportal wins:** certificates, open-ended answers graded by a person with a rubric, camera and screen proctoring with a secure browser, recruitment workflows, compliance and training records, and English/Polish working languages.
+
+---
+
+## Guide: Bank exam mock test platform (https://testoza.com/bank-exam-mock-test-platform)
+
+A long-form guide for banking coaching institutes and faculty on running IBPS, SBI and RRB mocks that behave like the real papers, with TestoZa as the worked example. Exam facts as reported by coaching sources for the 2026 cycle and checked on 9 October 2026 (the official notifications on ibps.in and sbi.bank.in are the final word); product details checked against the code the same day.
+
+- **What makes a bank paper different:** every section has its own clock, every question has five options, a section's marks and its question count often differ so marks per question are rarely whole numbers, and in IBPS each section has its own qualifying mark. Prelims marks never enter the merit list: IBPS PO merit is Mains (out of 225) and the interview at 80:20, and IBPS Clerk has no interview at all.
+- **Patterns (2026, as reported):** IBPS PO Prelims 100 Q / 100 marks / 60 min, 20 minutes a section (English 30 Q, Quant 35 Q, Reasoning 35 Q; the 2026 revision is reported as 30 / 30 / 40 marks, and sources disagree on that split). IBPS PO Mains 170 Q / 200 marks / 160 min: Reasoning and Computer Aptitude 40 Q / 60 / 50 min, Data Analysis 40 Q / 60 / 45, Awareness 50 Q / 60 / 35, English 40 Q / 20 / 30, then a 25-mark, 30-minute typed descriptive paper. SBI PO Prelims English 40 Q / 40, Quant 30 / 30, Reasoning 30 / 30, 20 minutes a section, reported to have no sectional cut-off; SBI PO Mains 170 Q / 200 marks / 180 min plus a 30-mark descriptive of three tasks chosen from six. IBPS Clerk Prelims 30 / 35 / 35 questions, one mark each, 20 minutes a section; Clerk Mains 160 Q / 200 marks / 125 min (Awareness 40 Q / 50 / 20 min, English 40 / 40 / 35, Reasoning and Computer 40 / 60 / 35, Quant 40 / 50 / 35). IBPS RRB Office Assistant Prelims 80 Q / 80 marks / 45 min with unequal sections: Reasoning 40 Q / 25 min, Numerical Ability 40 Q / 20 min.
+- **Marking:** a wrong answer costs a quarter of the marks the question carries, everywhere in the objective papers; nothing for a blank; none on the descriptive papers. With five options a blind guess is worth exactly zero on average, one option ruled out is worth a sixteenth of the question, two a sixth, three three-eighths — so eliminate first, and guess in the heavy sections (an SBI Data Analysis question is worth 2 marks, a Mains English question 0.5).
+- **Timed sections in TestoZa:** test builder: Split into sections, then Time each section, minutes per section (they need not be equal), and the time limit becomes their sum. On the exam screen sections open in order, the clock shows the open section's time, other sections' tabs and palette numbers are faded and say why they won't open, Save & Next stops at a section's last question, and the next section opens when the open one's time ends. Which section is open follows the time left, so refreshes, resumed attempts and join-code sittings on another device return to the right section; extra time from an examiner lengthens the open section.
+- **Five options and decimal marks:** "Add option" in the question card adds a fifth option (and more), and the exam screen renders whatever options a question has. Marks and negative marks are set per test, per section or per question with decimals, so IBPS PO Mains 2026 is four section settings on one test: 1.5 / 0.375, 1.5 / 0.375, 1.2 / 0.3 and 0.5 / 0.125. A per-section attempt limit ("answer any 3 of 6", hard or soft) covers SBI's descriptive choice, though not the typing.
+- **Sectional cut-offs:** in IBPS a candidate must clear every section's qualifying mark as well as the overall cut-off, so 60 out of 100 with 7 in English fails while the same 60 spread 14 / 22 / 24 qualifies; SBI's prelims is reported to have no sectional cut-off. TestoZa shows every section's score (Subject-Wise Split) and the batch rank, but does not mark a cut-off for you. Publish section targets rather than a total, and read each candidate's weakest section first.
+- **Sets:** data interpretation, puzzles and comprehension come in sets of five to ten questions. TestoZa has no single stimulus shared by a group of questions, so the table, chart or passage is repeated on each question of the set or attached to each as an image; leave question shuffling off for papers built out of sets, and check the widest table at 360 points before publishing.
+- **Languages:** a bilingual question carries English and Hindi one under the other (options too); AI import writes English, Hindi or both from PDFs and photos, keeps Hindi in Unicode and crops figures; the builder types Hindi from English letters. The English Language section stays in English, as in the exam. There is no language switch on the exam screen.
+- **Running a series:** topic tests, then sectional drills at the real question count and minutes three or four times a week, then full prelims mocks weekly, Mains mocks by halves then whole, and full mocks at the centre at the real shift time with a six-digit join code and roll number (no accounts). Bank exams run in four shifts and IBPS normalises across them by equipercentile equating; for your own batches, use the same paper on the same day or compare by rank within a batch.
+- **Results:** score, correct / wrong / skipped, every section's own score, time per question; the batch option breakdown is the most useful number on a five-option paper. Rank lists and full analysis on paid plans from ₹49 a week; making and sharing tests, timed sections, five options and decimal marks included, is free.
+- **Limits:** no shared passage or data set for a group of questions; the scientific calculator is one switch for the whole test, where the real Mains shows it in Data Analysis only; no typed descriptive paper; sectional cut-offs are not marked automatically; no exam-screen language switch; no normalisation across shifts; no ready-made bank question bank; compensatory time is not automatic; section locks are enforced in the browser; AI import needs a human check, especially of the fifth option.
+
+---
+
+## Guide: SSC mock test platform (https://testoza.com/ssc-mock-test-platform)
+
+A long-form guide for SSC coaching institutes and faculty on running mocks that behave like the 2026 SSC exams, with TestoZa as the worked example. Exam facts checked on 8 October 2026; product details checked against the code the same day.
+
+- **What changed in 2026:** CGL 2026 Tier 1 (30 September to 30 October 2026), CHSL 2026 Tier 1 and Selection Post Phase 14 give each of four 25-question sections its own 15 minutes. A section closes when its time ends, candidates can't go back, and unused time isn't carried forward (coaching sources report candidates who finish early wait). CGL/CHSL Tier 2 time every module (CGL Paper I: Maths 30 min, Reasoning 30, English 40, GA 20, Computer 15, then a 15-minute typing task). MTS: two 45-minute sessions. GD Constable: one 60-minute clock.
+- **Marking:** CGL/CHSL Tier 1 +2/−0.5; Tier 2 and MTS Session II +3/−1; MTS Session I +3, no negative; GD +2/−0.25. A blind guess at +2/−0.5 is worth +0.125 on average (+0.33 after ruling out one option, +0.75 after two); at +3/−1 it is worth 0; ten blind guesses at +2/−0.5 end below zero about 24% of the time.
+- **Timed sections in TestoZa:** test builder: Split into sections, then Time each section, minutes per section; the time limit becomes their sum. On the exam screen the sections open in order, the clock shows the open section's time, other sections' tabs and palette numbers are faded and say why they won't open, Save & Next stops at a section's last question; when the time ends the next section opens. Which section is open follows the time left, so refreshes, resumed attempts and join-code sittings on another device return to the right section; extra time from an examiner lengthens the open section. Randomize Questions shuffles within each section.
+- **Setups:** CGL/CHSL Tier 1: 4 sections, 15 min each, 2/0.5. CGL Tier 2 Paper I: 5 sections, 30/30/40/20/15, 3/1. MTS: 2 sections (one per session), 45 min each, 3/0 then 3/1. GD: 4 sections, one 60-minute clock, 2/0.25. Calculator off.
+- **Languages:** a bilingual question carries English and Hindi one under the other (options too); AI import writes English, Hindi or both from PDFs and photos; the builder types Hindi from English letters. No language switch on the exam screen; no regional languages beyond Hindi.
+- **Running a series:** topic tests, then 15-minute sectional drills three or four times a week, then full timed mocks weekly; full mocks at the centre with a six-digit join code and roll number (no accounts); compare batches on different papers by rank, as SSC itself normalises across shifts (equipercentile method since a June 2025 notice).
+- **Results:** score, correct/wrong/skipped, every section's own score (Subject-Wise Split), time per question; rough rank estimate for tests tagged SSC; faculty rank list and option analysis on paid plans from ₹49 a week. Making and sharing tests, timed sections included, is free.
+- **Limits:** no exam-screen language switch, no regional languages, no typing or data-entry tests, no ready-made SSC question bank, no normalisation, no automatic PwBD compensatory time (copy the test with 20-minute sections), section locks enforced in the browser.
+
+---
+
+## Guide: JEE Advanced mock test software (https://testoza.com/jee-advanced-mock-test-software)
+
+A long-form guide for JEE Advanced faculty and coaching institutes on building and running JEE Advanced mocks that behave like the real exam, with TestoZa as the worked example. Exam facts checked on 8 October 2026; product details checked against the app the same day.
+
+- **The exam:** set by one of the IITs in rotation (2026: IIT Roorkee, held on Sunday 17 May 2026, computer-based); two compulsory 3-hour papers on the same day, Physics, Chemistry and Mathematics in both; ranks from the total. The pattern is announced in each paper's instructions and changes between years. Example (Careers360, 2024 Paper 1, per subject): 4 one-correct (+3/−1), 3 one-or-more-correct (+4, partial +3/+2/+1, −2), 6 numerical (+4, no negative), 4 one-correct matching (+3/−1): 60 marks per subject, 180 per paper, 360 in all.
+- **Partial marking:** +4 only if all correct options are chosen; +3 if all four are correct and three chosen; +2 if three or more are correct and two chosen, both correct; +1 if two or more are correct and one chosen, correct; 0 if none chosen; −2 otherwise. In TestoZa each multiple-correct question has a Partial marks switch: Proportional (default; marks × picked ÷ correct, so 2 of 3 gives 2.67) or JEE Advanced (+1 per correct option, exactly the rule). New questions copy the previous question's setting; the server, results, faculty analysis and spreadsheet export use the same rule.
+- **Building a paper:** sections per subject; marks per test, section or question (most specific wins), e.g. +3/−1 on the test, +4/−2 on one-or-more-correct, +4/0 on numericals; numerical two-decimal answers as a range from truncated to rounded (0.78 to 0.79 for 0.785…), integers as exact values; matching as single correct with List-I/List-II in a table (Sy Pad Match List, or the AI import); paragraphs as a Passage question with sub-questions of any type, numerical included; AI import of PDFs or photos with LaTeX and mhchem.
+- **Two papers in one sitting:** a combined test (dashboard: Combine two papers): Paper 1, a break of 0–180 minutes (30 by default), Paper 2; candidates sign in and get one link; results only after both papers, as one total out of 360 with each paper's marks and correct / partial / wrong / skipped counts. The break can be skipped or extended by 5 minutes at a time.
+- **Candidate screen:** NTA-style, on phones, laptops and lab computers; each question shows its marks (+4 | −2); multiple-correct options have square keys with a tick; numerical answers on an on-screen keypad.
+- **After the mock:** per question, option breakdown, accuracy, average time and discrimination index; rank estimate for tests tagged JEE Advanced; read marks lost to −2s, partial answers, unattempted numericals and Paper 2 against Paper 1. Rank lists and full analysis on paid plans (from ₹49 a week); making, combining and sharing tests is free.
+- **Limits:** no merged faculty rank list across Paper 1 and Paper 2 (each paper is its own test in the analysis); the break isn't enforced; partial marks are set per question (imported questions start on Proportional); optional section timers stay off (JEE Advanced has none); AI output needs a human check; no step marking.
+
+---
+
+## Guide: Chemistry question paper maker (https://testoza.com/chemistry-question-paper-maker)
+
+A long-form guide for chemistry teachers in schools, coaching institutes and tutors on making chemistry question papers, tests and quizzes online with real formulas and reactions, with TestoZa as the worked example. Product details checked against the app on 5 October 2026.
+
+- **Why chemistry is hard online:** the small characters carry the meaning (2H vs H₂, CO vs Co, Fe²⁺ vs Fe³⁺, → vs ⇌, a catalyst above the arrow). Google Forms has no subscript or superscript formatting; Microsoft's answer forum says Microsoft Forms can't type them either, and its Math mode is built for maths. Unicode characters give H₂O but not arrows with conditions, stacked isotopes or a Kc fraction. Copying CBSE's Class 12 Chemistry sample paper for 2026-27 gives "Fe2+ + Cr2O7 2-" with the symbol-font arrow lost, and "6 × 10–3 g" for 6 × 10⁻³ g.
+- **Size:** the line Fe²⁺ + Cr₂O₇²⁻ + H⁺ → as mhchem is 29 bytes; a tight 1× screenshot of it is 2,890 bytes (about 100 times more).
+- **Four ways in:** (1) AI import: upload a question paper as a PDF or photos (Word or PowerPoint: save as PDF first); Extract keeps the questions, Generate writes new ones at Easy, Moderate or Tough; formulas, ions, state symbols and isotopes come out in mhchem, in options too; structures, schemes, graphs and apparatus are cropped and attached, including structures that are the options; match-the-columns lists become tables; papers in subject sections come back in sections; the review screen has Page and Diagram chips and a Raw button. (2) Fill from a photo: one printed or handwritten question, typed with its options in mhchem; the answer is ticked only when marked in the photo. (3) The Sy Pad's Chemistry tab: Formula (type H2SO4, Fe^3+, 2H2 + O2 -> 2H2O as plain letters; numbers drop below the line), →, ⇌, an arrow with boxes for a catalyst or Δ, ↑ gas, ↓ precipitate, (aq), (s), (l), (g), °C, Ka, Kb, pH, mol; Tables tab with a Match List layout. (4) mhchem between dollar signs: \ce{} for formulas and reactions, \pu{} for units; habits: spaces around + between species, a caret before charges (SO4^2-), exact capitals, conditions in brackets after the arrow, maths outside \ce{}.
+- **Structures:** no structure editor; structures are pictures, cropped by the import or uploaded to any question or option; on the exam screen a question's picture sits under its text and option pictures sit in their options. Crop tight, draw cleanly (for example with PubChem Sketcher), keep labels big, use names with words and structures with pictures.
+- **Question types:** single correct (incl. assertion–reason and match-the-column), multiple correct (marks × picked ÷ correct; any wrong option costs the negative mark), numerical answer (a range, or exact values separated by commas), passage / case study. Candidates type numbers only (digits, one decimal point, a minus sign), so ask for answers in a stated unit or power and give log values; for the pH of 0.002 M HCl (2.699…) a range of 2.69 to 2.70 is fair; 2.7 and 2.70 count the same.
+- **Marking patterns:** CBSE Class 12 Chemistry 2026-27: 70 marks in 3 hours, Section A 16 MCQs of 1 mark (4 assertion–reason), no log tables or calculators; NEET UG: 45 chemistry questions of 180, +4/−1, 3 hours; JEE Main: Chemistry 20 single correct + 5 numerical, +4/−1 on MCQs, numerical per the year's bulletin; CUET UG 2026: 50 compulsory questions in 60 minutes, +5/−1. Marks per test, section or question; decimal negative marks; an optional calculator.
+- **On a phone:** chemistry drawn as text (KaTeX with mhchem); text size 12 to 32 px with subscripts and charges growing too; long reactions scroll sideways; numerical answers on an on-screen keypad.
+- **After the test:** per question, the share choosing each option, accuracy, average time and a discrimination index; example: pH of 10⁻⁸ M HCl, where many students choose 8 (forgetting water's own H⁺; the answer is about 6.98). Rank list and full analysis on paid plans (from ₹49 a week).
+- **Limits:** no structure editor, answers are numbers (not formulas or names), no long answers or step marking, no 3D models or simulations, AI output needs a human check (charges and capitals first), no printed paper from the test (pdf.testoza.com/latex-to-pdf makes a printable PDF from LaTeX with mhchem).
+
+---
+
+## Guide: Math test maker with equations (https://testoza.com/math-test-maker)
+
+A long-form guide for maths teachers in schools, coaching institutes and tutors on making online maths tests with real equations, with TestoZa as the worked example. Product details checked against the app on 4 October 2026.
+
+- **Why maths is hard online:** a maths question is two-dimensional (fractions, powers, roots); form fields are one line. Google Forms has no equation editor; EquatIO inserts equations as images. Microsoft Forms has a Math switch with an equation editor and math keypad, and suggests options (Microsoft 365). Neither has negative marking built in, and neither can grade a range of numbers as correct. Workarounds hurt: flat typing is ambiguous (1/2x), PDF copy-paste loses structure, screenshots blur when zoomed, break dark mode, can't be edited or read by screen readers.
+- **Size:** the quadratic formula as LaTeX is 41 bytes; a tight 1× screenshot of it is 2,620 bytes (about 64 times more).
+- **Four ways in:** (1) AI import: upload a question paper as a PDF or photos (Word or PowerPoint: save as PDF first); Extract keeps the questions, Generate writes new ones at Easy, Moderate or Tough; maths comes out as LaTeX, figures are cropped and attached, and the review screen has Page and Diagram chips and a Raw button showing the LaTeX. (2) Fill from a photo: one printed or handwritten question, typed with its options; the answer is ticked only when marked in the photo, never solved. (3) The Sy Pad: a maths keyboard opened from "Maths & symbols" under a question; blue boxes for blanks, a live preview, tabs for Algebra, Pre-Algebra, Trigonometry, Calculus, Statistics, Physics, Chemistry and Tables (matrix, determinant, match-the-columns), a Words key, Insert warns about empty boxes, Copy gives $…$. (4) LaTeX between dollar signs in any question box or option, with a live preview; fractions in a sentence are drawn full size.
+- **Question types:** single correct, multiple correct (marks × picked ÷ correct; any wrong option costs the negative mark), numerical answer (a range, or exact values separated by commas), passage / case study. Candidates type numbers on an on-screen keypad: digits, one decimal point and a minus sign, so ask for decimals and state the rounding; for √5 to two decimal places a range of 2.23 to 2.24 is fair.
+- **Marking patterns:** school unit tests without negative marking; JEE Main Mathematics 20 single correct + 5 numerical at +4 / −1; SSC CGL Quantitative Aptitude 25 questions at +2 / −0.5; bank PO prelims Quantitative Aptitude 35 questions in 20 minutes at +1 / −0.25. Marks per test, section or question; decimal negative marks; an optional calculator (basic, with a scientific mode).
+- **On a phone:** maths is drawn as text (KaTeX), the text size goes from 12 to 32 px and the maths grows with it, wide expressions scroll sideways inside the question.
+- **After the test:** per question, the share choosing each option, accuracy, average time and a discrimination index (0.3 and above separates well; negative usually means a wrong key); the rank list and full analysis are on paid plans (from ₹49 a week). Solutions accept the same maths.
+- **Limits:** no long answers or step marking, no answers typed as expressions or fractions, no graphing or geometry drawing (figures are images), AI output needs a human check, no printed paper from the test (pdf.testoza.com/latex-to-pdf makes a printable PDF from LaTeX).
+
+---
+
+## Guide: How to prevent cheating in online exams (https://testoza.com/prevent-cheating-in-online-exams)
+
+A long-form guide for schools, coaching institutes, colleges and recruiters on preventing cheating in online exams, with TestoZa as the worked example. Product details checked against the app on 4 October 2026; research figures as published.
+
+- **How common:** Newton & Essex (Journal of Academic Ethics, 2024; 19 studies, 4,672 students): 44.7% admitted cheating in online exams, 29.9% before the pandemic, 54.7% during it. Chegg requests in five STEM subjects rose 196% in 2020 (Cotarlan & Lancaster, 2021). Chan & Ahn (PNAS, 2023) found unproctored online scores tracked in-person scores, suggesting cheating often doesn't help much; Newton disputed this.
+- **16 methods, four groups:** looking it up (another tab or app, a chatbot, a second device, Circle to Search/Google Lens, split screen or a second monitor, notes), getting help (the class group, someone in the room, impersonation, screen sharing), getting the answers early (early finishers, an answer key readable in the page, a leaked paper), gaming the test (a second attempt, a fake network failure, copying the question out).
+- **What a browser can see:** the page being hidden (tab or app switch, home screen, locked phone), leaving full screen, copy/paste/right-click inside the page. Not: a second device, people, screenshots, screen sharing, overlays or split screen (a partly visible page counts as visible). TestoZa doesn't count the window losing focus.
+- **TestoZa exam rules (paid plans from ₹49 a week):** Force full screen (skipped on iPhones, where Safari can't put web pages in full screen), Tab/App switch detection, after violations warn only / Strict (submit at the first) / 2–5 warnings then auto-submit, disable copy/paste, disable right click, block back button, disable exit button, shuffle question order (order only). Advice: 2–3 warnings for phones; Strict only on lab computers. In a sitting with a join code, warnings reach the examiner's exam room and the results export; on an exam link they act on the candidate's screen but aren't shown to the examiner.
+- **Paper design:** real exam timing (JEE Main ~2 min 24 s a question, NEET 1 min, SSC CGL 36 s), application questions, numerical answers, two versions (Klijn et al. 2024: later candidates finished 19.5% faster but scored no higher when versions differed), shuffled order, negative marking, never reuse a paper.
+- **Identity and leaks:** check-in by name, roll number, or roll number + 4-digit PIN (8 wrong tries per 10 minutes); one device per seat ("Changed device" in the exam room); one submission per candidate in a sitting. Answer keys are removed before the paper is sent and marked on the server; results can wait until the exam ends; scheduled links keep the key until the end time; questions are sent only when a sitting starts; late entry closes.
+- **AI:** GPT-4 answers went undetected in 94% of cases in real take-home exams at Reading and outscored real students 83.4% of the time (Scarfe et al., PLOS ONE, 2024); OpenAI withdrew its AI classifier in July 2023 (26% caught, 9% false positives). Defences: stay-in-exam rules, tight time, figure/data/multi-step questions, supervised rooms, short oral checks.
+- **After the exam:** identical wrong answers are the sign of copying (six shared wrong answers ≈ 1 in 729 by chance under an even spread), plus speed that doesn't fit the score, warnings, changed devices, jumps against history. TestoZa doesn't compare answer sheets automatically.
+- **Other tools:** webcam proctoring and lockdown browsers have costs (camera, private room, consent); TestoZa's exams use neither camera nor microphone. Google Forms locked mode needs Google Workspace for Education and school-managed Chromebooks; no timer without add-ons.
+- **Law:** Public Examinations (Prevention of Unfair Means) Act, 2024 (UPSC, SSC, RRBs, IBPS, NTA, central recruitment): 3–5 years and up to ₹10 lakh; organised cheating 5–10 years and at least ₹1 crore. Not school or coaching tests.
+
+---
+
+## Guide: Hindi online test maker (https://testoza.com/hindi-online-test-maker)
+
+A long-form guide for Hindi-medium schools and coaching institutes on making online tests in Hindi, with TestoZa as the worked example, and a short summary in Hindi. Product details checked against the app on 3 October 2026.
+
+- **What to check in any Hindi test maker:** Unicode storage (legacy fonts such as Kruti Dev, Chanakya and DevLys store English letters, so “भारत की राजधानी” arrives as “Hkkjr dh jkt/kkuh”); typing without a Hindi keyboard; reading existing papers; a Hindi typeface that renders matras and conjuncts on cheap phones; bilingual papers (NEET gives Hindi-medium candidates one Hindi + English booklet; the English version is final). Census 2011: 52.8 crore people (43.6%) counted under Hindi as mother tongue.
+- **Typing:** every question card in TestoZa's test builder has an English | हिंदी switch (question, options, passage; the test name and description have one too). Type in English letters and press space: a word made only of letters becomes Hindi via Google's transliteration service (“prashn” → प्रश्न), with up to five suggestions in a bar until the next letter is typed. New questions follow the last language used. Needs the internet. Capitals make no difference; doubling long vowels fixes most wrong first guesses (kaaran → कारण, shoonya → शून्य, vigyaan → विज्ञान); kam gives काम first (कम is second). English abbreviations (SI, km, pH) are converted too (सी, कम), so switch the card to English for them. Type the space before a question mark. Alternatives: Gboard or the iPhone's Hindi keyboards, Windows Hindi Phonetic, Inscript.
+- **Importing:** Fill from photo types one printed or handwritten question into a card, keeps Hindi, maps (क)–(घ) to A–D, takes the answer only from a mark or a printed “उत्तर: (ग)”, drops “प्रश्न 5”. Import from PDF or photos (AI test generator) reads PDFs and PNG/JPG/WEBP; Word files must be saved as PDF. A PDF's own text is read where it has text, but pages whose text looks like a legacy Hindi font (Kruti Dev, DevLys) are read as pictures, so the printed Hindi is what the AI reads; photos are read as pictures too. Text pasted from a legacy-font file is not converted: convert it to Unicode first.
+- **Language Output (AI import):** Same as Material, English, Hindi, or English + Hindi (bilingual: every question and option in both, one under the other, the first-selected language on top). Hindi for an English source is a translation: check terms against the Hindi-medium textbook (e.g. NCERT's फोकस दूरी, अपवर्तनांक).
+- **On students' phones:** TestoZa's screens use Mukta (Ek Type, Devanagari + Latin); a faint − / + at the top right of the question sets the text size from 12 to 32 px (18 to start); exam buttons (Back, Clear, Flag, Save & Next, Submit Test) are in English. No language switch on the exam screen: bilingual papers show both languages together.
+- **Formulas and numbers:** numbers and symbols stay as typed in Hindi mode; formulas go in with Sy Pad (Maths & symbols); numerical answers use 0–9 from the exam screen's keypad (Article 343: international numerals are the official form).
+- **Coaching:** NEET-UG (Hindi + English booklet, 180 questions, 180 min, +4/−1), SSC CGL Tier 1 (Hindi and English except English Comprehension, 100 questions, 60 min, +2/−0.5), RRB NTPC CBT 1 (15 languages, 100 questions, 90 min, −1/3), CTET (Hindi and English, 150 questions, 150 min, no negative marking).
+- **Google Forms:** stores Unicode Hindi and grades quizzes, but has no Hindi typing of its own, no reading of papers, no timer or negative marking without add-ons.
+- **Limits:** no exam-screen language switch; the app interface is in English; AI output in English, Hindi or both only; no conversion of pasted Kruti Dev text; Hindi typing needs the internet; option letters are A–D; objective questions only. Building tests, Hindi typing, AI import (hourly limits), links, join codes and results are free; paid plans ₹49/week, ₹149/month, ₹799/year.
+
+---
+
+## Guide: How to conduct an online exam (https://testoza.com/how-to-conduct-online-exam)
+
+A long-form, step-by-step guide for school teachers, coaching institutes, college exam cells and recruiters, with TestoZa as the worked example. Product details checked against the app on 2 October 2026.
+
+- **1. Plan:** decide the stakes (practice, class or weekly test, full mock or term exam, admission or hiring) and the place (one room, several rooms or labs, at home), the devices (in India usually Android phones: 93.89% of mobile web traffic in September 2026, Statcounter) and the size. Exams that decide a seat or a job belong in a supervised room.
+- **2. The paper:** objective questions a computer can mark (single correct, multiple correct, numerical, passage-based); written answers stay on paper. TestoZa's AI test generator reads PDFs and photos (PNG, JPG, WEBP) and matches a separate answer key. Marks and negative marks on every question card (each new question copies the last); partial marks for multiple-correct; numerical ranges; sections. Timing guide: NEET-UG 180 questions in 180 min (1 min each, +4/−1), JEE Main 75 in 3 h (2 min 24 s), CUET-UG 50 in 60 min (1 min 12 s, +5/−1), SSC CGL Tier 1 100 in 60 min (36 s, +2/−0.5). Have a second teacher answer the paper once before it goes live.
+- **3. Getting in:** a private exam link (start form or sign-in, optional time window) for practice; for timed exams, a sitting with a six-digit join code at testoza.com/join or a QR code, checked in by name only, roll number (name fills in from the batch list) or roll number + 4-digit PIN (shown once, printed as slips). One paper can be given to many batches as separate sittings. The New exam sheet needs only a paper and a time; More options hold the batch, late entry (0–60 min), start on time or when the teacher taps Start, check-in, walk-ins, when results show, and a name; closing time = start + paper length + late entry + 10 minutes.
+- **4. Exam rules:** force full screen; tab and app switch detection; warn only or 2–5 warnings then automatic submit; copy/paste and right-click off; back button blocked; shuffle question order. Warnings appear next to the candidate's name in the exam room. Release results when the exam ends (candidates in a sitting never receive the answer key). Rehearse full screen on iPhones; no browser rule can see a second phone. Exam-security rules are on paid plans (₹49/week, ₹149/month, ₹799/year).
+- **5. Rehearse:** two days before, a short sitting on three phones including an old one; switch apps, lock the screen, go offline, rejoin on another device; check two papers' marks by hand; send candidates an instructions message.
+- **6. Run the day:** the lobby opens 30 minutes before; projector view with the code, a QR code and names as they join; Start; a live list (writing, minutes left, answered, submitted, no signal, changed device, warnings); +5/+10 minutes for one candidate or +5 to +30 for everyone writing (the phone shows "Your teacher gave you N more minutes." at its next sync); submit one paper or remove a candidate; End exam submits everyone's last saved answers. Answers save every 20 seconds; a dead phone rejoins on any device; papers up to 15 minutes late because of the network are accepted and flagged; countdowns run on the server clock.
+- **7. Results:** check the questions most candidates got wrong (accuracy and option split) before release; candidates see marks, rank, right/wrong/skipped, sections and the class average; rank list to copy, send on WhatsApp or download as Excel; report cards (A4, print or PDF); WhatsApp messages to parents and absentees (nothing sent automatically); a re-test sitting for absentees.
+- **Google Forms:** fine for short practice quizzes; no built-in timer or negative marking (add-ons only); locked mode only on school-managed Chromebooks; no lobby, live monitoring or rank list.
+- **Limits:** no camera, microphone or screen proctoring; objective questions only; internet needed to join and submit; a hosted service (no self-hosting).
+
+---
+
+## Guide: Moodle alternative (https://testoza.com/moodle-alternative)
+
+A long-form guide for school heads, coaching institute owners, college exam cells and trainers who mostly use Moodle for quizzes and exams. Moodle facts checked against Moodle's documentation on 2 October 2026.
+
+- **Start with what you use:** if courses, assignments with essays or file uploads, forums, SCORM/H5P, completion tracking and a term gradebook are in daily use, keep Moodle (or another full LMS such as Canvas, Open edX or Chamilo) and fix the hosting. If tests are the main use, keep Moodle for teaching and move the tests, or switch entirely if tests are almost all you use.
+- **Moodle's scale:** 147,642 registered sites in 237 countries, 533 million user accounts and 12.8 billion quiz questions (stats.moodle.org); India has 4,486 registered sites, eighth in the world.
+- **Running Moodle:** Moodle 5.2 (20 April 2026) needs PHP 8.3+ (64-bit, sodium, max_input_vars ≥ 5000), PostgreSQL 16 / MySQL 8.4 / MariaDB 10.11, a data folder, cron every minute ("Your site will not work properly without it"), email and backups. Two major versions a year; about 12 months of bug fixes and 18 of security fixes; LTS versions get three years. Moodle 5.0 security support ends 5 October 2026, 5.1 on 19 April 2027, 4.5 LTS on 4 October 2027; 5.3 LTS is scheduled for 5 October 2026.
+- **MoodleCloud (INR, yearly, 2 October 2026):** Starter ₹15,340 (50 users, 1 GB), Mini ₹25,350 (100), Small ₹46,690 (200), Medium ₹1,13,380 (500), Standard ₹2,00,070 (750); no plugins or integrations; 28-day free trial.
+- **Exam day:** Moodle guests "cannot participate in any activities", so every quiz taker needs an account (username, first name, last name and email in bulk upload) and enrolment. On TestoZa, candidates open testoza.com/join, type a six-digit code (or scan a QR code) and check in with a name, roll number, or roll number + 4-digit PIN; no account. The teacher's exam room has a lobby, Start button, live list (writing, submitted, no signal, changed device, warnings), +5/+10 minutes per candidate, +5 to +30 for everyone, submit now, remove, End exam (submits saved answers), a projector view, and results: rank list (copy, WhatsApp, Excel), class average by section, report cards, parent messages via WhatsApp. Answers are saved to the server every 20 seconds; a dead phone rejoins on another device; papers submit themselves when time runs out.
+- **Questions:** Moodle imports GIFT, Aiken, Moodle XML and others; Word import is a plugin; no PDF import. Moodle's core AI (since 4.5) generates text and images in the editor and summarises content; question generation needs a plugin and a paid AI provider key. TestoZa's AI test generator reads PDFs and photos: Extract keeps a paper exactly (diagrams cropped, answer key matched, missing answers flagged); Generate writes new questions at Easy, Moderate or Tough in English, Hindi or both. TestoZa cannot import GIFT or Moodle XML.
+- **Negative marking:** Moodle sets each wrong option's grade as a percentage from a fixed list (100%, 90%, 83.33333%, 80%, 75% … 5%), so +4/−1 is −25%; single-answer negative grades only count with Deferred feedback; multiple-answer questions never score below zero. UPSC's −0.66 on 2 marks has no exact Moodle equivalent (−33.33333% gives −0.67). TestoZa: Marks and Wrong on each question card, any value; multiple-correct partial marks; numerical ranges; scored on the server.
+- **Phones:** Android had 93.89% of India's mobile web traffic in September 2026 (Statcounter). Safe Exam Browser runs only on Windows, macOS and iOS. Moodle app offline quizzes need no time limit. TestoZa's exam rules (full screen, tab-switch counting with auto-submit after N warnings, copy/paste and right-click off, back button blocked) run in any browser; no browser rule makes cheating impossible.
+- **Switching or running both:** export Moodle grades and back up courses; re-import questions by uploading original Word/PDF files or a printed quiz preview to Extract; paste batches from Excel; run one test in parallel; link TestoZa from the Moodle course as a URL resource. No LTI: move marks with Excel and Moodle's grade import.
+- **Limits:** no courses, lessons, SCORM, forums, essays, file uploads, term gradebook, LTI, SSO, plugins or self-hosting; questions cannot be exported to GIFT/XML; Safe Exam Browser locks lab machines harder than browser rules; exam-security rules, scheduling, branding and Excel export are on paid plans (₹49/week, ₹149/month, ₹799/year).
+
+---
+
+## Guide: NEET online test software (https://testoza.com/neet-online-test-software)
+
+A long-form guide for NEET faculty, coaching institutes and NEET aspirants on running full NEET mocks online.
+
+- **The paper:** NEET-UG has 180 compulsory single-correct questions for 720 marks: 45 each in Physics, Chemistry, Botany and Zoology; +4 right, −1 wrong, 0 blank; normally 3 hours (the 21 June 2026 re-exam ran 2:00–5:15 p.m.); 13 languages. 2021–2024 papers had an optional Section B (10 of 15) and 200 questions in 200 minutes. Formats include statement I/II, assertion–reason, match List-I with List-II, diagram and "choose the incorrect" questions.
+- **The numbers (NTA, 16 July 2026):** close to 20 lakh appeared in the re-exam and 11.21 lakh qualified; 90,780 scored 500 or more and 10,160 scored 600 or more, roughly 800 candidates per mark in that band.
+- **OMR or CBT:** the 3 May 2026 exam was cancelled on 12 May after a leak; on 15 May the Education Minister said NEET would move to computer-based testing from 2027; on 5 August the Centre told the Supreme Court the move is "under active consideration" pending a task force led by Nandan Nilekani, with adequate notice promised; the report was still awaited on 30 September 2026. The guide recommends practising both.
+- **On TestoZa:** NTA-style Standard Mode (five palette states, Save & Next, Review, Ans & Review, hideable timer that stays visible in the last five minutes); answers kept on the device and synced for signed-in students; AI Extract (with a separate answer key) and Generate (Easy, Moderate, Tough) from PDFs, Word, slides and photos, in English, Hindi or both; Match List tables, cropped diagrams and chemistry notation; sections with +4/−1 and attempt control for old Section B papers; teacher analysis with a speed-vs-accuracy quadrant and per-question accuracy, option split, average time and discrimination index; student results with subject marks, a time matrix, an AI mentor and a rank estimate for tests tagged NEET.
+- **Guessing:** a blind guess among four options is worth +0.25 marks on average, +0.67 after ruling out one option and +1.5 after two; break-even is a 20% chance of being right.
+- **Limits:** no OMR printing or scanning; a browser is not a test centre; AI needs a human check; the rank estimate is an AI estimate; exam-security rules, scheduling, branding and Excel export are on paid plans.
+
+---
+
+## Guide: JEE mock test platform (https://testoza.com/jee-mock-test-platform)
+
+A long-form guide for JEE faculty, coaching institutes and JEE aspirants on building JEE Main and JEE Advanced mock tests without learning LaTeX.
+
+- **The target:** JEE Main Paper 1 has 75 questions for 300 marks in 3 hours (20 multiple-choice and 5 numerical questions per subject, all compulsory; +4 correct, −1 for a wrong MCQ; negative marking on numericals has changed over the years, so check the year's bulletin). JEE Advanced is two compulsory 3-hour papers whose question types change yearly: single-correct, one-or-more-correct with partial marks and −2 for a wrong option, numerical answers to two decimal places, List-I/List-II matching.
+- **Notation without code:** LaTeX writes maths as text, KaTeX draws it in the browser, mhchem (\ce{...}) writes chemistry. On TestoZa faculty never type them: the AI writes LaTeX and mhchem when it reads PDFs, Word files, PowerPoint and photos, and the Sy Pad keyboard writes them as keys are tapped. People who know LaTeX can type it between $ signs; question boxes show a live preview.
+- **AI import:** Extract keeps a paper's questions, options and diagrams; Generate writes new questions (Easy, Moderate or Tough); English, Hindi or both; custom instructions. "Fill from photo" on a question card reads one printed or handwritten question, ticks the answer only if it is marked in the photo or written as "Ans:", never solves it, and crops any diagram.
+- **The Sy Pad:** an on-screen maths and chemistry keyboard in the test builder, opened from "Maths & symbols" under a question, "Open Sy Pad" in the builder's ⋯ menu, or "Sy Pad" under Create Test in the sidebar. It docks at the bottom (drag to move, double-click to dock), shows where the formula goes ("Goes into Question 3 · Option B"), has tabs for Algebra, Pre-Algebra, Trigonometry, Calculus, Statistics, Physics, Chemistry and Tables plus a Words key, uses blue boxes for blanks, draws a live preview, refuses to insert unfinished formulas unless told to, deletes whole symbols, and has an editable code line with Copy. Chemistry: Formula then plain typing (H2SO4, Fe^3+, 2H2 + O2 -> 2H2O), reversible and conditional arrows, state symbols. Tables: Match List (P/Q/R/S · 1/2/3/4), matrices, determinants, headed and bordered tables.
+- **Marking:** marks per test, section or question; fractions; numerical answers as an exact value, a list or a range (useful for JEE Advanced's two-decimal answers); section attempt control reproduces the 2021–2024 "any 5 of 10" numerical sections. Multi-correct partial credit is set per question: Proportional (marks × options picked ÷ correct options, the default) or JEE Advanced (+1 per correct option picked, full marks only for all of them, the negative mark for any wrong option), since 8 October 2026.
+- **Institutes and students:** NTA-style Standard Mode by default; live exam links with private results; rank list, subject scores and per-question accuracy, average time and option split; paid plans add exam-security rules, scheduling, start forms, branding, held results and Excel export. Students can build private mocks from photos, see time per question, use an AI mentor and ask for a rough rank estimate on tests tagged JEE Main or JEE Advanced.
+
+---
+
+## Create a Mock Test Online (guide)
+
+Guide: https://testoza.com/create-mock-test-online
+
+A mock test is a practice exam that copies the real one: the same number and type of questions, the same time limit, the same marking scheme including negative marks, and a similar exam screen. On TestoZa, students, teachers and coaching institutes build one from material they already have:
+
+- **Extract Questions**: upload a question paper, previous-year questions or a worksheet (PDF, Word, PowerPoint, JPG, PNG or WebP; several photos at once) and the questions, options and diagrams are copied as printed. A separate answer key can be uploaded and matched automatically.
+- **Generate New Questions**: upload photos of a textbook chapter, notes or slides and the AI writes new questions at Easy, Moderate or Tough difficulty, in the material's language, English, Hindi, or both (bilingual). Plain-language instructions set the count and marking scheme (for example "4 marks each, minus 1 for a wrong answer").
+- **Test builder**: type or paste single-correct and multi-correct MCQs, numerical-answer questions (with an accepted range) and comprehension passages, with LaTeX for maths and chemistry.
+
+Tests open by default in an NTA-style interface similar to computer-based exams such as JEE Main: a numbered question palette with five states (not visited, not answered, answered, marked for review, answered and marked for review), Mark for Review, an on-screen keypad for numerical answers, a countdown timer that submits the test at zero, per-section marks and negative marks, and an optional scientific calculator. Results sort every question into four groups by correctness and time taken: fast and accurate, slow and accurate, fast and careless, and time traps.
+
+Creating tests, the AI and auto-grading are free; a free account is needed to create tests, while students can take a shared test without an account. New tests are private until shared. Objective questions are graded automatically; long written answers are not. AI reading is reliable on clean print and should always be reviewed, especially for blurry photos, faint photocopies or messy handwriting. TestoZa is not affiliated with the NTA, SSC or UPSC.
+
+---
+
 ## Frequently Asked Questions (FAQ)
 
 ### How does Testoza use AI to create tests?

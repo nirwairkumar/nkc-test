@@ -21,8 +21,21 @@ const getCookie = (name: string): string | null => {
 const deleteCookie = (name: string) => {
   const hostname = window.location.hostname;
   const isProdDomain = hostname.endsWith('testoza.com');
-  const domainFlag = isProdDomain ? `; domain=${DOMAIN}` : '';
-  document.cookie = `${name}=; path=/${domainFlag}; max-age=-99999999; Secure; SameSite=Lax`;
+  const isSecure = window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+
+  // 1. Delete host-only cookie
+  document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}; SameSite=Lax`;
+  document.cookie = `${name}=; path=/; max-age=-99999999; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}; SameSite=Lax`;
+
+  // 2. Delete for current hostname
+  document.cookie = `${name}=; path=/; domain=${hostname}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}; SameSite=Lax`;
+
+  // 3. Delete root wildcard domain cookie if on testoza.com
+  if (isProdDomain) {
+    document.cookie = `${name}=; path=/; domain=${DOMAIN}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}; SameSite=Lax`;
+    document.cookie = `${name}=; path=/; domain=testoza.com; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}; SameSite=Lax`;
+  }
 };
 
 export const tokenStorage = {
@@ -46,6 +59,8 @@ export const tokenStorage = {
     try {
       localStorage.removeItem('testoza_token');
       localStorage.removeItem('testoza_refresh_token');
+      sessionStorage.removeItem('testoza_token');
+      sessionStorage.removeItem('testoza_refresh_token');
     } catch (e) {
       console.warn('Failed to clear tokens from localStorage', e);
     }

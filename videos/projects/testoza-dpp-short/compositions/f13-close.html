@@ -1,0 +1,51 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  /* sits over the phone composition, which shrinks to the right on its own timeline */
+  .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 6, 2, 0.75) 0%, rgba(10, 6, 2, 0.15) 32%, rgba(10, 6, 2, 0) 50%); opacity: 0; }
+  .bk { position: absolute; left: 90px; top: 760px; width: 380px; height: 538px; }
+  .bk i { position: absolute; inset: 0; border-radius: 6px 10px 10px 6px; background: url(assets/dpp/cover-neet.jpg) center / cover; box-shadow: 0 40px 60px -14px rgba(0, 0, 0, 0.7); }
+  .bk b { position: absolute; left: 6px; right: -8px; top: 6px; bottom: -9px; border-radius: 4px 10px 10px 4px; background: repeating-linear-gradient(180deg, #f4efe4 0 3px, #ddd5c4 3px 4px); }
+  .arrow { position: absolute; left: 470px; top: 990px; width: 120px; height: 80px; }
+  .arrow svg { width: 120px; height: 80px; overflow: visible; }
+  #c-logo { position: absolute; left: 0; right: 0; top: 250px; text-align: center; white-space: nowrap; font: 700 168px/1 'Outfit', sans-serif; letter-spacing: -0.02em; }
+  #c-logo .c { display: inline-block; color: #38bdf8; opacity: 0; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5)); }
+  #c-logo .z { display: inline-block; font-size: 1.26em; font-weight: 900; margin: 0 0.02em; opacity: 0;
+    background: linear-gradient(180deg, #ffe885, #f4b838 55%, #9e6400); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(244, 184, 56, 0.55)); }
+  .row { position: absolute; left: 0; right: 0; top: 500px; display: flex; justify-content: center; }
+  #c-url { height: 84px; padding: 0 38px; border-radius: 999px; display: flex; align-items: center; gap: 14px; opacity: 0;
+    font: 700 42px/1 'Outfit', sans-serif; color: #f8fafc; background: rgba(15, 23, 42, 0.85);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6), 0 20px 50px -20px rgba(56, 189, 248, 0.6); }
+</style>
+<div data-hf-id="hf-99gi" id="root" data-composition-id="f13-close" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-b668" class="shade" id="c-shade"></div>
+    <div data-hf-id="hf-md5q" class="bk" id="c-bk"><b data-hf-id="hf-xujp"></b><i data-hf-id="hf-wt6k"></i></div>
+    <div data-hf-id="hf-i4ts" class="arrow" id="c-arrow"><svg data-hf-id="hf-9u36" viewBox="0 0 120 80"><path data-hf-id="hf-9gqv" id="c-arrow-p" d="M8 40 H100 M74 14 L104 40 L74 66" fill="none" stroke="#facc15" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+    <div data-hf-id="hf-lmsc" id="c-logo"><span data-hf-id="hf-j92g" class="c">T</span><span data-hf-id="hf-1xgr" class="c">e</span><span data-hf-id="hf-t6q5" class="c">s</span><span data-hf-id="hf-vyvc" class="c">t</span><span data-hf-id="hf-4bax" class="c">o</span><span data-hf-id="hf-fhed" class="z">Z</span><span data-hf-id="hf-0c8n" class="c">a</span></div>
+    <div data-hf-id="hf-thy4" class="row"><div data-hf-id="hf-fwqv" id="c-url"><svg data-hf-id="hf-f0mr" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><circle data-hf-id="hf-m1lh" cx="12" cy="12" r="10" /><path data-hf-id="hf-sdt9" d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" /></svg>testoza.com</div></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f13-close';
+  const { qa, tl } = SF(ID);
+  // "Today's DPP..." the booklet slides in beside the shrinking phone
+  tl.fromTo('#c-bk', { x: -520, rotation: -12, opacity: 0 }, { x: 0, rotation: -4, opacity: 1, duration: 0.75, ease: 'expo.out' }, 0.3);
+  // "...today's online test." paper → phone
+  tl.fromTo('#c-arrow-p', { strokeDasharray: 260, strokeDashoffset: 260 }, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.out' }, 1.7);
+  tl.fromTo('#c-arrow', { x: -20 }, { x: 10, duration: 1.4, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 2.1);
+  // "Testoza dot com." the wordmark and the address
+  tl.to('#c-shade', { opacity: 1, duration: 0.6, ease: 'power2.out' }, 2.9);
+  tl.fromTo(qa('#c-logo .c'), { y: 80, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out', stagger: 0.05 }, 3.05);
+  tl.fromTo('#c-logo .z', { y: -240, rotation: -18, scale: 1.6, opacity: 0 }, { y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.6)' }, 3.3);
+  tl.fromTo('#c-url', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out' }, 3.75);
+  tl.to('#c-logo', { scale: 1.03, duration: 1.6, ease: 'sine.inOut' }, 3.9);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

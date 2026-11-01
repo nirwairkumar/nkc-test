@@ -1,0 +1,128 @@
+[
+ {
+  "w": "எல்லாரும்",
+  "r": "ellaarum",
+  "start": 0.08,
+  "end": 0.441,
+  "score": 0.748
+ },
+ {
+  "w": "முடிச்சதும்,",
+  "r": "mudiccatum",
+  "start": 0.461,
+  "end": 0.943,
+  "score": 0.83
+ },
+ {
+  "w": "முப்பத்திரண்டு",
+  "r": "muppattirandu",
+  "start": 1.063,
+  "end": 1.625,
+  "score": 0.825
+ },
+ {
+  "w": "results-உம்",
+  "r": "resultsum",
+  "start": 1.665,
+  "end": 2.046,
+  "score": 0.595
+ },
+ {
+  "w": "வந்துடும்.",
+  "r": "vantudum",
+  "start": 2.066,
+  "end": 2.407,
+  "score": 0.662
+ },
+ {
+  "w": "Ranks",
+  "r": "ranks",
+  "start": 2.708,
+  "end": 3.009,
+  "score": 0.893
+ },
+ {
+  "w": "on",
+  "r": "on",
+  "start": 3.15,
+  "end": 3.21,
+  "score": 0.496
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 3.27,
+  "end": 3.631,
+  "score": 0.932
+ },
+ {
+  "w": "முழு",
+  "r": "mulu",
+  "start": 3.912,
+  "end": 4.133,
+  "score": 0.992
+ },
+ {
+  "w": "batch-ஐ",
+  "r": "batchai",
+  "start": 4.273,
+  "end": 4.614,
+  "score": 0.368
+ },
+ {
+  "w": "scroll",
+  "r": "scroll",
+  "start": 4.614,
+  "end": 4.875,
+  "score": 0.65
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 4.915,
+  "end": 5.236,
+  "score": 0.88
+ },
+ {
+  "w": "எல்லாத்தையும்",
+  "r": "ellaattaiyum",
+  "start": 5.577,
+  "end": 6.059,
+  "score": 0.841
+ },
+ {
+  "w": "ஒரே",
+  "r": "oree",
+  "start": 6.139,
+  "end": 6.339,
+  "score": 0.9
+ },
+ {
+  "w": "click-ல",
+  "r": "clickla",
+  "start": 6.4,
+  "end": 6.721,
+  "score": 0.604
+ },
+ {
+  "w": "Excel-ல",
+  "r": "excella",
+  "start": 6.821,
+  "end": 7.182,
+  "score": 0.743
+ },
+ {
+  "w": "download",
+  "r": "download",
+  "start": 7.242,
+  "end": 7.543,
+  "score": 0.511
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 7.563,
+  "end": 7.864,
+  "score": 0.859
+ }
+]

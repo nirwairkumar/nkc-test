@@ -1,0 +1,65 @@
+[
+ {
+  "w": "आपका",
+  "r": "aapakaa",
+  "start": 0.08,
+  "end": 0.381,
+  "score": 0.956
+ },
+ {
+  "w": "institute।",
+  "r": "institute",
+  "start": 0.421,
+  "end": 1.044,
+  "score": 0.888
+ },
+ {
+  "w": "आपका",
+  "r": "aapakaa",
+  "start": 1.325,
+  "end": 1.646,
+  "score": 0.949
+ },
+ {
+  "w": "test।",
+  "r": "test",
+  "start": 1.686,
+  "end": 1.967,
+  "score": 0.998
+ },
+ {
+  "w": "आज",
+  "r": "aaj",
+  "start": 2.007,
+  "end": 2.569,
+  "score": 0.971
+ },
+ {
+  "w": "ही",
+  "r": "hii",
+  "start": 2.609,
+  "end": 2.689,
+  "score": 0.644
+ },
+ {
+  "w": "बनाइए",
+  "r": "banaaie",
+  "start": 2.709,
+  "end": 3.091,
+  "score": 0.952
+ },
+ {
+  "w": "testoza.com",
+  "r": "testozacom",
+  "start": 3.452,
+  "end": 4.275,
+  "score": 0.737
+ },
+ {
+  "w": "पर।",
+  "r": "par",
+  "start": 4.335,
+  "end": 4.476,
+  "score": 0.896
+ }
+]

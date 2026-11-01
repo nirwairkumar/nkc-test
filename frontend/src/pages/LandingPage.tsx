@@ -1,110 +1,123 @@
-import { useEffect, Suspense, lazy, useRef, useState } from 'react';
-import CreateTestsHero from '@/components/landing/CreateTestsHero';
+/**
+ * TestoZa homepage.
+ *
+ * Rebuilt from the V2 design that was reviewed in Admin → Testing Tools.
+ * Addresses the findings in LANDING_PAGE_AUDIT.md:
+ *
+ *   C1  one static, keyword-aligned <h1> (the old hero rotated four slogans
+ *       through the <h1>, none containing a target keyword, and Google scores
+ *       the rendered DOM rather than the static fallback)
+ *   C2  a real hero subheadline (the old one rendered `&nbsp;`)
+ *   C3  internal links out to the keyword landing pages, which were orphaned
+ *       — reachable only via sitemap. The bulk of that link equity now flows
+ *       through the shared Footer, so every page carries it, not just this one
+ *   C4  proof sits directly under the hero instead of ~6,000px down
+ *   M1  the product category is named in the first line
+ *   M4  one dominant CTA rather than three competing equally
+ *   P3  a concrete hero visual gives a stable, optimisable LCP element
+ *
+ * Structural notes:
+ *   • No <Navbar> or <Footer> here. Layout.tsx renders both globally and
+ *     decides per route where they appear; adding them again would duplicate.
+ *   • Testimonials are intentionally not rendered — the component exists but
+ *     holds placeholder quotes. Re-enable only with real, permissioned ones.
+ *   • The previous implementation's components under components/landing/ are
+ *     left untouched; SectionWiseBuilderShowcase is still used by TestList.
+ */
+
+import { useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import { getAppUrl } from '@/utils/subdomain';
 
-// Lazy load heavy sections
-const UploadMaterialsSection = lazy(() => import('@/components/landing/UploadMaterialsSection'));
-const FileToTestSection = lazy(() => import('@/components/landing/FileToTestSection'));
-const CategoryFolderCards = lazy(() => import('@/components/home/CategoryFolderCards'));
-const FeaturedTests = lazy(() => import('@/components/home/FeaturedTests'));
-const YouTubeGeneratorSection = lazy(() => import('@/components/landing/YouTubeGeneratorSection'));
-const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformStatsSection'));
-const CommunityJoinSection = lazy(() => import('@/components/landing/CommunityJoinSection'));
-const ManualCreateSection = lazy(() => import('@/components/landing/ManualCreateSection'));
-const SettingsShowcaseSection = lazy(() => import('@/components/landing/SettingsShowcaseSection'));
-const LiveExamTestimonials = lazy(() => import('@/components/landing/LiveExamTestimonials'));
+import LandingV2Nav from '@/components/landing-v2/LandingV2Nav';
+import LandingV2Hero from '@/components/landing-v2/LandingV2Hero';
+import {
+    FeatureDeepDives,
+    HowItWorks,
+    ProofBand,
+    QuestionTypesStrip,
+    ValueProps,
+} from '@/components/landing-v2/LandingV2Sections';
+import {
+    Comparison,
+    Faq,
+    FinalCta,
+} from '@/components/landing-v2/LandingV2Closing';
+import { FAQS, HERO } from '@/components/landing-v2/content';
 
-// Loading component
-const SectionLoader = ({ className = "h-96" }: { className?: string }) => (
-    <div className={`w-full ${className} flex items-center justify-center bg-slate-50 dark:bg-slate-900/50`}>
-        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-    </div>
-);
+/* ── Structured data ──────────────────────────────────────────────────────
+   Built from the same FAQS array the page renders, so the markup and the
+   schema can never drift apart — Google penalises FAQ schema that does not
+   match visible content.                                                   */
 
-// Viewport-based lazy loading wrapper to defer JS evaluation & execution for below-the-fold content
-function LazySection({ 
-    children, 
-    height, 
-    className = "" 
-}: { 
-    children: React.ReactNode; 
-    height: string; 
-    className?: string; 
-}) {
-    const ref = useRef<HTMLDivElement>(null);
-    const [isIntersected, setIsIntersected] = useState(false);
+const homepageFAQSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: { '@type': 'Answer', text: faq.a },
+    })),
+};
 
-    useEffect(() => {
-        if (isIntersected) return;
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setIsIntersected(true);
-                    observer.disconnect();
-                }
-            },
-            {
-                rootMargin: '300px 0px', // start loading 300px before entering viewport
-                threshold: 0.01,
-            }
-        );
-
-        if (ref.current) {
-            observer.observe(ref.current);
-        }
-
-        return () => {
-            observer.disconnect();
-        };
-    }, [isIntersected]);
-
-    return (
-        <div ref={ref} className={className} style={{ minHeight: height }}>
-            {isIntersected ? children : (
-                <div className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50" style={{ height }}>
-                    <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-                </div>
-            )}
-        </div>
-    );
-}
+const softwareSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'TestoZa',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web',
+    description: HERO.sub,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+    // aggregateRating deliberately omitted — publishing one without real
+    // reviews is a structured-data violation.
+};
 
 export default function LandingPage() {
     useEffect(() => {
-        // Smooth scroll behavior
         document.documentElement.style.scrollBehavior = 'smooth';
 
-        // Register WebMCP tool for agentic browsing
+        // WebMCP tool registration for agentic browsers. Carried over verbatim
+        // from the previous homepage — this is how AI agents discover that the
+        // page can generate a test.
         const registerWebMCPTools = () => {
-            const modelContext = 
-                (document as any).modelContext || 
+            const modelContext =
+                (document as any).modelContext ||
                 (navigator as any).modelContext;
 
             if (modelContext && typeof modelContext.registerTool === 'function') {
                 try {
                     modelContext.registerTool({
                         name: 'create_test_from_topic',
-                        description: 'Generates a mock test or exam on a specific subject, topic, or target exam (such as JEE, NEET, GATE).',
+                        description:
+                            'Generates an assessment or test on a specific academic subject, topic, or chapter for teachers.',
                         inputSchema: {
                             type: 'object',
                             properties: {
-                                topic: { 
-                                    type: 'string', 
-                                    description: 'The academic subject, chapter, or exam topic to generate questions for.' 
+                                topic: {
+                                    type: 'string',
+                                    description:
+                                        'The academic subject, chapter, or topic to generate questions for.',
                                 },
-                                numQuestions: { 
-                                    type: 'number', 
-                                    description: 'Number of questions to generate (default is 10).' 
-                                }
+                                numQuestions: {
+                                    type: 'number',
+                                    description:
+                                        'Number of questions to generate (default is 10).',
+                                },
                             },
-                            required: ['topic']
+                            required: ['topic'],
                         },
-                        execute: async ({ topic, numQuestions = 10 }: { topic: string; numQuestions?: number }) => {
-                            window.location.href = getAppUrl(`/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`);
+                        execute: async ({
+                            topic,
+                            numQuestions = 10,
+                        }: {
+                            topic: string;
+                            numQuestions?: number;
+                        }) => {
+                            window.location.href = getAppUrl(
+                                `/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`,
+                            );
                             return `Redirecting to test creation page for topic "${topic}" with ${numQuestions} questions.`;
-                        }
+                        },
                     });
                 } catch (err) {
                     console.warn('Failed to register WebMCP tool:', err);
@@ -114,217 +127,32 @@ export default function LandingPage() {
 
         registerWebMCPTools();
 
-        // Intersection Observer for scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px',
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-fade-in-up');
-                }
-            });
-        }, observerOptions);
-
-        // Observe all sections
-        const sections = document.querySelectorAll('.landing-section');
-        sections.forEach((section) => observer.observe(section));
-
         return () => {
-            observer.disconnect();
             document.documentElement.style.scrollBehavior = 'auto';
         };
     }, []);
 
-    const handleManageTest = (test: any) => {
-        // Not used heavily by unauthenticated users on landing page, 
-        // but required by prop signature.
-    };
-
     return (
         <>
             <SEO
-                title="Free Online Test Maker – Conduct Online Tests & Exams with AI"
-                description="Create and conduct online tests in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Conduct online exams, mock tests, CBT platform & exam integrity tools."
+                title="Free Online Test Maker – Create & Conduct Exams with AI"
+                description="Create and conduct online exams with AI. Generate quizzes from PDFs, YouTube videos, or plain text in minutes — auto-graded, proctored, and free for unlimited students."
                 canonicalUrl="https://testoza.com/"
-                keywords={[
-                    "conduct online test",
-                    "conduct online exam",
-                    "conduct online mock test",
-                    "create online test",
-                    "online test maker for teachers",
-                    "free online test maker for teachers",
-                    "online quiz maker for teachers",
-                    "create exam online",
-                    "make test online",
-                    "online exam software",
-                    "best online exam platform",
-                    "free quiz maker for teachers",
-                    "test creator for teachers",
-                    "computer-based test platform",
-                    "online examination platform",
-                    "ai quiz generator",
-                    "secure online exam software",
-                    "how to create a test online",
-                    "online mock test platform",
-                    "conduct exams online securely",
-                    "digital exam platform"
-                ]}
+                schemas={[homepageFAQSchema, softwareSchema]}
             />
 
-            <div className="min-h-screen">
-                {/* Hero Section - No animation class needed, has its own */}
-                <CreateTestsHero />
-
-                {/* SEO Content Section */}
-                <section className="bg-white dark:bg-slate-950 py-12 border-b border-slate-100 dark:border-slate-800">
-                    <div className="container mx-auto px-6 text-center max-w-4xl">
-                        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-slate-900 dark:text-white">
-                            The Best Free Online Test Maker & AI Quiz Generator
-                        </h2>
-                        <div className="prose dark:prose-invert max-w-none">
-                            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                                <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span> is the ultimate <strong>online test platform</strong> for teachers, students, and institutes.
-                                Our <strong>AI test generator</strong> allows you to create quizzes from PDFs, text, and YouTube videos in seconds.
-                                Whether you need a <strong>mock test for JEE, NEET, GATE</strong>, or a simple class quiz, <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span> provides
-                                comprehensive tools to assess knowledge effectively.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-
-
-                {/* Feature Sections with scroll animations */}
-                <div className="landing-section">
-                    <LazySection height="800px">
-                        <Suspense fallback={<SectionLoader className="h-[800px]" />}>
-                            <ManualCreateSection />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                <div className="landing-section">
-                    <LazySection height="750px">
-                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
-                            <SettingsShowcaseSection />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                <div className="landing-section">
-                    <LazySection height="600px">
-                        <Suspense fallback={<SectionLoader className="h-[600px]" />}>
-                            <LiveExamTestimonials />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                <div id="features" className="landing-section">
-                    <LazySection height="750px">
-                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
-                            <UploadMaterialsSection />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                <div className="landing-section">
-                    <LazySection height="1100px">
-                        <Suspense fallback={<SectionLoader className="h-[1100px]" />}>
-                            <FileToTestSection />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                {/* Discover Free Tests - Real Data */}
-                <div className="landing-section bg-slate-50 dark:bg-slate-900/20 py-16">
-                    <div className="container mx-auto px-6 max-w-7xl">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                Discover Free Tests
-                            </h2>
-                            <p className="text-muted-foreground max-w-2xl mx-auto">
-                                Browse thousands of tests created by our community.
-                            </p>
-                        </div>
-
-                        <LazySection height="350px">
-                            <Suspense fallback={<SectionLoader className="h-[350px]" />}>
-                                <CategoryFolderCards />
-                            </Suspense>
-                        </LazySection>
-
-                        <div className="mt-12">
-                            <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                                <span className="bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Featured</span> Tests
-                            </h3>
-                            <LazySection height="500px">
-                                <Suspense fallback={<SectionLoader className="h-[500px]" />}>
-                                    <FeaturedTests user={null} onManageTest={handleManageTest} />
-                                </Suspense>
-                            </LazySection>
-                        </div>
-
-                        <div className="text-center mt-8">
-                            <a
-                                href={getAppUrl('/dashboard')}
-                                className="inline-flex items-center justify-center bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 text-base px-6 py-3 rounded-full transition-all font-medium"
-                            >
-                                View All Tests on Dashboard
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {/* <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
-                        <YouTubeGeneratorSection />
-                    </Suspense>
-                </div> */}
-
-                {/* Platform Statistics - Promotional */}
-                {/* <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
-                        <PlatformStatsSection />
-                    </Suspense>
-                </div> */}
-
-                {/* Community Campaign Section */}
-                <div className="landing-section">
-                    <LazySection height="400px">
-                        <Suspense fallback={<SectionLoader className="h-[400px]" />}>
-                            <CommunityJoinSection />
-                        </Suspense>
-                    </LazySection>
-                </div>
-
-                {/* Final CTA Section */}
-                <section className="landing-section py-32 bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 text-white">
-                    <div className="container mx-auto px-6 text-center">
-                        <h2 className="text-5xl md:text-6xl font-bold mb-6">
-                            Ready to Transform Learning?
-                        </h2>
-                        <p className="text-xl md:text-2xl mb-12 opacity-90 max-w-3xl mx-auto">
-                            Join thousands of educators and students who are already creating amazing tests
-                            with our AI-powered platform.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <a
-                                href={getAppUrl('/create-test')}
-                                className="inline-flex items-center justify-center bg-white text-purple-600 hover:bg-white/90 text-lg px-8 py-4 rounded-full shadow-2xl hover:shadow-white/50 transition-all duration-300 hover:scale-105 font-semibold"
-                            >
-                                Get Started Free
-                            </a>
-                            <a
-                                href={getAppUrl('/dashboard')}
-                                className="inline-flex items-center justify-center bg-white/10 text-white border-2 border-white/30 hover:bg-white/20 text-lg px-8 py-4 rounded-full backdrop-blur-sm transition-all duration-300 font-semibold"
-                            >
-                                Explore Tests
-                            </a>
-                        </div>
-                    </div>
-                </section>
+            <div className="min-h-screen bg-white font-[Outfit,system-ui,sans-serif] antialiased dark:bg-slate-950">
+                <LandingV2Nav />
+                <LandingV2Hero />
+                <ProofBand />
+                <ValueProps />
+                <HowItWorks />
+                <FeatureDeepDives />
+                <QuestionTypesStrip />
+                <Comparison />
+                {/* Testimonials intentionally disabled — placeholder quotes only. */}
+                <Faq />
+                <FinalCta />
             </div>
         </>
     );

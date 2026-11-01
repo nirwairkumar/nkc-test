@@ -1,0 +1,21 @@
+{
+  "lang": "ta",
+  "voice": "Zephyr",
+  "out_dir": "assets/voice-ta",
+  "style": "You are a bright, friendly young Tamil woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak natural everyday Tamil the way young students in Chennai talk, mixing English words exactly as written: smooth, clear, warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy. English words stay English. Say Testoza as 'test-OH-za'.",
+  "lines": [
+    { "id": "e01", "text": "JEE, NEET, SSC, Banking... ஒவ்வொரு aspirant கிட்டயும் DPPs ஒரு அடுக்கு இருக்கும்." },
+    { "id": "e02", "text": "ஆனா paper-ல, பின்னாடி clock வச்சு solve பண்றது? அது real exam இல்ல." },
+    { "id": "e03", "text": "அதனால Testoza open பண்ணுங்க. PDF இருக்கா? அதுவும் ok. ஆனா ரொம்ப easy way... உங்க DPP pages-ஐ photo எடுங்க." },
+    { "id": "e04", "text": "அப்புறம் answer key-ஐ photo எடுத்து... இங்க போடுங்க." },
+    { "id": "e05", "text": "Marking set பண்ணுங்க, plus four, minus one... அப்புறம் Extract அழுத்துங்க." },
+    { "id": "e06", "text": "இப்போ AI ஒவ்வொரு question-ஐயும் படிக்குது... உங்க key-ல இருந்து சரியான answer-ஐயும் போடுது." },
+    { "id": "e07", "text": "பன்னிரண்டு questions, முப்பத்திரண்டு seconds-ல ready!" },
+    { "id": "e08", "text": "ஒரு தடவை பாருங்க, save பண்ணுங்க... உங்க test My Tests-ல ready." },
+    { "id": "e09", "text": "Preview அழுத்துங்க, start பண்ணுங்க." },
+    { "id": "e10", "text": "இப்போ clock real. Answer select பண்ணுங்க, அடுத்தது போங்க, திரும்ப வாங்க... exam day மாதிரியே." },
+    { "id": "e11", "text": "Submit..." },
+    { "id": "e12", "text": "result உடனே. உங்க score, எது தப்பு, time எங்க போச்சுன்னு." },
+    { "id": "e13", "text": "இன்னைக்கு DPP... இன்னைக்கே online test. Testoza dot com." }
+  ]
+}

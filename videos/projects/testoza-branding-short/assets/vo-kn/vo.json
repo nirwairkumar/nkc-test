@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-kn/L01.wav",
+    "duration": 5.606417,
+    "text": "ನಿಮ್ಮ institute ನ logo ಮತ್ತು ಹೆಸರು — ಪ್ರತಿ online test ಮೇಲೆ. ಹೇಗೆ ಅಂತ step by step ನೋಡೋಣ.",
+    "raw": "{hook}ನಿಮ್ಮ institute ನ logo ಮತ್ತು ಹೆಸರು — ಪ್ರತಿ online test ಮೇಲೆ. {how}ಹೇಗೆ ಅಂತ step by step ನೋಡೋಣ."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-kn/L02.wav",
+    "duration": 2.627917,
+    "text": "Test ಗೆ ಹೆಸರು ಕೊಟ್ಟು, Institution branding open ಮಾಡಿ.",
+    "raw": "{title}Test ಗೆ ಹೆಸರು ಕೊಟ್ಟು, {branding}Institution branding open ಮಾಡಿ."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-kn/L03.wav",
+    "duration": 5.848125,
+    "text": "ನಿಮ್ಮ logo ಹಾಕಿ, institute ಹೆಸರು type ಮಾಡಿ, ಒಂದು colour, ಒಂದು font ಆರಿಸಿ. ಅಷ್ಟೇ — ನಿಮ್ಮ brand ready.",
+    "raw": "{logo}ನಿಮ್ಮ logo ಹಾಕಿ, {name}institute ಹೆಸರು type ಮಾಡಿ, {color}ಒಂದು colour, {font}ಒಂದು font ಆರಿಸಿ. {branded}ಅಷ್ಟೇ — ನಿಮ್ಮ brand ready."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-kn/L04.wav",
+    "duration": 4.811375,
+    "text": "ಈಗ questions — ಸರಿಯಾದ answer tap ಮಾಡಿ, ಮುಂದಿನದು, ಇನ್ನೊಂದು. ಆಮೇಲೆ Save.",
+    "raw": "{q1}ಈಗ questions — {right1}ಸರಿಯಾದ answer tap ಮಾಡಿ, ಮುಂದಿನದು, {add3}ಇನ್ನೊಂದು. {save}ಆಮೇಲೆ Save."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-kn/L05.wav",
+    "duration": 4.754583,
+    "text": "Conduct exam, start, link copy ಮಾಡಿ — ಅಥವಾ ಆರು ಅಂಕಿಯ join code ಕಳಿಸಿ.",
+    "raw": "{conduct}Conduct exam, {start}start, {copy}link copy ಮಾಡಿ — {code}ಅಥವಾ ಆರು ಅಂಕಿಯ join code ಕಳಿಸಿ."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-kn/L06.wav",
+    "duration": 5.59375,
+    "text": "Students link open ಮಾಡ್ತಾರೆ, ಹೆಸರು type ಮಾಡ್ತಾರೆ, start ಮಾಡ್ತಾರೆ… ನೋಡಿ — ನಿಮ್ಮ logo, ಹೆಸರು, ಮೇಲೆಯೇ.",
+    "raw": "{dopen}Students link open ಮಾಡ್ತಾರೆ, {cname}ಹೆಸರು type ಮಾಡ್ತಾರೆ, {dgo}start ಮಾಡ್ತಾರೆ… {dbrand}ನೋಡಿ — ನಿಮ್ಮ logo, ಹೆಸರು, ಮೇಲೆಯೇ."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-kn/L07.wav",
+    "duration": 4.390333,
+    "text": "Phone ನಲ್ಲಾ? Code type ಮಾಡಿ, Start tap ಮಾಡಿದ್ರೆ, ಅಲ್ಲೂ ನಿಮ್ಮ brand. ಪ್ರತಿ question, ನಿಮ್ಮ ಹೆಸರಿನಲ್ಲೇ.",
+    "raw": "{typecode}Phone ನಲ್ಲಾ? Code type ಮಾಡಿ, {pgo}Start tap ಮಾಡಿದ್ರೆ, {pbrand}ಅಲ್ಲೂ ನಿಮ್ಮ brand. {ans1}ಪ್ರತಿ question, ನಿಮ್ಮ ಹೆಸರಿನಲ್ಲೇ."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-kn/L08.wav",
+    "duration": 3.854083,
+    "text": "ನಿಮ್ಮ institute. ನಿಮ್ಮ test. ಇವತ್ತೇ ಮಾಡಿ — testoza.com ನಲ್ಲಿ.",
+    "raw": "{endcard}ನಿಮ್ಮ institute. ನಿಮ್ಮ test. {endurl}ಇವತ್ತೇ ಮಾಡಿ — testoza.com ನಲ್ಲಿ."
+  }
+]

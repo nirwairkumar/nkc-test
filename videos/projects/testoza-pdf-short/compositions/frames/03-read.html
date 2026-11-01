@@ -1,0 +1,83 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f3-card { top: 560px; height: 483px; }
+  #f3-card img { position: absolute; left: 0; top: 0; width: 960px; }
+  #f3-qs { top: 1067px; height: 453px; }
+  .f3-head { position: absolute; left: 0; top: 0; width: 960px; height: 83px; z-index: 2; }
+  .f3-head img { position: absolute; left: 0; top: 0; width: 960px; }
+  .f3-list { position: absolute; left: 0; top: 83px; width: 960px; height: 370px; overflow: hidden; }
+  .f3-roll { position: absolute; left: 0; top: 0; width: 960px; }
+  .f3-roll img { position: absolute; left: 0; top: 0; width: 960px; }
+  .f3-glow { position: absolute; inset: 0; border-radius: 26px; box-shadow: inset 0 0 0 4px rgba(56, 189, 248, 0.9); opacity: 0; }
+  #f3-s2 { top: 410px; font-size: 54px; font-weight: 700; color: #94a3b8; }
+  #f3-s2 span { margin: 0 8px; }
+  #f3-s2 span.on { color: #f8fafc; }
+</style>
+<div data-hf-id="hf-ykp9" id="root" data-composition-id="f03-read" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-t2vp" id="f3-stage" class="clip sf-stage" data-start="0" data-duration="10" data-track-index="0"></div>
+    <div data-hf-id="hf-3duw" class="sf-panel" id="f3-card">
+      <img data-hf-id="hf-4er1" class="f3-c" src="assets/ui/card-0.png" alt="" />
+      <img data-hf-id="hf-tbr8" class="f3-c" src="assets/ui/card-1.png" alt="" />
+      <img data-hf-id="hf-ti3z" class="f3-c" src="assets/ui/card-2.png" alt="" />
+      <img data-hf-id="hf-vmf2" class="f3-c" src="assets/ui/card-3.png" alt="" />
+      <img data-hf-id="hf-3h8p" class="f3-c" src="assets/ui/card-4.png" alt="" />
+      <div data-hf-id="hf-r2s0" class="f3-glow" id="f3-glow"></div>
+    </div>
+    <div data-hf-id="hf-ivmi" class="sf-panel" id="f3-qs">
+      <div data-hf-id="hf-4if0" class="f3-head">
+        <img data-hf-id="hf-vzqh" class="f3-h" src="assets/ui/qhead-0.png" alt="" />
+        <img data-hf-id="hf-a5pc" class="f3-h" src="assets/ui/qhead-1.png" alt="" />
+        <img data-hf-id="hf-zd9n" class="f3-h" src="assets/ui/qhead-2.png" alt="" />
+        <img data-hf-id="hf-r0wq" class="f3-h" src="assets/ui/qhead-3.png" alt="" />
+        <img data-hf-id="hf-60ul" class="f3-h" src="assets/ui/qhead-4.png" alt="" />
+      </div>
+      <div data-hf-id="hf-6n2q" class="f3-list">
+        <div data-hf-id="hf-x6sc" class="f3-roll" id="f3-roll">
+          <img data-hf-id="hf-d10j" class="f3-l" src="assets/ui/qcol-0.png" alt="" />
+          <img data-hf-id="hf-dxsi" class="f3-l" src="assets/ui/qcol-1.png" alt="" />
+          <img data-hf-id="hf-7p0h" class="f3-l" src="assets/ui/qcol-2.png" alt="" />
+          <img data-hf-id="hf-h520" class="f3-l" src="assets/ui/qcol-3.png" alt="" />
+          <img data-hf-id="hf-gilj" class="f3-l" src="assets/ui/qcol-4.png" alt="" />
+        </div>
+      </div>
+    </div>
+    <div data-hf-id="hf-a4as" class="sf-sup" id="f3-s1">AI reads every <em data-hf-id="hf-06if">question.</em></div>
+    <div data-hf-id="hf-2ykf" class="sf-sup" id="f3-s2"><span data-hf-id="hf-qa84" id="f3-w1">Options.</span><span data-hf-id="hf-z2zw" id="f3-w2">Answer key.</span><span data-hf-id="hf-4do6" id="f3-w3">Diagrams.</span></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f03-read';
+  const { q, qa, tl, superIn, wordIn, only } = SF(ID);
+  const C = qa('.f3-c'), H = qa('.f3-h'), L = qa('.f3-l');
+  tl.fromTo('#f3-card', { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out' }, 0);
+  tl.fromTo('#f3-qs', { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out' }, 0.1);
+  // states change when the stopwatch reaches each screen's own elapsed time (×7 from 0:04 at 0.5s)
+  const SW = [0, 3.21, 5.11, 7.01, 8.5];
+  SW.forEach((t, i) => {
+    only(t, C[i], C); only(t, H[i], H); only(t, L[i], L);
+    if (i) tl.fromTo('#f3-glow', { opacity: 1 }, { opacity: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, t);
+  });
+  // the list rolls as questions arrive, keeping the newest in view
+  const roll = q('#f3-roll');
+  tl.set(roll, { y: 0 }, 0);
+  tl.to(roll, { y: -1013, duration: 5.11 - 3.21, ease: 'sine.inOut' }, 3.21);
+  tl.to(roll, { y: -3043, duration: 7.01 - 5.11, ease: 'sine.inOut' }, 5.11);
+  tl.to(roll, { y: -5216, duration: 8.5 - 7.01, ease: 'sine.inOut' }, 7.01);
+  tl.to(roll, { y: -7123, duration: 10 - 8.5, ease: 'sine.inOut' }, 8.5);
+  // "अब ए आई हर सवाल खुद पढ़ता है। ऑप्शंस, आंसर की, डायग्राम, और इक्वेशंस भी।"
+  superIn(0.35, q('#f3-s1'));
+  tl.set('#f3-s2', { autoAlpha: 1 }, 0);
+  tl.set(['#f3-w1', '#f3-w2', '#f3-w3'], { opacity: 0 }, 0);
+  wordIn(3.35, q('#f3-w1'));
+  wordIn(4.35, q('#f3-w2'));
+  wordIn(5.3, q('#f3-w3'));
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

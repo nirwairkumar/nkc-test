@@ -1,0 +1,93 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.04,
+  "end": 0.2,
+  "score": 0.503
+ },
+ {
+  "w": "screen,",
+  "r": "screen",
+  "start": 0.26,
+  "end": 0.601,
+  "score": 0.498
+ },
+ {
+  "w": "साफ़-सुथरा,",
+  "r": "saafsutharaa",
+  "start": 0.962,
+  "end": 1.563,
+  "score": 0.783
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 1.743,
+  "end": 1.843,
+  "score": 0.996
+ },
+ {
+  "w": "पढ़ने",
+  "r": "paddhane",
+  "start": 1.903,
+  "end": 2.184,
+  "score": 0.965
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 2.224,
+  "end": 2.324,
+  "score": 0.766
+ },
+ {
+  "w": "आसान।",
+  "r": "aasaan",
+  "start": 2.364,
+  "end": 2.725,
+  "score": 0.888
+ },
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 3.266,
+  "end": 3.566,
+  "score": 0.515
+ },
+ {
+  "w": "पर",
+  "r": "par",
+  "start": 3.626,
+  "end": 3.706,
+  "score": 0.335
+ },
+ {
+  "w": "tap,",
+  "r": "tap",
+  "start": 3.766,
+  "end": 4.047,
+  "score": 0.943
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 4.408,
+  "end": 4.628,
+  "score": 0.545
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 4.648,
+  "end": 4.728,
+  "score": 0.189
+ },
+ {
+  "w": "next।",
+  "r": "next",
+  "start": 4.768,
+  "end": 5.049,
+  "score": 0.671
+ }
+]

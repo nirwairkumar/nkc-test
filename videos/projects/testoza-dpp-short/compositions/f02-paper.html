@@ -1,0 +1,83 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  .desk { position: absolute; inset: 0; background: radial-gradient(130% 100% at 30% 20%, #d9c3a3 0%, #b89a74 55%, #8a6d4c 100%); }
+  .desk::before { content: ''; position: absolute; inset: 0; opacity: 0.22; mix-blend-mode: multiply;
+    background: repeating-linear-gradient(97deg, rgba(90, 60, 30, 0) 0 26px, rgba(90, 60, 30, 0.35) 27px 29px, rgba(90, 60, 30, 0) 30px 61px); }
+  .world { position: absolute; inset: 0; }
+  /* the open DPP, lying on the desk */
+  .persp { position: absolute; inset: 0; perspective: 1900px; }
+  .page { position: absolute; left: 110px; top: 620px; width: 860px; height: 1216px; background: url(assets/dpp/page-1.jpg) center / 100% 100%;
+    box-shadow: 0 40px 70px rgba(40, 22, 6, 0.45), 0 4px 12px rgba(40, 22, 6, 0.3); }
+  .page::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.08) 75%, rgba(0, 0, 0, 0.16)); }
+  /* a pencil across the page */
+  .pencil { position: absolute; left: 520px; top: 1250px; width: 560px; height: 30px; border-radius: 4px 15px 15px 4px; transform-origin: 0 50%;
+    background: linear-gradient(180deg, #ffd34d 0 33%, #f2b705 33% 66%, #d99a00 66%); box-shadow: 0 14px 18px -6px rgba(40, 22, 6, 0.5); }
+  .pencil::before { content: ''; position: absolute; left: -46px; top: 0; border-style: solid; border-width: 15px 46px 15px 0; border-color: transparent #e8c59a transparent transparent; }
+  .pencil::after { content: ''; position: absolute; right: -6px; top: 0; width: 46px; height: 30px; border-radius: 3px 15px 15px 3px; background: linear-gradient(180deg, #f6a5a5, #e07b7b); border-left: 10px solid #b8b8b8; }
+  /* the table clock behind the page */
+  .clock { position: absolute; left: 500px; top: 170px; width: 380px; height: 420px; }
+  .clock svg { position: absolute; inset: 0; width: 380px; height: 420px; overflow: visible; }
+  #c-sec, #c-min, #c-hr { transform-box: view-box; }
+  .dim { position: absolute; inset: 0; background: #120a03; opacity: 0; }
+</style>
+<div data-hf-id="hf-1gnq" id="root" data-composition-id="f02-paper" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-vtqp" class="world" id="p-world">
+      <div data-hf-id="hf-3tbf" class="desk"></div>
+      <div data-hf-id="hf-vfh5" class="clock" id="p-clock">
+        <svg data-hf-id="hf-61ig" viewBox="0 0 380 420">
+          <ellipse data-hf-id="hf-zkn8" cx="190" cy="408" rx="150" ry="12" fill="rgba(40,22,6,0.35)" />
+          <path data-hf-id="hf-emlz" d="M110 360 L80 405 M270 360 L300 405" stroke="#5b4636" stroke-width="12" stroke-linecap="round" />
+          <circle data-hf-id="hf-4jom" cx="92" cy="70" r="46" fill="#c0392b" /><circle data-hf-id="hf-jid1" cx="288" cy="70" r="46" fill="#c0392b" />
+          <rect data-hf-id="hf-iz2q" x="182" y="30" width="16" height="30" rx="4" fill="#7f8c8d" />
+          <circle data-hf-id="hf-15yk" cx="190" cy="215" r="170" fill="#c0392b" />
+          <circle data-hf-id="hf-wt0l" cx="190" cy="215" r="148" fill="#fdfaf2" />
+          <g data-hf-id="hf-oapw" stroke="#2d2a26" stroke-linecap="round">
+            <line data-hf-id="hf-r2py" x1="190" y1="80" x2="190" y2="104" stroke-width="7" /><line data-hf-id="hf-wwvo" x1="190" y1="326" x2="190" y2="350" stroke-width="7" />
+            <line data-hf-id="hf-n6ol" x1="55" y1="215" x2="79" y2="215" stroke-width="7" /><line data-hf-id="hf-3b2r" x1="301" y1="215" x2="325" y2="215" stroke-width="7" />
+            <line data-hf-id="hf-ocww" x1="257" y1="98" x2="250" y2="110" stroke-width="4" /><line data-hf-id="hf-kexu" x1="307" y1="148" x2="295" y2="155" stroke-width="4" />
+            <line data-hf-id="hf-66o0" x1="307" y1="282" x2="295" y2="275" stroke-width="4" /><line data-hf-id="hf-0u0k" x1="257" y1="332" x2="250" y2="320" stroke-width="4" />
+            <line data-hf-id="hf-wl99" x1="123" y1="98" x2="130" y2="110" stroke-width="4" /><line data-hf-id="hf-p8nr" x1="73" y1="148" x2="85" y2="155" stroke-width="4" />
+            <line data-hf-id="hf-jfhp" x1="73" y1="282" x2="85" y2="275" stroke-width="4" /><line data-hf-id="hf-39xn" x1="123" y1="332" x2="130" y2="320" stroke-width="4" />
+          </g>
+          <line data-hf-id="hf-n4n4" id="c-hr" x1="190" y1="215" x2="190" y2="145" stroke="#2d2a26" stroke-width="11" stroke-linecap="round" style="transform-origin: 190px 215px" />
+          <line data-hf-id="hf-lnnx" id="c-min" x1="190" y1="215" x2="190" y2="105" stroke="#2d2a26" stroke-width="7" stroke-linecap="round" style="transform-origin: 190px 215px" />
+          <line data-hf-id="hf-ihbq" id="c-sec" x1="190" y1="240" x2="190" y2="92" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round" style="transform-origin: 190px 215px" />
+          <circle data-hf-id="hf-jvax" cx="190" cy="215" r="9" fill="#2d2a26" />
+        </svg>
+      </div>
+      <div data-hf-id="hf-aqwk" class="persp"><div data-hf-id="hf-uc4b" class="page" id="p-page"></div></div>
+      <div data-hf-id="hf-2z8r" class="pencil" id="p-pencil"></div>
+    </div>
+    <div data-hf-id="hf-ydi5" class="dim" id="p-dim"></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f02-paper';
+  const { tl } = SF(ID);
+  tl.set('#c-hr', { rotation: 310 }, 0);
+  tl.set('#c-min', { rotation: 54 }, 0);
+  // the second hand ticks once a second
+  for (let s = 0; s <= 5; s++) tl.fromTo('#c-sec', { rotation: 42 + s * 6 }, { rotation: 48 + s * 6, duration: 0.12, ease: 'back.out(3)', immediateRender: s === 0 }, s);
+  // the page lies on the desk; camera drifts in
+  tl.fromTo('#p-page', { rotationX: 34, rotationZ: -3, y: 40 }, { rotationX: 28, rotationZ: -2, y: 0, duration: 5.1, ease: 'power1.out' }, 0);
+  tl.fromTo('#p-pencil', { rotation: -24, x: 60 }, { rotation: -22, x: 0, duration: 5.1, ease: 'power1.out' }, 0);
+  tl.fromTo('#p-world', { scale: 1.08 }, { scale: 1.0, duration: 5.1, ease: 'power1.out' }, 0);
+  // "But solving them on paper," page sharp, clock soft
+  tl.fromTo('#p-clock', { filter: 'blur(9px)', scale: 0.92 }, { filter: 'blur(9px)', scale: 0.92, duration: 0.01 }, 0);
+  // "...with a clock behind you?" rack focus to the clock
+  tl.to('#p-clock', { filter: 'blur(0px)', scale: 1.08, duration: 0.7, ease: 'power2.inOut' }, 1.95);
+  tl.to(['#p-page', '#p-pencil'], { filter: 'blur(5px)', duration: 0.7, ease: 'power2.inOut' }, 1.95);
+  // "That's not the real exam." the scene dims and goes soft for the phone
+  tl.to('#p-dim', { opacity: 0.35, duration: 0.8, ease: 'power2.inOut' }, 3.5);
+  tl.to('#p-world', { filter: 'blur(16px)', duration: 0.7, ease: 'power2.in' }, 4.4);
+  tl.to('#p-dim', { opacity: 0.6, duration: 0.7, ease: 'power2.in' }, 4.4);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

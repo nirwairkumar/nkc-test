@@ -28,10 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_anon_test_attempts_status
 CREATE INDEX IF NOT EXISTS idx_anon_test_attempts_started_at
     ON anon_test_attempts (started_at);
 
--- Row Level Security: Backend (service role) manages all reads/writes
+-- Row Level Security: Backend (service role) manages all reads/writes.
+-- service_role bypasses RLS, so NO policy is needed. Do not add a USING(true)
+-- policy here - without a TO clause it applies to anon too (see C3 in
+-- SECURITY_THREAT_MODEL_AND_PLAN.md and migration 20260920120000).
 ALTER TABLE anon_test_attempts ENABLE ROW LEVEL SECURITY;
-
--- Allow service role full access (backend uses service role key)
-CREATE POLICY "Service role full access" ON anon_test_attempts
-    USING (true)
-    WITH CHECK (true);

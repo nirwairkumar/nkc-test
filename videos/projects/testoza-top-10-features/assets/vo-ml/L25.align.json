@@ -1,0 +1,107 @@
+[
+ {
+  "w": "ഇപ്പോൾ",
+  "r": "ippoolla",
+  "start": 0.04,
+  "end": 0.34,
+  "score": 0.963
+ },
+ {
+  "w": "അവൾ",
+  "r": "avalla",
+  "start": 0.361,
+  "end": 0.561,
+  "score": 0.992
+ },
+ {
+  "w": "വേറൊരു",
+  "r": "veerroru",
+  "start": 0.581,
+  "end": 0.941,
+  "score": 0.617
+ },
+ {
+  "w": "app-ലേക്ക്",
+  "r": "appleekk",
+  "start": 0.981,
+  "end": 1.322,
+  "score": 0.917
+ },
+ {
+  "w": "പോകുന്നു",
+  "r": "pookunnu",
+  "start": 1.382,
+  "end": 1.702,
+  "score": 0.985
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.983,
+  "end": 2.343,
+  "score": 0.733
+ },
+ {
+  "w": "ഉടനെ",
+  "r": "uttane",
+  "start": 2.444,
+  "end": 2.744,
+  "score": 0.817
+ },
+ {
+  "w": "പിടിക്കുന്നു.",
+  "r": "pittikkunnu",
+  "start": 2.784,
+  "end": 3.185,
+  "score": 0.996
+ },
+ {
+  "w": "Warning",
+  "r": "warning",
+  "start": 3.886,
+  "end": 4.246,
+  "score": 0.484
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 4.306,
+  "end": 4.527,
+  "score": 0.578
+ },
+ {
+  "w": "of",
+  "r": "of",
+  "start": 4.547,
+  "end": 4.607,
+  "score": 0.315
+ },
+ {
+  "w": "three.",
+  "r": "three",
+  "start": 4.667,
+  "end": 4.847,
+  "score": 0.391
+ },
+ {
+  "w": "നേരെ",
+  "r": "neere",
+  "start": 5.208,
+  "end": 5.528,
+  "score": 0.917
+ },
+ {
+  "w": "തിരികെ",
+  "r": "tirike",
+  "start": 5.588,
+  "end": 5.828,
+  "score": 0.829
+ },
+ {
+  "w": "paper-ലേക്ക്.",
+  "r": "paperleekk",
+  "start": 5.889,
+  "end": 6.449,
+  "score": 0.744
+ }
+]

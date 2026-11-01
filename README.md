@@ -27,6 +27,7 @@ The platform combines:
 ⚡ **Current Stage:** MVP Live  
 🌐 Live Platform: https://testoza.com  
 👨‍💻 Built Independently by: Nirwair Kumar Chaudhary  
+📖 **Comprehensive Master Product Guide**: [About TestoZa/PLATFORM_OVERVIEW.md](file:///d:/Yuga%20Yatra/nkc-Test-platform/About%20TestoZa/PLATFORM_OVERVIEW.md)
 
 ---
 

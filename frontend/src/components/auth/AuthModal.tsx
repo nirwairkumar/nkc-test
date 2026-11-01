@@ -10,29 +10,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signUpWithEmail, signInWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
-import { useTurnstile } from '@/hooks/useTurnstile';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { toast } from 'sonner';
-import { Lock, Mail, User, Loader2, Sparkles, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, User, Loader2, Sparkles, ArrowRight, ShieldCheck, ArrowLeft, Gift } from 'lucide-react';
 import { updateProfile } from '@/lib/usersApi';
+import { pendingReferral } from '@/lib/referral';
 
 const authFormSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address." }),
     password: z.string().optional(),
     name: z.string().optional(),
-    designation: z.enum(["Teacher", "Institution", "Other"]).optional(),
 });
 
 export default function AuthModal() {
     const { isAuthModalOpen, closeAuthModal, authModalView, setAuthModalView, redirectPath, onSuccessCallback } = useAuthModal();
     const { user, profile, refreshSession } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     // Onboarding sub-state when user signs up / logs in without designation
     const [onboardingName, setOnboardingName] = useState('');
     const [onboardingDesignation, setOnboardingDesignation] = useState<'Teacher' | 'Institution' | 'Other' | undefined>(undefined);
     const [isOnboardingSaving, setIsOnboardingSaving] = useState(false);
+    const invite = isAuthModalOpen && !user ? pendingReferral() : null;
 
     const form = useForm<z.infer<typeof authFormSchema>>({
         resolver: zodResolver(authFormSchema),
@@ -40,7 +39,6 @@ export default function AuthModal() {
             email: '',
             password: '',
             name: '',
-            designation: undefined,
         },
     });
 
@@ -71,26 +69,6 @@ export default function AuthModal() {
             // Successfully authenticated in popup! Refresh session state in-place
             await refreshSession();
 
-            // Check if user has designation or needs onboarding
-            const localDesignation = localStorage.getItem('user_designation');
-            const { fetchUserDetails } = await import('@/lib/usersApi');
-            const { supabase } = await import('@/integrations/supabase/client');
-            const sessionData = await supabase.auth.getSession();
-            const authedUser = sessionData.data?.session?.user;
-
-            let hasDesignation = authedUser?.user_metadata?.designation || localDesignation;
-            if (!hasDesignation && authedUser?.id) {
-                const profileRes = await fetchUserDetails(authedUser.id);
-                hasDesignation = profileRes.data?.designation;
-            }
-
-            if (!hasDesignation) {
-                setOnboardingName(authedUser?.user_metadata?.full_name || authedUser?.email?.split('@')[0] || '');
-                setAuthModalView('onboarding');
-                setIsLoading(false);
-                return;
-            }
-
             toast.success('Successfully signed in with Google!');
             closeAuthModal();
             if (onSuccessCallback) onSuccessCallback();
@@ -103,7 +81,6 @@ export default function AuthModal() {
 
     const handleEmailSubmit = async (values: z.infer<typeof authFormSchema>) => {
         setIsLoading(true);
-        const turnstileToken = getToken();
 
         try {
             if (authModalView === 'login') {
@@ -113,27 +90,14 @@ export default function AuthModal() {
                     return;
                 }
 
-                const response = await signInWithEmail(values.email, values.password, turnstileToken);
+                const response = await signInWithEmail(values.email, values.password);
                 if (response.error) {
-                    resetTurnstile();
                     toast.error(response.error.message || 'Login failed');
                     setIsLoading(false);
                     return;
                 }
 
                 await refreshSession();
-
-                // Check if user has designation
-                const localDesignation = localStorage.getItem('user_designation');
-                const hasDesignation = response.data?.user?.user_metadata?.designation || localDesignation;
-
-                if (!hasDesignation) {
-                    // Switch to inline onboarding view
-                    setOnboardingName(response.data?.user?.user_metadata?.full_name || values.email.split('@')[0]);
-                    setAuthModalView('onboarding');
-                    setIsLoading(false);
-                    return;
-                }
 
                 toast.success('Successfully signed in!');
                 closeAuthModal();
@@ -150,15 +114,9 @@ export default function AuthModal() {
                     setIsLoading(false);
                     return;
                 }
-                if (!values.designation) {
-                    toast.error("Please select a designation");
-                    setIsLoading(false);
-                    return;
-                }
 
-                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation, turnstileToken);
+                const { error } = await signUpWithEmail(values.email, values.password, values.name);
                 if (error) {
-                    resetTurnstile();
                     if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
                         toast.error('Account already exists. Please sign in.');
                         setAuthModalView('login');
@@ -171,10 +129,9 @@ export default function AuthModal() {
 
                 // Automatic sign-in after signup
                 try {
-                    const response = await signInWithEmail(values.email, values.password, turnstileToken);
+                    const response = await signInWithEmail(values.email, values.password);
                     if (response.error) throw response.error;
 
-                    localStorage.setItem('user_designation', values.designation);
                     await refreshSession();
 
                     toast.success('Account created and signed in!');
@@ -268,6 +225,14 @@ export default function AuthModal() {
                             {authModalView === 'forgot' && 'Enter your registered email to receive a recovery link.'}
                             {authModalView === 'onboarding' && 'Tell us your role so we can personalize your experience.'}
                         </DialogDescription>
+                        {/* Came from someone's invite link (pages/InvitePage): show it's been kept. */}
+                        {authModalView === 'signup' && invite && (
+                            <div className="flex justify-center pt-1">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-[12px] font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">
+                                    <Gift className="h-3.5 w-3.5" /> Invited by {invite.name || 'a colleague'}
+                                </span>
+                            </div>
+                        )}
                     </DialogHeader>
 
                     {/* View Switcher Tabs (Login / Signup) */}
@@ -322,7 +287,7 @@ export default function AuthModal() {
                                         <SelectValue placeholder="Select your role..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Teacher">Teacher / Educator</SelectItem>
+                                        <SelectItem value="Teacher">Educator</SelectItem>
                                         <SelectItem value="Institution">School / Coaching Institution</SelectItem>
                                         <SelectItem value="Other">Student / Independent Creator</SelectItem>
                                     </SelectContent>
@@ -423,33 +388,8 @@ export default function AuthModal() {
                                         />
                                     )}
 
-                                    {authModalView === 'signup' && (
-                                        <FormField
-                                            control={form.control}
-                                            name="designation"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-1">
-                                                    <FormLabel className="text-xs font-semibold">I am a</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="h-10 text-xs rounded-xl">
-                                                                <SelectValue placeholder="Select your role" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Teacher">Teacher / Educator</SelectItem>
-                                                            <SelectItem value="Institution">School / Coaching Institution</SelectItem>
-                                                            <SelectItem value="Other">Student / Creator</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage className="text-[11px]" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
 
-                                    {/* Cloudflare Turnstile Bot Protection Container */}
-                                    <div ref={turnstileRef} className="flex justify-center my-1"></div>
+
 
                                     <Button
                                         type="submit"

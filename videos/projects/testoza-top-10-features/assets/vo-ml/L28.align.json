@@ -1,0 +1,184 @@
+[
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 0.02,
+  "end": 0.38,
+  "score": 0.998
+ },
+ {
+  "w": "dashboard-ൽ:",
+  "r": "dashboardla",
+  "start": 0.44,
+  "end": 1.041,
+  "score": 0.668
+ },
+ {
+  "w": "ഇപ്പോൾ",
+  "r": "ippoolla",
+  "start": 1.221,
+  "end": 1.541,
+  "score": 0.852
+ },
+ {
+  "w": "മുപ്പത്",
+  "r": "muppat",
+  "start": 1.541,
+  "end": 1.842,
+  "score": 0.628
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 1.882,
+  "end": 2.242,
+  "score": 0.366
+ },
+ {
+  "w": "എഴുതുന്നു,",
+  "r": "elllutunnu",
+  "start": 2.242,
+  "end": 2.622,
+  "score": 0.943
+ },
+ {
+  "w": "രണ്ട്",
+  "r": "ranntt",
+  "start": 2.943,
+  "end": 3.163,
+  "score": 0.481
+ },
+ {
+  "w": "പേർ",
+  "r": "peerra",
+  "start": 3.203,
+  "end": 3.383,
+  "score": 0.83
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 3.403,
+  "end": 3.703,
+  "score": 0.679
+ },
+ {
+  "w": "ചെയ്തു.",
+  "r": "ceytu",
+  "start": 3.863,
+  "end": 4.063,
+  "score": 0.948
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 4.604,
+  "end": 4.924,
+  "score": 0.563
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 4.964,
+  "end": 5.265,
+  "score": 0.74
+ },
+ {
+  "w": "ചെയ്യൂ",
+  "r": "ceyyuu",
+  "start": 5.325,
+  "end": 5.585,
+  "score": 0.842
+ },
+ {
+  "w": "started,",
+  "r": "started",
+  "start": 5.865,
+  "end": 6.406,
+  "score": 0.594
+ },
+ {
+  "w": "writing,",
+  "r": "writing",
+  "start": 6.426,
+  "end": 7.126,
+  "score": 0.703
+ },
+ {
+  "w": "submitted,",
+  "r": "submitted",
+  "start": 7.306,
+  "end": 8.027,
+  "score": 0.621
+ },
+ {
+  "w": "dropped.",
+  "r": "dropped",
+  "start": 8.047,
+  "end": 8.407,
+  "score": 0.765
+ },
+ {
+  "w": "ഏത്",
+  "r": "eet",
+  "start": 8.808,
+  "end": 9.008,
+  "score": 0.677
+ },
+ {
+  "w": "tile",
+  "r": "tile",
+  "start": 9.068,
+  "end": 9.268,
+  "score": 0.621
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 9.328,
+  "end": 9.528,
+  "score": 0.713
+ },
+ {
+  "w": "ചെയ്താലും,",
+  "r": "ceytaalum",
+  "start": 9.588,
+  "end": 10.009,
+  "score": 0.965
+ },
+ {
+  "w": "ആര്,",
+  "r": "aar",
+  "start": 10.249,
+  "end": 10.469,
+  "score": 0.601
+ },
+ {
+  "w": "എത്രത്തോളം",
+  "r": "etrattoollam",
+  "start": 10.729,
+  "end": 11.25,
+  "score": 0.801
+ },
+ {
+  "w": "ചെയ്തു",
+  "r": "ceytu",
+  "start": 11.27,
+  "end": 11.53,
+  "score": 0.97
+ },
+ {
+  "w": "എന്ന്",
+  "r": "enn",
+  "start": 11.61,
+  "end": 11.71,
+  "score": 0.997
+ },
+ {
+  "w": "അറിയാം.",
+  "r": "arriyaam",
+  "start": 11.79,
+  "end": 12.05,
+  "score": 0.99
+ }
+]

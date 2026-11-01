@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function NotificationsPage() {
     const navigate = useNavigate();
-    const { notifications, handleDelete, handleClearAll, loading } = useNotifications();
+    const { notifications, handleDelete, handleClearAll, markAsRead, loading } = useNotifications();
 
     return (
         <div className="min-h-screen bg-background">
@@ -27,6 +27,7 @@ export default function NotificationsPage() {
                         notifications={notifications}
                         onDelete={handleDelete}
                         onClearAll={handleClearAll}
+                        onMarkAsRead={markAsRead}
                         maxHeight="100%"
                     />
                 )}

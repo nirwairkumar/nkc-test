@@ -1,0 +1,1 @@
+അടുത്തതായി എന്ത് ചെയ്യണമെന്ന് Testoza തന്നെ പറയും: exam room set ചെയ്യൂ. Full screen നിർബന്ധം. ഓരോ tab, app switch-ഉം പിടിക്കപ്പെടും, ഒരു limit വെക്കൂ — അതായത് മൂന്ന് warnings — പിന്നെ test സ്വയം submit ആകും. Copy-paste block, right-click block, back button-ഉം.

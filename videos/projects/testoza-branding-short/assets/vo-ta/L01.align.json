@@ -1,0 +1,86 @@
+[
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 0.04,
+  "end": 0.241,
+  "score": 0.48
+ },
+ {
+  "w": "institute-ஓட",
+  "r": "instituteooda",
+  "start": 0.321,
+  "end": 0.863,
+  "score": 0.737
+ },
+ {
+  "w": "logo-வும்",
+  "r": "logovum",
+  "start": 0.943,
+  "end": 1.365,
+  "score": 0.857
+ },
+ {
+  "w": "பேரும்",
+  "r": "peerum",
+  "start": 1.465,
+  "end": 1.806,
+  "score": 0.938
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 2.168,
+  "end": 2.489,
+  "score": 0.782
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 2.569,
+  "end": 2.91,
+  "score": 0.41
+ },
+ {
+  "w": "test-லயும்.",
+  "r": "testlayum",
+  "start": 2.93,
+  "end": 3.412,
+  "score": 0.669
+ },
+ {
+  "w": "எப்படின்னு",
+  "r": "eppadinnu",
+  "start": 3.934,
+  "end": 4.355,
+  "score": 0.707
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 4.576,
+  "end": 4.877,
+  "score": 0.731
+ },
+ {
+  "w": "by",
+  "r": "by",
+  "start": 4.917,
+  "end": 5.038,
+  "score": 0.487
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 5.058,
+  "end": 5.278,
+  "score": 0.874
+ },
+ {
+  "w": "பார்க்கலாம்.",
+  "r": "paarkkalaam",
+  "start": 5.318,
+  "end": 5.68,
+  "score": 0.538
+ }
+]

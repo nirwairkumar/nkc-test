@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.08,
+  "end": 0.261,
+  "score": 0.542
+ },
+ {
+  "w": "screen,",
+  "r": "screen",
+  "start": 0.341,
+  "end": 0.663,
+  "score": 0.505
+ },
+ {
+  "w": "clean,",
+  "r": "clean",
+  "start": 1.064,
+  "end": 1.405,
+  "score": 0.427
+ },
+ {
+  "w": "చదవడానికి",
+  "r": "cadavaddaaniki",
+  "start": 1.947,
+  "end": 2.57,
+  "score": 0.838
+ },
+ {
+  "w": "easy.",
+  "r": "easy",
+  "start": 2.811,
+  "end": 3.052,
+  "score": 0.035
+ },
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 3.594,
+  "end": 3.935,
+  "score": 0.547
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 4.035,
+  "end": 4.196,
+  "score": 0.963
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 4.276,
+  "end": 4.658,
+  "score": 0.655
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 5.16,
+  "end": 5.441,
+  "score": 0.424
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 5.802,
+  "end": 5.902,
+  "score": 0.397
+ },
+ {
+  "w": "next.",
+  "r": "next",
+  "start": 5.963,
+  "end": 6.264,
+  "score": 0.576
+ }
+]

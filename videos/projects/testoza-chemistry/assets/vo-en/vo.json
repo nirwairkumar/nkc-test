@@ -1,0 +1,170 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-en/L01.wav",
+    "duration": 15.195708,
+    "text": "Reactions, with heat on the arrow. Complex ions and their charges. Match-the-list tables. Structures, right inside the question.\nThis is chemistry in Testoza — and in the next few minutes, you'll type all of it yourself.",
+    "raw": "{m1}Reactions, with heat on the arrow. {m2}Complex ions and their charges. {m3}Match-the-list tables. {m4}Structures, right inside the question.\n{title}This is chemistry in TestoZa — and in the next few minutes, you'll type all of it yourself."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-en/L02.wav",
+    "duration": 9.396,
+    "text": "We'll use real questions from JEE Main and JEE Advanced 2026. Open Create Test, give it a name, pick JEE marking… and straight to the questions.",
+    "raw": "We'll use real questions from JEE Main and JEE Advanced 2026. {create}Open Create Test, {name}give it a name, {marking}pick JEE marking… {questions}and straight to the questions."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-en/L03.wav",
+    "duration": 11.884458,
+    "text": "First, a JEE Main question on complex ions. The words, you just type.\nFor the formulas, open Maths and symbols — this is Sy Pad — and go to the Chemistry tab.",
+    "raw": "First, a JEE Main question on complex ions. {q1text}The words, you just type.\nFor the formulas, {sypad}open Maths and symbols — this is Sy Pad — {chem}and go to the Chemistry tab."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-en/L04.wav",
+    "duration": 17.309542,
+    "text": "Now, the most useful button for any chemistry teacher — Formula.\nJust type the formula the way you'd write it. Bracket, M, n, B, r, four… see? The four drops down on its own.\nFor the charge, type a caret, then two minus.",
+    "raw": "Now, the most useful button for any chemistry teacher — {formula}Formula.\nJust type the formula the way you'd write it. {mn}Bracket, M n, B r, four… {sub}see? The four drops down on its own.\n{charge}For the charge, type a caret, then two minus."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-en/L05.wav",
+    "duration": 20.345333,
+    "text": "Then the copper complex — six waters, two plus. Insert, and Formula again for the two nickel complexes.\nEvery number drops down and every charge goes up, while you type.\nInsert… and the whole line sits right in the question.\nThe options are plain text, and D is the right answer.",
+    "raw": "{rest}Then the copper complex — six waters, two plus. {ins1a}Insert, {f1b}and Formula again for the two nickel complexes.\nEvery number drops down and every charge goes up, while you type.\n{ins1}Insert… {lands1}and the whole line sits right in the question.\n{opts1}The options are plain text, {correct1}and D is the right answer."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-en/L06.wav",
+    "duration": 8.970083,
+    "text": "Next, an equilibrium. Type the first line, then Formula, A, the gas key, the reversible arrow, B… and gas again.",
+    "raw": "{q2add}Next, an equilibrium. {q2text}Type the first line, {formula2}then Formula, {a}A, {gas}the gas key, {rev}the reversible arrow, {b}B… {gas2}and gas again."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-en/L07.wav",
+    "duration": 11.610542,
+    "text": "The other keys work the same way: gas given off, a precipitate, heat, degree Celsius, aqueous, solid, liquid, K-a, K-b, pH and mol. One tap each.",
+    "raw": "The other keys work the same way: {up}gas given off, {down}a precipitate, {heat}heat, {deg}degree Celsius, {aq}aqueous, solid, liquid, {consts}K a, K b, pH and mol. One tap each."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-en/L08.wav",
+    "duration": 9.021667,
+    "text": "Insert. Now the rest of the question — the concentrations, and what happens when we add more A.\nThen the four options, and D again.",
+    "raw": "{ins2}Insert. {rest2}Now the rest of the question — the concentrations, and what happens when we add more A.\n{opts2}Then the four options, {correct2}and D again."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-en/L09.wav",
+    "duration": 17.882542,
+    "text": "Now, three reactions with conditions on the arrows. Formula, sodium tetraborate… then the arrow with a box above and below.\nHere you choose how many lines go above and below. We only need one, on top, so remove the bottom one, and Insert.",
+    "raw": "{q3add}Now, three reactions with conditions on the arrows. {formula3}Formula, sodium tetraborate… {arrowkey}then the arrow with a box above and below.\n{rows}Here you choose how many lines go above and below. We only need one, on top, {rowminus}so remove the bottom one, {rowins}and Insert."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-en/L10.wav",
+    "duration": 8.794917,
+    "text": "That question mark above the arrow is your blank. Tap delta for heat, step past the arrow with this key, and finish the reaction. Insert.",
+    "raw": "{qmark}That question mark above the arrow is your blank. {delta}Tap delta for heat, {step}step past the arrow with this key, {prod}and finish the reaction. {ins3a}Insert."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-en/L11.wav",
+    "duration": 12.116833,
+    "text": "Second reaction: copper sulphate plus Y. Same arrow — but now tap Words, and type non-luminous flame. Words keep their spaces, like normal text.\nInsert.",
+    "raw": "{line2}Second reaction: copper sulphate plus Y. {arrow2}Same arrow — {words}but now tap Words, {flame}and type non-luminous flame. Words keep their spaces, like normal text.\n{ins3b}Insert."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-en/L12.wav",
+    "duration": 19.270833,
+    "text": "And the third one: two Z, two X and carbon on the left, the arrow with luminous flame on top,\nand two Q, borax and carbon monoxide on the right — exactly the same way. Insert.\nType the question, the four options — plus two and plus two, and so on — and B is correct.",
+    "raw": "{line3}And the third one: two Z, two X and carbon on the left, the arrow with luminous flame on top,\nand two Q, borax and carbon monoxide on the right — exactly the same way. {ins3c}Insert.\n{q3rest}Type the question, {opts3}the four options — plus two and plus two, and so on — {correct3}and B is correct."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-en/L13.wav",
+    "duration": 12.304958,
+    "text": "Match the list — JEE Main loves these. In Sy Pad, open Tables, and choose Match List.\nList-I and List-II are already there. Type the labels — A, B, C, D and one to four — and Insert.",
+    "raw": "{q4add}Match the list — JEE Main loves these. {tables}In Sy Pad, open Tables, {match}and choose Match List.\n{editor}List-I and List-II are already there. {labels}Type the labels — A, B, C, D and one to four — {tins}and Insert."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-en/L14.wav",
+    "duration": 18.124833,
+    "text": "Every empty cell is now a blue box. Click one, tap Formula, and type X-e-O-three.\nNext box — X-e-F-two… and so on, down both lists: X-e-O-two-F-two, X-e-O-F-four, then B-r-F-five, N-H-three, the I-three minus ion, and S-F-four.",
+    "raw": "{blue}Every empty cell is now a blue box. {box1}Click one, {f1}tap Formula, {xe}and type XeO3.\n{box2}Next box — XeF2… {fill}and so on, down both lists: XeO2F2, XeOF4, then BrF5, NH3, the I3 minus ion, and SF4."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-en/L15.wav",
+    "duration": 11.966583,
+    "text": "Insert — and there it is: a clean two-column table, right inside the question, just like the paper.\nType the four options — A two, B one, and so on — and B is the answer.",
+    "raw": "{tins2}Insert — {table}and there it is: a clean two-column table, right inside the question, just like the paper.\n{opts4}Type the four options — A two, B one, and so on — {correct4}and B is the answer."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-en/L16.wav",
+    "duration": 15.982667,
+    "text": "Now JEE Advanced, Paper 1. The answer here is a number, so change the question type to Numerical answer.\nAnd JEE Advanced takes nothing off for a wrong number, so set Wrong to zero. You can set the marks on any question, like this.",
+    "raw": "{q5add}Now JEE Advanced, Paper 1. The answer here is a number, {qtype}so change the question type {numerical}to Numerical answer.\nAnd JEE Advanced takes nothing off for a wrong number, {wrong}so set Wrong to zero. You can set the marks on any question, like this."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-en/L17.wav",
+    "duration": 13.674208,
+    "text": "Type the question. Now the first structure — tap Picture, then this cloud button.\nIt puts a picture inside the text, exactly where your cursor is. Choose a picture, find your file, pick the structure… and there it is.",
+    "raw": "{q5text}Type the question. Now the first structure — {pic}tap Picture, {cloud}then this cloud button.\n{cloudwhy}It puts a picture inside the text, exactly where your cursor is. {choose}Choose a picture, find your file, {pick}pick the structure… {placed}and there it is."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-en/L18.wav",
+    "duration": 25.52125,
+    "text": "Now open Sy Pad, and right next to the structure, the arrow with conditions. Tap Words, type heat on top, add X, and Insert.\nThe second structure goes in exactly the same way: Picture, the cloud button, choose the file.\nThen Sy Pad again — the arrow, the word heat on top, and Y. Insert.",
+    "raw": "Now open Sy Pad, and right next to the structure, {arrow5}the arrow with conditions. {heat5}Tap Words, type heat on top, {x}add X, and Insert.\n{second}The second structure goes in exactly the same way: Picture, the cloud button, choose the file.\nThen Sy Pad again — the arrow, the word heat on top, {y}and Y. {ins5}Insert."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-en/L19.wav",
+    "duration": 4.775042,
+    "text": "Just like the paper. For the answer, choose Exact value, and type four.",
+    "raw": "{seen}Just like the paper. For the answer, {exact}choose Exact value, {four}and type four."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-en/L20.wav",
+    "duration": 12.434625,
+    "text": "And when a question is long — don't type it at all. More than one answer can be right here, so first choose Multiple correct.\nNow Fill from photo, choose a photo of the question… and Testoza reads it for you.",
+    "raw": "And when a question is long — {q6add}don't type it at all. More than one answer can be right here, {qtype6}so first choose {multi}Multiple correct.\n{photo}Now Fill from photo, {choose6}choose a photo of the question… {reading}and TestoZa reads it for you."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-en/L21.wav",
+    "duration": 10.459917,
+    "text": "All three reactions, the gas labels, the five-seventy-three kelvin, even U two-thirty-five — and the photo shows the answer, so A and C are already ticked.",
+    "raw": "{filled}All three reactions, the gas labels, the 573 kelvin, even U-235 — {ticked}and the photo shows the answer, so A and C are already ticked."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-en/L22.wav",
+    "duration": 10.712875,
+    "text": "Always give it one quick read.\nLast thing — partial marks. Choose JEE Advanced: one mark for each correct option picked, full marks only for all of them.",
+    "raw": "{check}Always give it one quick read.\n{partial}Last thing — partial marks. {jeeadv}Choose JEE Advanced: one mark for each correct option picked, full marks only for all of them."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-en/L23.wav",
+    "duration": 6.329333,
+    "text": "Save test… and your chemistry paper is in My Tests — ready to conduct as a live exam.",
+    "raw": "{save}Save test… {saved}and your chemistry paper is in My Tests — {ready}ready to conduct as a live exam."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-en/L24.wav",
+    "duration": 9.79175,
+    "text": "Formulas, reactions, tables and structures — all in one place. Make your chemistry test at testoza.com.\nSubscribe for more, and I'll see you in the next one.",
+    "raw": "Formulas, reactions, tables and structures — all in one place. {endurl}Make your chemistry test at testoza.com.\n{thanks}Subscribe for more, and I'll see you in the next one."
+  }
+]

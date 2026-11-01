@@ -1,0 +1,163 @@
+[
+  {
+    "line": "L02",
+    "cue": "title",
+    "click": 6.2,
+    "word": 6.53,
+    "lead": 0.33
+  },
+  {
+    "line": "L02",
+    "cue": "branding",
+    "click": 7.21,
+    "word": 7.33,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "logo",
+    "click": 9.17,
+    "word": 9.29,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "name",
+    "click": 9.78,
+    "word": 10.33,
+    "lead": 0.55
+  },
+  {
+    "line": "L03",
+    "cue": "color",
+    "click": 11.65,
+    "word": 11.77,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "font",
+    "click": 12.53,
+    "word": 12.65,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "branded",
+    "click": 13.41,
+    "word": 13.53,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "q1",
+    "click": 14.39,
+    "word": 15.19,
+    "lead": 0.8
+  },
+  {
+    "line": "L04",
+    "cue": "right1",
+    "click": 15.64,
+    "word": 16.47,
+    "lead": 0.83
+  },
+  {
+    "line": "L04",
+    "cue": "add3",
+    "click": 17.82,
+    "word": 18.39,
+    "lead": 0.56
+  },
+  {
+    "line": "L04",
+    "cue": "save",
+    "click": 19.95,
+    "word": 20.07,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "conduct",
+    "click": 21.53,
+    "word": 21.83,
+    "lead": 0.29
+  },
+  {
+    "line": "L05",
+    "cue": "start",
+    "click": 22.12,
+    "word": 23.19,
+    "lead": 1.07
+  },
+  {
+    "line": "L05",
+    "cue": "copy",
+    "click": 23.22,
+    "word": 23.91,
+    "lead": 0.68
+  },
+  {
+    "line": "L05",
+    "cue": "code",
+    "click": 24.59,
+    "word": 24.71,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "dopen",
+    "click": 27.07,
+    "word": 27.19,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "cname",
+    "click": 28.24,
+    "word": 28.55,
+    "lead": 0.31
+  },
+  {
+    "line": "L06",
+    "cue": "dgo",
+    "click": 28.91,
+    "word": 29.59,
+    "lead": 0.68
+  },
+  {
+    "line": "L06",
+    "cue": "dbrand",
+    "click": 30.03,
+    "word": 30.15,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "typecode",
+    "click": 33.93,
+    "word": 34.63,
+    "lead": 0.7
+  },
+  {
+    "line": "L07",
+    "cue": "pgo",
+    "click": 35.99,
+    "word": 36.11,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "pbrand",
+    "click": 36.91,
+    "word": 37.03,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "ans1",
+    "click": 38.67,
+    "word": 38.79,
+    "lead": 0.12
+  }
+]

@@ -1,0 +1,107 @@
+[
+ {
+  "w": "Phone",
+  "r": "phone",
+  "start": 0.06,
+  "end": 0.301,
+  "score": 0.649
+ },
+ {
+  "w": "ನಲ್ಲಾ?",
+  "r": "nallaa",
+  "start": 0.301,
+  "end": 0.682,
+  "score": 0.857
+ },
+ {
+  "w": "Code",
+  "r": "code",
+  "start": 0.942,
+  "end": 1.123,
+  "score": 0.303
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.143,
+  "end": 1.323,
+  "score": 0.501
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 1.323,
+  "end": 1.504,
+  "score": 0.903
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 1.544,
+  "end": 1.784,
+  "score": 0.733
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 1.804,
+  "end": 1.945,
+  "score": 0.722
+ },
+ {
+  "w": "ಮಾಡಿದ್ರೆ,",
+  "r": "maaddidre",
+  "start": 1.945,
+  "end": 2.245,
+  "score": 0.685
+ },
+ {
+  "w": "ಅಲ್ಲೂ",
+  "r": "alluu",
+  "start": 2.346,
+  "end": 2.586,
+  "score": 0.811
+ },
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 2.606,
+  "end": 2.787,
+  "score": 0.995
+ },
+ {
+  "w": "brand.",
+  "r": "brand",
+  "start": 2.827,
+  "end": 3.087,
+  "score": 0.67
+ },
+ {
+  "w": "ಪ್ರತಿ",
+  "r": "prati",
+  "start": 3.208,
+  "end": 3.428,
+  "score": 0.992
+ },
+ {
+  "w": "question,",
+  "r": "question",
+  "start": 3.488,
+  "end": 3.809,
+  "score": 0.4
+ },
+ {
+  "w": "ನಿಮ್ಮ",
+  "r": "nimma",
+  "start": 3.829,
+  "end": 3.969,
+  "score": 0.593
+ },
+ {
+  "w": "ಹೆಸರಿನಲ್ಲೇ.",
+  "r": "hesarinallee",
+  "start": 3.969,
+  "end": 4.39,
+  "score": 0.579
+ }
+]

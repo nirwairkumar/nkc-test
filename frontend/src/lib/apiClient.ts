@@ -16,6 +16,10 @@ const apiClient = axios.create({
 
 // ─── Request Interceptor: Attach token if logged in ──────────────────────────
 apiClient.interceptors.request.use(async (config) => {
+    // Strip leading slash if URL is relative so Axios baseURL path (/api/) is not stripped
+    if (config.url && config.url.startsWith('/') && !config.url.startsWith('//') && !config.url.startsWith('http')) {
+        config.url = config.url.replace(/^\/+/, '');
+    }
     const token = tokenStorage.getTokens().token;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;

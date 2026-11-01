@@ -1,0 +1,98 @@
+[
+  {
+    "id": "w0",
+    "text": "She",
+    "start": 0,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "sees",
+    "start": 0.24,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "her",
+    "start": 0.56,
+    "end": 0.72
+  },
+  {
+    "id": "w3",
+    "text": "score",
+    "start": 0.72,
+    "end": 1.2
+  },
+  {
+    "id": "w4",
+    "text": "instantly,",
+    "start": 1.2,
+    "end": 1.92
+  },
+  {
+    "id": "w5",
+    "text": "seventy",
+    "start": 1.92,
+    "end": 2.32
+  },
+  {
+    "id": "w6",
+    "text": "five",
+    "start": 2.32,
+    "end": 2.56
+  },
+  {
+    "id": "w7",
+    "text": "percent,",
+    "start": 2.56,
+    "end": 3.12
+  },
+  {
+    "id": "w8",
+    "text": "with",
+    "start": 3.12,
+    "end": 3.36
+  },
+  {
+    "id": "w9",
+    "text": "the",
+    "start": 3.36,
+    "end": 3.44
+  },
+  {
+    "id": "w10",
+    "text": "solution",
+    "start": 3.44,
+    "end": 3.92
+  },
+  {
+    "id": "w11",
+    "text": "key",
+    "start": 3.92,
+    "end": 4.32
+  },
+  {
+    "id": "w12",
+    "text": "if",
+    "start": 4.4,
+    "end": 4.48
+  },
+  {
+    "id": "w13",
+    "text": "you",
+    "start": 4.56,
+    "end": 4.64
+  },
+  {
+    "id": "w14",
+    "text": "allow",
+    "start": 4.64,
+    "end": 4.88
+  },
+  {
+    "id": "w15",
+    "text": "it.",
+    "start": 4.88,
+    "end": 5.12
+  }
+]

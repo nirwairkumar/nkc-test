@@ -1,0 +1,198 @@
+[
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 0.04,
+  "end": 0.3,
+  "score": 0.994
+ },
+ {
+  "w": "paper-ஐ",
+  "r": "paperai",
+  "start": 0.5,
+  "end": 1.161,
+  "score": 0.628
+ },
+ {
+  "w": "sections-ஆ",
+  "r": "sectionsaa",
+  "start": 1.161,
+  "end": 1.721,
+  "score": 0.42
+ },
+ {
+  "w": "பிரிங்க,",
+  "r": "piringka",
+  "start": 1.781,
+  "end": 2.141,
+  "score": 0.913
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 2.441,
+  "end": 2.741,
+  "score": 0.976
+ },
+ {
+  "w": "section-க்கும்",
+  "r": "sectionkkum",
+  "start": 2.821,
+  "end": 3.361,
+  "score": 0.503
+ },
+ {
+  "w": "தனி",
+  "r": "tani",
+  "start": 3.442,
+  "end": 3.682,
+  "score": 0.837
+ },
+ {
+  "w": "timer",
+  "r": "timer",
+  "start": 3.782,
+  "end": 4.102,
+  "score": 0.524
+ },
+ {
+  "w": "SSC",
+  "r": "ssc",
+  "start": 4.482,
+  "end": 4.642,
+  "score": 0.296
+ },
+ {
+  "w": "மாதிரியே.",
+  "r": "maatiriyee",
+  "start": 4.762,
+  "end": 5.182,
+  "score": 0.977
+ },
+ {
+  "w": "எங்க",
+  "r": "engka",
+  "start": 5.542,
+  "end": 5.763,
+  "score": 0.996
+ },
+ {
+  "w": "வேணும்னாலும்",
+  "r": "veenumnaalum",
+  "start": 5.783,
+  "end": 6.283,
+  "score": 0.789
+ },
+ {
+  "w": "split",
+  "r": "split",
+  "start": 6.283,
+  "end": 6.503,
+  "score": 0.702
+ },
+ {
+  "w": "பண்ணலாம்:",
+  "r": "pannalaam",
+  "start": 6.543,
+  "end": 6.883,
+  "score": 0.881
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 7.203,
+  "end": 7.663,
+  "score": 0.436
+ },
+ {
+  "w": "ஏழு",
+  "r": "eelu",
+  "start": 7.803,
+  "end": 8.024,
+  "score": 0.75
+ },
+ {
+  "w": "முதல்",
+  "r": "mutal",
+  "start": 8.064,
+  "end": 8.264,
+  "score": 0.818
+ },
+ {
+  "w": "பதிமூணு",
+  "r": "patimuunu",
+  "start": 8.304,
+  "end": 8.804,
+  "score": 0.364
+ },
+ {
+  "w": "Section",
+  "r": "section",
+  "start": 8.944,
+  "end": 9.284,
+  "score": 0.226
+ },
+ {
+  "w": "B",
+  "r": "b",
+  "start": 9.344,
+  "end": 9.364,
+  "score": 0.009
+ },
+ {
+  "w": "ஆகிடுச்சு.",
+  "r": "aakiduccu",
+  "start": 9.524,
+  "end": 9.944,
+  "score": 0.835
+ },
+ {
+  "w": "இங்க",
+  "r": "ingka",
+  "start": 10.365,
+  "end": 10.585,
+  "score": 0.953
+ },
+ {
+  "w": "பத்து",
+  "r": "pattu",
+  "start": 10.645,
+  "end": 10.865,
+  "score": 0.709
+ },
+ {
+  "w": "நிமிஷம்,",
+  "r": "nimissam",
+  "start": 10.885,
+  "end": 11.245,
+  "score": 0.955
+ },
+ {
+  "w": "அங்க",
+  "r": "angka",
+  "start": 11.425,
+  "end": 11.645,
+  "score": 0.932
+ },
+ {
+  "w": "பத்து",
+  "r": "pattu",
+  "start": 11.705,
+  "end": 11.905,
+  "score": 0.775
+ },
+ {
+  "w": "நிமிஷம்…",
+  "r": "nimissam",
+  "start": 11.945,
+  "end": 12.285,
+  "score": 0.968
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 12.586,
+  "end": 12.866,
+  "score": 0.233
+ }
+]

@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X, Menu } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X, Menu, Shield, ShieldCheck, ShieldAlert, Eye, Maximize2, Calendar, SlidersHorizontal, CheckCircle2, XCircle, Timer, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
+
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -36,6 +37,7 @@ import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import SplashLoader from '@/components/ui/SplashLoader';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { getUserAppUrl } from '@/utils/subdomain';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -50,7 +52,8 @@ import {
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import { shareTest } from '@/utils/shareUtils';
-import { getUserAppUrl } from '@/utils/subdomain';
+import { roleLabel } from './users/roles';
+
 interface ManageTestsProps {
     activeTab?: string;
 }
@@ -144,6 +147,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
 
     const [conductModeTests, setConductModeTests] = useState<any[]>([]);
     const [conductModeLoading, setConductModeLoading] = useState(false);
+    const [inspectingEnvTest, setInspectingEnvTest] = useState<any | null>(null);
 
     // Three-dot menu state
     const [allClasses, setAllClasses] = useState<any[]>([]);
@@ -365,7 +369,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
 
         try {
             setTabLoading(true);
-            
+
             if (tabId === 'tests') {
                 await Promise.all([
                     loadTests(true),
@@ -403,22 +407,9 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         fetchActiveTabData(activeTab);
     }, [activeTab, fetchActiveTabData]);
 
-    // Fetch conduct mode tests on mount to get the active count for the sidebar badge
-    useEffect(() => {
-        const fetchInitialConductCount = async () => {
-            try {
-                const { data, error } = await fetchConductModeTests();
-                if (!error && data) {
-                    setConductModeTests(data || []);
-                    // Mark as loaded so navigating to the activity tab doesn't fetch again
-                    loadedTabsRef.current['activity'] = true;
-                }
-            } catch (err) {
-                console.error("Failed to load initial conduct mode tests count:", err);
-            }
-        };
-        fetchInitialConductCount();
-    }, []);
+    // Live exams load only for the 'activity' tab. AdminDashboard fetches the sidebar badge
+    // count itself, and Live Activity is ExamOpsPanel now, so this page no longer fetches
+    // every live exam on load.
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -491,7 +482,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             ...test.settings,
             conduct_exam: {
                 ...test.settings?.conduct_exam,
-                enabled: false
+                enabled: false,
+                ended_at: new Date().toISOString()
             }
         };
         const { error } = await updateTest(test.id, { settings: updatedSettings }, isAdmin);
@@ -502,6 +494,220 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             loadConductModeTests();
         }
     };
+
+    const handleCopyLiveLink = async (url: string) => {
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success("Live exam link copied to clipboard!");
+        } catch {
+            toast.error("Failed to copy live link");
+        }
+    };
+
+    const formatIST = (dateStr?: string | null, includeSeconds: boolean = false) => {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return String(dateStr);
+            return date.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                ...(includeSeconds ? { second: '2-digit' } : {}),
+                hour12: true
+            }) + ' IST';
+        } catch {
+            return String(dateStr);
+        }
+    };
+
+    const formatTimeAgo = (dateStr?: string | null) => {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            const diffMs = Date.now() - date.getTime();
+            if (diffMs < 0) return 'in future';
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return 'just now';
+            if (mins < 60) return `${mins}m ago`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours}h ${mins % 60}m ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        } catch {
+            return '';
+        }
+    };
+
+    const getEnvironmentSettingsSummary = (settings?: any) => {
+        if (!settings) return [];
+        const items: { label: string; active: boolean; detail?: string; icon: any; color: string }[] = [];
+
+        if (settings.force_fullscreen) {
+            items.push({
+                label: 'Fullscreen Locked',
+                active: true,
+                detail: 'Student must remain in full-screen mode',
+                icon: Maximize2,
+                color: 'text-violet-700 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800'
+            });
+        }
+
+        if (settings.tab_switch_mode && settings.tab_switch_mode !== 'off') {
+            const modeLabel = settings.tab_switch_mode === 'strict'
+                ? 'Strict'
+                : settings.tab_switch_mode === 'warning'
+                    ? 'Warning'
+                    : `${settings.tab_switch_mode}`;
+            items.push({
+                label: `Tab Switch: ${modeLabel}`,
+                active: true,
+                detail: `Tab switch detection: ${modeLabel}`,
+                icon: Eye,
+                color: 'text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+            });
+        }
+
+        if (settings.disable_copy_paste) {
+            items.push({
+                label: 'No Copy/Paste',
+                active: true,
+                detail: 'Clipboard copy & paste is blocked',
+                icon: Copy,
+                color: 'text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+            });
+        }
+
+        if (settings.disable_actions) {
+            items.push({
+                label: 'Shortcuts Blocked',
+                active: true,
+                detail: 'Right-click and keyboard inspection shortcuts disabled',
+                icon: Lock,
+                color: 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+            });
+        }
+
+        if (settings.block_back_button) {
+            items.push({
+                label: 'Back Blocked',
+                active: true,
+                detail: 'Browser back button navigation prevented',
+                icon: Shield,
+                color: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+            });
+        }
+
+        if (settings.disable_exit_button) {
+            items.push({
+                label: 'Exit Hidden',
+                active: true,
+                detail: 'Exit test button is disabled / hidden',
+                icon: XCircle,
+                color: 'text-purple-700 bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+            });
+        }
+
+        if (settings.strict_timer) {
+            items.push({
+                label: 'Strict Timer',
+                active: true,
+                detail: 'Timer counts down strictly without pause',
+                icon: Timer,
+                color: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+            });
+        }
+
+        if (settings.attempt_limit) {
+            items.push({
+                label: `${settings.attempt_limit} Attempt Limit`,
+                active: true,
+                detail: `Max ${settings.attempt_limit} attempt(s) per candidate`,
+                icon: Users,
+                color: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800'
+            });
+        }
+
+        if (settings.shuffle_questions) {
+            items.push({
+                label: 'Shuffle Questions',
+                active: true,
+                detail: 'Questions are randomized per student',
+                icon: Layers,
+                color: 'text-teal-700 bg-teal-50 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800'
+            });
+        }
+
+        if (settings.start_form?.enabled && settings.start_form?.fields?.length > 0) {
+            items.push({
+                label: `Reg Form (${settings.start_form.fields.length})`,
+                active: true,
+                detail: `Fields: ${settings.start_form.fields.map((f: any) => f.label || f.name).join(', ')}`,
+                icon: FileText,
+                color: 'text-orange-700 bg-orange-50 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800'
+            });
+        }
+
+        if (settings.exam_interface_mode) {
+            items.push({
+                label: `${settings.exam_interface_mode.toUpperCase()} UI`,
+                active: true,
+                detail: `Exam UI: ${settings.exam_interface_mode.toUpperCase()} mode`,
+                icon: Settings,
+                color: 'text-slate-700 bg-slate-100 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800'
+            });
+        }
+
+        return items;
+    };
+
+    // Auto-deactivate ended scheduled exams
+    useEffect(() => {
+        if (!conductModeTests || conductModeTests.length === 0) return;
+
+        const checkExpiredScheduledTests = async () => {
+            const now = new Date();
+            const expiredTests = conductModeTests.filter(t => {
+                const schedule = t.settings?.schedule;
+                if (schedule?.enabled && schedule?.end_time) {
+                    return new Date(schedule.end_time) < now;
+                }
+                return false;
+            });
+
+            if (expiredTests.length > 0) {
+                for (const expTest of expiredTests) {
+                    try {
+                        const updatedSettings = {
+                            ...expTest.settings,
+                            conduct_exam: {
+                                ...(expTest.settings?.conduct_exam || {}),
+                                enabled: false,
+                                ended_at: new Date().toISOString()
+                            }
+                        };
+                        await updateTest(expTest.id, {
+                            settings: updatedSettings,
+                            visibility: 'private',
+                            is_public: false
+                        }, isAdmin);
+                        toast.info(`Scheduled test "${expTest.title}" reached end time and was automatically deactivated.`);
+                    } catch (e) {
+                        console.error("Auto deactivation error in admin:", e);
+                    }
+                }
+                loadConductModeTests();
+            }
+        };
+
+        checkExpiredScheduledTests();
+        const interval = setInterval(checkExpiredScheduledTests, 15000);
+        return () => clearInterval(interval);
+    }, [conductModeTests]);
 
     const handleOpenCloneToUserDialog = (test: any) => {
         setCloningTestSelected(test);
@@ -1005,993 +1211,1128 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                 ) : (
                     <>
 
-                {/* --- TESTS TAB --- */}
-                <TabsContent value="tests" className="space-y-4">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        {/* Search Bar */}
-                        <div className="relative w-full md:w-72">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder={placeholders[placeholderIndex]}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 h-9 bg-background"
-                            />
-                        </div>
-                        <Button variant="outline" onClick={() => loadTests(true)} size="sm" className="whitespace-nowrap">
-                            <RefreshCw className={`h-4 w-4 mr-2 ${testsLoading ? 'animate-spin' : ''}`} />
-                            <span className="hidden md:inline">Refresh Tests</span>
-                        </Button>
+                        {/* --- TESTS TAB --- */}
+                        <TabsContent value="tests" className="space-y-4">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                {/* Search Bar */}
+                                <div className="relative w-full md:w-72">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder={placeholders[placeholderIndex]}
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-9 h-9 bg-background"
+                                    />
+                                </div>
+                                <Button variant="outline" onClick={() => loadTests(true)} size="sm" className="whitespace-nowrap">
+                                    <RefreshCw className={`h-4 w-4 mr-2 ${testsLoading ? 'animate-spin' : ''}`} />
+                                    <span className="hidden md:inline">Refresh Tests</span>
+                                </Button>
 
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {tests.length === 0 && !testsLoading ? (
-                            <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
-                                {searchQuery ? "No matching tests found." : "No tests found."}
                             </div>
-                        ) : (
-                            <>
-                                {tests.map((test) => {
-                                    const testId = test.id;
-                                    const isRendered = isItemRendered(testId);
-                                    const currentVisibility = test.visibility || (test.is_public ? 'public' : 'private');
-                                    const className = test.classes?.name || null;
 
-                                    if (!isRendered) {
-                                        return (
-                                            <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
-                                                <TestCardSkeleton />
-                                            </div>
-                                        );
-                                    }
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {tests.length === 0 && !testsLoading ? (
+                                    <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
+                                        {searchQuery ? "No matching tests found." : "No tests found."}
+                                    </div>
+                                ) : (
+                                    <>
+                                        {tests.map((test) => {
+                                            const testId = test.id;
+                                            const isRendered = isItemRendered(testId);
+                                            const currentVisibility = test.visibility || (test.is_public ? 'public' : 'private');
+                                            const className = test.classes?.name || null;
 
-                                    return (
-                                        <div
-                                            key={test.id}
-                                            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full overflow-hidden"
-                                        >
-                                            {/* --- Identity Accent --- */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-
-                                            {/* --- Zone A: Header --- */}
-                                            <div className="flex justify-between items-start mb-4 gap-3 pl-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <h3
-                                                        className="text-[1.05rem] font-semibold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2 mb-1 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors"
-                                                        title={test.title}
-                                                    >
-                                                        {test.title}
-                                                    </h3>
-                                                    {test.settings?.is_example_template && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
-                                                            Example Template
-                                                        </span>
-                                                    )}
-                                                    {/* --- Zone B: Metadata (Clean Row) --- */}
-                                                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1.5">
-                                                        <span className="flex items-center gap-1.5">
-                                                            <FileText className="w-3.5 h-3.5 opacity-70" />
-                                                            {test.total_questions || test.questions?.length || 0} Qs
-                                                        </span>
-                                                        <span className="text-slate-300">•</span>
-                                                        <span className="flex items-center gap-1.5">
-                                                            <Clock className="w-3.5 h-3.5 opacity-70" />
-                                                            {test.duration || 0}m
-                                                        </span>
-                                                        <span className="text-slate-300">•</span>
-                                                        <span className="text-xs text-slate-400 font-normal tracking-wide">
-                                                            #{test.custom_id || 'N/A'}
-                                                        </span>
+                                            if (!isRendered) {
+                                                return (
+                                                    <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                        <TestCardSkeleton />
                                                     </div>
-                                                </div>
+                                                );
+                                            }
 
-                                                {/* Top Actions: Menu & Info */}
-                                                <div className="flex items-center gap-0.5 shrink-0 -mr-1 -mt-1">
-                                                    <div
-                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 cursor-pointer rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleViewCreator(test.created_by);
-                                                        }}
-                                                        title="Creator Info"
-                                                    >
-                                                        <Info className="w-4 h-4" />
-                                                    </div>
+                                            return (
+                                                <div
+                                                    key={test.id}
+                                                    className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full overflow-hidden"
+                                                >
+                                                    {/* --- Identity Accent --- */}
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
 
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-56">
-                                                            {/* Visibility Submenu */}
-                                                            <DropdownMenuSub>
-                                                                <DropdownMenuSubTrigger>
-                                                                    {getVisibilityIcon(currentVisibility)}
-                                                                    <span className="ml-2">Visibility</span>
-                                                                </DropdownMenuSubTrigger>
-                                                                <DropdownMenuSubContent>
-                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
-                                                                        <Globe className="mr-2 h-4 w-4" /> Public
-                                                                        {currentVisibility === 'public' && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
-                                                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
-                                                                        {currentVisibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
-                                                                        <Lock className="mr-2 h-4 w-4" /> Private
-                                                                        {currentVisibility === 'private' && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuSubContent>
-                                                            </DropdownMenuSub>
-
-                                                            {/* Share Link */}
-                                                            <DropdownMenuItem onClick={() => handleShare(test)}>
-                                                                <LinkIcon className="mr-2 h-4 w-4" /> Share Link
-                                                            </DropdownMenuItem>
-
-                                                            <DropdownMenuSeparator />
-
-                                                            {/* Class Assignment Submenu */}
-                                                            <DropdownMenuSub>
-                                                                <DropdownMenuSubTrigger>
-                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
-                                                                </DropdownMenuSubTrigger>
-                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                                    {allClasses.length === 0 ? (
-                                                                        <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
-                                                                    ) : (
-                                                                        <>
-                                                                            <DropdownMenuItem onClick={() => handleClassChange(test, null, null)}>
-                                                                                <span className="opacity-50">None</span>
-                                                                                {!test.class_id && <Check className="ml-auto h-4 w-4" />}
-                                                                            </DropdownMenuItem>
-                                                                            {allClasses.map(cls => (
-                                                                                <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id, cls.name)}>
-                                                                                    {cls.name}
-                                                                                    {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
-                                                                                </DropdownMenuItem>
-                                                                            ))}
-                                                                        </>
-                                                                    )}
-                                                                </DropdownMenuSubContent>
-                                                            </DropdownMenuSub>
-
-                                                            {/* Sub-Category Assignment Submenu */}
-                                                            <DropdownMenuSub>
-                                                                <DropdownMenuSubTrigger>
-                                                                    <BookOpen className="mr-2 h-4 w-4" /> Assign Sub-Category
-                                                                </DropdownMenuSubTrigger>
-                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                                    <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)} className="flex items-center justify-between">
-                                                                        <span className="opacity-50">None</span>
-                                                                        {!test.sub_category_id && <Check className="h-4 w-4 ml-2 text-primary" />}
-                                                                    </DropdownMenuItem>
-                                                                    {(() => {
-                                                                        const filteredSubs = (test.categories && test.categories.length > 0)
-                                                                            ? allSubCategories.filter(sc => test.categories?.some((c: any) => c.id === sc.category_id))
-                                                                            : allSubCategories;
-
-                                                                        if (filteredSubs.length === 0) {
-                                                                            return <DropdownMenuItem disabled>No sub-categories available</DropdownMenuItem>;
-                                                                        }
-
-                                                                        return filteredSubs.map(sc => {
-                                                                            const parentCat = categories.find(c => c.id === sc.category_id);
-                                                                            const isAssigned = test.sub_category_id === sc.id;
-                                                                            return (
-                                                                                <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)} className="flex items-center justify-between">
-                                                                                    <span>{parentCat ? `${parentCat.name} → ` : ''}{sc.name}</span>
-                                                                                    {isAssigned && <Check className="h-4 w-4 ml-2 text-primary" />}
-                                                                                </DropdownMenuItem>
-                                                                            );
-                                                                        });
-                                                                    })()}
-                                                                </DropdownMenuSubContent>
-                                                            </DropdownMenuSub>
-
-                                                            <DropdownMenuSeparator />
-
-                                                            {/* Edit Action */}
-                                                            <DropdownMenuItem onClick={() => openTestEditDialog(test)}>
-                                                                <Pencil className="mr-2 h-4 w-4" /> Edit Test
-                                                            </DropdownMenuItem>
-
-                                                            {/* Manage Action */}
-                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
-                                                                <Settings className="mr-2 h-4 w-4" /> Manage Settings
-                                                            </DropdownMenuItem>
-
-                                                            {/* Upload Solutions Action */}
-                                                            <DropdownMenuItem onClick={() => navigate(`/solutions-editor/${test.id}`)}>
-                                                                <Upload className="mr-2 h-4 w-4" /> Upload Solutions
-                                                            </DropdownMenuItem>
-
-                                                            {/* Clone to User */}
-                                                            <DropdownMenuItem onClick={() => handleOpenCloneToUserDialog(test)}>
-                                                                <Copy className="mr-2 h-4 w-4" /> Clone to User
-                                                            </DropdownMenuItem>
-
-                                                            <DropdownMenuSeparator />
-
-                                                            {/* Delete Action */}
-                                                            <DropdownMenuItem
-                                                                onClick={() => handleDeleteTest(test.id, test.title)}
-                                                                className="text-destructive focus:text-destructive"
+                                                    {/* --- Zone A: Header --- */}
+                                                    <div className="flex justify-between items-start mb-4 gap-3 pl-2">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3
+                                                                className="text-[1.05rem] font-semibold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2 mb-1 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors"
+                                                                title={test.title}
                                                             >
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                                {test.title}
+                                                            </h3>
+                                                            {test.settings?.is_example_template && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
+                                                                    Example Template
+                                                                </span>
+                                                            )}
+                                                            {/* --- Zone B: Metadata (Clean Row) --- */}
+                                                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1.5">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <FileText className="w-3.5 h-3.5 opacity-70" />
+                                                                    {test.total_questions || test.questions?.length || 0} Qs
+                                                                </span>
+                                                                <span className="text-slate-300">•</span>
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <Clock className="w-3.5 h-3.5 opacity-70" />
+                                                                    {test.duration || 0}m
+                                                                </span>
+                                                                <span className="text-slate-300">•</span>
+                                                                <span className="text-xs text-slate-400 font-normal tracking-wide">
+                                                                    #{test.custom_id || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Top Actions: Menu & Info */}
+                                                        <div className="flex items-center gap-0.5 shrink-0 -mr-1 -mt-1">
+                                                            <div
+                                                                className="p-1.5 text-slate-400 hover:text-indigo-600 cursor-pointer rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleViewCreator(test.created_by);
+                                                                }}
+                                                                title="Creator Info"
+                                                            >
+                                                                <Info className="w-4 h-4" />
+                                                            </div>
+
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                                        <MoreVertical className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-56">
+                                                                    {/* Visibility Submenu */}
+                                                                    <DropdownMenuSub>
+                                                                        <DropdownMenuSubTrigger>
+                                                                            {getVisibilityIcon(currentVisibility)}
+                                                                            <span className="ml-2">Visibility</span>
+                                                                        </DropdownMenuSubTrigger>
+                                                                        <DropdownMenuSubContent>
+                                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
+                                                                                <Globe className="mr-2 h-4 w-4" /> Public
+                                                                                {currentVisibility === 'public' && <Check className="ml-auto h-4 w-4" />}
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
+                                                                                <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                                                                {currentVisibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
+                                                                                <Lock className="mr-2 h-4 w-4" /> Private
+                                                                                {currentVisibility === 'private' && <Check className="ml-auto h-4 w-4" />}
+                                                                            </DropdownMenuItem>
+                                                                        </DropdownMenuSubContent>
+                                                                    </DropdownMenuSub>
+
+                                                                    {/* Share Link */}
+                                                                    <DropdownMenuItem onClick={() => handleShare(test)}>
+                                                                        <LinkIcon className="mr-2 h-4 w-4" /> Share Link
+                                                                    </DropdownMenuItem>
+
+                                                                    <DropdownMenuSeparator />
+
+                                                                    {/* Class Assignment Submenu */}
+                                                                    <DropdownMenuSub>
+                                                                        <DropdownMenuSubTrigger>
+                                                                            <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                                        </DropdownMenuSubTrigger>
+                                                                        <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                            {allClasses.length === 0 ? (
+                                                                                <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null, null)}>
+                                                                                        <span className="opacity-50">None</span>
+                                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                                                    </DropdownMenuItem>
+                                                                                    {allClasses.map(cls => (
+                                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id, cls.name)}>
+                                                                                            {cls.name}
+                                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                                        </DropdownMenuItem>
+                                                                                    ))}
+                                                                                </>
+                                                                            )}
+                                                                        </DropdownMenuSubContent>
+                                                                    </DropdownMenuSub>
+
+                                                                    {/* Sub-Category Assignment Submenu */}
+                                                                    <DropdownMenuSub>
+                                                                        <DropdownMenuSubTrigger>
+                                                                            <BookOpen className="mr-2 h-4 w-4" /> Assign Sub-Category
+                                                                        </DropdownMenuSubTrigger>
+                                                                        <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                            <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)} className="flex items-center justify-between">
+                                                                                <span className="opacity-50">None</span>
+                                                                                {!test.sub_category_id && <Check className="h-4 w-4 ml-2 text-primary" />}
+                                                                            </DropdownMenuItem>
+                                                                            {(() => {
+                                                                                const filteredSubs = (test.categories && test.categories.length > 0)
+                                                                                    ? allSubCategories.filter(sc => test.categories?.some((c: any) => c.id === sc.category_id))
+                                                                                    : allSubCategories;
+
+                                                                                if (filteredSubs.length === 0) {
+                                                                                    return <DropdownMenuItem disabled>No sub-categories available</DropdownMenuItem>;
+                                                                                }
+
+                                                                                return filteredSubs.map(sc => {
+                                                                                    const parentCat = categories.find(c => c.id === sc.category_id);
+                                                                                    const isAssigned = test.sub_category_id === sc.id;
+                                                                                    return (
+                                                                                        <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)} className="flex items-center justify-between">
+                                                                                            <span>{parentCat ? `${parentCat.name} → ` : ''}{sc.name}</span>
+                                                                                            {isAssigned && <Check className="h-4 w-4 ml-2 text-primary" />}
+                                                                                        </DropdownMenuItem>
+                                                                                    );
+                                                                                });
+                                                                            })()}
+                                                                        </DropdownMenuSubContent>
+                                                                    </DropdownMenuSub>
+
+                                                                    <DropdownMenuSeparator />
+
+                                                                    {/* Edit Action */}
+                                                                    <DropdownMenuItem onClick={() => openTestEditDialog(test)}>
+                                                                        <Pencil className="mr-2 h-4 w-4" /> Edit Test
+                                                                    </DropdownMenuItem>
+
+                                                                    {/* Manage Action */}
+                                                                    <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
+                                                                        <Settings className="mr-2 h-4 w-4" /> Manage Settings
+                                                                    </DropdownMenuItem>
+
+                                                                    {/* Upload Solutions Action */}
+                                                                    <DropdownMenuItem onClick={() => navigate(`/solutions-editor/${test.id}`)}>
+                                                                        <Upload className="mr-2 h-4 w-4" /> Upload Solutions
+                                                                    </DropdownMenuItem>
+
+                                                                    {/* Clone to User */}
+                                                                    <DropdownMenuItem onClick={() => handleOpenCloneToUserDialog(test)}>
+                                                                        <Copy className="mr-2 h-4 w-4" /> Clone to User
+                                                                    </DropdownMenuItem>
+
+                                                                    <DropdownMenuSeparator />
+
+                                                                    {/* Delete Action */}
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDeleteTest(test.id, test.title)}
+                                                                        className="text-destructive focus:text-destructive"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Test
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* --- Zone C: Tags --- */}
+                                                    <div className="pl-2 flex-grow mb-4">
+                                                        {className && (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-800/30">
+                                                                <GraduationCap className="w-3 h-3 opacity-70" />
+                                                                {className}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* --- Zone D: Actions --- */}
+                                                    <div className="flex items-center justify-end gap-3 mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/50 pl-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 text-xs font-medium px-4 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                                                            onClick={() => setViewingResultsTest(test)}
+                                                        >
+                                                            Results
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
+                                                            onClick={() => window.open(getUserAppUrl(`/test-intro/${test.id}`), '_blank')}
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            );
+                                        })}
 
-                                            {/* --- Zone C: Tags --- */}
-                                            <div className="pl-2 flex-grow mb-4">
-                                                {className && (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-800/30">
-                                                        <GraduationCap className="w-3 h-3 opacity-70" />
-                                                        {className}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* --- Zone D: Actions --- */}
-                                            <div className="flex items-center justify-end gap-3 mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/50 pl-2">
+                                        {hasMore && (
+                                            <div
+                                                className="col-span-full py-8 flex justify-center"
+                                                ref={observerTarget}
+                                            >
                                                 <Button
                                                     variant="outline"
-                                                    size="sm"
-                                                    className="h-8 text-xs font-medium px-4 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                                                    onClick={() => setViewingResultsTest(test)}
+                                                    onClick={() => loadTests(false)}
+                                                    disabled={testsLoading}
+                                                    className="w-full md:w-auto min-w-[200px]"
                                                 >
-                                                    Results
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
-                                                    onClick={() => window.open(getUserAppUrl(`/test-intro/${test.id}`), '_blank')}
-                                                >
-                                                    View
+                                                    {testsLoading ? (
+                                                        <>
+                                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                            Loading More...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus className="h-4 w-4 mr-2" />
+                                                            View More Tests
+                                                        </>
+                                                    )}
                                                 </Button>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        )}
+                                    </>
+                                )}
+                            </div>
 
-                                {hasMore && (
-                                    <div
-                                        className="col-span-full py-8 flex justify-center"
-                                        ref={observerTarget}
-                                    >
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => loadTests(false)}
-                                            disabled={testsLoading}
-                                            className="w-full md:w-auto min-w-[200px]"
-                                        >
-                                            {testsLoading ? (
-                                                <>
-                                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                                    Loading More...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    View More Tests
-                                                </>
-                                            )}
+                        </TabsContent>
+
+                        {/* --- CATEGORIES TAB --- */}
+                        <TabsContent value="categories">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <CardTitle>Test Categories</CardTitle>
+                                            <CardDescription>Create and rename categories (e.g., JEE, NEET, Physics, Math).</CardDescription>
+                                        </div>
+                                        <Button onClick={() => openCategoryDialog()} size="sm">
+                                            <Plus className="w-4 h-4 mr-2" /> Add Category
                                         </Button>
                                     </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                </TabsContent>
-
-                {/* --- CATEGORIES TAB --- */}
-                <TabsContent value="categories">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle>Test Categories</CardTitle>
-                                    <CardDescription>Create and rename categories (e.g., JEE, NEET, Physics, Math).</CardDescription>
-                                </div>
-                                <Button onClick={() => openCategoryDialog()} size="sm">
-                                    <Plus className="w-4 h-4 mr-2" /> Add Category
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Category Name</TableHead>
-                                        <TableHead className="w-[150px] text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {categoriesLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={2} className="text-center py-12 text-slate-500 font-medium">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                                                    <span className="text-xs font-semibold">Loading categories...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : categories.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={2} className="text-center text-muted-foreground">No categories found.</TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        categories.map(category => (
-                                            <React.Fragment key={category.id}>
-                                                <TableRow className="cursor-pointer hover:bg-slate-50" onClick={() => toggleExpandCategory(category.id)}>
-                                                    <TableCell className="font-medium">
-                                                        <span className="mr-2 text-xs text-muted-foreground">{expandedCategory === category.id ? '▼' : '▶'}</span>
-                                                        {category.name}
-                                                        {subCategories[category.id] && (
-                                                            <span className="ml-2 text-xs text-muted-foreground">({subCategories[category.id].length} sub)</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="text-right flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                                                        <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id)} title="Add Sub-Category">
-                                                            <Plus className="w-4 h-4 text-emerald-600" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => openCategoryDialog(category)}>
-                                                            <Pencil className="w-4 h-4 text-blue-600" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
-                                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                                        </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Category Name</TableHead>
+                                                <TableHead className="w-[150px] text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {categoriesLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={2} className="text-center py-12 text-slate-500 font-medium">
+                                                        <div className="flex flex-col items-center justify-center gap-2">
+                                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                            <span className="text-xs font-semibold">Loading categories...</span>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
-                                                {expandedCategory === category.id && (
-                                                    (subCategories[category.id] || []).length === 0 ? (
-                                                        <TableRow>
-                                                            <TableCell colSpan={2} className="pl-10 text-sm text-muted-foreground italic bg-slate-50/50">No sub-categories. Click + to add one.</TableCell>
+                                            ) : categories.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={2} className="text-center text-muted-foreground">No categories found.</TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                categories.map(category => (
+                                                    <React.Fragment key={category.id}>
+                                                        <TableRow className="cursor-pointer hover:bg-slate-50" onClick={() => toggleExpandCategory(category.id)}>
+                                                            <TableCell className="font-medium">
+                                                                <span className="mr-2 text-xs text-muted-foreground">{expandedCategory === category.id ? '▼' : '▶'}</span>
+                                                                {category.name}
+                                                                {subCategories[category.id] && (
+                                                                    <span className="ml-2 text-xs text-muted-foreground">({subCategories[category.id].length} sub)</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                                                <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id)} title="Add Sub-Category">
+                                                                    <Plus className="w-4 h-4 text-emerald-600" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onClick={() => openCategoryDialog(category)}>
+                                                                    <Pencil className="w-4 h-4 text-blue-600" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
+                                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                                </Button>
+                                                            </TableCell>
                                                         </TableRow>
-                                                    ) : (
-                                                        (subCategories[category.id] || []).map(sc => (
-                                                            <TableRow key={sc.id} className="bg-slate-50/50">
-                                                                <TableCell className="pl-10 text-sm">↳ {sc.name}</TableCell>
-                                                                <TableCell className="text-right flex justify-end gap-2">
-                                                                    <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id, sc)}>
-                                                                        <Pencil className="w-3.5 h-3.5 text-blue-500" />
-                                                                    </Button>
-                                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSubCategory(sc)}>
-                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))
-                                                    )
-                                                )}
-                                            </React.Fragment>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- USERS TAB --- */}
-                <TabsContent value="users">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <CardTitle>Registered Users</CardTitle>
-                                    <CardDescription>View, modify roles, and manage all users on the platform.</CardDescription>
-                                </div>
-                                <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search users..."
-                                        value={userSearchQuery}
-                                        onChange={(e) => setUserSearchQuery(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]"></TableHead>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Role / Designation</TableHead>
-                                        <TableHead>Joined</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {usersLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                                                    <span className="text-xs font-semibold">Loading registered users...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : users.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                No users found.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        users.map(user => (
-                                            <TableRow key={user.id}>
-                                                <TableCell>
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={user.avatar_url} />
-                                                        <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{user.full_name || 'N/A'}</span>
-                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{user.email}</TableCell>
-                                                <TableCell>
-                                                    <select
-                                                        value={user.designation || 'Student'}
-                                                        onChange={(e) => handleDesignationChange(user, e.target.value)}
-                                                        className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    >
-                                                        <option value="Student">Student</option>
-                                                        <option value="Teacher">Teacher</option>
-                                                        <option value="Institution">Institution</option>
-                                                        <option value="Guest">Guest</option>
-                                                        <option value="Admin">Admin</option>
-                                                    </select>
-                                                </TableCell>
-                                                <TableCell className="text-muted-foreground text-xs">
-                                                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    <Button variant="ghost" size="sm" onClick={() => handleViewUserDetails(user)}>
-                                                        View Profile
-                                                    </Button>
-                                                    <Button 
-                                                        variant="destructive" 
-                                                        size="sm" 
-                                                        onClick={() => handleDeleteUserPermanently(user)}
-                                                        className="h-8 text-xs"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5 mr-1" />
-                                                        Delete User
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-
-                            {/* Registered Users Pagination Footer */}
-                            <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-                                <div>
-                                    Showing {usersTotal > 0 ? (usersPage - 1) * 10 + 1 : 0} to {Math.min(usersPage * 10, usersTotal)} of {usersTotal} registered users
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const newPage = Math.max(1, usersPage - 1);
-                                            setUsersPage(newPage);
-                                            loadUsers(newPage);
-                                        }}
-                                        disabled={usersPage <= 1 || usersLoading}
-                                        className="h-8 text-xs rounded-xl"
-                                    >
-                                        Previous
-                                    </Button>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        Page {usersPage} of {Math.ceil(usersTotal / 10) || 1}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const maxPage = Math.ceil(usersTotal / 10) || 1;
-                                            const newPage = Math.min(maxPage, usersPage + 1);
-                                            setUsersPage(newPage);
-                                            loadUsers(newPage);
-                                        }}
-                                        disabled={usersPage >= (Math.ceil(usersTotal / 10) || 1) || usersLoading}
-                                        className="h-8 text-xs rounded-xl"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- VERIFIED CREATORS TAB --- */}
-                <TabsContent value="verified_creators">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <CardTitle>Manage Verified Creators</CardTitle>
-                                    <CardDescription>Grant or revoke "Authorized Partner" status and edit designations.</CardDescription>
-                                </div>
-                                <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search creators..."
-                                        value={creatorSearchQuery}
-                                        onChange={(e) => setCreatorSearchQuery(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]"></TableHead>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Role / Designation</TableHead>
-                                        <TableHead>Verified Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {verifiedCreatorsLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                                                    <span className="text-xs font-semibold">Loading verified creators...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : verifiedCreators.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                No verified creators found.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        verifiedCreators.map(user => (
-                                            <TableRow key={user.id}>
-                                                <TableCell>
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={user.avatar_url} />
-                                                        <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{user.full_name || 'N/A'}</span>
-                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{user.email}</TableCell>
-                                                <TableCell>
-                                                    <select
-                                                        value={user.designation || 'Student'}
-                                                        onChange={(e) => handleDesignationChange(user, e.target.value)}
-                                                        className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    >
-                                                        <option value="Student">Student</option>
-                                                        <option value="Teacher">Teacher</option>
-                                                        <option value="Institution">Institution</option>
-                                                        <option value="Guest">Guest</option>
-                                                        <option value="Admin">Admin</option>
-                                                    </select>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {user.is_verified_creator ? (
-                                                        <span className="text-green-600 font-semibold text-xs flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" /> YES
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-muted-foreground text-xs">No</span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    {user.is_verified_creator ? (
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            onClick={() => handleRevokeVerification(user)}
-                                                            className="h-7 text-xs"
-                                                        >
-                                                            Remove Verified Status
-                                                        </Button>
-                                                    ) : (
-                                                        <Button
-                                                            variant="default" // "Make Verified Creator"
-                                                            size="sm"
-                                                            onClick={() => handleVerifyUser(user)}
-                                                            className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
-                                                        >
-                                                            Make Verified Creator
-                                                        </Button>
-                                                    )}
-                                                    <Button 
-                                                        variant="destructive" 
-                                                        size="sm" 
-                                                        onClick={() => handleDeleteUserPermanently(user)}
-                                                        className="h-7 text-xs"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5 mr-1" />
-                                                        Delete
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-
-                            {/* Verified Creators Pagination Footer */}
-                            <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-                                <div>
-                                    Showing {verifiedCreatorsTotal > 0 ? (verifiedCreatorsPage - 1) * 10 + 1 : 0} to {Math.min(verifiedCreatorsPage * 10, verifiedCreatorsTotal)} of {verifiedCreatorsTotal} verified creators
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const newPage = Math.max(1, verifiedCreatorsPage - 1);
-                                            setVerifiedCreatorsPage(newPage);
-                                            loadVerifiedCreators(newPage);
-                                        }}
-                                        disabled={verifiedCreatorsPage <= 1 || verifiedCreatorsLoading}
-                                        className="h-8 text-xs rounded-xl"
-                                    >
-                                        Previous
-                                    </Button>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        Page {verifiedCreatorsPage} of {Math.ceil(verifiedCreatorsTotal / 10) || 1}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            const maxPage = Math.ceil(verifiedCreatorsTotal / 10) || 1;
-                                            const newPage = Math.min(maxPage, verifiedCreatorsPage + 1);
-                                            setVerifiedCreatorsPage(newPage);
-                                            loadVerifiedCreators(newPage);
-                                        }}
-                                        disabled={verifiedCreatorsPage >= (Math.ceil(verifiedCreatorsTotal / 10) || 1) || verifiedCreatorsLoading}
-                                        className="h-8 text-xs rounded-xl"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- COMBINED TESTS TAB --- */}
-                <TabsContent value="combined" className="space-y-6">
-                    {/* Create Combined Session Card */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Layers className="w-5 h-5 text-indigo-600" />
-                                Create Combined Session
-                            </CardTitle>
-                            <CardDescription>
-                                Merge two existing tests into a single session (e.g. JEE Advanced Paper I + Paper II). Only admins can create combined sessions.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Session Title */}
-                                <div className="md:col-span-2 grid gap-1.5">
-                                    <Label htmlFor="cs-title">Session Title <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        id="cs-title"
-                                        placeholder="e.g. JEE Advanced 2025"
-                                        value={newSession.title}
-                                        onChange={e => setNewSession(p => ({ ...p, title: e.target.value }))}
-                                    />
-                                </div>
-
-                                {/* Paper I */}
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="cs-test1">Paper I — Select Test <span className="text-red-500">*</span></Label>
-                                    <select
-                                        id="cs-test1"
-                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        value={newSession.test1_id}
-                                        onChange={e => setNewSession(p => ({ ...p, test1_id: e.target.value }))}
-                                    >
-                                        <option value="">— Choose a test —</option>
-                                        {tests.map(t => (
-                                            <option key={t.id} value={t.id} disabled={t.id === newSession.test2_id}>
-                                                {t.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Paper II */}
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="cs-test2">Paper II — Select Test <span className="text-red-500">*</span></Label>
-                                    <select
-                                        id="cs-test2"
-                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                        value={newSession.test2_id}
-                                        onChange={e => setNewSession(p => ({ ...p, test2_id: e.target.value }))}
-                                    >
-                                        <option value="">— Choose a test —</option>
-                                        {tests.map(t => (
-                                            <option key={t.id} value={t.id} disabled={t.id === newSession.test1_id}>
-                                                {t.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Paper I Label */}
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="cs-p1label">Paper I Label</Label>
-                                    <Input
-                                        id="cs-p1label"
-                                        placeholder="Paper I"
-                                        value={newSession.paper1_label}
-                                        onChange={e => setNewSession(p => ({ ...p, paper1_label: e.target.value }))}
-                                    />
-                                </div>
-
-                                {/* Paper II Label */}
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="cs-p2label">Paper II Label</Label>
-                                    <Input
-                                        id="cs-p2label"
-                                        placeholder="Paper II"
-                                        value={newSession.paper2_label}
-                                        onChange={e => setNewSession(p => ({ ...p, paper2_label: e.target.value }))}
-                                    />
-                                </div>
-
-                                {/* Break Duration */}
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="cs-break">Break Duration (minutes)</Label>
-                                    <Input
-                                        id="cs-break"
-                                        type="number"
-                                        min={0}
-                                        max={180}
-                                        value={newSession.break_duration_minutes}
-                                        onChange={e => setNewSession(p => ({ ...p, break_duration_minutes: parseInt(e.target.value) || 30 }))}
-                                    />
-                                </div>
-
-                                {/* Visibility */}
-                                <div className="grid gap-1.5">
-                                    <Label>Visibility</Label>
-                                    <div className="flex items-center gap-3 h-9">
-                                        <Checkbox
-                                            id="cs-public"
-                                            checked={newSession.is_public}
-                                            onCheckedChange={v => setNewSession(p => ({ ...p, is_public: !!v }))}
-                                        />
-                                        <label htmlFor="cs-public" className="text-sm font-medium cursor-pointer">
-                                            {newSession.is_public ? 'Public (visible to all users)' : 'Private (admin only)'}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button
-                                onClick={handleCreateCombinedSession}
-                                disabled={isSavingSession || !newSession.title || !newSession.test1_id || !newSession.test2_id}
-                                className="bg-indigo-600 hover:bg-indigo-700"
-                            >
-                                {isSavingSession ? (
-                                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
-                                ) : (
-                                    <><Plus className="w-4 h-4 mr-2" /> Create Combined Session</>
-                                )}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-
-                    {/* Existing Combined Sessions */}
-                    <Card>
-                        <CardHeader className="flex-row items-center justify-between">
-                            <CardTitle>Existing Sessions ({combinedSessions.length})</CardTitle>
-                            <Button variant="outline" size="sm" onClick={loadCombinedSessions} disabled={combinedLoading}>
-                                <RefreshCw className={`h-4 w-4 mr-2 ${combinedLoading ? 'animate-spin' : ''}`} />
-                                Refresh
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Title</TableHead>
-                                        <TableHead>Paper I</TableHead>
-                                        <TableHead>Paper II</TableHead>
-                                        <TableHead>Break</TableHead>
-                                        <TableHead>Visibility</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {combinedLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                                                    <span className="text-xs font-semibold">Loading combined sessions...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : combinedSessions.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                No combined sessions yet. Create one above.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        combinedSessions.map(session => (
-                                            <TableRow key={session.id}>
-                                                <TableCell className="font-medium">
-                                                    <div>{session.title}</div>
-                                                    <div className="text-xs text-slate-400 font-mono">{session.id.slice(0, 8)}…</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-xs font-bold text-violet-600">{session.paper1_label || 'Paper I'}</div>
-                                                    <div className="text-xs text-slate-500 line-clamp-1">{session.test1_id}</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-xs font-bold text-blue-600">{session.paper2_label || 'Paper II'}</div>
-                                                    <div className="text-xs text-slate-500 line-clamp-1">{session.test2_id}</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{session.break_duration_minutes ?? 30}m</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant={session.is_public ? 'default' : 'secondary'}>
-                                                        {session.is_public ? 'Public' : 'Private'}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-500 hover:text-red-600"
-                                                        onClick={() => handleDeleteCombinedSession(session.id, session.title)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* --- ACTIVITY (LIVE EXAMS) TAB --- */}
-                <TabsContent value="activity" className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-bold tracking-tight">Active Conduct-Mode Exams</h2>
-                            <p className="text-sm text-muted-foreground">Monitor and control exams currently running live on the platform.</p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={loadConductModeTests}
-                            disabled={conductModeLoading}
-                            className="bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-900 border"
-                        >
-                            <RefreshCw className={`h-4 w-4 mr-2 ${conductModeLoading ? 'animate-spin' : ''}`} />
-                            Refresh Live Status
-                        </Button>
-                    </div>
-
-                    {conductModeLoading ? (
-                        <div className="flex flex-col items-center justify-center py-12 border rounded-xl bg-slate-50/50 dark:bg-slate-950/20">
-                            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin mb-4" />
-                            <p className="text-sm text-muted-foreground">Loading active exams status...</p>
-                        </div>
-                    ) : conductModeTests.length === 0 ? (
-                        <Card className="border border-dashed border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center p-8 text-center">
-                            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-4 text-slate-400 border shadow-sm">
-                                <Radio className="h-6 w-6" />
-                            </div>
-                            <h3 className="font-semibold text-base mb-1">No Active Exams</h3>
-                            <p className="text-sm text-slate-500 max-w-sm">There are currently no tests running in conduct mode. When a creator starts a live test, it will appear here.</p>
-                        </Card>
-                    ) : (
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            {conductModeTests.map((t) => (
-                                <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between">
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mb-1 bg-emerald-50 dark:bg-emerald-950/40 w-fit px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
-                                                    <span className="relative flex h-2 w-2">
-                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                                    </span>
-                                                    Live Now
-                                                </div>
-                                                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-snug">{t.title}</CardTitle>
-                                                {t.custom_id && (
-                                                    <CardDescription className="text-xs text-slate-400 font-mono">ID: {t.custom_id}</CardDescription>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="pb-4 pt-0 space-y-3">
-                                        <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                                            <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                                                <GraduationCap className="h-4 w-4 text-indigo-500 shrink-0" />
-                                                <div className="overflow-hidden truncate">
-                                                    <span className="font-semibold block text-slate-700 dark:text-slate-300 truncate">{t.creator_name || 'Unknown'}</span>
-                                                    <span className="text-slate-400 truncate block text-[10px]">{t.creator_email}</span>
-                                                </div>
-                                            </div>
-                                            {t.end_time && (
-                                                <div className="flex items-center gap-2 p-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg border border-amber-100/30">
-                                                    <Clock className="h-4 w-4 text-amber-500 shrink-0" />
-                                                    <div>
-                                                        <span className="font-medium text-amber-800 dark:text-amber-300 block">Scheduled Ending</span>
-                                                        <span className="text-slate-400 text-[10px]">{new Date(t.end_time).toLocaleString()}</span>
-                                                    </div>
-                                                </div>
+                                                        {expandedCategory === category.id && (
+                                                            (subCategories[category.id] || []).length === 0 ? (
+                                                                <TableRow>
+                                                                    <TableCell colSpan={2} className="pl-10 text-sm text-muted-foreground italic bg-slate-50/50">No sub-categories. Click + to add one.</TableCell>
+                                                                </TableRow>
+                                                            ) : (
+                                                                (subCategories[category.id] || []).map(sc => (
+                                                                    <TableRow key={sc.id} className="bg-slate-50/50">
+                                                                        <TableCell className="pl-10 text-sm">↳ {sc.name}</TableCell>
+                                                                        <TableCell className="text-right flex justify-end gap-2">
+                                                                            <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id, sc)}>
+                                                                                <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                                                                            </Button>
+                                                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteSubCategory(sc)}>
+                                                                                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                                            </Button>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ))
+                                                            )
+                                                        )}
+                                                    </React.Fragment>
+                                                ))
                                             )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* --- USERS TAB --- */}
+                        <TabsContent value="users">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <div>
+                                            <CardTitle>Registered Users</CardTitle>
+                                            <CardDescription>View, modify roles, and manage all users on the platform.</CardDescription>
                                         </div>
-                                    </CardContent>
-                                    <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-950/20 px-6 py-3 flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full h-8 text-xs font-semibold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20"
-                                            onClick={() => setViewingResultsTest(t)}
-                                        >
-                                            <BarChart2 className="w-3.5 h-3.5 mr-1.5" />
-                                            Live Results
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            className="w-full h-8 text-xs font-semibold"
-                                            onClick={() => handleStopConductMode(t)}
-                                        >
-                                            <X className="w-3.5 h-3.5 mr-1.5" />
-                                            Stop Exam
-                                        </Button>
-                                    </CardFooter>
+                                        <div className="relative w-full md:w-64">
+                                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search users..."
+                                                value={userSearchQuery}
+                                                onChange={(e) => setUserSearchQuery(e.target.value)}
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Role / Designation</TableHead>
+                                                <TableHead>Joined</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {usersLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                        <div className="flex flex-col items-center justify-center gap-2">
+                                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                            <span className="text-xs font-semibold">Loading registered users...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : users.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                                        No users found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                users.map(user => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell>
+                                                            <Avatar className="h-8 w-8">
+                                                                <AvatarImage src={user.avatar_url} />
+                                                                <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                            </Avatar>
+                                                        </TableCell>
+                                                        <TableCell className="font-medium">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>{user.full_name || 'N/A'}</span>
+                                                                {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>{user.email}</TableCell>
+                                                        <TableCell>
+                                                            <select
+                                                                value={user.designation || 'Student'}
+                                                                onChange={(e) => handleDesignationChange(user, e.target.value)}
+                                                                className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                            >
+                                                                <option value="Student">Student</option>
+                                                                <option value="Teacher">Educator</option>
+                                                                <option value="Institution">Institution</option>
+                                                                <option value="Guest">Guest</option>
+                                                                <option value="Admin">Admin</option>
+                                                            </select>
+                                                        </TableCell>
+                                                        <TableCell className="text-muted-foreground text-xs">
+                                                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right space-x-2">
+                                                            <Button variant="ghost" size="sm" onClick={() => handleViewUserDetails(user)}>
+                                                                View Profile
+                                                            </Button>
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                onClick={() => handleDeleteUserPermanently(user)}
+                                                                className="h-8 text-xs"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                                Delete User
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+
+                                    {/* Registered Users Pagination Footer */}
+                                    <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+                                        <div>
+                                            Showing {usersTotal > 0 ? (usersPage - 1) * 10 + 1 : 0} to {Math.min(usersPage * 10, usersTotal)} of {usersTotal} registered users
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const newPage = Math.max(1, usersPage - 1);
+                                                    setUsersPage(newPage);
+                                                    loadUsers(newPage);
+                                                }}
+                                                disabled={usersPage <= 1 || usersLoading}
+                                                className="h-8 text-xs rounded-xl"
+                                            >
+                                                Previous
+                                            </Button>
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                Page {usersPage} of {Math.ceil(usersTotal / 10) || 1}
+                                            </span>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const maxPage = Math.ceil(usersTotal / 10) || 1;
+                                                    const newPage = Math.min(maxPage, usersPage + 1);
+                                                    setUsersPage(newPage);
+                                                    loadUsers(newPage);
+                                                }}
+                                                disabled={usersPage >= (Math.ceil(usersTotal / 10) || 1) || usersLoading}
+                                                className="h-8 text-xs rounded-xl"
+                                            >
+                                                Next
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* --- VERIFIED CREATORS TAB --- */}
+                        <TabsContent value="verified_creators">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <div>
+                                            <CardTitle>Manage Verified Creators</CardTitle>
+                                            <CardDescription>Grant or revoke "Authorized Partner" status and edit designations.</CardDescription>
+                                        </div>
+                                        <div className="relative w-full md:w-64">
+                                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search creators..."
+                                                value={creatorSearchQuery}
+                                                onChange={(e) => setCreatorSearchQuery(e.target.value)}
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Role / Designation</TableHead>
+                                                <TableHead>Verified Status</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {verifiedCreatorsLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                        <div className="flex flex-col items-center justify-center gap-2">
+                                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                            <span className="text-xs font-semibold">Loading verified creators...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : verifiedCreators.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                                        No verified creators found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                verifiedCreators.map(user => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell>
+                                                            <Avatar className="h-8 w-8">
+                                                                <AvatarImage src={user.avatar_url} />
+                                                                <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                            </Avatar>
+                                                        </TableCell>
+                                                        <TableCell className="font-medium">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>{user.full_name || 'N/A'}</span>
+                                                                {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>{user.email}</TableCell>
+                                                        <TableCell>
+                                                            <select
+                                                                value={user.designation || 'Student'}
+                                                                onChange={(e) => handleDesignationChange(user, e.target.value)}
+                                                                className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                            >
+                                                                <option value="Student">Student</option>
+                                                                <option value="Teacher">Educator</option>
+                                                                <option value="Institution">Institution</option>
+                                                                <option value="Guest">Guest</option>
+                                                                <option value="Admin">Admin</option>
+                                                            </select>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {user.is_verified_creator ? (
+                                                                <span className="text-green-600 font-semibold text-xs flex items-center gap-1">
+                                                                    <CheckCircle className="w-3 h-3" /> YES
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-muted-foreground text-xs">No</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-right space-x-2">
+                                                            {user.is_verified_creator ? (
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    size="sm"
+                                                                    onClick={() => handleRevokeVerification(user)}
+                                                                    className="h-7 text-xs"
+                                                                >
+                                                                    Remove Verified Status
+                                                                </Button>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="default" // "Make Verified Creator"
+                                                                    size="sm"
+                                                                    onClick={() => handleVerifyUser(user)}
+                                                                    className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                                                                >
+                                                                    Make Verified Creator
+                                                                </Button>
+                                                            )}
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                onClick={() => handleDeleteUserPermanently(user)}
+                                                                className="h-7 text-xs"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                                Delete
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+
+                                    {/* Verified Creators Pagination Footer */}
+                                    <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+                                        <div>
+                                            Showing {verifiedCreatorsTotal > 0 ? (verifiedCreatorsPage - 1) * 10 + 1 : 0} to {Math.min(verifiedCreatorsPage * 10, verifiedCreatorsTotal)} of {verifiedCreatorsTotal} verified creators
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const newPage = Math.max(1, verifiedCreatorsPage - 1);
+                                                    setVerifiedCreatorsPage(newPage);
+                                                    loadVerifiedCreators(newPage);
+                                                }}
+                                                disabled={verifiedCreatorsPage <= 1 || verifiedCreatorsLoading}
+                                                className="h-8 text-xs rounded-xl"
+                                            >
+                                                Previous
+                                            </Button>
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                Page {verifiedCreatorsPage} of {Math.ceil(verifiedCreatorsTotal / 10) || 1}
+                                            </span>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    const maxPage = Math.ceil(verifiedCreatorsTotal / 10) || 1;
+                                                    const newPage = Math.min(maxPage, verifiedCreatorsPage + 1);
+                                                    setVerifiedCreatorsPage(newPage);
+                                                    loadVerifiedCreators(newPage);
+                                                }}
+                                                disabled={verifiedCreatorsPage >= (Math.ceil(verifiedCreatorsTotal / 10) || 1) || verifiedCreatorsLoading}
+                                                className="h-8 text-xs rounded-xl"
+                                            >
+                                                Next
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* --- COMBINED TESTS TAB --- */}
+                        <TabsContent value="combined" className="space-y-6">
+                            {/* Create Combined Session Card */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Layers className="w-5 h-5 text-indigo-600" />
+                                        Create Combined Session
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Merge two existing tests into a single session (e.g. JEE Advanced Paper I + Paper II). Only admins can create combined sessions.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Session Title */}
+                                        <div className="md:col-span-2 grid gap-1.5">
+                                            <Label htmlFor="cs-title">Session Title <span className="text-red-500">*</span></Label>
+                                            <Input
+                                                id="cs-title"
+                                                placeholder="e.g. JEE Advanced 2025"
+                                                value={newSession.title}
+                                                onChange={e => setNewSession(p => ({ ...p, title: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        {/* Paper I */}
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="cs-test1">Paper I — Select Test <span className="text-red-500">*</span></Label>
+                                            <select
+                                                id="cs-test1"
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                value={newSession.test1_id}
+                                                onChange={e => setNewSession(p => ({ ...p, test1_id: e.target.value }))}
+                                            >
+                                                <option value="">— Choose a test —</option>
+                                                {tests.map(t => (
+                                                    <option key={t.id} value={t.id} disabled={t.id === newSession.test2_id}>
+                                                        {t.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Paper II */}
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="cs-test2">Paper II — Select Test <span className="text-red-500">*</span></Label>
+                                            <select
+                                                id="cs-test2"
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                value={newSession.test2_id}
+                                                onChange={e => setNewSession(p => ({ ...p, test2_id: e.target.value }))}
+                                            >
+                                                <option value="">— Choose a test —</option>
+                                                {tests.map(t => (
+                                                    <option key={t.id} value={t.id} disabled={t.id === newSession.test1_id}>
+                                                        {t.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Paper I Label */}
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="cs-p1label">Paper I Label</Label>
+                                            <Input
+                                                id="cs-p1label"
+                                                placeholder="Paper I"
+                                                value={newSession.paper1_label}
+                                                onChange={e => setNewSession(p => ({ ...p, paper1_label: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        {/* Paper II Label */}
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="cs-p2label">Paper II Label</Label>
+                                            <Input
+                                                id="cs-p2label"
+                                                placeholder="Paper II"
+                                                value={newSession.paper2_label}
+                                                onChange={e => setNewSession(p => ({ ...p, paper2_label: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        {/* Break Duration */}
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="cs-break">Break Duration (minutes)</Label>
+                                            <Input
+                                                id="cs-break"
+                                                type="number"
+                                                min={0}
+                                                max={180}
+                                                value={newSession.break_duration_minutes}
+                                                onChange={e => setNewSession(p => ({ ...p, break_duration_minutes: parseInt(e.target.value) || 30 }))}
+                                            />
+                                        </div>
+
+                                        {/* Visibility */}
+                                        <div className="grid gap-1.5">
+                                            <Label>Visibility</Label>
+                                            <div className="flex items-center gap-3 h-9">
+                                                <Checkbox
+                                                    id="cs-public"
+                                                    checked={newSession.is_public}
+                                                    onCheckedChange={v => setNewSession(p => ({ ...p, is_public: !!v }))}
+                                                />
+                                                <label htmlFor="cs-public" className="text-sm font-medium cursor-pointer">
+                                                    {newSession.is_public ? 'Public (visible to all users)' : 'Private (admin only)'}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        onClick={handleCreateCombinedSession}
+                                        disabled={isSavingSession || !newSession.title || !newSession.test1_id || !newSession.test2_id}
+                                        className="bg-indigo-600 hover:bg-indigo-700"
+                                    >
+                                        {isSavingSession ? (
+                                            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                                        ) : (
+                                            <><Plus className="w-4 h-4 mr-2" /> Create Combined Session</>
+                                        )}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+
+                            {/* Existing Combined Sessions */}
+                            <Card>
+                                <CardHeader className="flex-row items-center justify-between">
+                                    <CardTitle>Existing Sessions ({combinedSessions.length})</CardTitle>
+                                    <Button variant="outline" size="sm" onClick={loadCombinedSessions} disabled={combinedLoading}>
+                                        <RefreshCw className={`h-4 w-4 mr-2 ${combinedLoading ? 'animate-spin' : ''}`} />
+                                        Refresh
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Paper I</TableHead>
+                                                <TableHead>Paper II</TableHead>
+                                                <TableHead>Break</TableHead>
+                                                <TableHead>Visibility</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {combinedLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                        <div className="flex flex-col items-center justify-center gap-2">
+                                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                            <span className="text-xs font-semibold">Loading combined sessions...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : combinedSessions.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                                        No combined sessions yet. Create one above.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                combinedSessions.map(session => (
+                                                    <TableRow key={session.id}>
+                                                        <TableCell className="font-medium">
+                                                            <div>{session.title}</div>
+                                                            <div className="text-xs text-slate-400 font-mono">{session.id.slice(0, 8)}…</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="text-xs font-bold text-violet-600">{session.paper1_label || 'Paper I'}</div>
+                                                            <div className="text-xs text-slate-500 line-clamp-1">{session.test1_id}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="text-xs font-bold text-blue-600">{session.paper2_label || 'Paper II'}</div>
+                                                            <div className="text-xs text-slate-500 line-clamp-1">{session.test2_id}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline">{session.break_duration_minutes ?? 30}m</Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={session.is_public ? 'default' : 'secondary'}>
+                                                                {session.is_public ? 'Public' : 'Private'}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-red-500 hover:text-red-600"
+                                                                onClick={() => handleDeleteCombinedSession(session.id, session.title)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* --- ACTIVITY (LIVE EXAMS) TAB --- */}
+                        <TabsContent value="activity" className="space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold tracking-tight">Active Conduct-Mode Exams</h2>
+                                    <p className="text-sm text-muted-foreground">Monitor and control exams currently running live on the platform with IST timings and environment settings.</p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={loadConductModeTests}
+                                    disabled={conductModeLoading}
+                                    className="bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-900 border cursor-pointer"
+                                >
+                                    <RefreshCw className={`h-4 w-4 mr-2 ${conductModeLoading ? 'animate-spin' : ''}`} />
+                                    Refresh Live Status
+                                </Button>
+                            </div>
+
+                            {conductModeLoading ? (
+                                <div className="flex flex-col items-center justify-center py-12 border rounded-xl bg-slate-50/50 dark:bg-slate-950/20">
+                                    <Loader2 className="h-8 w-8 text-emerald-500 animate-spin mb-4" />
+                                    <p className="text-sm text-muted-foreground">Loading active exams status...</p>
+                                </div>
+                            ) : conductModeTests.length === 0 ? (
+                                <Card className="border border-dashed border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center p-8 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-4 text-slate-400 border shadow-sm">
+                                        <Radio className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="font-semibold text-base mb-1">No Active Exams</h3>
+                                    <p className="text-sm text-slate-500 max-w-sm">There are currently no tests running in conduct mode. When a creator starts a live test, it will appear here.</p>
                                 </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
+                            ) : (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {conductModeTests.map((t) => {
+                                        const envSettings = getEnvironmentSettingsSummary(t.settings);
+                                        const liveTimeStr = t.made_live_at || t.conduct_started_at;
+                                        const isScheduled = !!(t.is_scheduled || (t.settings?.schedule?.enabled && (t.end_time || t.start_time)));
+                                        const scheduleEndTime = t.end_time || t.settings?.schedule?.end_time;
+                                        const scheduleStartTime = t.start_time || t.settings?.schedule?.start_time;
+                                        const conductSlug = t.settings?.conduct_exam?.conduct_slug || t.slug;
+                                        const liveUrl = conductSlug ? getUserAppUrl(`/test/${conductSlug}`) : '';
+
+                                        return (
+                                            <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between rounded-xl shadow-xs">
+                                                <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900/60 bg-slate-50/40 dark:bg-slate-900/20">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="space-y-1.5 min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/80">
+                                                                    <span className="relative flex h-2 w-2">
+                                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                                    </span>
+                                                                    {isScheduled ? 'Scheduled Live' : 'Live Now'}
+                                                                </div>
+
+                                                                {t.custom_id && (
+                                                                    <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                                                                        #{t.custom_id}
+                                                                    </span>
+                                                                )}
+
+                                                                {(t.submission_count !== undefined) && (
+                                                                    <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60 flex items-center gap-1">
+                                                                        <BarChart2 className="w-3 h-3 text-indigo-500" />
+                                                                        {t.submission_count} {t.submission_count === 1 ? 'Submission' : 'Submissions'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">
+                                                                {t.title}
+                                                            </CardTitle>
+                                                        </div>
+                                                    </div>
+                                                </CardHeader>
+
+                                                <CardContent className="p-4 space-y-3.5 flex-1">
+                                                    {/* Creator Info */}
+                                                    <div className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800/60">
+                                                        <Avatar className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700">
+                                                            <AvatarImage src={t.creator_avatar} />
+                                                            <AvatarFallback className="bg-indigo-50 text-indigo-700 text-xs font-bold">
+                                                                {(t.creator_name || 'U').charAt(0).toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="overflow-hidden min-w-0 flex-1">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{t.creator_name || 'Unknown'}</span>
+                                                                {t.creator_verified && <VerifiedBadge size={14} />}
+                                                            </div>
+                                                            <span className="text-slate-400 truncate block text-[11px] font-mono">{t.creator_email}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Live Time & Date in IST */}
+                                                    <div className="space-y-1.5 text-xs">
+                                                        <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/40">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                                                <span className="text-[11px] font-medium text-emerald-900 dark:text-emerald-200">
+                                                                    Made Live (IST):
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                {liveTimeStr ? (
+                                                                    <>
+                                                                        <span className="font-bold text-[11px] text-emerald-800 dark:text-emerald-300 block font-mono">
+                                                                            {formatIST(liveTimeStr)}
+                                                                        </span>
+                                                                        {formatTimeAgo(liveTimeStr) && (
+                                                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                                                                ({formatTimeAgo(liveTimeStr)})
+                                                                            </span>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="font-semibold text-[11px] text-emerald-700 dark:text-emerald-300 block">
+                                                                        Active (Current Link)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Schedule Information in IST with Auto-Deactivation tag */}
+                                                        {isScheduled && (
+                                                            <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/50 space-y-1.5">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-semibold text-[11px]">
+                                                                        <Calendar className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                                                                        <span>Scheduled Window (IST)</span>
+                                                                    </div>
+                                                                    <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-800">
+                                                                        Auto-Deactivates at End
+                                                                    </span>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5 font-mono">
+                                                                    <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded border border-amber-100 dark:border-amber-900/40">
+                                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wide block font-sans">Start</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                            {formatIST(scheduleStartTime)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded border border-amber-100 dark:border-amber-900/40">
+                                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wide block font-sans">End</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                            {formatIST(scheduleEndTime)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Test-Environment Settings Summary */}
+                                                    <div className="space-y-1.5 pt-1">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                                <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                                                                Environment Settings Enabled ({envSettings.length})
+                                                            </span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-2 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                                                                onClick={() => setInspectingEnvTest(t)}
+                                                            >
+                                                                <SlidersHorizontal className="h-3 w-3 mr-1" />
+                                                                Inspect Details
+                                                            </Button>
+                                                        </div>
+
+                                                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                                                            {envSettings.length === 0 ? (
+                                                                <span className="text-[11px] text-slate-400 italic">
+                                                                    Standard Environment (Default settings)
+                                                                </span>
+                                                            ) : (
+                                                                envSettings.map((item, idx) => {
+                                                                    const Icon = item.icon;
+                                                                    return (
+                                                                        <span
+                                                                            key={idx}
+                                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${item.color}`}
+                                                                            title={item.detail}
+                                                                        >
+                                                                            <Icon className="h-3 w-3 shrink-0" />
+                                                                            {item.label}
+                                                                        </span>
+                                                                    );
+                                                                })
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+
+                                                <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-950/30 px-4 py-3 flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="flex-1 h-8 text-xs font-semibold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20 cursor-pointer"
+                                                        onClick={() => setViewingResultsTest(t)}
+                                                    >
+                                                        <BarChart2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                                                        Live Results
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="flex-1 h-8 text-xs font-semibold hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 dark:hover:bg-indigo-950/20 cursor-pointer"
+                                                        onClick={() => setInspectingEnvTest(t)}
+                                                    >
+                                                        <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                                                        Environment
+                                                    </Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        className="h-8 text-xs font-semibold px-3 cursor-pointer"
+                                                        onClick={() => handleStopConductMode(t)}
+                                                        title="Stop this live exam"
+                                                    >
+                                                        <X className="w-3.5 h-3.5 mr-1" />
+                                                        Stop
+                                                    </Button>
+                                                </CardFooter>
+                                            </Card>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </TabsContent>
                     </>
                 )}
             </Tabs>
@@ -2144,7 +2485,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                             </Avatar>
                             <div className="text-center space-y-1">
                                 <h3 className="font-bold text-xl">{viewingCreator.full_name || viewingCreator.email || 'Unknown User'}</h3>
-                                <Badge variant="secondary">{viewingCreator.designation || 'Member'}</Badge>
+                                <Badge variant="secondary">{roleLabel(viewingCreator.designation) || 'Member'}</Badge>
                                 <p className="text-sm text-muted-foreground">{viewingCreator.email || 'No email registered'}</p>
                             </div>
 
@@ -2201,17 +2542,6 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                             }}
                                         >
                                             <Edit className="w-3 h-3" /> Dashboard
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-8 text-[11px] flex items-center gap-1 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-300"
-                                            onClick={() => {
-                                                setViewingUser(null);
-                                                window.open(getUserAppUrl(`/materials?userId=${viewingUser.id}`), '_blank');
-                                            }}
-                                        >
-                                            <Layers className="w-3 h-3" /> Materials
                                         </Button>
                                         <Button
                                             size="sm"
@@ -2492,6 +2822,274 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                                 {isCloning ? 'Cloning...' : 'Confirm Clone'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* ENVIRONMENT SETTINGS INSPECTION DIALOG */}
+            {inspectingEnvTest && (
+                <Dialog open={!!inspectingEnvTest} onOpenChange={(open) => !open && setInspectingEnvTest(null)}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                        <DialogHeader>
+                            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                <ShieldCheck className="h-5 w-5" />
+                                <DialogTitle className="text-lg font-bold">
+                                    Test Environment & Proctoring Configuration
+                                </DialogTitle>
+                            </div>
+                            <DialogDescription className="text-xs">
+                                Review active proctoring rules, timing constraints, and candidate access settings for this live exam.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-2 text-xs">
+                            {/* Test Summary Header */}
+                            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{inspectingEnvTest.title}</span>
+                                        {inspectingEnvTest.custom_id && (
+                                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                                #{inspectingEnvTest.custom_id}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500">
+                                        Creator: <strong className="text-slate-700 dark:text-slate-300">{inspectingEnvTest.creator_name || 'Unknown'}</strong> ({inspectingEnvTest.creator_email})
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs text-indigo-600 hover:text-indigo-700 cursor-pointer"
+                                    onClick={() => {
+                                        const t = inspectingEnvTest;
+                                        setInspectingEnvTest(null);
+                                        setConfiguringTest(t);
+                                    }}
+                                >
+                                    <Settings className="h-3.5 w-3.5 mr-1" />
+                                    Manage Settings
+                                </Button>
+                            </div>
+
+                            {/* Active Live Link in Inspect Modal */}
+                            {((inspectingEnvTest.settings?.conduct_exam?.conduct_slug) || inspectingEnvTest.slug) && (
+                                <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100/70 dark:border-blue-900/40 gap-2">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        <LinkIcon className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-[10px] uppercase font-bold text-blue-900/70 dark:text-blue-300/70 block tracking-wide">
+                                                Active Live Exam Link
+                                            </span>
+                                            <span className="text-xs font-mono font-semibold text-blue-950 dark:text-blue-100 truncate block select-all">
+                                                {getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs font-semibold text-blue-700 bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-800 hover:bg-blue-50 cursor-pointer"
+                                            onClick={() => handleCopyLiveLink(getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`))}
+                                        >
+                                            <Copy className="h-3 w-3 mr-1" />
+                                            Copy
+                                        </Button>
+                                        <a
+                                            href={getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="h-7 px-2.5 inline-flex items-center justify-center text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-xs"
+                                        >
+                                            <ExternalLink className="h-3 w-3 mr-1" />
+                                            Open
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 1: Timing & IST Schedule */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 bg-white dark:bg-slate-950/40">
+                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                        <Clock className="h-4 w-4 text-emerald-500" />
+                                        Timing & IST Live Schedule
+                                    </h4>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                        All Times in IST (UTC+5:30)
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Made Live Timestamp</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                            {(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at)
+                                                ? formatIST(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at, true)
+                                                : 'Active (Current Link)'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Timer Mode</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.strict_timer ? '⚡ Strict Timer' : 'Flexible Timer'} ({inspectingEnvTest.duration || inspectingEnvTest.settings?.duration || 0} mins)
+                                        </span>
+                                    </div>
+
+                                    {inspectingEnvTest.settings?.schedule?.enabled ? (
+                                        <>
+                                            <div className="p-2 bg-amber-50/60 dark:bg-amber-950/30 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+                                                <span className="text-amber-700 dark:text-amber-400 text-[10px] uppercase font-semibold block">Schedule Start (IST)</span>
+                                                <span className="font-bold text-amber-900 dark:text-amber-200 font-mono">
+                                                    {formatIST(inspectingEnvTest.start_time || inspectingEnvTest.settings?.schedule?.start_time, true)}
+                                                </span>
+                                            </div>
+
+                                            <div className="p-2 bg-amber-50/60 dark:bg-amber-950/30 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-amber-700 dark:text-amber-400 text-[10px] uppercase font-semibold block">Schedule End (IST)</span>
+                                                    <span className="text-[9px] font-bold text-amber-800 bg-amber-200/70 px-1 py-0.2 rounded">Auto-Deactivate</span>
+                                                </div>
+                                                <span className="font-bold text-amber-900 dark:text-amber-200 font-mono">
+                                                    {formatIST(inspectingEnvTest.end_time || inspectingEnvTest.settings?.schedule?.end_time, true)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="sm:col-span-2 p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-500">
+                                            <span>No automated schedule window. Test remains live until manually stopped by creator or admin.</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Section 2: Security & Anti-Cheat Grid */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 bg-white dark:bg-slate-950/40">
+                                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                        <ShieldAlert className="h-4 w-4 text-indigo-500" />
+                                        Anti-Cheating & Proctoring Safeguards
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.force_fullscreen ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Maximize2 className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Force Fullscreen</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.force_fullscreen ? 'Active: Exam enters fullscreen mode' : 'Disabled: Normal browser window'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.tab_switch_mode && inspectingEnvTest.settings?.tab_switch_mode !== 'off' ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Eye className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Tab Switch Detection</span>
+                                            <span className="text-[11px] opacity-80">
+                                                {inspectingEnvTest.settings?.tab_switch_mode === 'strict' ? 'Strict: Auto-submit on violations' : inspectingEnvTest.settings?.tab_switch_mode === 'warning' ? 'Warning Alerts active' : 'Disabled'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_copy_paste ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Copy className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Copy / Paste Protection</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_copy_paste ? 'Active: Copy, paste & selection blocked' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_actions ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">DevTools & Right Click Block</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_actions ? 'Active: Inspection shortcuts blocked' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.block_back_button ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Back Button Lock</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.block_back_button ? 'Active: Traps browser back navigation' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_exit_button ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Exit Button Restriction</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_exit_button ? 'Active: Exit button hidden/blocked' : 'Disabled: Candidate may exit'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Delivery & Registration Form */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 bg-white dark:bg-slate-950/40">
+                                <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <FileText className="h-4 w-4 text-orange-500" />
+                                    Access Control & Candidate Form
+                                </h4>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Attempt Limit</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.attempt_limit ? `${inspectingEnvTest.settings.attempt_limit} Attempt(s)` : 'Unlimited Attempts'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Question Randomization</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.shuffle_questions ? '✅ Shuffled' : 'Standard Order'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Immediate Results</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.show_results_immediate !== false ? '✅ Visible After Submit' : 'Hidden'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {inspectingEnvTest.settings?.start_form?.enabled && inspectingEnvTest.settings?.start_form?.fields?.length > 0 && (
+                                    <div className="mt-2 p-2.5 bg-orange-50/50 dark:bg-orange-950/20 rounded-lg border border-orange-200/60 dark:border-orange-900/40 space-y-1">
+                                        <span className="font-semibold text-orange-900 dark:text-orange-200 block">Candidate Required Registration Fields:</span>
+                                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                            {inspectingEnvTest.settings.start_form.fields.map((f: any, idx: number) => (
+                                                <span key={idx} className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded text-[10px] font-medium border border-orange-200 dark:border-orange-800 text-orange-800 dark:text-orange-300">
+                                                    {f.label || f.name} {f.required && '*'}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter className="gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setInspectingEnvTest(null)}>
+                                Close
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                onClick={() => {
+                                    const t = inspectingEnvTest;
+                                    setInspectingEnvTest(null);
+                                    setConfiguringTest(t);
+                                }}
+                            >
+                                <Settings className="w-3.5 h-3.5 mr-1.5" />
+                                Edit Settings
                             </Button>
                         </DialogFooter>
                     </DialogContent>

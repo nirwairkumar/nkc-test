@@ -1,0 +1,226 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-kn/L01.wav",
+    "duration": 17.450375,
+    "text": "ಒಂದು question paper, online test ಆಗಿ ಬದಲಾಗುತ್ತೆ. Equations — ಕೆಲವೇ ಸೆಕೆಂಡ್‌ಗಳಲ್ಲಿ. Students ಯಾವ phone ಇಂದ ಬೇಕಾದರೂ join ಆಗ್ತಾರೆ. Cheating ತಕ್ಷಣ ಸಿಕ್ಕಿಬೀಳುತ್ತೆ. ಪ್ರತಿ result, rank ಜೊತೆ ಬರುತ್ತೆ.\nಇದೇ Testoza — ಇವು ಇದರ top ten features, ಒಂದೊಂದನ್ನೂ ಹೇಗೆ ಬಳಸೋದು ಅಂತ ನೋಡೋಣ.",
+    "raw": "{m1}ಒಂದು question paper, online test ಆಗಿ ಬದಲಾಗುತ್ತೆ. {m2}Equations — ಕೆಲವೇ ಸೆಕೆಂಡ್‌ಗಳಲ್ಲಿ. {m3}Students ಯಾವ phone ಇಂದ ಬೇಕಾದರೂ join ಆಗ್ತಾರೆ. {m4}Cheating ತಕ್ಷಣ ಸಿಕ್ಕಿಬೀಳುತ್ತೆ. {m5}ಪ್ರತಿ result, rank ಜೊತೆ ಬರುತ್ತೆ.\n{title}ಇದೇ TestoZa — ಇವು ಇದರ top ten features, ಒಂದೊಂದನ್ನೂ ಹೇಗೆ ಬಳಸೋದು ಅಂತ ನೋಡೋಣ."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-kn/L02.wav",
+    "duration": 1.890708,
+    "text": "Number one: Generate with AI.",
+    "raw": "Number one: Generate with AI."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-kn/L03.wav",
+    "duration": 12.08925,
+    "text": "ನಿಮ್ಮ question paper PDF ಆಗಿದೆಯಾ, ಅಥವಾ ಬರೀ photos? Generate with AI open ಮಾಡಿ, file select ಮಾಡಿ — ಮೂರು page PDF, answer key ಜೊತೆ — ಆಮೇಲೆ Extract Questions tap ಮಾಡಿ.",
+    "raw": "ನಿಮ್ಮ question paper PDF ಆಗಿದೆಯಾ, ಅಥವಾ ಬರೀ photos? {upload}Generate with AI open ಮಾಡಿ, {choose}file select ಮಾಡಿ — ಮೂರು page PDF, answer key ಜೊತೆ — {extract}ಆಮೇಲೆ Extract Questions tap ಮಾಡಿ."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-kn/L04.wav",
+    "duration": 7.995875,
+    "text": "ಈಗ ನೋಡಿ. AI ಪ್ರತಿ page ಓದುತ್ತೆ, questions ಒಂದೊಂದಾಗಿ ಬರೋಕೆ ಶುರುವಾಗುತ್ತೆ — options, maths, ಎಲ್ಲಾ. ಅರ್ಧ ನಿಮಿಷದಲ್ಲಿ, ಹನ್ನೆರಡು questions ರೆಡಿ.",
+    "raw": "{reading}ಈಗ ನೋಡಿ. AI ಪ್ರತಿ page ಓದುತ್ತೆ, {q1}questions ಒಂದೊಂದಾಗಿ ಬರೋಕೆ ಶುರುವಾಗುತ್ತೆ — options, maths, ಎಲ್ಲಾ. {preview}ಅರ್ಧ ನಿಮಿಷದಲ್ಲಿ, ಹನ್ನೆರಡು questions ರೆಡಿ."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-kn/L05.wav",
+    "duration": 8.661,
+    "text": "ಕೊನೆಯ page ನಲ್ಲಿರೋ answer key ಕೂಡ ಓದಿದೆ, ಹಾಗಾಗಿ ಪ್ರತಿ answer ಈಗಾಗಲೇ mark ಆಗಿದೆ. ಒಮ್ಮೆ ನೋಡಿ, Save ಮಾಡಿ, ನಿಮ್ಮ paper ಈಗ ಒಂದು test.",
+    "raw": "{answers}ಕೊನೆಯ page ನಲ್ಲಿರೋ answer key ಕೂಡ ಓದಿದೆ, ಹಾಗಾಗಿ ಪ್ರತಿ answer ಈಗಾಗಲೇ mark ಆಗಿದೆ. ಒಮ್ಮೆ ನೋಡಿ, {save}Save ಮಾಡಿ, {newcard}ನಿಮ್ಮ paper ಈಗ ಒಂದು test."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-kn/L06.wav",
+    "duration": 3.026125,
+    "text": "Number two: maths, science — ಸರಿಯಾಗಿ type ಮಾಡಬಹುದು.",
+    "raw": "Number two: maths, science — ಸರಿಯಾಗಿ type ಮಾಡಬಹುದು."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-kn/L07.wav",
+    "duration": 10.980792,
+    "text": "Test ಅನ್ನು builder ನಲ್ಲಿ open ಮಾಡಿ — ಹನ್ನೆರಡು questions ಇಲ್ಲೇ ಇವೆ. ಒಂದು question add ಮಾಡಿ, words ಎಂದಿನಂತೆ type ಮಾಡಿ. Formula ಗೆ, Maths and symbols open ಮಾಡಿ — ಇದೇ Sy Pad.",
+    "raw": "{edit}Test ಅನ್ನು builder ನಲ್ಲಿ open ಮಾಡಿ — ಹನ್ನೆರಡು questions ಇಲ್ಲೇ ಇವೆ. {addq}ಒಂದು question add ಮಾಡಿ, {q13text}words ಎಂದಿನಂತೆ type ಮಾಡಿ. {sypad}Formula ಗೆ, Maths and symbols open ಮಾಡಿ — ಇದೇ Sy Pad."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-kn/L08.wav",
+    "duration": 16.219625,
+    "text": "h equals u t minus ಅಂತ type ಮಾಡಿ, fraction key, one over two, ಆಮೇಲೆ power key, t square ಗೆ. ಒಂದು proper formula — ಯಾವ code ಕಲಿಯೋ ಅಗತ್ಯ ಇಲ್ಲ. Insert, ಅದು ನೇರವಾಗಿ question ಒಳಗೆ ಬರುತ್ತೆ.",
+    "raw": "{h}h equals u t minus ಅಂತ type ಮಾಡಿ, {frac}fraction key, one over two, {power}ಆಮೇಲೆ power key, t square ಗೆ. {formula}ಒಂದು proper formula — ಯಾವ code ಕಲಿಯೋ ಅಗತ್ಯ ಇಲ್ಲ. {insert}Insert, ಅದು ನೇರವಾಗಿ question ಒಳಗೆ ಬರುತ್ತೆ."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-kn/L09.wav",
+    "duration": 4.723875,
+    "text": "Number three: ಕನ್ನಡ, ಹಿಂದಿ — ನೂರ ಹತ್ತೊಂಬತ್ತು ಭಾಷೆಗಳಲ್ಲಿ type ಮಾಡಬಹುದು.",
+    "raw": "Number three: ಕನ್ನಡ, ಹಿಂದಿ — ನೂರ ಹತ್ತೊಂಬತ್ತು ಭಾಷೆಗಳಲ್ಲಿ type ಮಾಡಬಹುದು."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-kn/L10.wav",
+    "duration": 13.973125,
+    "text": "Language switch tap ಮಾಡಿ, ಇಲ್ಲಿ Hindi ಆರಿಸ್ತಿದ್ದೀವಿ — ಕನ್ನಡ ಕೂಡ ಇದೆ — English letters ನಲ್ಲಿ type ಮಾಡಿ. Space ಒತ್ತಿದ ತಕ್ಷಣ ಪ್ರತಿ word ಬದಲಾಗುತ್ತೆ — ಬೇರೆ keyboard ಬೇಕಾಗಿಲ್ಲ. ಈಗ question ಎರಡು ಭಾಷೆಗಳಲ್ಲಿ ಇದೆ, options ಕೂಡ ಹಾಗೇ.",
+    "raw": "{lang}Language switch tap ಮಾಡಿ, {hindi}ಇಲ್ಲಿ Hindi ಆರಿಸ್ತಿದ್ದೀವಿ — ಕನ್ನಡ ಕೂಡ ಇದೆ — {hitype}English letters ನಲ್ಲಿ type ಮಾಡಿ. Space ಒತ್ತಿದ ತಕ್ಷಣ ಪ್ರತಿ word ಬದಲಾಗುತ್ತೆ — ಬೇರೆ keyboard ಬೇಕಾಗಿಲ್ಲ. {hindone}ಈಗ question ಎರಡು ಭಾಷೆಗಳಲ್ಲಿ ಇದೆ, {opts}options ಕೂಡ ಹಾಗೇ."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-kn/L11.wav",
+    "duration": 2.410875,
+    "text": "Number four: real exam patterns.",
+    "raw": "Number four: real exam patterns."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-kn/L12.wav",
+    "duration": 9.845917,
+    "text": "ಪ್ರತಿ question ಗೆ plus four, minus one. JEE Advanced style ಬೇಕಾ? Multiple correct ಆಗಿ ಮಾಡಿ, JEE Advanced partial marks ಆರಿಸಿ, ಸರಿಯಾದ answer mark ಮಾಡಿ.",
+    "raw": "{marks}ಪ್ರತಿ question ಗೆ plus four, minus one. {qtype}JEE Advanced style ಬೇಕಾ? {multi}Multiple correct ಆಗಿ ಮಾಡಿ, {jeeadv}JEE Advanced partial marks ಆರಿಸಿ, {correct}ಸರಿಯಾದ answer mark ಮಾಡಿ."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-kn/L13.wav",
+    "duration": 14.626125,
+    "text": "ಈಗ paper ಅನ್ನು sections ಆಗಿ ಭಾಗ ಮಾಡಿ, ಪ್ರತಿ section ಗೆ ತನ್ನದೇ timer — SSC ಥರಾನೇ. ಎಲ್ಲಿ ಬೇಕಾದರೂ split ಮಾಡಿ: questions ಏಳರಿಂದ ಹದಿಮೂರು Section B ಆದವು. ಇಲ್ಲಿ ಹತ್ತು ನಿಮಿಷ, ಅಲ್ಲಿ ಹತ್ತು ನಿಮಿಷ… Save.",
+    "raw": "{sections}ಈಗ paper ಅನ್ನು sections ಆಗಿ ಭಾಗ ಮಾಡಿ, {timed}ಪ್ರತಿ section ಗೆ ತನ್ನದೇ timer — SSC ಥರಾನೇ. {gap}ಎಲ್ಲಿ ಬೇಕಾದರೂ split ಮಾಡಿ: {split}questions ಏಳರಿಂದ ಹದಿಮೂರು Section B ಆದವು. {mina}ಇಲ್ಲಿ ಹತ್ತು ನಿಮಿಷ, {minb}ಅಲ್ಲಿ ಹತ್ತು ನಿಮಿಷ… {save}Save."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-kn/L14.wav",
+    "duration": 4.556083,
+    "text": "Number five: ಒಂದೇ click ನಲ್ಲಿ live — anti-cheating exam room ಒಳಗೆ.",
+    "raw": "Number five: ಒಂದೇ click ನಲ್ಲಿ live — anti-cheating exam room ಒಳಗೆ."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-kn/L15.wav",
+    "duration": 7.340292,
+    "text": "Test ರೆಡಿ ಆದ ತಕ್ಷಣ, Conduct exam tap ಮಾಡಿ. ನಿಮಗೆ ಒಂದು secure exam link ಸಿಗುತ್ತೆ. Start conducting, exam ಈಗ live.",
+    "raw": "{card}Test ರೆಡಿ ಆದ ತಕ್ಷಣ, {conduct}Conduct exam tap ಮಾಡಿ. {link}ನಿಮಗೆ ಒಂದು secure exam link ಸಿಗುತ್ತೆ. {start}Start conducting, {live}exam ಈಗ live."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-kn/L16.wav",
+    "duration": 14.514042,
+    "text": "ಮುಂದಿನ step Testoza ನೇ ಹೇಳುತ್ತೆ: exam room set ಮಾಡಿ. Full screen. Tab, app switch ಸಿಕ್ಕಿಬೀಳುತ್ತೆ, limit set ಮಾಡಿ — ಮೂರು warnings — test ತಾನಾಗಿಯೇ submit. Copy-paste, right-click, back button — ಎಲ್ಲಾ block.",
+    "raw": "{tip1}ಮುಂದಿನ step TestoZa ನೇ ಹೇಳುತ್ತೆ: {settings}exam room set ಮಾಡಿ. {fs}Full screen. {tab}Tab, app switch ಸಿಕ್ಕಿಬೀಳುತ್ತೆ, {count}limit set ಮಾಡಿ — {threepick}ಮೂರು warnings — test ತಾನಾಗಿಯೇ submit. {copyoff}Copy-paste, {right}right-click, {back}back button — ಎಲ್ಲಾ block."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-kn/L17.wav",
+    "duration": 8.051917,
+    "text": "Results tab ನಲ್ಲಿ, exam ಆದ ಮೇಲೆ candidates ಏನು ನೋಡಬೇಕು ಅಂತ ನೀವೇ ನಿರ್ಧರಿಸ್ತೀರ. Questions shuffle ಮಾಡಿ, ಯಾರಿಗೂ ಒಂದೇ order ಬರಲ್ಲ. Save.",
+    "raw": "{results}Results tab ನಲ್ಲಿ, {resultview}exam ಆದ ಮೇಲೆ candidates ಏನು ನೋಡಬೇಕು ಅಂತ ನೀವೇ ನಿರ್ಧರಿಸ್ತೀರ. {shuffle}Questions shuffle ಮಾಡಿ, ಯಾರಿಗೂ ಒಂದೇ order ಬರಲ್ಲ. {saveset}Save."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-kn/L18.wav",
+    "duration": 2.624542,
+    "text": "Number six: ಎಲ್ಲಿ ಬೇಕಾದರೂ share ಮಾಡಿ.",
+    "raw": "Number six: ಎಲ್ಲಿ ಬೇಕಾದರೂ share ಮಾಡಿ."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-kn/L19.wav",
+    "duration": 15.813583,
+    "text": "ಮುಂದಿನ tip: candidates ಗೆ ಕಳಿಸಿ. Link copy ಮಾಡಿ, ಅಥವಾ ನೇರವಾಗಿ class WhatsApp group ನಲ್ಲಿ share ಮಾಡಿ. Class ನಲ್ಲಿ phones ಇಲ್ವಾ? Join code ತಗೊಳ್ಳಿ. ಆರು digits. Board ಮೇಲೆ ಬರೆಯಿರಿ, students ಅದನ್ನ testoza dot com slash join ನಲ್ಲಿ type ಮಾಡ್ತಾರೆ.",
+    "raw": "{tip2}ಮುಂದಿನ tip: candidates ಗೆ ಕಳಿಸಿ. {copy}Link copy ಮಾಡಿ, {share}ಅಥವಾ ನೇರವಾಗಿ class WhatsApp group ನಲ್ಲಿ share ಮಾಡಿ. {menu}Class ನಲ್ಲಿ phones ಇಲ್ವಾ? {getcode}Join code ತಗೊಳ್ಳಿ. {code}ಆರು digits. Board ಮೇಲೆ ಬರೆಯಿರಿ, students ಅದನ್ನ testoza dot com slash join ನಲ್ಲಿ type ಮಾಡ್ತಾರೆ."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-kn/L20.wav",
+    "duration": 2.123083,
+    "text": "Number seven: ಬೇಕಾದ details ತಗೊಳ್ಳಿ.",
+    "raw": "Number seven: ಬೇಕಾದ details ತಗೊಳ್ಳಿ."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-kn/L21.wav",
+    "duration": 8.878458,
+    "text": "Name default ಆಗಿ ಕೇಳುತ್ತೆ. ರೋಲ್ ನಂಬರ್ add ಮಾಡಿ, ಅಥವಾ ಬೇರೆ ಏನಾದರೂ — batch, school, phone. Start ಮಾಡೋ ಮುಂಚೆ candidates ಇದನ್ನ fill ಮಾಡ್ತಾರೆ.",
+    "raw": "{inputs}Name default ಆಗಿ ಕೇಳುತ್ತೆ. {roll}ರೋಲ್ ನಂಬರ್ add ಮಾಡಿ, {inputsdone}ಅಥವಾ ಬೇರೆ ಏನಾದರೂ — batch, school, phone. Start ಮಾಡೋ ಮುಂಚೆ candidates ಇದನ್ನ fill ಮಾಡ್ತಾರೆ."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-kn/L22.wav",
+    "duration": 4.49325,
+    "text": "Number eight: ಯಾವ phone ನಲ್ಲಾದರೂ exam room. App ಬೇಡ, sign-up ಬೇಡ.",
+    "raw": "Number eight: ಯಾವ phone ನಲ್ಲಾದರೂ exam room. App ಬೇಡ, sign-up ಬೇಡ."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-kn/L23.wav",
+    "duration": 10.123583,
+    "text": "ಇಲ್ಲಿ ಒಬ್ಬ student, ಅವಳ phone ನಲ್ಲಿ, testoza dot com slash join ನಲ್ಲಿ. ಆರು digits type ಮಾಡ್ತಾಳೆ, exam open ಆಗುತ್ತೆ. Name, roll number, start.",
+    "raw": "{join}ಇಲ್ಲಿ ಒಬ್ಬ student, ಅವಳ phone ನಲ್ಲಿ, testoza dot com slash join ನಲ್ಲಿ. {code6}ಆರು digits type ಮಾಡ್ತಾಳೆ, {details}exam open ಆಗುತ್ತೆ. {name}Name, {rollin}roll number, {go}start."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-kn/L24.wav",
+    "duration": 5.908125,
+    "text": "Full screen, clean, ಓದೋಕೆ easy. Answer tap ಮಾಡಿ, save and next.",
+    "raw": "{exam}Full screen, clean, ಓದೋಕೆ easy. {ans1}Answer tap ಮಾಡಿ, {next1}save and next."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-kn/L25.wav",
+    "duration": 6.4665,
+    "text": "ಈಗ ಅವಳು ಬೇರೆ app ಗೆ ಹೋಗ್ತಾಳೆ — exam ತಕ್ಷಣ ಹಿಡಿಯುತ್ತೆ. Warning one of three. ನೇರವಾಗಿ ಮತ್ತೆ paper ಗೆ.",
+    "raw": "{violation}ಈಗ ಅವಳು ಬೇರೆ app ಗೆ ಹೋಗ್ತಾಳೆ — exam ತಕ್ಷಣ ಹಿಡಿಯುತ್ತೆ. Warning one of three. {warnok}ನೇರವಾಗಿ ಮತ್ತೆ paper ಗೆ."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-kn/L26.wav",
+    "duration": 3.300792,
+    "text": "ಕೊನೆವರೆಗೂ fast-forward ಮಾಡೋಣ. Submit, confirm.",
+    "raw": "{rush}ಕೊನೆವರೆಗೂ fast-forward ಮಾಡೋಣ. {submit}Submit, {yes}confirm."
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-kn/L27.wav",
+    "duration": 2.332708,
+    "text": "Number nine: exam ಅನ್ನು live ಆಗಿ ನೋಡಿ.",
+    "raw": "Number nine: exam ಅನ್ನು live ಆಗಿ ನೋಡಿ."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-kn/L28.wav",
+    "duration": 13.415875,
+    "text": "ನಿಮ್ಮ dashboard ನಲ್ಲಿ: ಈಗ ಮೂವತ್ತು students ಬರೀತಿದ್ದಾರೆ, ಇಬ್ಬರು submit ಮಾಡಿದ್ದಾರೆ. Results open ಮಾಡಿ — started, writing, submitted, dropped. ಯಾವ tile tap ಮಾಡಿದರೂ, ಯಾರು, ಎಷ್ಟು ಮುಗಿಸಿದ್ದಾರೆ ಅಂತ ಗೊತ್ತಾಗುತ್ತೆ.",
+    "raw": "{dash}ನಿಮ್ಮ dashboard ನಲ್ಲಿ: {writing}ಈಗ ಮೂವತ್ತು students ಬರೀತಿದ್ದಾರೆ, {subm}ಇಬ್ಬರು submit ಮಾಡಿದ್ದಾರೆ. {panel}Results open ಮಾಡಿ — {started}started, {writ}writing, {two}submitted, {zero}dropped. {names}ಯಾವ tile tap ಮಾಡಿದರೂ, ಯಾರು, ಎಷ್ಟು ಮುಗಿಸಿದ್ದಾರೆ ಅಂತ ಗೊತ್ತಾಗುತ್ತೆ."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-kn/L29.wav",
+    "duration": 2.628292,
+    "text": "Number ten: submit ಮಾಡಿದ ತಕ್ಷಣ results.",
+    "raw": "Number ten: submit ಮಾಡಿದ ತಕ್ಷಣ results."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-kn/L30.wav",
+    "duration": 4.898417,
+    "text": "ಅವಳ score ತಕ್ಷಣ ಕಾಣಿಸುತ್ತೆ — ಎಪ್ಪತ್ತೈದು percent — ನೀವು allow ಮಾಡಿದರೆ, solution key ಜೊತೆ.",
+    "raw": "{score}ಅವಳ score ತಕ್ಷಣ ಕಾಣಿಸುತ್ತೆ — ಎಪ್ಪತ್ತೈದು percent — {solkey}ನೀವು allow ಮಾಡಿದರೆ, solution key ಜೊತೆ."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-kn/L31.wav",
+    "duration": 8.044458,
+    "text": "ಎಲ್ಲರೂ ಮುಗಿಸಿದ ಮೇಲೆ, ಮೂವತ್ತೆರಡು results ಬಂದುಬಿಡುತ್ತೆ. Ranks on ಮಾಡಿ, ಇಡೀ batch scroll ಮಾಡಿ, ಎಲ್ಲವನ್ನೂ ಒಂದೇ click ನಲ್ಲಿ Excel ಗೆ download ಮಾಡಿ.",
+    "raw": "{all}ಎಲ್ಲರೂ ಮುಗಿಸಿದ ಮೇಲೆ, ಮೂವತ್ತೆರಡು results ಬಂದುಬಿಡುತ್ತೆ. {rank}Ranks on ಮಾಡಿ, {scrolllist}ಇಡೀ batch scroll ಮಾಡಿ, {export}ಎಲ್ಲವನ್ನೂ ಒಂದೇ click ನಲ್ಲಿ Excel ಗೆ download ಮಾಡಿ."
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-kn/L32.wav",
+    "duration": 8.197625,
+    "text": "ಇವೇ ಹತ್ತು features — question paper ಇಂದ ranked results ವರೆಗೂ, ಎಲ್ಲಾ ಒಂದೇ ಕಡೆ. testoza dot com ನಲ್ಲಿ try ಮಾಡಿ, ಇಂಥ videos ಗೆ subscribe ಮಾಡಿ.",
+    "raw": "ಇವೇ ಹತ್ತು features — question paper ಇಂದ ranked results ವರೆಗೂ, ಎಲ್ಲಾ ಒಂದೇ ಕಡೆ. {endurl}testoza dot com ನಲ್ಲಿ try ಮಾಡಿ, {thanks}ಇಂಥ videos ಗೆ subscribe ಮಾಡಿ."
+  }
+]

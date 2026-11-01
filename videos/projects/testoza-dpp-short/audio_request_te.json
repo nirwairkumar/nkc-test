@@ -1,0 +1,60 @@
+{
+  "lang": "te",
+  "voice": "Zephyr",
+  "out_dir": "assets/voice-te",
+  "style": "You are a bright, friendly young Telugu woman in her mid-twenties who cleared NEET and now helps students study smarter. Speak natural everyday Telugu the way young students in Hyderabad talk, mixing English words exactly as written: smooth, clear, warm and trustworthy, upbeat and genuinely enthusiastic, like sharing a study hack with a friend. Natural pace, never rushed, never salesy. English words stay English. Say Testoza as 'test-OH-za'.",
+  "lines": [
+    {
+      "id": "e01",
+      "text": "JEE, NEET, SSC, Banking... ప్రతి aspirant దగ్గర DPPs కుప్ప ఉంటుంది."
+    },
+    {
+      "id": "e02",
+      "text": "కానీ paper మీద, వెనకాల clock పెట్టుకుని solve చేయడం? అది real exam కాదు."
+    },
+    {
+      "id": "e03",
+      "text": "అందుకే Testoza open చేయండి. PDF ఉందా? అది కూడా ok. కానీ easiest way... మీ DPP pages ని photo తీయండి."
+    },
+    {
+      "id": "e04",
+      "text": "తర్వాత answer key photo తీసి... ఇక్కడ పెట్టండి."
+    },
+    {
+      "id": "e05",
+      "text": "Marking set చేయండి, plus four, minus one... Extract నొక్కండి."
+    },
+    {
+      "id": "e06",
+      "text": "ఇప్పుడు AI ప్రతి question చదువుతుంది... మీ key నుంచి సరైన answer కూడా పెడుతుంది."
+    },
+    {
+      "id": "e07",
+      "text": "పన్నెండు questions, ముప్పై రెండు seconds లో ready!"
+    },
+    {
+      "id": "e08",
+      "text": "ఒకసారి చూడండి, save చేయండి... మీ test My Tests లో ఉంటుంది."
+    },
+    {
+      "id": "e09",
+      "text": "Preview నొక్కండి, start చేయండి."
+    },
+    {
+      "id": "e10",
+      "text": "ఇప్పుడు clock real. Answer select చేయండి, ముందుకు వెళ్ళండి, మళ్ళీ రండి... exam day లాగే."
+    },
+    {
+      "id": "e11",
+      "text": "Submit..."
+    },
+    {
+      "id": "e12",
+      "text": "result వెంటనే. మీ score, ఏది తప్పు, time ఎక్కడ పోయిందో."
+    },
+    {
+      "id": "e13",
+      "text": "ఈరోజు DPP... ఈరోజే online test. Testoza dot com."
+    }
+  ]
+}

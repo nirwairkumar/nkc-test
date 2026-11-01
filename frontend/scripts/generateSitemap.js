@@ -15,7 +15,10 @@ async function fetchFromEndpoints(endpoints) {
     for (const url of endpoints) {
         try {
             console.log(`[Sitemap] Attempting fetch from: ${url}`);
-            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const res = await fetch(url, { 
+                headers: { 'Accept': 'application/json' },
+                signal: AbortSignal.timeout(3500)
+            });
             if (res.ok) {
                 return res;
             }
@@ -26,52 +29,152 @@ async function fetchFromEndpoints(endpoints) {
     return null;
 }
 
+function buildXml(urls, baseUrl) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(page => {
+    const formattedDate = new Date(page.lastmod || STATIC_PAGE_LASTMOD).toISOString();
+    const loc = page.url.startsWith('http') ? page.url : `${baseUrl}${page.url}`;
+    return `    <url>
+        <loc>${loc}</loc>
+        <lastmod>${formattedDate}</lastmod>
+        <changefreq>${page.changefreq || 'weekly'}</changefreq>
+        <priority>${page.priority || '0.7'}</priority>
+    </url>`;
+}).join('\n')}
+</urlset>`;
+}
+
 async function generateSitemap() {
     try {
         console.log("Starting sitemap generation...");
 
-        const BASE_URL = process.env.VITE_SITE_URL || 'https://testoza.com';
-        const primaryApi = process.env.VITE_API_URL || 'http://localhost:8000/api';
+        const BASE_URL = (process.env.VITE_SITE_URL || 'https://testoza.com').replace(/\/$/, '');
+        const primaryApi = process.env.VITE_API_URL || 'https://apigcp.testoza.com/api';
         
-        // List of candidate API endpoints (local -> production Cloud Run -> custom domain)
+        // Candidate API endpoints
         const apiCandidates = [
             primaryApi,
             'https://apigcp.testoza.com/api',
-            'https://test-platform-backend-1087440407062.asia-south1.run.app/api'
+            'https://test-platform-backend-1087440407062.asia-south1.run.app/api',
+            'http://localhost:8000/api'
         ].filter((val, idx, self) => self.indexOf(val) === idx);
 
-        const pages = [
+        const staticPages = [
             { url: '/', changefreq: 'daily', priority: 1.0, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/login', changefreq: 'monthly', priority: 0.5, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/create-test', changefreq: 'weekly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/generate-with-ai', changefreq: 'weekly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/quiz-creator', changefreq: 'weekly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/assessment-platform', changefreq: 'weekly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/quiz-creator', changefreq: 'weekly', priority: 0.95, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/assessment-platform', changefreq: 'weekly', priority: 0.95, lastmod: STATIC_PAGE_LASTMOD },
+            // Guides (src/guides): lastmod follows each guide's dateModified.
+            { url: '/create-mock-test-online', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
+            { url: '/generate-with-ai', changefreq: 'weekly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test', changefreq: 'weekly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/more-tests', changefreq: 'daily', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/pricing', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/premium', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/about', changefreq: 'monthly', priority: 0.6, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/support', changefreq: 'monthly', priority: 0.6, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/convert', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/survey', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/privacy-policy', changefreq: 'monthly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/about', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/support', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/privacy-policy', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/terms-and-conditions', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Use-Case Landing Pages
+            { url: '/online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-exam-software', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-quiz-maker', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/mcq-test-maker', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/ai-question-generator', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/pdf-to-quiz', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/youtube-to-quiz', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-test-for-coaching', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/exam-software-for-schools', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/white-label-test-platform', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/auto-grading-software', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-proctoring-software', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Subject Hub Pages
+            { url: '/create-test/physics', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/chemistry', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/mathematics', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/biology', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/english', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/computer-science', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/history', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/geography', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/economics', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/general-knowledge', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/reasoning', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Comparison Pages
+            { url: '/compare/testmoz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/classmarker-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/google-forms-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/quizizz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/typeform-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+
+            // Guides (src/guides), and the index that lists them all
+            { url: '/guides', changefreq: 'weekly', priority: 0.9, lastmod: '2026-10-09T00:00:00.000Z' },
+            { url: '/best-online-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
+            { url: '/cbt-exam-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-28T00:00:00.000Z' },
+            { url: '/jee-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
+            { url: '/ai-test-generator', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
+            { url: '/neet-online-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-01T00:00:00.000Z' },
+            { url: '/moodle-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },
+            { url: '/how-to-conduct-online-exam', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-02T00:00:00.000Z' },
+            { url: '/hindi-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-03T00:00:00.000Z' },
+            { url: '/prevent-cheating-in-online-exams', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-04T00:00:00.000Z' },
+            { url: '/math-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-04T00:00:00.000Z' },
+            { url: '/chemistry-question-paper-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-05T00:00:00.000Z' },
+            { url: '/jee-advanced-mock-test-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
+            { url: '/ssc-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-08T00:00:00.000Z' },
+            { url: '/bank-exam-mock-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-09T00:00:00.000Z' },
+            { url: '/classplus-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/teachmint-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/kahoot-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/testportal-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-10T00:00:00.000Z' },
+            { url: '/mobile-friendly-online-exam', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/embed-test-on-website', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/full-length-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/share-test-on-whatsapp', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-13T00:00:00.000Z' },
+            { url: '/mercer-mettl-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/proprofs-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/socrative-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/speedexam-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/canvas-quizzes-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-15T00:00:00.000Z' },
+            { url: '/best-online-exam-software-india', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-25T00:00:00.000Z' },
+            { url: '/sectional-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/online-test-for-tuition-teachers', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/cbse-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/scholarship-admission-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/online-test-with-negative-marking', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend
+        const testPages = [];
         try {
-            const LIMIT = 1000;
+            const LIMIT = 100;
             let page = 1;
             let hasMore = true;
-            let allTests = [];
 
-            while (hasMore && page <= 5) {
+            while (hasMore && page <= 20) {
                 const endpoints = apiCandidates.map(api => `${api}/tests/feed?limit=${LIMIT}&page=${page}`);
                 const testRes = await fetchFromEndpoints(endpoints);
 
                 if (testRes) {
                     const testData = await testRes.json();
                     const tests = testData.tests || [];
-                    allTests = [...allTests, ...tests];
+                    tests.forEach(test => {
+                        const lastMod = test.updated_at || test.created_at || STATIC_PAGE_LASTMOD;
+                        const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+                        const isJEE = test.title?.toUpperCase().includes('JEE');
+
+                        if (!testPages.find(p => p.url === url)) {
+                            testPages.push({
+                                url,
+                                changefreq: isJEE ? 'daily' : 'weekly',
+                                priority: isJEE ? 0.9 : 0.8,
+                                lastmod: lastMod
+                            });
+                        }
+                    });
                     hasMore = tests.length === LIMIT && testData.meta?.has_more !== false;
                     page++;
                 } else {
@@ -79,35 +182,21 @@ async function generateSitemap() {
                 }
             }
 
-            console.log(`[Sitemap] Total tests fetched: ${allTests.length}`);
-
-            allTests.forEach(test => {
-                const lastMod = test.updated_at || test.created_at || STATIC_PAGE_LASTMOD;
-                const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-                const isJEE = test.title?.toUpperCase().includes('JEE');
-
-                pages.push({
-                    url,
-                    changefreq: isJEE ? 'daily' : 'weekly',
-                    priority: isJEE ? 0.9 : 0.8,
-                    lastmod: lastMod
-                });
-            });
+            console.log(`[Sitemap] Total tests fetched: ${testPages.length}`);
         } catch (e) {
             console.warn("⚠️  [Sitemap] Error fetching tests:", e.message);
         }
 
-        // 2. Add Explicit Hub Categories
-        const hubCategories = ['jee-mains', 'gate', 'cat', 'jee', 'iit-jam'];
+        // 2. Fetch / Build Category Hubs
+        const categoryPages = [];
+        const hubCategories = ['jee-mains', 'jee-advanced', 'neet-ug', 'gate', 'cat', 'jee', 'iit-jam', 'ssc'];
         hubCategories.forEach(slug => {
-            if (!pages.find(p => p.url === `/tests/${slug}`)) {
-                pages.push({
-                    url: `/tests/${slug}`,
-                    changefreq: 'daily',
-                    priority: 0.95,
-                    lastmod: STATIC_PAGE_LASTMOD
-                });
-            }
+            categoryPages.push({
+                url: `/tests/${slug}`,
+                changefreq: 'daily',
+                priority: 0.95,
+                lastmod: STATIC_PAGE_LASTMOD
+            });
         });
 
         try {
@@ -121,11 +210,11 @@ async function generateSitemap() {
                         const slug = (cat.slug || cat.name).toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
                         const isJEE = cat.name?.toUpperCase().includes('JEE');
 
-                        if (!pages.find(p => p.url === `/tests/${slug}`)) {
-                            pages.push({
+                        if (!categoryPages.find(p => p.url === `/tests/${slug}`)) {
+                            categoryPages.push({
                                 url: `/tests/${slug}`,
                                 changefreq: isJEE ? 'daily' : 'weekly',
-                                priority: isJEE ? 0.85 : 0.7,
+                                priority: isJEE ? 0.85 : 0.75,
                                 lastmod: STATIC_PAGE_LASTMOD
                             });
                         }
@@ -136,29 +225,42 @@ async function generateSitemap() {
             console.warn("⚠️  [Sitemap] Error fetching categories:", e.message);
         }
 
-        // 3. Generate XML
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map(page => {
-    const formattedDate = new Date(page.lastmod || STATIC_PAGE_LASTMOD).toISOString();
-    return `    <url>
-        <loc>${BASE_URL}${page.url}</loc>
-        <lastmod>${formattedDate}</lastmod>
-        <changefreq>${page.changefreq}</changefreq>
-        <priority>${page.priority}</priority>
-    </url>`;
-}).join('\n')}
-</urlset>`;
-
-        // Write to file
+        // 3. Write XML Files
         const publicDir = path.resolve(__dirname, '../public');
-        if (!fs.existsSync(publicDir)) {
-            fs.mkdirSync(publicDir);
-        }
+        const sitemapSubDir = path.join(publicDir, 'sitemap');
 
-        fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml);
-        console.log(`✅ [Sitemap] Successfully generated ${path.join(publicDir, 'sitemap.xml')} with ${pages.length} URLs.`);
+        if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+        if (!fs.existsSync(sitemapSubDir)) fs.mkdirSync(sitemapSubDir, { recursive: true });
 
+        // Combined Sitemap
+        const allPages = [...staticPages, ...categoryPages, ...testPages];
+        fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), buildXml(allPages, BASE_URL));
+
+        // Sub-sitemaps
+        fs.writeFileSync(path.join(sitemapSubDir, 'static.xml'), buildXml(staticPages, BASE_URL));
+        fs.writeFileSync(path.join(sitemapSubDir, 'categories.xml'), buildXml(categoryPages, BASE_URL));
+        fs.writeFileSync(path.join(sitemapSubDir, 'tests.xml'), buildXml(testPages, BASE_URL));
+
+        // Index XML
+        const today = new Date().toISOString().split('T')[0];
+        const sitemapIndexXml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>${BASE_URL}/sitemap/static.xml</loc>
+        <lastmod>${today}</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>${BASE_URL}/sitemap/categories.xml</loc>
+        <lastmod>${today}</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>${BASE_URL}/sitemap/tests.xml</loc>
+        <lastmod>${today}</lastmod>
+    </sitemap>
+</sitemapindex>`;
+        fs.writeFileSync(path.join(sitemapSubDir, 'index.xml'), sitemapIndexXml);
+
+        console.log(`✅ [Sitemap] Successfully generated sitemap.xml (${allPages.length} URLs) and sub-sitemaps in public/sitemap/.`);
         process.exit(0);
 
     } catch (error) {

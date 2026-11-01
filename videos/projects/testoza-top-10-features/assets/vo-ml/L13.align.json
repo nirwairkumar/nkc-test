@@ -1,0 +1,212 @@
+[
+ {
+  "w": "ഇനി",
+  "r": "ini",
+  "start": 0.06,
+  "end": 0.2,
+  "score": 0.986
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.26,
+  "end": 0.601,
+  "score": 0.623
+ },
+ {
+  "w": "sections",
+  "r": "sections",
+  "start": 0.681,
+  "end": 1.102,
+  "score": 0.377
+ },
+ {
+  "w": "ആയി",
+  "r": "aayi",
+  "start": 1.122,
+  "end": 1.262,
+  "score": 0.904
+ },
+ {
+  "w": "തിരിക്കൂ,",
+  "r": "tirikkuu",
+  "start": 1.322,
+  "end": 1.723,
+  "score": 0.909
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 2.023,
+  "end": 2.304,
+  "score": 0.972
+ },
+ {
+  "w": "section-നും",
+  "r": "sectionnum",
+  "start": 2.344,
+  "end": 2.744,
+  "score": 0.504
+ },
+ {
+  "w": "സ്വന്തം",
+  "r": "svantam",
+  "start": 2.805,
+  "end": 3.165,
+  "score": 0.859
+ },
+ {
+  "w": "timer",
+  "r": "timer",
+  "start": 3.265,
+  "end": 3.486,
+  "score": 0.665
+ },
+ {
+  "w": "SSC",
+  "r": "ssc",
+  "start": 3.866,
+  "end": 4.067,
+  "score": 0.396
+ },
+ {
+  "w": "പോലെ",
+  "r": "poole",
+  "start": 4.207,
+  "end": 4.407,
+  "score": 0.88
+ },
+ {
+  "w": "തന്നെ.",
+  "r": "tanne",
+  "start": 4.447,
+  "end": 4.668,
+  "score": 0.996
+ },
+ {
+  "w": "എവിടെ",
+  "r": "evitte",
+  "start": 5.289,
+  "end": 5.569,
+  "score": 0.985
+ },
+ {
+  "w": "വേണമെങ്കിലും",
+  "r": "veennamengkilum",
+  "start": 5.589,
+  "end": 6.21,
+  "score": 0.993
+ },
+ {
+  "w": "split",
+  "r": "split",
+  "start": 6.27,
+  "end": 6.551,
+  "score": 0.814
+ },
+ {
+  "w": "ചെയ്യാം:",
+  "r": "ceyyaam",
+  "start": 6.671,
+  "end": 6.951,
+  "score": 0.998
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 7.192,
+  "end": 7.652,
+  "score": 0.249
+ },
+ {
+  "w": "ഏഴ്",
+  "r": "eelll",
+  "start": 7.692,
+  "end": 7.953,
+  "score": 0.734
+ },
+ {
+  "w": "മുതൽ",
+  "r": "mutala",
+  "start": 8.013,
+  "end": 8.273,
+  "score": 0.991
+ },
+ {
+  "w": "പതിമൂന്ന്",
+  "r": "patimuunn",
+  "start": 8.333,
+  "end": 8.774,
+  "score": 0.155
+ },
+ {
+  "w": "Section",
+  "r": "section",
+  "start": 8.894,
+  "end": 9.255,
+  "score": 0.413
+ },
+ {
+  "w": "B",
+  "r": "b",
+  "start": 9.335,
+  "end": 9.355,
+  "score": 0.961
+ },
+ {
+  "w": "ആയി.",
+  "r": "aayi",
+  "start": 9.555,
+  "end": 9.716,
+  "score": 0.911
+ },
+ {
+  "w": "ഇവിടെ",
+  "r": "ivitte",
+  "start": 10.176,
+  "end": 10.417,
+  "score": 0.995
+ },
+ {
+  "w": "പത്ത്",
+  "r": "patt",
+  "start": 10.457,
+  "end": 10.637,
+  "score": 0.595
+ },
+ {
+  "w": "മിനിറ്റ്,",
+  "r": "minirrrr",
+  "start": 10.697,
+  "end": 11.018,
+  "score": 0.588
+ },
+ {
+  "w": "അവിടെ",
+  "r": "avitte",
+  "start": 11.158,
+  "end": 11.398,
+  "score": 0.993
+ },
+ {
+  "w": "പത്ത്",
+  "r": "patt",
+  "start": 11.438,
+  "end": 11.639,
+  "score": 0.765
+ },
+ {
+  "w": "മിനിറ്റ്…",
+  "r": "minirrrr",
+  "start": 11.699,
+  "end": 11.999,
+  "score": 0.666
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 12.18,
+  "end": 12.34,
+  "score": 0.462
+ }
+]

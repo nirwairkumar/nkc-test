@@ -1,0 +1,82 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  .f2-paper {
+    position: absolute; left: 150px; top: 610px; width: 780px; height: 980px; padding: 56px 58px; background: #fffdf8; z-index: 6;
+    border-radius: 6px; color: #111827; font-family: Georgia, 'Times New Roman', serif; transform-origin: 50% 40%;
+    box-shadow: 0 50px 120px -30px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+  .f2-head { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 16px; }
+  .f2-head h1 { margin: 0; font-size: 30px; letter-spacing: 0.04em; }
+  .f2-head p { margin: 8px 0 0; font-size: 19px; color: #374151; }
+  .f2-q { margin-top: 26px; font-size: 22px; line-height: 1.42; }
+  .f2-q b { margin-right: 8px; }
+  .f2-o { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 30px; margin: 8px 0 0 30px; font-size: 21px; color: #1f2937; }
+  .f2-chip {
+    position: absolute; left: 110px; top: 560px; z-index: 7; display: flex; align-items: center; gap: 14px; padding: 12px 22px 12px 14px;
+    border-radius: 18px; background: #fff; box-shadow: 0 20px 50px -14px rgba(0, 0, 0, 0.6); font: 600 25px/1 'Outfit', sans-serif; color: #0f172a; white-space: nowrap;
+  }
+  .f2-chip i { display: grid; place-items: center; width: 50px; height: 58px; border-radius: 10px; background: #dc2626; color: #fff; font: 800 15px/1 'Outfit', sans-serif; font-style: normal; }
+  .f2-chip small { display: block; margin-top: 4px; font: 500 18px/1 'Outfit', sans-serif; color: #64748b; }
+  #f2-win { top: 600px; }
+  #f2-win .sf-view { height: 760px; }
+  .f2-btn { position: absolute; left: 86px; top: 350px; width: 786px; height: 56px; border-radius: 14px; box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.0); }
+  .f2-xbtn { position: absolute; left: 98px; top: 1104px; width: 338px; height: 52px; border-radius: 12px; }
+</style>
+<div data-hf-id="hf-mvm1" id="root" data-composition-id="f02-upload" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-0km5" id="f2-stage" class="clip sf-stage" data-start="0" data-duration="4.8" data-track-index="0"></div>
+    <div data-hf-id="hf-t29x" class="sf-win" id="f2-win">
+      <div data-hf-id="hf-84ta" class="sf-chrome"><div data-hf-id="hf-iqcs" class="sf-dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></div><div data-hf-id="hf-ffyq" class="sf-url">testoza.com<b data-hf-id="hf-mx8d">/generate-with-ai</b></div></div>
+      <div data-hf-id="hf-n9ib" class="sf-view">
+        <div data-hf-id="hf-jayj" id="f2-s1" class="sf-shot"><img data-hf-id="hf-v1m6" src="assets/ui/upload-1.png" alt="" style="width:960px" /><div data-hf-id="hf-a3em" class="f2-btn" id="f2-btn"></div></div>
+        <div data-hf-id="hf-an2o" id="f2-s2" class="sf-shot"><img data-hf-id="hf-68n9" src="assets/ui/upload-2.png" alt="" style="width:960px" /><div data-hf-id="hf-nhpo" class="f2-xbtn" id="f2-xbtn"></div></div>
+      </div>
+    </div>
+    <div data-hf-id="hf-qdpy" class="f2-paper" id="f2-paper">
+      <div data-hf-id="hf-ieuv" class="f2-head">
+        <h1 data-hf-id="hf-ccek">JEE MAIN 2026 · PHYSICS MOCK TEST 01</h1>
+        <p data-hf-id="hf-7wgf">Time: 60 min &nbsp;·&nbsp; Maximum marks: 120 &nbsp;·&nbsp; 30 questions</p>
+      </div>
+      <div data-hf-id="hf-ymui" class="f2-q"><b data-hf-id="hf-hknq">1.</b>A ball is thrown vertically upward with a speed of 20 m/s. Taking g = 10 m/s², the maximum height reached is:</div>
+      <div data-hf-id="hf-j75c" class="f2-o"><span data-hf-id="hf-y8l1">(A) 10 m</span><span data-hf-id="hf-y7mv">(B) 20 m</span><span data-hf-id="hf-b57t">(C) 30 m</span><span data-hf-id="hf-9zdz">(D) 40 m</span></div>
+      <div data-hf-id="hf-a9q3" class="f2-q"><b data-hf-id="hf-7bcx">2.</b>Two resistors of 4 Ω and 12 Ω are connected in parallel. Their equivalent resistance is:</div>
+      <div data-hf-id="hf-gamg" class="f2-o"><span data-hf-id="hf-q7cf">(A) 3 Ω</span><span data-hf-id="hf-yyfd">(B) 8 Ω</span><span data-hf-id="hf-1yxh">(C) 16 Ω</span><span data-hf-id="hf-sgub">(D) 48 Ω</span></div>
+      <div data-hf-id="hf-z10d" class="f2-q"><b data-hf-id="hf-lq90">3.</b>The de Broglie wavelength of an electron accelerated through a potential difference V is proportional to:</div>
+      <div data-hf-id="hf-f3pd" class="f2-o"><span data-hf-id="hf-p4or">(A) V</span><span data-hf-id="hf-8p8q">(B) √V</span><span data-hf-id="hf-74k9">(C) 1/V</span><span data-hf-id="hf-sj6g">(D) 1/√V</span></div>
+      <div data-hf-id="hf-u4xo" class="f2-q"><b data-hf-id="hf-k1cn">4.</b>A wire of length 2 m carries a current of 5 A perpendicular to a magnetic field of 0.4 T. The force on the wire (in N) is ____.</div>
+    </div>
+    <div data-hf-id="hf-v74k" class="f2-chip" id="f2-chip"><i data-hf-id="hf-eelu">PDF</i><div data-hf-id="hf-sxhx">JEE_Main_Physics_Mock_01.pdf<small data-hf-id="hf-f2ba">6 pages · 2.4 MB</small></div></div>
+    <div data-hf-id="hf-tjto" class="sf-sup" id="f2-s">Upload the <em data-hf-id="hf-xrsj">PDF.</em></div>
+    <svg data-hf-id="hf-myis" class="sf-cursor" viewBox="0 0 24 24"><path data-hf-id="hf-v13s" d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.8L4 19z" fill="#fff" stroke="#0f172a" stroke-width="1.3" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f02-upload';
+  const { q, tl, superIn, only, cursorAt, move, click } = SF(ID);
+  const S = [q('#f2-s1'), q('#f2-s2')];
+  only(0, S[0], S);
+  // handoff from frame 1: the paper (scale 1.04, −2°) folds down into its file chip
+  tl.set('#f2-paper', { rotation: -2, scale: 1.04 }, 0);
+  tl.to('#f2-paper', { scale: 0.12, x: -300, y: -430, rotation: 0, opacity: 0, duration: 0.6, ease: 'power3.in' }, 0);
+  tl.fromTo('#f2-win', { y: 420, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'expo.out' }, 0.15);
+  superIn(0.55, q('#f2-s'));
+  // the chip drops onto "Choose File" (centre 539,1036) as the stopwatch starts
+  tl.to('#f2-chip', { x: 539 - 110 - 250, y: 1036 - 560 - 42, scale: 0.9, duration: 0.6, ease: 'power3.inOut' }, 0.6);
+  tl.to('#f2-chip', { scale: 0.4, opacity: 0, duration: 0.22, ease: 'power2.in' }, 1.22);
+  tl.fromTo('#f2-btn', { boxShadow: '0 0 0 0px rgba(56,189,248,0.9)' }, { boxShadow: '0 0 0 18px rgba(56,189,248,0)', duration: 0.6, ease: 'power2.out' }, 1.25);
+  only(1.45, S[1], S);
+  // pan down to "Extract Questions" and click it
+  tl.to(S[1], { y: -472, duration: 1.0, ease: 'power2.inOut' }, 2.3);
+  cursorAt(2.0, 760, 1210);
+  move(3.15, 327, 1316, 0.65);
+  click(3.9, 327, 1316, q('#f2-xbtn'));
+  tl.fromTo('#f2-xbtn', { boxShadow: '0 0 0 0px rgba(56,189,248,0.9)' }, { boxShadow: '0 0 0 16px rgba(56,189,248,0)', duration: 0.6, ease: 'power2.out' }, 3.9);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

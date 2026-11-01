@@ -1,0 +1,140 @@
+[
+  {
+    "id": "w0",
+    "text": "Block",
+    "start": 0.08,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "back",
+    "start": 0.48,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "button",
+    "start": 0.72,
+    "end": 1.12
+  },
+  {
+    "id": "w3",
+    "text": "stops",
+    "start": 1.12,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "a",
+    "start": 1.52,
+    "end": 1.6
+  },
+  {
+    "id": "w5",
+    "text": "student",
+    "start": 1.6,
+    "end": 2
+  },
+  {
+    "id": "w6",
+    "text": "leaving",
+    "start": 2,
+    "end": 2.32
+  },
+  {
+    "id": "w7",
+    "text": "the",
+    "start": 2.32,
+    "end": 2.4
+  },
+  {
+    "id": "w8",
+    "text": "exam",
+    "start": 2.4,
+    "end": 2.8
+  },
+  {
+    "id": "w9",
+    "text": "by",
+    "start": 2.8,
+    "end": 2.96
+  },
+  {
+    "id": "w10",
+    "text": "accident,",
+    "start": 2.96,
+    "end": 3.52
+  },
+  {
+    "id": "w11",
+    "text": "and",
+    "start": 3.52,
+    "end": 3.84
+  },
+  {
+    "id": "w12",
+    "text": "disable",
+    "start": 3.84,
+    "end": 4.4
+  },
+  {
+    "id": "w13",
+    "text": "exit",
+    "start": 4.4,
+    "end": 4.64
+  },
+  {
+    "id": "w14",
+    "text": "button",
+    "start": 4.64,
+    "end": 4.96
+  },
+  {
+    "id": "w15",
+    "text": "hides",
+    "start": 4.96,
+    "end": 5.36
+  },
+  {
+    "id": "w16",
+    "text": "the",
+    "start": 5.36,
+    "end": 5.44
+  },
+  {
+    "id": "w17",
+    "text": "exit",
+    "start": 5.44,
+    "end": 5.84
+  },
+  {
+    "id": "w18",
+    "text": "so",
+    "start": 5.92,
+    "end": 6.16
+  },
+  {
+    "id": "w19",
+    "text": "nobody",
+    "start": 6.16,
+    "end": 6.48
+  },
+  {
+    "id": "w20",
+    "text": "walks",
+    "start": 6.48,
+    "end": 6.8
+  },
+  {
+    "id": "w21",
+    "text": "out",
+    "start": 6.8,
+    "end": 7.04
+  },
+  {
+    "id": "w22",
+    "text": "halfway.",
+    "start": 7.04,
+    "end": 7.52
+  }
+]

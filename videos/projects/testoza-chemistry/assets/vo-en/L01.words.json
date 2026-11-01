@@ -1,0 +1,224 @@
+[
+  {
+    "id": "w0",
+    "text": "Reactions",
+    "start": 0,
+    "end": 0.88
+  },
+  {
+    "id": "w1",
+    "text": "with",
+    "start": 0.88,
+    "end": 1.12
+  },
+  {
+    "id": "w2",
+    "text": "heat",
+    "start": 1.12,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "on",
+    "start": 1.6,
+    "end": 1.76
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 1.76,
+    "end": 2
+  },
+  {
+    "id": "w5",
+    "text": "arrow.",
+    "start": 2,
+    "end": 2.72
+  },
+  {
+    "id": "w6",
+    "text": "Complex",
+    "start": 2.72,
+    "end": 3.28
+  },
+  {
+    "id": "w7",
+    "text": "ions",
+    "start": 3.28,
+    "end": 3.84
+  },
+  {
+    "id": "w8",
+    "text": "and",
+    "start": 3.84,
+    "end": 4
+  },
+  {
+    "id": "w9",
+    "text": "their",
+    "start": 4,
+    "end": 4.32
+  },
+  {
+    "id": "w10",
+    "text": "charges.",
+    "start": 4.32,
+    "end": 5.2
+  },
+  {
+    "id": "w11",
+    "text": "Match",
+    "start": 5.2,
+    "end": 5.6
+  },
+  {
+    "id": "w12",
+    "text": "the",
+    "start": 5.6,
+    "end": 5.76
+  },
+  {
+    "id": "w13",
+    "text": "list",
+    "start": 5.76,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "tables.",
+    "start": 6.16,
+    "end": 7.04
+  },
+  {
+    "id": "w15",
+    "text": "Structures",
+    "start": 7.04,
+    "end": 7.84
+  },
+  {
+    "id": "w16",
+    "text": "right",
+    "start": 7.84,
+    "end": 8.08
+  },
+  {
+    "id": "w17",
+    "text": "inside",
+    "start": 8.32,
+    "end": 8.72
+  },
+  {
+    "id": "w18",
+    "text": "the",
+    "start": 8.72,
+    "end": 8.96
+  },
+  {
+    "id": "w19",
+    "text": "question.",
+    "start": 8.96,
+    "end": 9.84
+  },
+  {
+    "id": "w20",
+    "text": "This",
+    "start": 9.84,
+    "end": 10
+  },
+  {
+    "id": "w21",
+    "text": "is",
+    "start": 10,
+    "end": 10.16
+  },
+  {
+    "id": "w22",
+    "text": "chemistry",
+    "start": 10.16,
+    "end": 10.8
+  },
+  {
+    "id": "w23",
+    "text": "in",
+    "start": 10.8,
+    "end": 10.88
+  },
+  {
+    "id": "w24",
+    "text": "testosa",
+    "start": 11.04,
+    "end": 11.6
+  },
+  {
+    "id": "w25",
+    "text": "and",
+    "start": 11.92,
+    "end": 12.08
+  },
+  {
+    "id": "w26",
+    "text": "in",
+    "start": 12.08,
+    "end": 12.24
+  },
+  {
+    "id": "w27",
+    "text": "the",
+    "start": 12.24,
+    "end": 12.4
+  },
+  {
+    "id": "w28",
+    "text": "next",
+    "start": 12.4,
+    "end": 12.64
+  },
+  {
+    "id": "w29",
+    "text": "few",
+    "start": 12.64,
+    "end": 12.88
+  },
+  {
+    "id": "w30",
+    "text": "minutes",
+    "start": 12.88,
+    "end": 13.2
+  },
+  {
+    "id": "w31",
+    "text": "you",
+    "start": 13.28,
+    "end": 13.52
+  },
+  {
+    "id": "w32",
+    "text": "type",
+    "start": 13.68,
+    "end": 14.08
+  },
+  {
+    "id": "w33",
+    "text": "all",
+    "start": 14.08,
+    "end": 14.24
+  },
+  {
+    "id": "w34",
+    "text": "of",
+    "start": 14.24,
+    "end": 14.4
+  },
+  {
+    "id": "w35",
+    "text": "it",
+    "start": 14.4,
+    "end": 14.64
+  },
+  {
+    "id": "w36",
+    "text": "yourself.",
+    "start": 14.64,
+    "end": 15.12
+  }
+]

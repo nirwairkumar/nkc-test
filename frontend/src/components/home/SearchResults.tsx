@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, FileText, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
 import { fetchCategoryStats } from '@/lib/categoriesApi';
 import { toast } from 'sonner';
@@ -252,8 +251,7 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                                <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} /></div>
+                            <CardFooter className="p-3 pt-0 flex justify-end items-center gap-2">
                                 {user?.id === test.created_by ? (
                                     <div className="flex-1 flex gap-2">
                                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManageTest(test)}>

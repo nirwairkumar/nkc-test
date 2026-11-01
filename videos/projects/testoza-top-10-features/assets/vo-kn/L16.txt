@@ -1,0 +1,1 @@
+ಮುಂದಿನ step Testoza ನೇ ಹೇಳುತ್ತೆ: exam room set ಮಾಡಿ. Full screen. Tab, app switch ಸಿಕ್ಕಿಬೀಳುತ್ತೆ, limit set ಮಾಡಿ — ಮೂರು warnings — test ತಾನಾಗಿಯೇ submit. Copy-paste, right-click, back button — ಎಲ್ಲಾ block.

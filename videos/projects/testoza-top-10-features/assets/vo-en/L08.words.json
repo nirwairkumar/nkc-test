@@ -1,0 +1,206 @@
+[
+  {
+    "id": "w0",
+    "text": "Type",
+    "start": 0.08,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "H",
+    "start": 0.4,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "equals",
+    "start": 0.8,
+    "end": 1.28
+  },
+  {
+    "id": "w3",
+    "text": "UT",
+    "start": 1.28,
+    "end": 2
+  },
+  {
+    "id": "w4",
+    "text": "minus",
+    "start": 2,
+    "end": 2.56
+  },
+  {
+    "id": "w5",
+    "text": "tap",
+    "start": 2.56,
+    "end": 2.72
+  },
+  {
+    "id": "w6",
+    "text": "the",
+    "start": 2.88,
+    "end": 3.04
+  },
+  {
+    "id": "w7",
+    "text": "fraction",
+    "start": 3.04,
+    "end": 3.52
+  },
+  {
+    "id": "w8",
+    "text": "key",
+    "start": 3.52,
+    "end": 3.92
+  },
+  {
+    "id": "w9",
+    "text": "one",
+    "start": 4.16,
+    "end": 4.4
+  },
+  {
+    "id": "w10",
+    "text": "over",
+    "start": 4.72,
+    "end": 5.04
+  },
+  {
+    "id": "w11",
+    "text": "two,",
+    "start": 5.2,
+    "end": 5.68
+  },
+  {
+    "id": "w12",
+    "text": "then",
+    "start": 5.68,
+    "end": 5.92
+  },
+  {
+    "id": "w13",
+    "text": "the",
+    "start": 5.92,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "power",
+    "start": 6.08,
+    "end": 6.48
+  },
+  {
+    "id": "w15",
+    "text": "key",
+    "start": 6.48,
+    "end": 6.72
+  },
+  {
+    "id": "w16",
+    "text": "four",
+    "start": 6.88,
+    "end": 7.28
+  },
+  {
+    "id": "w17",
+    "text": "T",
+    "start": 7.44,
+    "end": 7.68
+  },
+  {
+    "id": "w18",
+    "text": "squared.",
+    "start": 7.92,
+    "end": 8.8
+  },
+  {
+    "id": "w19",
+    "text": "A",
+    "start": 8.8,
+    "end": 9.04
+  },
+  {
+    "id": "w20",
+    "text": "proper",
+    "start": 9.04,
+    "end": 9.44
+  },
+  {
+    "id": "w21",
+    "text": "formula,",
+    "start": 9.44,
+    "end": 10.08
+  },
+  {
+    "id": "w22",
+    "text": "no",
+    "start": 10.08,
+    "end": 10.32
+  },
+  {
+    "id": "w23",
+    "text": "code",
+    "start": 10.32,
+    "end": 10.72
+  },
+  {
+    "id": "w24",
+    "text": "to",
+    "start": 10.72,
+    "end": 10.88
+  },
+  {
+    "id": "w25",
+    "text": "learn.",
+    "start": 10.88,
+    "end": 11.52
+  },
+  {
+    "id": "w26",
+    "text": "Insert",
+    "start": 11.52,
+    "end": 12.24
+  },
+  {
+    "id": "w27",
+    "text": "and",
+    "start": 12.32,
+    "end": 12.56
+  },
+  {
+    "id": "w28",
+    "text": "it",
+    "start": 12.56,
+    "end": 12.8
+  },
+  {
+    "id": "w29",
+    "text": "sits",
+    "start": 12.8,
+    "end": 13.12
+  },
+  {
+    "id": "w30",
+    "text": "right",
+    "start": 13.12,
+    "end": 13.36
+  },
+  {
+    "id": "w31",
+    "text": "inside",
+    "start": 13.36,
+    "end": 13.68
+  },
+  {
+    "id": "w32",
+    "text": "the",
+    "start": 13.68,
+    "end": 13.84
+  },
+  {
+    "id": "w33",
+    "text": "question.",
+    "start": 13.84,
+    "end": 14.24
+  }
+]

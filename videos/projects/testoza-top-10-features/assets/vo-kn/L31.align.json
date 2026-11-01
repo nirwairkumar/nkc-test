@@ -1,0 +1,149 @@
+[
+ {
+  "w": "ಎಲ್ಲರೂ",
+  "r": "ellaruu",
+  "start": 0.06,
+  "end": 0.401,
+  "score": 0.975
+ },
+ {
+  "w": "ಮುಗಿಸಿದ",
+  "r": "mugisida",
+  "start": 0.441,
+  "end": 0.843,
+  "score": 0.996
+ },
+ {
+  "w": "ಮೇಲೆ,",
+  "r": "meele",
+  "start": 0.903,
+  "end": 1.123,
+  "score": 0.956
+ },
+ {
+  "w": "ಮೂವತ್ತೆರಡು",
+  "r": "muuvatteraddu",
+  "start": 1.284,
+  "end": 1.765,
+  "score": 0.64
+ },
+ {
+  "w": "results",
+  "r": "results",
+  "start": 1.805,
+  "end": 2.147,
+  "score": 0.584
+ },
+ {
+  "w": "ಬಂದುಬಿಡುತ್ತೆ.",
+  "r": "bamdubiddutte",
+  "start": 2.187,
+  "end": 2.648,
+  "score": 0.797
+ },
+ {
+  "w": "Ranks",
+  "r": "ranks",
+  "start": 3.089,
+  "end": 3.35,
+  "score": 0.758
+ },
+ {
+  "w": "on",
+  "r": "on",
+  "start": 3.471,
+  "end": 3.611,
+  "score": 0.481
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 3.671,
+  "end": 3.912,
+  "score": 0.998
+ },
+ {
+  "w": "ಇಡೀ",
+  "r": "iddii",
+  "start": 4.133,
+  "end": 4.373,
+  "score": 0.805
+ },
+ {
+  "w": "batch",
+  "r": "batch",
+  "start": 4.434,
+  "end": 4.654,
+  "score": 0.512
+ },
+ {
+  "w": "scroll",
+  "r": "scroll",
+  "start": 4.694,
+  "end": 4.995,
+  "score": 0.657
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 5.055,
+  "end": 5.296,
+  "score": 0.995
+ },
+ {
+  "w": "ಎಲ್ಲವನ್ನೂ",
+  "r": "ellavannuu",
+  "start": 5.677,
+  "end": 6.139,
+  "score": 0.889
+ },
+ {
+  "w": "ಒಂದೇ",
+  "r": "omdee",
+  "start": 6.179,
+  "end": 6.44,
+  "score": 0.917
+ },
+ {
+  "w": "click",
+  "r": "click",
+  "start": 6.46,
+  "end": 6.6,
+  "score": 0.537
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 6.66,
+  "end": 6.861,
+  "score": 0.993
+ },
+ {
+  "w": "Excel",
+  "r": "excel",
+  "start": 6.981,
+  "end": 7.262,
+  "score": 0.476
+ },
+ {
+  "w": "ಗೆ",
+  "r": "ge",
+  "start": 7.302,
+  "end": 7.362,
+  "score": 0.932
+ },
+ {
+  "w": "download",
+  "r": "download",
+  "start": 7.443,
+  "end": 7.764,
+  "score": 0.497
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 7.784,
+  "end": 7.984,
+  "score": 0.997
+ }
+]

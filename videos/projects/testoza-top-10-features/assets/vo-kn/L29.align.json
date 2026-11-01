@@ -1,0 +1,44 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.08,
+  "end": 0.401,
+  "score": 0.565
+ },
+ {
+  "w": "ten:",
+  "r": "ten",
+  "start": 0.522,
+  "end": 0.682,
+  "score": 0.301
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 1.063,
+  "end": 1.425,
+  "score": 0.787
+ },
+ {
+  "w": "ಮಾಡಿದ",
+  "r": "maaddida",
+  "start": 1.505,
+  "end": 1.766,
+  "score": 0.989
+ },
+ {
+  "w": "ತಕ್ಷಣ",
+  "r": "takssanna",
+  "start": 1.806,
+  "end": 2.147,
+  "score": 0.977
+ },
+ {
+  "w": "results.",
+  "r": "results",
+  "start": 2.207,
+  "end": 2.568,
+  "score": 0.417
+ }
+]

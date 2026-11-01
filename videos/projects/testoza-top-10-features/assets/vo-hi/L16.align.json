@@ -1,0 +1,275 @@
+[
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 0.0,
+  "end": 0.401,
+  "score": 0.787
+ },
+ {
+  "w": "ख़ुद",
+  "r": "khud",
+  "start": 0.501,
+  "end": 0.661,
+  "score": 0.975
+ },
+ {
+  "w": "बताता",
+  "r": "bataataa",
+  "start": 0.701,
+  "end": 1.102,
+  "score": 0.953
+ },
+ {
+  "w": "है",
+  "r": "hai",
+  "start": 1.122,
+  "end": 1.222,
+  "score": 0.994
+ },
+ {
+  "w": "अगला",
+  "r": "agalaa",
+  "start": 1.282,
+  "end": 1.542,
+  "score": 0.955
+ },
+ {
+  "w": "step:",
+  "r": "step",
+  "start": 1.562,
+  "end": 1.802,
+  "score": 0.783
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.223,
+  "end": 2.624,
+  "score": 0.439
+ },
+ {
+  "w": "room",
+  "r": "room",
+  "start": 2.724,
+  "end": 2.864,
+  "score": 0.499
+ },
+ {
+  "w": "सेट",
+  "r": "sett",
+  "start": 2.944,
+  "end": 3.124,
+  "score": 0.736
+ },
+ {
+  "w": "कीजिए।",
+  "r": "kiijie",
+  "start": 3.164,
+  "end": 3.425,
+  "score": 0.811
+ },
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 3.965,
+  "end": 4.186,
+  "score": 0.258
+ },
+ {
+  "w": "screen",
+  "r": "screen",
+  "start": 4.266,
+  "end": 4.586,
+  "score": 0.487
+ },
+ {
+  "w": "ज़रूरी।",
+  "r": "zaruurii",
+  "start": 4.666,
+  "end": 5.087,
+  "score": 0.85
+ },
+ {
+  "w": "हर",
+  "r": "har",
+  "start": 5.488,
+  "end": 5.648,
+  "score": 0.974
+ },
+ {
+  "w": "tab",
+  "r": "tab",
+  "start": 5.708,
+  "end": 5.988,
+  "score": 0.961
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 6.068,
+  "end": 6.169,
+  "score": 0.926
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 6.269,
+  "end": 6.409,
+  "score": 0.64
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 6.489,
+  "end": 6.709,
+  "score": 0.538
+ },
+ {
+  "w": "पकड़ा",
+  "r": "pakaddaa",
+  "start": 6.749,
+  "end": 7.07,
+  "score": 0.97
+ },
+ {
+  "w": "जाएगा,",
+  "r": "jaaegaa",
+  "start": 7.09,
+  "end": 7.47,
+  "score": 0.988
+ },
+ {
+  "w": "एक",
+  "r": "ek",
+  "start": 7.951,
+  "end": 8.071,
+  "score": 0.984
+ },
+ {
+  "w": "limit",
+  "r": "limit",
+  "start": 8.131,
+  "end": 8.432,
+  "score": 0.807
+ },
+ {
+  "w": "रखिए",
+  "r": "rakhie",
+  "start": 8.472,
+  "end": 8.752,
+  "score": 0.898
+ },
+ {
+  "w": "मान",
+  "r": "maan",
+  "start": 9.113,
+  "end": 9.293,
+  "score": 0.981
+ },
+ {
+  "w": "लीजिए",
+  "r": "liijie",
+  "start": 9.333,
+  "end": 9.533,
+  "score": 0.746
+ },
+ {
+  "w": "तीन",
+  "r": "tiin",
+  "start": 9.633,
+  "end": 9.834,
+  "score": 0.982
+ },
+ {
+  "w": "warnings",
+  "r": "warnings",
+  "start": 9.914,
+  "end": 10.294,
+  "score": 0.509
+ },
+ {
+  "w": "फिर",
+  "r": "phir",
+  "start": 10.635,
+  "end": 10.775,
+  "score": 0.944
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 10.875,
+  "end": 11.135,
+  "score": 0.959
+ },
+ {
+  "w": "अपने-आप",
+  "r": "apaneaap",
+  "start": 11.215,
+  "end": 11.696,
+  "score": 0.978
+ },
+ {
+  "w": "submit।",
+  "r": "submit",
+  "start": 11.756,
+  "end": 12.077,
+  "score": 0.824
+ },
+ {
+  "w": "Copy-paste",
+  "r": "copypaste",
+  "start": 12.497,
+  "end": 13.158,
+  "score": 0.539
+ },
+ {
+  "w": "बंद,",
+  "r": "bamd",
+  "start": 13.218,
+  "end": 13.479,
+  "score": 0.895
+ },
+ {
+  "w": "right-click",
+  "r": "rightclick",
+  "start": 13.919,
+  "end": 14.4,
+  "score": 0.437
+ },
+ {
+  "w": "बंद,",
+  "r": "bamd",
+  "start": 14.48,
+  "end": 14.7,
+  "score": 0.896
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 15.061,
+  "end": 15.201,
+  "score": 0.978
+ },
+ {
+  "w": "back",
+  "r": "back",
+  "start": 15.261,
+  "end": 15.441,
+  "score": 0.665
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 15.501,
+  "end": 15.762,
+  "score": 0.658
+ },
+ {
+  "w": "भी।",
+  "r": "bhii",
+  "start": 15.802,
+  "end": 15.922,
+  "score": 0.918
+ }
+]

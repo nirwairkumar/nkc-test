@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Test-ന്",
+  "r": "testn",
+  "start": 0.0,
+  "end": 0.341,
+  "score": 0.767
+ },
+ {
+  "w": "പേര്",
+  "r": "peer",
+  "start": 0.421,
+  "end": 0.601,
+  "score": 0.765
+ },
+ {
+  "w": "നൽകൂ,",
+  "r": "nalakuu",
+  "start": 0.661,
+  "end": 0.962,
+  "score": 0.456
+ },
+ {
+  "w": "പിന്നെ",
+  "r": "pinne",
+  "start": 1.022,
+  "end": 1.202,
+  "score": 0.821
+ },
+ {
+  "w": "Institution",
+  "r": "institution",
+  "start": 1.242,
+  "end": 1.783,
+  "score": 0.815
+ },
+ {
+  "w": "branding",
+  "r": "branding",
+  "start": 1.823,
+  "end": 2.184,
+  "score": 0.881
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 2.224,
+  "end": 2.424,
+  "score": 0.825
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 2.465,
+  "end": 2.725,
+  "score": 0.251
+ }
+]

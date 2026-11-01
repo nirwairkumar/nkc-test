@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.201,
+  "score": 0.5
+ },
+ {
+  "w": "का",
+  "r": "kaa",
+  "start": 0.221,
+  "end": 0.341,
+  "score": 0.745
+ },
+ {
+  "w": "नाम",
+  "r": "naam",
+  "start": 0.361,
+  "end": 0.541,
+  "score": 0.916
+ },
+ {
+  "w": "लिखिए,",
+  "r": "likhie",
+  "start": 0.602,
+  "end": 0.862,
+  "score": 0.75
+ },
+ {
+  "w": "फिर",
+  "r": "phir",
+  "start": 1.043,
+  "end": 1.163,
+  "score": 0.555
+ },
+ {
+  "w": "Institution",
+  "r": "institution",
+  "start": 1.203,
+  "end": 1.664,
+  "score": 0.667
+ },
+ {
+  "w": "branding",
+  "r": "branding",
+  "start": 1.704,
+  "end": 2.025,
+  "score": 0.695
+ },
+ {
+  "w": "खोलिए।",
+  "r": "kholie",
+  "start": 2.045,
+  "end": 2.286,
+  "score": 0.477
+ }
+]

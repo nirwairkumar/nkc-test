@@ -1,0 +1,304 @@
+[span] Testo
+[a] Features
+[a] How it works
+[a] Log in
+[a] Start free
+[span] Free
+[span] The Educator's Choice
+[h1] Free online
+[span] test maker
+[span] Build a full paper
+[span] from your notes
+[p] Create and conduct exams with AI. Generate quizzes from PDFs, YouTube videos, or plain text in minutes — auto-graded, proctored, and free for unlimited students.
+[span] Generate a test with AI
+[a] Build one manually
+[li] PDF to paper in under 2 minutes
+[li] Proctoring built in
+[li] No student limit, ever
+[div] Your Institution Name here, Location
+[div] JEE Main 2026 Session 1 Mock Test
+[div] 2:58:43
+[div] ⚠ 0/3
+[div] Exit
+[div] Submit Test
+[div] Mathematics
+[div] Physics
+[div] Chemistry
+[span] QUESTION
+[span] Single Choice
+[p] If the area of the region
+[p] , where
+[p] and
+[mi] gcd
+[p] , then the value of
+[p] is:
+[text] y = 4 − x²
+[text] y = 1 − 2x
+[div] OPTIONS
+[div] ‹ Back
+[div] Clear
+[div] Review
+[div] Ans & Review
+[button] Save & Next ›
+[div] Question Palette
+[div] Not Visited
+[div] Not Ans
+[div] Answered
+[div] Review
+[div] Ans & Review
+[div] Mathematics
+[div] Physics
+[div] Chemistry
+[span] Your Institution Name here, ...
+[div] JEE Main 2026 Session 1...
+[div] 2:58:43
+[div] ⚠ 0/3
+[span] Exit
+[div] Submit Test
+[div] Mathematics
+[div] Physics
+[div] Chemistry
+[span] QUESTION
+[span] Single Choice
+[p] Let
+[p] be a chord of the hyperbola
+[p] perpendicular to the
+[p] -axis such that
+[p] is an equilateral triangle,
+[p] being the centre of the hyperbola. If the eccentricity of the hyperbola is
+[p] , then the area of the triangle
+[p] is:
+[div] Back
+[div] Clear
+[div] Save & Next ›
+[dt] Students per test
+[span] No limit
+[span] Students per test
+[dt] Works in any mobile browser
+[span] No app
+[span] Works in any mobile browser
+[dt] From PDF to ready paper
+[span] Under 2 min
+[span] From PDF to ready paper
+[dt] Unlimited tests for teachers
+[span] Free
+[span] Unlimited tests for teachers
+[p] Why TestoZa
+[h2] Everything a real exam needs, nothing it doesn't
+[p] Three things separate an assessment platform from a form builder. TestoZa does all three.
+[h3] Turn any source into a paper
+[p] Upload a PDF, paste a YouTube link, or drop in raw text. AI writes MCQs, numericals, true/false and multi-select questions with explanations — then hands you an editable draft, not a locked export.
+[a] See PDF to quiz
+[h3] Exam integrity that actually holds
+[p] Full-screen enforcement, tab-switch detection, copy-paste lock, and question and option randomisation. Violations are logged, and you choose whether to warn, lock, or auto-submit.
+[a] See proctoring controls
+[h3] Grading and analysis, done
+[p] Negative marking to your exact scheme, instant scoring on submission, per-question timing, section-wise breakdowns, rank lists and downloadable reports.
+[a] See auto-grading
+[p] How it works
+[h2] A finished paper in three steps
+[p] No setup, no training, no template library to wade through.
+[h3] Bring your material
+[p] A chapter PDF, a lecture recording on YouTube, an old question paper, or nothing at all — start from a blank builder if you prefer.
+[h3] AI drafts the paper
+[p] Choose question count, difficulty and language. Every question lands in the editor where you can rewrite, reorder, re-mark or delete before anyone sees it.
+[h3] Share a link
+[p] Send the URL or QR code over WhatsApp, email or Google Classroom. Students open it in any browser. Results and analysis appear as they submit.
+[span] Question engine
+[h3] Every question type a real exam needs
+[p] Single and multiple correct, numerical ranges with tolerance, assertion-reason, and comprehension passages. Per-question marks and negative marks, LaTeX for maths and chemistry, and images on both questions and options.
+[span] Per-question and per-section marking schemes
+[span] Negative marking at -0.25, -0.33, -0.5, -1 or any value
+[span] LaTeX and chemical notation rendered natively
+[span] Section-wise papers with independent timers
+[div] Test Builder
+[div] TestoZa Platform
+[button] Publish
+[div] Test Title
+[span] JEE Advanced Mock Exam – 2024
+[div] Time (mins)
+[div] Section-wise Questions
+[span] Off
+[span] Q1 · Single Choice
+[div] Question
+[span] What is the square root of 144?
+[span] Q2 · Integration (LaTeX)
+[div] Question
+[span] Evaluate the definite integral:
+[mi] sin
+[button] Add New Question
+[button] Save Test
+[div] Test Created Successfully!
+[div] Your test has been saved and is ready to be published on TestoZa.
+[span] Conducting exams
+[h3] Run a real exam, not a shared form
+[p] Schedule a window, require registration, and watch attempts in real time. Candidates get a distraction-free interface with a live timer, question palette, and a review-and-submit flow that matches what they will face in a computer-based test.
+[span] Scheduled start and end windows
+[span] Live monitoring while the exam runs
+[span] Attempt limits and section-wise attempt control
+[span] Works on phones, tablets and low-end laptops
+[div] Test Environment Settings
+[div] View Results
+[div] Security
+[div] Access
+[div] Results
+[div] Focus & Security
+[div] Focus Mode
+[div] Prompts users to focus on the exam window. Log exits and distractions.
+[div] Tab Activity Detection
+[div] Log when candidates navigate away from the test tab.
+[div] Focus Violations
+[span] No limit (Warn only)
+[span] Strict (Instant Submit)
+[span] warnings then Submit
+[div] Both window exits and tab focus losses count toward this limit.
+[div] Question Shuffling
+[div] Shuffle question order for each candidate
+[div] Option Shuffling
+[div] Shuffle multiple-choice answer options
+[div] Navigation Warnings
+[div] Warn candidate before leaving the page
+[div] Calculator Widget
+[div] Enable scientific calculator widget
+[div] Scheduled Access
+[div] Restrict test availability window.
+[div] Start Date & Time
+[span] 15/10/2026, 09:00
+[div] End Date & Time
+[span] 15/10/2026, 12:00
+[div] Assign to Class
+[div] Group this test under a specific class.
+[span] No Class (General)
+[div] Attempt Limit
+[div] Restrict users to a single attempt.
+[span] Single Attempt
+[div] Start Form
+[div] Collect details before start (Name is default).
+[button] Add Field
+[div] Result Visibility
+[div] Show detailed analysis immediately after submit.
+[div] Strict Timer (Server Side)
+[div] Prevents timer reset on reload. Uses start timestamp.
+[div] Allow Flexible Timer
+[div] Allows test takers to disable the timer before starting.
+[strong] Warning:
+[span] Don't forget to turn this off for strict exams.
+[div] Randomize Questions
+[div] Shuffle question order for every student.
+[button] Cancel
+[button] Save Settings
+[div] Settings Saved Successfully!
+[div] Your test environment is ready for students.
+[span] After the exam
+[h3] Results your students can learn from
+[p] Scores are computed on the server the moment a paper is submitted. Students see their marks, accuracy, time per question and where they lost points. You see the cohort — topic weak spots, rank lists, and every attempt in one table.
+[span] Server-side scoring — no client-side tampering
+[span] Per-topic and per-section performance breakdown
+[span] Rank lists and percentile calculation
+[span] Solutions and explanations released on your schedule
+[span] Topic performance
+[span] 42 students
+[span] Mechanics
+[span] Thermodynamics
+[span] Optics
+[span] Modern physics
+[p] Question types
+[p] With per-question marking
+[span] Single correct
+[span] +4 / −1
+[span] Multiple correct
+[span] +4 / partial
+[span] Numerical range
+[span] +4 / 0
+[span] Passage & comprehension
+[span] +3 / −1
+[p] Comparison
+[h2] Google Forms, Moodle, or TestoZa?
+[p] Forms is a survey tool. Moodle is a full LMS you host and maintain. If what you actually need is to set a paper and conduct it, here is where the three diverge.
+[caption] Feature comparison between TestoZa, Google Forms, Moodle and Quizizz
+[th] Capability
+[th] TestoZa
+[th] Google Forms
+[th] Moodle
+[th] Quizizz
+[th] Built for formal assessment
+[th] Ready to use without setup
+[th] No server or hosting to maintain
+[th] AI questions from PDF / YouTube
+[th] Negative marking
+[th] Tab-switch and full-screen proctoring
+[th] Section-wise papers with timers
+[th] Rank list and percentile
+[th] White-label branding
+[th] Unlimited students, free
+[p] Moodle is open-source and capable, but it is an LMS you host, configure and maintain — quiz setup, proctoring plugins and scoring rules are each separate work. Google Forms is a survey tool. Reflects the freely available tiers and a default Moodle install as understood on 2026-09-23. Competitor products change — verify every claim before publishing.
+[p] FAQ
+[h2] Questions teachers actually ask
+[p] If yours isn't here, support replies within a working day.
+[span] How do I create a test from a PDF?
+[p] You can create a test from a PDF on TestoZa in under two minutes using our AI importer. Navigate to the AI Test Generator, upload your PDF (lecture notes, textbook chapters, or question banks), select your desired question count and difficulty, and click Generate. The AI extracts key concepts, creates multiple-choice or short-answer questions with detailed explanations, and loads them directly into your editable test builder.
+[span] Can I turn a YouTube video into a quiz?
+[p] Yes. Paste the YouTube video URL into the AI quiz generator and the system analyses the video transcript to generate relevant questions with correct answers and explanations. It is an ideal tool for flipped classrooms, homework assignments, and checking comprehension after video lessons.
+[span] How do I add negative marking to an online test?
+[p] Negative marking is set in the Test Settings panel while creating or editing any test. Under Scoring Settings, enable Negative Marking and specify the deduction per incorrect answer — such as -0.25, -0.33, -0.5, or -1. The platform applies it automatically on submission, matching competitive examination scoring rules.
+[span] How do I stop students from cheating in an online test?
+[p] TestoZa prevents cheating through layered exam controls. When setting up your test you can enable full-screen enforcement, tab-switch monitoring, copy-paste disabling, and question and option randomisation. If a student leaves the exam tab or attempts unauthorised navigation, TestoZa logs the infraction and can automatically submit or lock the test after a threshold you choose.
+[span] Can students take the test on a mobile phone?
+[p] Yes. Students can take any TestoZa test on phones, tablets or laptops without installing anything. Every test link opens in standard mobile browsers including Chrome, Safari and Firefox. The interface adapts to small screens while keeping the timer visible, question navigation clear, and full touch support for answering and submitting.
+[span] How do I share a test with my students?
+[p] Copy the unique test URL or generate a QR code from your dashboard. Distribute it via WhatsApp, email, Google Classroom, or your LMS. Students click the link, enter their name or roll number, and begin immediately — no downloads, no accounts required unless you want them.
+[span] Is TestoZa better than Google Forms for conducting tests?
+[p] TestoZa is purpose-built for educational assessment, whereas Google Forms is a survey tool. TestoZa provides exam timers, automatic negative marking, tab-switch detection, randomised question ordering, AI-powered generation, and student analytics with rank calculation — a professional computer-based testing experience without add-ons.
+[span] What is a free alternative to Quizizz for teachers?
+[p] TestoZa is a free alternative to Quizizz for educators who need formal, exam-grade assessments rather than gamified trivia. It offers unlimited test creation, AI question generation from PDFs and YouTube, customisable timers, negative marking and leaderboards — with no student limits or paywalled question types.
+[h2] Set your next paper in ten minutes
+[p] Upload a chapter PDF and see what the AI drafts. If it isn't useful, you've lost ten minutes.
+[span] Generate a test with AI
+[a] See pricing
+[p] The free online test maker for teachers, coaching institutes and schools. Create, conduct and analyse exams — powered by AI.
+[p] ✓ SSL encrypted & privacy protected
+[a] support@testoza.com
+[dt] LinkedIn:
+[a] linkedin.com/company/testoza
+[dt] Address:
+[dd] 1st Floor, Nirmaan, Sudha & Shankar Inv Hub, IIT Madras, Chennai, Tamil Nadu 600036, India
+[a] AI test generator
+[a] Create a mock test online
+[a] Manual test builder
+[a] PDF to quiz
+[a] AI question generator
+[a] MCQ test maker
+[a] Online quiz maker
+[h2] Solutions
+[a] Online test maker
+[a] Online exam software
+[a] Exam software for schools
+[a] Online tests for coaching
+[a] Online proctoring software
+[a] Assessment platform
+[a] Exams on phones
+[a] Test on your website
+[a] Full-length mocks
+[a] Share on WhatsApp
+[a] Classplus alternative
+[a] All 22 guides
+[h2] Platform
+[a] Pricing and plans
+[a] Auto-grading software
+[a] Quiz creator
+[a] Browse tests
+[a] User guide
+[h2] PDF tools
+[a] Panna PDF tools
+[a] Free PDF editor
+[a] Hindi PDF editor
+[a] LaTeX to PDF
+[a] ChatGPT to PDF
+[a] Panna guide
+[a] About TestoZa
+[a] Blog & news
+[a] Privacy policy
+[a] Terms & conditions
+[span] TestoZa Educational Systems. All rights reserved.
+[span] Made with
+[span] in India

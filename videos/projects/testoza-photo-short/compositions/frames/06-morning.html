@@ -1,0 +1,62 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f6-phone { top: 560px; }
+  /* morning: a warm sunrise glow over the usual stage */
+  .f6-sun { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(900px 700px at 80% 12%, rgba(251, 191, 36, 0.30), transparent 70%), radial-gradient(700px 600px at 10% 90%, rgba(251, 146, 60, 0.14), transparent 70%); }
+  .f6-clock { position: absolute; left: 540px; top: 206px; display: flex; align-items: center; gap: 16px; height: 104px; padding: 0 38px 0 30px; border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72); box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.6), 0 24px 60px -18px rgba(0, 0, 0, 0.8);
+    font: 800 64px/1 'Outfit', sans-serif; color: #f8fafc; font-variant-numeric: tabular-nums; white-space: nowrap; visibility: hidden; }
+  .f6-clock svg { width: 52px; height: 52px; color: #fbbf24; }
+  .f6-clock small { font-size: 0.55em; font-weight: 700; color: #fcd34d; margin-left: 4px; }
+  #f6-s { top: 330px; }
+</style>
+<div id="root" data-composition-id="f06-morning" data-width="1080" data-height="1920">
+  <div class="sf">
+    <div id="f6-stage" class="clip sf-stage" data-start="0" data-duration="4.4" data-track-index="0"></div>
+    <div class="f6-sun" id="f6-sun"></div>
+    <div class="f6-clock" id="f6-clock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>7:55<small>AM</small></div>
+    <div class="sf-phone" id="f6-phone">
+      <div class="sf-screen">
+        <div class="sf-notch"></div>
+        <img class="f6-s" src="assets/ui/phone-join-0.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-1.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-2.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-3.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-4.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-5.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-join-6.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-exam-0.png" alt="" />
+        <img class="f6-s" src="assets/ui/phone-exam-1.png" alt="" />
+      </div>
+    </div>
+    <div class="sf-sup" id="f6-s">Morning: <em>students join.</em></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f06-morning';
+  const { q, qa, tl, superIn, only, tap } = SF(ID);
+  const S = qa('.f6-s');
+  only(0, S[0], S);
+  tl.fromTo('#f6-sun', { opacity: 0 }, { opacity: 1, duration: 1.2, ease: 'power1.out' }, 0);
+  tl.set('#f6-clock', { xPercent: -50, yPercent: -50 }, 0);
+  tl.fromTo('#f6-clock', { autoAlpha: 0, scale: 0.7, filter: 'blur(10px)' }, { autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 0.6, ease: 'back.out(1.7)' }, 0.15);
+  tl.fromTo('#f6-phone', { y: 520, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.75, ease: 'expo.out' }, 0);
+  // "सुबह बच्चे..."
+  superIn(0.4, q('#f6-s'));
+  // "...phone पर code डालते हैं": 4 8 2 · 9 1 3
+  [1.65, 1.77, 1.89, 2.01, 2.13, 2.25].forEach((t, i) => only(t, S[i + 1], S));
+  tap(2.4, 540, 1194);            // Continue
+  only(2.6, S[7], S);             // "...और test शुरू।" the exam opens
+  tap(3.7, 538, 1101);            // option A
+  only(3.77, S[8], S);
+  tl.to('#f6-phone', { y: -18, duration: 3.6, ease: 'sine.inOut' }, 0.8);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

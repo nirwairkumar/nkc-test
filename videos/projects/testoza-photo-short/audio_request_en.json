@@ -1,0 +1,48 @@
+{
+  "provider": "gemini",
+  "tts_model": "gemini-2.5-pro-preview-tts",
+  "voice": "Sulafat",
+  "lang": "en",
+  "out_dir": "assets/voice-en",
+  "style": "A warm, friendly young Indian woman in her late twenties, a teacher talking to another teacher, in natural conversational English with a light, clear Indian accent. Relaxed, like talking to a friend, never a newsreader or an advert. Smooth flow with short natural breaths at commas and full stops.",
+  "lines": [
+    {
+      "id": "f01",
+      "text": "Almost eleven at night... class test tomorrow, and the paper isn’t even typed.",
+      "style": "Late at night, a little tired and worried, quieter, a real teacher's small sigh of stress."
+    },
+    {
+      "id": "f02",
+      "text": "No problem... open Testoza, and take just one photo.",
+      "style": "Reassuring, a small smile, the mood lifts; quick and easy."
+    },
+    {
+      "id": "f03",
+      "text": "The AI reads every question from the photo... with the options and the answer key.",
+      "style": "Genuinely impressed, light rhythm."
+    },
+    {
+      "id": "f04",
+      "text": "Ten questions... ready in just seventeen seconds!",
+      "style": "The number lands, pleased and a little amazed."
+    },
+    {
+      "id": "f05",
+      "text": "Make the test live, and just send your students a six-digit code.",
+      "style": "Quick and easy, matter-of-fact."
+    },
+    {
+      "id": "f06",
+      "text": "Next morning, students type the code... and the test begins.",
+      "style": "Fresh morning feel, light and calm."
+    },
+    {
+      "id": "f07",
+      "text": "Late-night stress, gone with one photo. Testoza.com, completely free.",
+      "style": "Warm relieved payoff, then say the web address slowly and clearly: testoza dot com."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  }
+}

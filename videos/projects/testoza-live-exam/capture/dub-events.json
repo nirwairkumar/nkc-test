@@ -1,0 +1,828 @@
+{
+  "total": 347.09,
+  "lines": [
+    {
+      "id": "L01",
+      "start": 0.45,
+      "end": 11.97,
+      "next": 14.47,
+      "enDur": 11.52,
+      "events": [
+        {
+          "cue": "m1",
+          "at": 0.41,
+          "kind": "scene"
+        },
+        {
+          "cue": "m2",
+          "at": 1.61,
+          "kind": "scene"
+        },
+        {
+          "cue": "m3",
+          "at": 2.73,
+          "kind": "scene"
+        },
+        {
+          "cue": "m4",
+          "at": 4.49,
+          "kind": "scene"
+        },
+        {
+          "cue": "title",
+          "at": 8.17,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L02",
+      "start": 14.47,
+      "end": 22.35,
+      "next": 22.67,
+      "enDur": 7.89,
+      "events": [
+        {
+          "cue": "card",
+          "at": 15.31,
+          "kind": "click"
+        },
+        {
+          "cue": "conduct",
+          "at": 20.83,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L03",
+      "start": 22.67,
+      "end": 32.11,
+      "next": 32.43,
+      "enDur": 9.44,
+      "events": [
+        {
+          "cue": "link",
+          "at": 23.51,
+          "kind": "click"
+        },
+        {
+          "cue": "start",
+          "at": 29.75,
+          "kind": "click"
+        },
+        {
+          "cue": "live",
+          "at": 30.71,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L04",
+      "start": 32.43,
+      "end": 39.89,
+      "next": 40.21,
+      "enDur": 7.46,
+      "events": [
+        {
+          "cue": "coach",
+          "at": 33.67,
+          "kind": "click"
+        },
+        {
+          "cue": "settings",
+          "at": 38.39,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L05",
+      "start": 40.21,
+      "end": 48.7,
+      "next": 49.02,
+      "enDur": 8.49,
+      "events": [
+        {
+          "cue": "t1",
+          "at": 42.44,
+          "kind": "click"
+        },
+        {
+          "cue": "t2",
+          "at": 43.19,
+          "kind": "click"
+        },
+        {
+          "cue": "t3",
+          "at": 43.85,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L06",
+      "start": 49.02,
+      "end": 59.19,
+      "next": 59.51,
+      "enDur": 10.17,
+      "events": [
+        {
+          "cue": "fs",
+          "at": 49.7,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L07",
+      "start": 59.51,
+      "end": 68.33,
+      "next": 68.65,
+      "enDur": 8.83,
+      "events": [
+        {
+          "cue": "tab",
+          "at": 60.11,
+          "kind": "click"
+        },
+        {
+          "cue": "caught",
+          "at": 66.43,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L08",
+      "start": 68.65,
+      "end": 90.62,
+      "next": 90.94,
+      "enDur": 21.96,
+      "events": [
+        {
+          "cue": "warn",
+          "at": 71.57,
+          "kind": "click"
+        },
+        {
+          "cue": "strict",
+          "at": 74.61,
+          "kind": "click"
+        },
+        {
+          "cue": "count",
+          "at": 79.73,
+          "kind": "click"
+        },
+        {
+          "cue": "three",
+          "at": 82.29,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L09",
+      "start": 90.94,
+      "end": 100.41,
+      "next": 100.73,
+      "enDur": 9.48,
+      "events": [
+        {
+          "cue": "copy",
+          "at": 90.82,
+          "kind": "click"
+        },
+        {
+          "cue": "right",
+          "at": 96.02,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L10",
+      "start": 100.73,
+      "end": 108.38,
+      "next": 108.7,
+      "enDur": 7.65,
+      "events": [
+        {
+          "cue": "back",
+          "at": 100.69,
+          "kind": "click"
+        },
+        {
+          "cue": "exit",
+          "at": 104.45,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L11",
+      "start": 108.7,
+      "end": 111.01,
+      "next": 111.33,
+      "enDur": 2.31,
+      "events": [
+        {
+          "cue": "access",
+          "at": 109.7,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L12",
+      "start": 111.33,
+      "end": 119.47,
+      "next": 119.79,
+      "enDur": 8.14,
+      "events": [
+        {
+          "cue": "sched",
+          "at": 111.29,
+          "kind": "click"
+        },
+        {
+          "cue": "pickers",
+          "at": 114.73,
+          "kind": "click"
+        },
+        {
+          "cue": "schedoff",
+          "at": 117.29,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L13",
+      "start": 119.79,
+      "end": 136.69,
+      "next": 137.01,
+      "enDur": 16.9,
+      "events": [
+        {
+          "cue": "class",
+          "at": 119.75,
+          "kind": "click"
+        },
+        {
+          "cue": "attempt",
+          "at": 123.19,
+          "kind": "click"
+        },
+        {
+          "cue": "single",
+          "at": 125.99,
+          "kind": "click"
+        },
+        {
+          "cue": "login",
+          "at": 128.63,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L14",
+      "start": 137.01,
+      "end": 138.98,
+      "next": 139.3,
+      "enDur": 1.97,
+      "events": [
+        {
+          "cue": "results",
+          "at": 137.77,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L15",
+      "start": 139.3,
+      "end": 147.42,
+      "next": 147.74,
+      "enDur": 8.12,
+      "events": [
+        {
+          "cue": "vis",
+          "at": 139.26,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L16",
+      "start": 147.74,
+      "end": 154.75,
+      "next": 155.07,
+      "enDur": 7.01,
+      "events": [
+        {
+          "cue": "strictt",
+          "at": 147.62,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L17",
+      "start": 155.07,
+      "end": 163.41,
+      "next": 163.73,
+      "enDur": 8.35,
+      "events": [
+        {
+          "cue": "flex",
+          "at": 154.95,
+          "kind": "click"
+        },
+        {
+          "cue": "flexwarn",
+          "at": 159.43,
+          "kind": "click"
+        },
+        {
+          "cue": "flexoff",
+          "at": 161.43,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L18",
+      "start": 163.73,
+      "end": 169.82,
+      "next": 170.14,
+      "enDur": 6.08,
+      "events": [
+        {
+          "cue": "shuffle",
+          "at": 163.61,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L19",
+      "start": 170.14,
+      "end": 184.75,
+      "next": 185.07,
+      "enDur": 14.61,
+      "events": [
+        {
+          "cue": "layout",
+          "at": 170.9,
+          "kind": "click"
+        },
+        {
+          "cue": "std",
+          "at": 172.74,
+          "kind": "click"
+        },
+        {
+          "cue": "modern",
+          "at": 179.06,
+          "kind": "click"
+        },
+        {
+          "cue": "stdpick",
+          "at": 182.34,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L20",
+      "start": 185.07,
+      "end": 191.88,
+      "next": 192.2,
+      "enDur": 6.82,
+      "events": [
+        {
+          "cue": "save",
+          "at": 185.11,
+          "kind": "click"
+        },
+        {
+          "cue": "chip",
+          "at": 187.27,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L21",
+      "start": 192.2,
+      "end": 200.63,
+      "next": 200.95,
+      "enDur": 8.43,
+      "events": [
+        {
+          "cue": "inputs",
+          "at": 193.76,
+          "kind": "click"
+        },
+        {
+          "cue": "roll",
+          "at": 197.04,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L22",
+      "start": 200.95,
+      "end": 205.79,
+      "next": 206.93,
+      "enDur": 4.84,
+      "events": [
+        {
+          "cue": "coach2",
+          "at": 200.83,
+          "kind": "click"
+        },
+        {
+          "cue": "copy2",
+          "at": 202.31,
+          "kind": "click"
+        },
+        {
+          "cue": "share",
+          "at": 203.31,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L23",
+      "start": 206.93,
+      "end": 213.76,
+      "next": 215.26,
+      "enDur": 6.83,
+      "events": [
+        {
+          "cue": "wa",
+          "at": 207.13,
+          "kind": "scene"
+        },
+        {
+          "cue": "walines",
+          "at": 208.89,
+          "kind": "scene"
+        },
+        {
+          "cue": "hname",
+          "at": 209.29,
+          "kind": "scene"
+        },
+        {
+          "cue": "htime",
+          "at": 209.93,
+          "kind": "scene"
+        },
+        {
+          "cue": "hlink",
+          "at": 210.89,
+          "kind": "scene"
+        },
+        {
+          "cue": "hinstr",
+          "at": 212.17,
+          "kind": "scene"
+        },
+        {
+          "cue": "send",
+          "at": 213.2,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L24",
+      "start": 215.26,
+      "end": 224.93,
+      "next": 226.26,
+      "enDur": 9.66,
+      "events": [
+        {
+          "cue": "menu",
+          "at": 220.1,
+          "kind": "click"
+        },
+        {
+          "cue": "getcode",
+          "at": 221.22,
+          "kind": "click"
+        },
+        {
+          "cue": "code",
+          "at": 222.66,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L25",
+      "start": 226.26,
+      "end": 230.12,
+      "next": 232.12,
+      "enDur": 3.86,
+      "events": [
+        {
+          "cue": "board",
+          "at": 226.14,
+          "kind": "scene"
+        },
+        {
+          "cue": "url",
+          "at": 227.26,
+          "kind": "scene"
+        },
+        {
+          "cue": "digits",
+          "at": 229.34,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L26",
+      "start": 232.12,
+      "end": 236.57,
+      "next": 237.72,
+      "enDur": 4.45,
+      "events": [
+        {
+          "cue": "msg",
+          "at": 233.76,
+          "kind": "scene"
+        },
+        {
+          "cue": "tap",
+          "at": 235.68,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L27",
+      "start": 237.72,
+      "end": 247.06,
+      "next": 249.42,
+      "enDur": 9.34,
+      "events": [
+        {
+          "cue": "intro",
+          "at": 237.6,
+          "kind": "click"
+        },
+        {
+          "cue": "scrollp",
+          "at": 241.68,
+          "kind": "click"
+        },
+        {
+          "cue": "name",
+          "at": 242.68,
+          "kind": "click"
+        },
+        {
+          "cue": "go",
+          "at": 246,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L28",
+      "start": 249.42,
+      "end": 256.82,
+      "next": 257.14,
+      "enDur": 7.4,
+      "events": [
+        {
+          "cue": "join",
+          "at": 250.98,
+          "kind": "click"
+        },
+        {
+          "cue": "typecode",
+          "at": 254.1,
+          "kind": "click"
+        },
+        {
+          "cue": "cont",
+          "at": 255.86,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L29",
+      "start": 257.14,
+      "end": 265.69,
+      "next": 266.01,
+      "enDur": 8.55,
+      "events": [
+        {
+          "cue": "fill",
+          "at": 258.38,
+          "kind": "click"
+        },
+        {
+          "cue": "start2",
+          "at": 260.22,
+          "kind": "click"
+        },
+        {
+          "cue": "fsgo",
+          "at": 261.1,
+          "kind": "click"
+        },
+        {
+          "cue": "answer",
+          "at": 263.5,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L30",
+      "start": 266.01,
+      "end": 271.56,
+      "next": 271.88,
+      "enDur": 5.55,
+      "events": [
+        {
+          "cue": "violation",
+          "at": 268.05,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L31",
+      "start": 271.88,
+      "end": 276.83,
+      "next": 277.99,
+      "enDur": 4.95,
+      "events": [
+        {
+          "cue": "submit",
+          "at": 271.76,
+          "kind": "click"
+        },
+        {
+          "cue": "score",
+          "at": 273.44,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L32",
+      "start": 277.99,
+      "end": 285.79,
+      "next": 286.11,
+      "enDur": 7.81,
+      "events": [
+        {
+          "cue": "dash",
+          "at": 278.59,
+          "kind": "click"
+        },
+        {
+          "cue": "writing",
+          "at": 279.79,
+          "kind": "click"
+        },
+        {
+          "cue": "subm",
+          "at": 281.87,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L33",
+      "start": 286.11,
+      "end": 295.37,
+      "next": 295.69,
+      "enDur": 9.26,
+      "events": [
+        {
+          "cue": "panel",
+          "at": 283.87,
+          "kind": "click"
+        },
+        {
+          "cue": "started",
+          "at": 287.19,
+          "kind": "click"
+        },
+        {
+          "cue": "writ",
+          "at": 288.55,
+          "kind": "click"
+        },
+        {
+          "cue": "two",
+          "at": 289.83,
+          "kind": "click"
+        },
+        {
+          "cue": "zero",
+          "at": 290.79,
+          "kind": "click"
+        },
+        {
+          "cue": "names",
+          "at": 292.87,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L34",
+      "start": 295.69,
+      "end": 307.07,
+      "next": 308.22,
+      "enDur": 11.38,
+      "events": [
+        {
+          "cue": "later",
+          "at": 295.57,
+          "kind": "scene"
+        },
+        {
+          "cue": "all",
+          "at": 297.01,
+          "kind": "click"
+        },
+        {
+          "cue": "export",
+          "at": 304.61,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L35",
+      "start": 308.22,
+      "end": 317.06,
+      "next": 320.92,
+      "enDur": 8.84,
+      "events": [
+        {
+          "cue": "landing",
+          "at": 308.1,
+          "kind": "click"
+        },
+        {
+          "cue": "phones",
+          "at": 314.02,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L36",
+      "start": 320.92,
+      "end": 332.94,
+      "next": 334.74,
+      "enDur": 12.02,
+      "events": [
+        {
+          "cue": "neet",
+          "at": 323.2,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L37",
+      "start": 334.74,
+      "end": 344.09,
+      "next": 347.09,
+      "enDur": 9.35,
+      "events": [
+        {
+          "cue": "endurl",
+          "at": 338.7,
+          "kind": "scene"
+        },
+        {
+          "cue": "thanks",
+          "at": 340.62,
+          "kind": "scene"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Panna — free PDF tools by TestoZa",
+  "short_name": "Panna PDF",
+  "description": "Edit PDF text in the same font, edit Hindi PDFs, and convert LaTeX or ChatGPT maths to PDF — free, in your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "lang": "en",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

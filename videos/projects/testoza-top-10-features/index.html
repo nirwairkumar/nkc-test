@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:400 600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Backdrop for the whole film (brand sky + indigo, faint grid) */
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 760px at 28% 62%,rgba(14,165,233,.26),rgba(2,6,23,0) 70%),radial-gradient(1000px 640px at 80% 20%,rgba(99,102,241,.26),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);background-size:64px 64px}
+.card{position:absolute;inset:0;overflow:hidden}
+
+/* Desktop footage: a full-frame window (it scales up into place when its section starts).
+   2304x1296 frames shown at 1536x864 CSS px; GSAP scales the cam (1.25 = full frame) and pans. */
+.win{position:absolute;inset:0;overflow:hidden;transform-origin:50% 50%;background:#fff}
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+
+/* Phone (the candidate take): 646x1398 footage at 0.7 inside a frame, centred */
+.phonescene{position:absolute;inset:0}
+.phonescene .glow{position:absolute;left:560px;top:90px;width:800px;height:900px;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),rgba(56,189,248,0));filter:blur(10px)}
+.pcam{position:absolute;inset:0;transform-origin:0 0}
+.phone{position:absolute;padding:14px;border-radius:64px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 60px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;border-radius:50px;overflow:hidden;background:#fff}
+.pv{position:absolute;left:0;top:0;width:100%;height:100%}
+.pvid{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.chrome{position:absolute;left:0;right:0;top:0;height:140px;background:#f8fafc;border-bottom:1px solid #e2e8f0;z-index:3;opacity:0}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:62px;background:#f8fafc;border-top:1px solid #e2e8f0;z-index:3;display:flex;justify-content:space-around;align-items:center;padding:0 26px 10px;opacity:0}
+.tbar i{width:22px;height:22px;border-radius:6px;border:2.5px solid #64748b;display:block}
+.tbar i:nth-child(3){border-radius:50%}
+.sbar{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 38px 0 44px;font:700 17px 'Outfit';color:#0f172a}
+.isl{position:absolute;left:50%;top:13px;width:122px;height:34px;margin-left:-61px;border-radius:20px;background:#000;display:block}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:16px;height:6px;background:currentColor;border-radius:1px}
+.purl{position:absolute;left:18px;right:18px;top:70px;height:48px;border-radius:24px;background:#e9eef5;display:flex;align-items:center;justify-content:center;gap:8px;font:600 18px 'Outfit';color:#1e293b}
+.purl .lk{width:15px;height:15px;color:#475569;display:block}
+.purl .lk svg{width:15px;height:15px;display:block}
+.purl .u2{display:none}
+
+/* Number sting: the feature number and ten progress dots (no words) */
+.sting{background:transparent}
+.sting .num{position:absolute;left:0;right:0;top:200px;text-align:center;font:900 420px/1 'Outfit';letter-spacing:-.04em}
+.sting .num span{display:inline-block;background:linear-gradient(135deg,#7dd3fc 0%,#38bdf8 35%,#818cf8 70%,#facc15 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 30px 60px rgba(56,189,248,.35))}
+.dots{position:absolute;left:0;right:0;top:760px;display:flex;justify-content:center;gap:26px}
+.dots i{width:22px;height:22px;border-radius:50%;background:rgba(148,163,184,.25);display:block;box-shadow:inset 0 0 0 2px rgba(148,163,184,.35)}
+.dots i.done{background:#38bdf8;box-shadow:none}
+.dots i.on{background:#facc15;box-shadow:0 0 0 6px rgba(250,204,21,.22),0 0 30px 6px rgba(250,204,21,.45)}
+
+/* Title card: the logo and a big 10 */
+.titlecard{background:radial-gradient(900px 600px at 50% 55%,rgba(56,189,248,.18),rgba(2,6,23,0) 70%)}
+.titlecard .wm{position:absolute;left:0;right:0;margin:0 auto;top:150px;height:120px}
+.ten{position:absolute;left:0;right:0;top:300px;text-align:center;font:900 380px/1 'Outfit';letter-spacing:-.05em}
+.ten span{display:inline-block;background:linear-gradient(135deg,#7dd3fc,#38bdf8 40%,#818cf8 75%,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 30px 70px rgba(56,189,248,.4))}
+.titlecard .dots{top:800px}
+
+/* Fast-forward pill (a wait shown faster): an icon and the speed, no words */
+.speed{position:absolute;right:64px;top:64px;height:64px;display:flex;align-items:center;gap:12px;padding:0 26px 0 22px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 2px rgba(250,204,21,.7);color:#facc15;z-index:9}
+.speed i{width:30px;height:30px;display:block}
+.speed i svg{width:30px;height:30px;display:block}
+.speed b{font:800 30px 'Outfit'}
+
+/* File dialog (Windows-style Open box; not TestoZa UI) */
+.fdlg{position:absolute;inset:0;z-index:7;opacity:0}
+.fdlg .scrim{position:absolute;inset:0;background:rgba(2,6,23,.35)}
+.fwin{position:absolute;left:410px;top:170px;width:1100px;height:690px;border-radius:12px;background:#f3f3f3;box-shadow:0 40px 100px -30px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.12);overflow:hidden;font-family:'Segoe UI','Outfit',sans-serif;color:#1f2937}
+.fwin .bar{height:46px;display:flex;align-items:center;padding:0 18px;font:600 16px 'Outfit';background:#eeeeee}
+.fwin .bar i{margin-left:auto;font-style:normal;color:#64748b;letter-spacing:22px}
+.fwin .path{height:52px;margin:6px 16px 10px;border-radius:8px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;font:500 16px 'Outfit';color:#334155;box-shadow:0 0 0 1px #e2e8f0}
+.fwin .path b{color:#94a3b8;font-weight:500}
+.fwin .body{position:absolute;left:0;right:0;top:114px;bottom:86px;display:flex}
+.fwin .nav{width:220px;padding:10px 12px;border-right:1px solid #e5e5e5}
+.fwin .nav p{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:6px;font:500 16px 'Outfit';color:#334155}
+.fwin .nav p.on{background:#dbeafe}
+.fwin .nav s{width:18px;height:14px;border-radius:3px;background:#fbbf24;display:block}
+.fwin .files{flex:1;padding:22px 26px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:22px;background:#fff}
+.tile{width:190px;padding:10px;border-radius:8px;text-align:center;font:500 14px/1.3 'Outfit';color:#1f2937;word-break:break-all}
+.tile .th{height:140px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:4px;box-shadow:0 0 0 1px #e5e7eb;margin-bottom:8px;overflow:hidden}
+.tile .pdf{width:72px;height:92px;border-radius:6px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(#e11d48,#be123c) border-box;border:3px solid transparent;position:relative;display:block}
+.tile .pdf::after{content:'';position:absolute;left:10px;right:10px;bottom:12px;height:18px;border-radius:3px;background:#e11d48}
+.tile.sel{background:#cce4ff;box-shadow:0 0 0 1px #99c9ff}
+.fwin .foot2{position:absolute;left:0;right:0;bottom:0;height:86px;display:flex;align-items:center;gap:14px;padding:0 22px;background:#f3f3f3;border-top:1px solid #e5e5e5}
+.fwin .fname{flex:1;height:40px;border-radius:6px;background:#fff;box-shadow:0 0 0 1px #d4d4d4;display:flex;align-items:center;padding:0 14px;font:500 16px 'Outfit';color:#111827;white-space:nowrap;overflow:hidden}
+.fwin .fname em{font-style:normal}
+.fwin .btn{height:40px;min-width:120px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:600 16px 'Outfit';box-shadow:0 0 0 1px #d4d4d4;background:#fff}
+.fwin .btn.open{background:#0067c0;color:#fff;box-shadow:none}
+.fcur{position:absolute;left:0;top:0;width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* End card: logo, testoza.com, a bell (no words) */
+.endcard{background:radial-gradient(900px 600px at 50% 50%,rgba(56,189,248,.18),rgba(2,6,23,0) 70%)}
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:300px;height:170px}
+.pills{position:absolute;left:0;right:0;top:560px;display:flex;justify-content:center;gap:28px}
+.pill{height:92px;padding:0 48px;border-radius:999px;display:flex;align-items:center;gap:14px;font:700 42px 'Outfit'}
+.pill.url{color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 2px rgba(56,189,248,.65)}
+.pill.subs{padding:0 34px;color:#fff;background:#dc2626;box-shadow:0 20px 40px -14px rgba(220,38,38,.7)}
+.bell{width:30px;height:30px;border-radius:15px 15px 5px 5px;background:#fff;display:block;position:relative}
+.bell::after{content:'';position:absolute;left:11px;bottom:-7px;width:8px;height:7px;border-radius:0 0 4px 4px;background:#fff}
+
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="285.09" data-width="1920" data-height="1080">
+<div class="clip stage" id="stage" data-start="0" data-duration="285.09" data-track-index="0"><div class="grid"></div></div>
+<div class="win" id="mt1" data-on="0" data-off="2.95"><div class="cam" id="mt1-cam"><video class="clip foot" id="v1" src="assets/cut/0-m1-38a6a95340.mp4" muted data-start="0" data-duration="2.95" data-track-index="1"></video></div></div>
+<div class="win" id="mt2" data-on="2.95" data-off="5.19"><div class="cam" id="mt2-cam"><video class="clip foot" id="v2" src="assets/cut/0-m2-e1dafa4c3e.mp4" muted data-start="2.95" data-duration="2.24" data-track-index="1"></video></div></div>
+<div class="phonescene" id="mt3" data-on="5.19" data-off="7.51">
+  <div class="glow"></div><div class="pcam" id="mt3-cam"><div class="phone" style="left:720px;top:36.5px;width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv full"><video class="clip pvid" id="v3" src="assets/cut/0-m3-b40a54a79a.mp4" muted data-start="5.19" data-duration="2.32" data-track-index="1"></video></div></div></div></div></div>
+<div class="phonescene" id="mt4" data-on="7.51" data-off="9.35">
+  <div class="glow"></div><div class="pcam" id="mt4-cam"><div class="phone" style="left:720px;top:36.5px;width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv full"><video class="clip pvid" id="v4" src="assets/cut/0-m4-a70f5e21a4.mp4" muted data-start="7.51" data-duration="1.84" data-track-index="1"></video></div></div></div></div></div>
+<div class="win" id="mt5" data-on="9.35" data-off="12.31"><div class="cam" id="mt5-cam"><video class="clip foot" id="v5" src="assets/cut/0-m5-075cd3cb9c.mp4" muted data-start="9.35" data-duration="2.96" data-track-index="1"></video></div></div>
+<div class="clip card titlecard" id="title" data-start="12.31" data-duration="7.1" data-track-index="3">
+      <img class="wm" src="assets/img/wordmark.png" alt="TestoZa"/><div class="ten"><span>10</span></div>
+      <div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+<div class="clip card sting" id="st1" data-start="19.41" data-duration="3.01" data-track-index="3">
+      <div class="num"><span>01</span></div>
+      <div class="dots"><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w2" data-on="22.42" data-off="53.75"><div class="cam" id="cam2"><video class="clip foot" id="v6" src="assets/cut/2-ai-fd8d0c4f75.mp4" muted data-start="22.42" data-duration="31.33" data-track-index="1"></video><div class="ov"><div class="cur" id="cur2"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip2"></div></div></div></div>
+<div class="clip speed" id="spd2-3344" data-start="33.44" data-duration="3.2" data-track-index="8"><i><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z" fill="currentColor"/></svg></i><b>5×</b></div>
+<div class="clip speed" id="spd2-5089" data-start="50.89" data-duration="0.49" data-track-index="8"><i><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z" fill="currentColor"/></svg></i><b>10×</b></div>
+<div class="clip card sting" id="st2" data-start="53.75" data-duration="3.98" data-track-index="3">
+      <div class="num"><span>02</span></div>
+      <div class="dots"><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w4" data-on="57.73" data-off="83.8"><div class="cam" id="cam4"><video class="clip foot" id="v7" src="assets/cut/4-build-74879ca3ba.mp4" muted data-start="57.73" data-duration="26.07" data-track-index="1"></video><div class="ov"><div class="cur" id="cur4"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip4"></div></div></div></div>
+<div class="clip speed" id="spd4-8039" data-start="80.39" data-duration="3.39" data-track-index="8"><i><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z" fill="currentColor"/></svg></i><b>3×</b></div>
+<div class="clip card sting" id="st3" data-start="83.8" data-duration="5.05" data-track-index="3">
+      <div class="num"><span>03</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w6" data-on="88.84" data-off="103.28"><div class="cam" id="cam6"><video class="clip foot" id="v8" src="assets/cut/6-build-5c26e91b5f.mp4" muted data-start="88.84" data-duration="14.43" data-track-index="1"></video><div class="ov"><div class="cur" id="cur6"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip6"></div></div></div></div>
+<div class="clip card sting" id="st4" data-start="103.28" data-duration="3.79" data-track-index="3">
+      <div class="num"><span>04</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w8" data-on="107.06" data-off="132.8"><div class="cam" id="cam8"><video class="clip foot" id="v9" src="assets/cut/8-build-395fa61932.mp4" muted data-start="107.06" data-duration="25.73" data-track-index="1"></video><div class="ov"><div class="cur" id="cur8"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip8"></div></div></div></div>
+<div class="clip card sting" id="st5" data-start="132.8" data-duration="5.1" data-track-index="3">
+      <div class="num"><span>05</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w10" data-on="137.9" data-off="170.13"><div class="cam" id="cam10"><video class="clip foot" id="v10" src="assets/cut/10-conduct-10e934d7be.mp4" muted data-start="137.9" data-duration="32.23" data-track-index="1"></video><div class="ov"><div class="cur" id="cur10"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip10"></div></div></div></div>
+<div class="clip card sting" id="st6" data-start="170.13" data-duration="2.84" data-track-index="3">
+      <div class="num"><span>06</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w12" data-on="172.98" data-off="187.51"><div class="cam" id="cam12"><video class="clip foot" id="v11" src="assets/cut/12-conduct-8eba1ca3d8.mp4" muted data-start="172.98" data-duration="14.53" data-track-index="1"></video><div class="ov"><div class="cur" id="cur12"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip12"></div></div></div></div>
+<div class="clip card sting" id="st7" data-start="187.51" data-duration="3.23" data-track-index="3">
+      <div class="num"><span>07</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></div></div>
+<div class="win" id="w14" data-on="190.74" data-off="199.41"><div class="cam" id="cam14"><video class="clip foot" id="v12" src="assets/cut/14-conduct-c6511f6685.mp4" muted data-start="190.74" data-duration="8.67" data-track-index="1"></video><div class="ov"><div class="cur" id="cur14"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip14"></div></div></div></div>
+<div class="clip card sting" id="st8" data-start="199.41" data-duration="5.06" data-track-index="3">
+      <div class="num"><span>08</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i><i class=""></i></div></div>
+<div class="phonescene" id="ph16" data-on="204.47" data-off="230.37">
+  <div class="glow"></div><div class="pcam" id="ph16-cam"><div class="phone" style="left:720px;top:36.5px;width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv" id="ph16-pv"><video class="clip pvid" id="v13" src="assets/cut/16-phone-ce0a2e88b6.mp4" muted data-start="204.47" data-duration="25.9" data-track-index="1"></video></div>
+        <div class="chrome" id="ph16-chrome"><div class="sbar"><b>9:41</b><i class="isl"></i><span class="sig"><b></b><b></b><b></b><b></b><em></em></span></div><div class="purl"><i class="lk"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></i><span class="u1">testoza.com/join</span><span class="u2">app.testoza.com</span></div></div>
+        <div class="tbar" id="ph16-tbar"><i></i><i></i><i></i><i></i><i></i></div></div></div></div></div>
+<div class="clip speed" id="spd16-22658" data-start="226.58" data-duration="1.42" data-track-index="8"><i><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z" fill="currentColor"/></svg></i><b>6×</b></div>
+<div class="clip card sting" id="st9" data-start="230.37" data-duration="3.42" data-track-index="3">
+      <div class="num"><span>09</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i><i class=""></i></div></div>
+<div class="win" id="w18" data-on="233.78" data-off="247.45"><div class="cam" id="cam18"><video class="clip foot" id="v14" src="assets/cut/18-results-ff9d31980b.mp4" muted data-start="233.78" data-duration="13.67" data-track-index="1"></video><div class="ov"><div class="cur" id="cur18"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip18"></div></div></div></div>
+<div class="clip speed" id="spd18-23931" data-start="239.31" data-duration="0.68" data-track-index="8"><i><svg viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z" fill="currentColor"/></svg></i><b>8×</b></div>
+<div class="clip card sting" id="st10" data-start="247.45" data-duration="3.81" data-track-index="3">
+      <div class="num"><span>10</span></div>
+      <div class="dots"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="on"></i></div></div>
+<div class="phonescene" id="ph20" data-on="251.26" data-off="257.39">
+  <div class="glow"></div><div class="pcam" id="ph20-cam"><div class="phone" style="left:720px;top:36.5px;width:480px;height:1007px"><div class="screen" style="width:452px;height:979px"><div class="pv" id="ph20-pv"><video class="clip pvid" id="v15" src="assets/cut/20-phone-e80bc78de5.mp4" muted data-start="251.26" data-duration="6.13" data-track-index="1"></video></div>
+        <div class="chrome" id="ph20-chrome"><div class="sbar"><b>9:41</b><i class="isl"></i><span class="sig"><b></b><b></b><b></b><b></b><em></em></span></div><div class="purl"><i class="lk"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></i><span class="u1">testoza.com/join</span><span class="u2">app.testoza.com</span></div></div>
+        <div class="tbar" id="ph20-tbar"><i></i><i></i><i></i><i></i><i></i></div></div></div></div></div>
+<div class="win" id="w21" data-on="257.39" data-off="266.59"><div class="cam" id="cam21"><video class="clip foot" id="v16" src="assets/cut/21-results-c00e5fd582.mp4" muted data-start="257.39" data-duration="9.2" data-track-index="1"></video><div class="ov"><div class="cur" id="cur21"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rip" id="rip21"></div></div></div></div>
+<div class="clip card endcard" id="end" data-start="266.59" data-duration="18.5" data-track-index="3">
+      <img class="wm" src="assets/img/wordmark.png" alt="TestoZa"/>
+      <div class="pills"><div class="pill url">testoza.com</div><div class="pill subs" id="subpill"><s class="bell"></s></div></div></div>
+<div class="clip fdlg" id="fd-choose" data-start="27.17" data-duration="2.82" data-track-index="6"><div class="scrim"></div>
+    <div class="fwin"><div class="bar">Open<i>— ▢ ✕</i></div><div class="path">This PC <b>›</b> Downloads <b>›</b> NEET Physics</div>
+      <div class="body"><div class="nav"><p><s></s>Home</p><p><s></s>Desktop</p><p class="on"><s></s>Downloads</p><p><s></s>Documents</p></div><div class="files"><div class="tile"><div class="th"><i class="pdf"></i></div>DPP-06-Units-and-Measurement.pdf</div><div class="tile pick"><div class="th"><i class="pdf"></i></div>DPP-07-Motion-in-a-Straight-Line.pdf</div><div class="tile"><div class="th"><i class="pdf"></i></div>Class-notes-Kinematics.pdf</div></div></div>
+      <div class="foot2"><div class="fname">File name:&nbsp;<em>DPP-07-Motion-in-a-Straight-Line.pdf</em></div><div class="btn open">Open</div><div class="btn">Cancel</div></div></div>
+    <div class="fcur"><svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.3-3.4-7.6L4 18z" fill="#0f172a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div>
+<audio id="mw0" src="assets/sfx/whoosh-short.mp3" data-start="0" data-duration="0.57" data-track-index="13" data-volume="0.25"></audio>
+<audio id="mw1" src="assets/sfx/whoosh-short.mp3" data-start="2.83" data-duration="0.57" data-track-index="13" data-volume="0.25"></audio>
+<audio id="mw2" src="assets/sfx/whoosh-short.mp3" data-start="5.07" data-duration="0.57" data-track-index="13" data-volume="0.25"></audio>
+<audio id="mw3" src="assets/sfx/whoosh-short.mp3" data-start="7.39" data-duration="0.57" data-track-index="13" data-volume="0.25"></audio>
+<audio id="mw4" src="assets/sfx/whoosh-short.mp3" data-start="9.23" data-duration="0.57" data-track-index="13" data-volume="0.25"></audio>
+<audio id="sting1" src="assets/sfx/sting.mp3" data-start="12.26" data-duration="4" data-track-index="13" data-volume="0.3"></audio>
+<audio id="sw1" src="assets/sfx/whoosh.mp3" data-start="19.26" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw2" src="assets/sfx/whoosh.mp3" data-start="53.6" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw3" src="assets/sfx/whoosh.mp3" data-start="83.65" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw4" src="assets/sfx/whoosh.mp3" data-start="103.13" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw5" src="assets/sfx/whoosh.mp3" data-start="132.65" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw6" src="assets/sfx/whoosh.mp3" data-start="169.98" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw7" src="assets/sfx/whoosh.mp3" data-start="187.36" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw8" src="assets/sfx/whoosh.mp3" data-start="199.26" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw9" src="assets/sfx/whoosh.mp3" data-start="230.22" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sw10" src="assets/sfx/whoosh.mp3" data-start="247.3" data-duration="0.57" data-track-index="13" data-volume="0.35"></audio>
+<audio id="sb10" src="assets/sfx/impact-bass-1.mp3" data-start="247.65" data-duration="2.1" data-track-index="14" data-volume="0.35"></audio>
+<audio id="sting2" src="assets/sfx/sting.mp3" data-start="266.69" data-duration="4" data-track-index="14" data-volume="0.3"></audio>
+<audio id="voL01" data-audio-group="voiceover" src="assets/vo-en/L01.wav" data-start="0.35" data-duration="18.06" data-track-index="10" data-volume="1"></audio>
+<audio id="voL02" data-audio-group="voiceover" src="assets/vo-en/L02.wav" data-start="19.71" data-duration="2.31" data-track-index="10" data-volume="1"></audio>
+<audio id="voL03" data-audio-group="voiceover" src="assets/vo-en/L03.wav" data-start="22.87" data-duration="10.39" data-track-index="10" data-volume="1"></audio>
+<audio id="voL04" data-audio-group="voiceover" src="assets/vo-en/L04.wav" data-start="33.56" data-duration="11.66" data-track-index="10" data-volume="1"></audio>
+<audio id="voL05" data-audio-group="voiceover" src="assets/vo-en/L05.wav" data-start="45.52" data-duration="7.77" data-track-index="10" data-volume="1"></audio>
+<audio id="voL06" data-audio-group="voiceover" src="assets/vo-en/L06.wav" data-start="54.05" data-duration="3.28" data-track-index="10" data-volume="1"></audio>
+<audio id="voL07" data-audio-group="voiceover" src="assets/vo-en/L07.wav" data-start="58.18" data-duration="10.51" data-track-index="10" data-volume="1"></audio>
+<audio id="voL08" data-audio-group="voiceover" src="assets/vo-en/L08.wav" data-start="68.99" data-duration="14.34" data-track-index="10" data-volume="1"></audio>
+<audio id="voL09" data-audio-group="voiceover" src="assets/vo-en/L09.wav" data-start="84.1" data-duration="4.35" data-track-index="10" data-volume="1"></audio>
+<audio id="voL10" data-audio-group="voiceover" src="assets/vo-en/L10.wav" data-start="89.32" data-duration="13.52" data-track-index="10" data-volume="1"></audio>
+<audio id="voL11" data-audio-group="voiceover" src="assets/vo-en/L11.wav" data-start="103.58" data-duration="3.09" data-track-index="10" data-volume="1"></audio>
+<audio id="voL12" data-audio-group="voiceover" src="assets/vo-en/L12.wav" data-start="107.51" data-duration="10.6" data-track-index="10" data-volume="1"></audio>
+<audio id="voL13" data-audio-group="voiceover" src="assets/vo-en/L13.wav" data-start="118.41" data-duration="13.94" data-track-index="10" data-volume="1"></audio>
+<audio id="voL14" data-audio-group="voiceover" src="assets/vo-en/L14.wav" data-start="133.1" data-duration="4.4" data-track-index="10" data-volume="1"></audio>
+<audio id="voL15" data-audio-group="voiceover" src="assets/vo-en/L15.wav" data-start="138.38" data-duration="7.64" data-track-index="10" data-volume="1"></audio>
+<audio id="voL16" data-audio-group="voiceover" src="assets/vo-en/L16.wav" data-start="146.32" data-duration="13.55" data-track-index="10" data-volume="1"></audio>
+<audio id="voL17" data-audio-group="voiceover" src="assets/vo-en/L17.wav" data-start="160.17" data-duration="9.52" data-track-index="10" data-volume="1"></audio>
+<audio id="voL18" data-audio-group="voiceover" src="assets/vo-en/L18.wav" data-start="170.43" data-duration="2.14" data-track-index="10" data-volume="1"></audio>
+<audio id="voL19" data-audio-group="voiceover" src="assets/vo-en/L19.wav" data-start="173.46" data-duration="13.6" data-track-index="10" data-volume="1"></audio>
+<audio id="voL20" data-audio-group="voiceover" src="assets/vo-en/L20.wav" data-start="187.81" data-duration="2.53" data-track-index="10" data-volume="1"></audio>
+<audio id="voL21" data-audio-group="voiceover" src="assets/vo-en/L21.wav" data-start="191.19" data-duration="7.78" data-track-index="10" data-volume="1"></audio>
+<audio id="voL22" data-audio-group="voiceover" src="assets/vo-en/L22.wav" data-start="199.71" data-duration="4.36" data-track-index="10" data-volume="1"></audio>
+<audio id="voL23" data-audio-group="voiceover" src="assets/vo-en/L23.wav" data-start="204.95" data-duration="9.12" data-track-index="10" data-volume="1"></audio>
+<audio id="voL24" data-audio-group="voiceover" src="assets/vo-en/L24.wav" data-start="214.36" data-duration="5.16" data-track-index="10" data-volume="1"></audio>
+<audio id="voL25" data-audio-group="voiceover" src="assets/vo-en/L25.wav" data-start="220.2" data-duration="6.2" data-track-index="10" data-volume="1"></audio>
+<audio id="voL26" data-audio-group="voiceover" src="assets/vo-en/L26.wav" data-start="226.7" data-duration="3.21" data-track-index="10" data-volume="1"></audio>
+<audio id="voL27" data-audio-group="voiceover" src="assets/vo-en/L27.wav" data-start="230.67" data-duration="2.72" data-track-index="10" data-volume="1"></audio>
+<audio id="voL28" data-audio-group="voiceover" src="assets/vo-en/L28.wav" data-start="234.26" data-duration="12.75" data-track-index="10" data-volume="1"></audio>
+<audio id="voL29" data-audio-group="voiceover" src="assets/vo-en/L29.wav" data-start="247.75" data-duration="3.11" data-track-index="10" data-volume="1"></audio>
+<audio id="voL30" data-audio-group="voiceover" src="assets/vo-en/L30.wav" data-start="251.74" data-duration="5.2" data-track-index="10" data-volume="1"></audio>
+<audio id="voL31" data-audio-group="voiceover" src="assets/vo-en/L31.wav" data-start="257.87" data-duration="8.27" data-track-index="10" data-volume="1"></audio>
+<audio id="voL32" data-audio-group="voiceover" src="assets/vo-en/L32.wav" data-start="267.19" data-duration="8.4" data-track-index="10" data-volume="1"></audio>
+<audio id="ck0" src="assets/sfx/click-soft.mp3" data-start="27.02" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck1" src="assets/sfx/click-soft.mp3" data-start="28.27" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck2" src="assets/sfx/click-soft.mp3" data-start="29.54" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck3" src="assets/sfx/click-soft.mp3" data-start="31.39" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck4" src="assets/sfx/click-soft.mp3" data-start="50.42" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck5" src="assets/sfx/click-soft.mp3" data-start="58.22" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck6" src="assets/sfx/click-soft.mp3" data-start="61.51" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck7" src="assets/sfx/click-soft.mp3" data-start="62.43" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck8" src="assets/sfx/click-soft.mp3" data-start="64.62" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck9" src="assets/sfx/click-soft.mp3" data-start="71.43" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck10" src="assets/sfx/click-soft.mp3" data-start="73.28" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck11" src="assets/sfx/click-soft.mp3" data-start="74.55" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck12" src="assets/sfx/click-soft.mp3" data-start="80.39" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck13" src="assets/sfx/click-soft.mp3" data-start="80.92" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck14" src="assets/sfx/click-soft.mp3" data-start="81.48" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck15" src="assets/sfx/click-soft.mp3" data-start="89.2" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck16" src="assets/sfx/click-soft.mp3" data-start="90.56" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck17" src="assets/sfx/click-soft.mp3" data-start="91.29" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck18" src="assets/sfx/click-soft.mp3" data-start="100.8" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck19" src="assets/sfx/click-soft.mp3" data-start="110.19" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck20" src="assets/sfx/click-soft.mp3" data-start="112.43" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck21" src="assets/sfx/click-soft.mp3" data-start="114.11" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck22" src="assets/sfx/click-soft.mp3" data-start="116.59" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck23" src="assets/sfx/click-soft.mp3" data-start="118.29" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck24" src="assets/sfx/click-soft.mp3" data-start="120.45" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck25" src="assets/sfx/click-soft.mp3" data-start="124.69" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck26" src="assets/sfx/click-soft.mp3" data-start="126.21" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck27" src="assets/sfx/click-soft.mp3" data-start="128.84" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck28" src="assets/sfx/click-soft.mp3" data-start="130.45" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck29" src="assets/sfx/click-soft.mp3" data-start="131.65" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck30" src="assets/sfx/click-soft.mp3" data-start="139.62" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck31" src="assets/sfx/click-soft.mp3" data-start="143.38" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck32" src="assets/sfx/click-soft.mp3" data-start="148.36" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck33" src="assets/sfx/click-soft.mp3" data-start="149.62" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck34" src="assets/sfx/click-soft.mp3" data-start="150.68" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck35" src="assets/sfx/click-soft.mp3" data-start="152.46" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck36" src="assets/sfx/click-soft.mp3" data-start="153.19" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck37" src="assets/sfx/click-soft.mp3" data-start="153.96" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck38" src="assets/sfx/click-soft.mp3" data-start="156.56" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck39" src="assets/sfx/click-soft.mp3" data-start="157.7" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck40" src="assets/sfx/click-soft.mp3" data-start="158.84" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck41" src="assets/sfx/click-soft.mp3" data-start="160.05" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck42" src="assets/sfx/click-soft.mp3" data-start="164.61" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck43" src="assets/sfx/click-soft.mp3" data-start="169.01" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck44" src="assets/sfx/click-soft.mp3" data-start="175.85" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck45" src="assets/sfx/click-soft.mp3" data-start="176.7" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck46" src="assets/sfx/click-soft.mp3" data-start="179.34" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck47" src="assets/sfx/click-soft.mp3" data-start="180.54" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck48" src="assets/sfx/click-soft.mp3" data-start="192.51" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck49" src="assets/sfx/click-soft.mp3" data-start="205.69" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck50" src="assets/sfx/click-soft.mp3" data-start="211.67" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck51" src="assets/sfx/click-soft.mp3" data-start="212.56" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck52" src="assets/sfx/click-soft.mp3" data-start="213.47" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck53" src="assets/sfx/click-soft.mp3" data-start="216.96" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck54" src="assets/sfx/click-soft.mp3" data-start="218.16" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck55" src="assets/sfx/click-soft.mp3" data-start="218.81" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck56" src="assets/sfx/click-soft.mp3" data-start="219.28" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck57" src="assets/sfx/click-soft.mp3" data-start="225.04" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck58" src="assets/sfx/click-soft.mp3" data-start="228.33" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck59" src="assets/sfx/click-soft.mp3" data-start="229.06" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck60" src="assets/sfx/click-soft.mp3" data-start="239.16" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck61" src="assets/sfx/click-soft.mp3" data-start="243.18" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck62" src="assets/sfx/click-soft.mp3" data-start="254.74" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck63" src="assets/sfx/click-soft.mp3" data-start="260.75" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="ck64" src="assets/sfx/click-soft.mp3" data-start="263.51" data-duration="0.37" data-track-index="15" data-volume="0.4"></audio>
+<audio id="bed1" src="assets/music/bed-1.mp3" data-start="0" data-duration="134.3" data-track-index="20" data-volume="0.2" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.85}"></audio>
+<audio id="bed2" src="assets/music/bed-2.mp3" data-start="132.3" data-duration="99.57" data-track-index="21" data-volume="0.2" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.85}"></audio>
+<audio id="bed3" src="assets/music/bed-3.mp3" data-start="229.87" data-duration="55.22" data-track-index="22" data-volume="0.22" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.85}"></audio>
+</div>
+<script>
+const PLAN = [{"type":"shot","sel":"#mt1-cam","at":0,"dur":2.95,"from":{"scale":1.495,"x":-376,"y":-212},"to":{"scale":1.625,"x":-576,"y":-324}},{"type":"shot","sel":"#mt2-cam","at":2.95,"dur":2.24,"from":{"scale":1.7825,"x":-409,"y":-443},"to":{"scale":1.9375,"x":-528,"y":-529}},{"type":"shot","sel":"#mt3-cam","at":5.19,"dur":2.32,"from":{"scale":1.06,"x":0,"y":20},"to":{"scale":1.12,"x":0,"y":0}},{"type":"shot","sel":"#mt4-cam","at":7.51,"dur":1.84,"from":{"scale":1.06,"x":0,"y":20},"to":{"scale":1.12,"x":0,"y":0}},{"type":"shot","sel":"#mt5-cam","at":9.35,"dur":2.96,"from":{"scale":1.3225,"x":0,"y":0},"to":{"scale":1.4375,"x":-16,"y":0}},{"type":"title","sel":"#title","at":12.31},{"type":"sting","sel":"#st1","at":19.41,"end":22.42},{"type":"cursor","cur":"#cur2","rip":"#rip2","moves":[{"at":25.96,"x":765,"y":223,"click":false,"d":0.55},{"at":27.02,"x":896,"y":353,"click":true,"d":0.55},{"at":31.39,"x":636,"y":432,"click":true,"d":0.55},{"at":45.4,"x":752,"y":822,"click":false,"d":0.55},{"at":48.32,"x":492,"y":248,"click":false,"d":0.55},{"at":50.42,"x":1268,"y":822,"click":true,"d":0.55},{"at":51.8,"x":431,"y":432,"click":false,"d":0.55}],"hides":[[27.17,29.99]]},{"type":"cam","sel":"#cam2","keys":[{"at":24.81,"scale":2.125,"x":-665,"y":0},{"at":24.81,"scale":2.125,"x":-665,"y":0},{"at":25.85,"scale":1.8295,"x":-607,"y":-478},{"at":32.59,"scale":2.125,"x":0,"y":0},{"at":36.03,"scale":1.25,"x":0,"y":0},{"at":41.55,"scale":2.125,"x":-1344,"y":-756},{"at":44.18,"scale":1.3319,"x":0,"y":-71},{"at":49.24,"scale":1.25,"x":0,"y":0}]},{"type":"reveal","sel":"#w2","at":22.42},{"type":"speed","sel":"#spd2-3344","at":33.44},{"type":"speed","sel":"#spd2-5089","at":50.89},{"type":"sting","sel":"#st2","at":53.75,"end":57.73},{"type":"cursor","cur":"#cur4","rip":"#rip4","moves":[{"at":58.22,"x":421,"y":487,"click":true,"d":0.39},{"at":61.51,"x":746,"y":712,"click":true,"d":0.55},{"at":62.43,"x":746,"y":374,"click":true,"d":0.55},{"at":64.62,"x":597,"y":414,"click":true,"d":0.55},{"at":71.43,"x":752,"y":698,"click":true,"d":0.55},{"at":72.38,"x":517,"y":542,"click":true,"d":0.55},{"at":73.28,"x":1117,"y":782,"click":true,"d":0.55},{"at":74.55,"x":752,"y":740,"click":true,"d":0.55},{"at":77.67,"x":768,"y":532,"click":false,"d":0.55},{"at":80.39,"x":1090,"y":533,"click":true,"d":0.55},{"at":80.92,"x":1113,"y":479,"click":true,"d":0.43},{"at":81.48,"x":746,"y":375,"click":true,"d":0.45}],"hides":[]},{"type":"cam","sel":"#cam4","keys":[{"at":57.73,"scale":1.25,"x":0,"y":0},{"at":60.41,"scale":1.8677,"x":-433,"y":-477},{"at":79.22,"scale":1.25,"x":0,"y":0}]},{"type":"reveal","sel":"#w4","at":57.73},{"type":"speed","sel":"#spd4-8039","at":80.39},{"type":"sting","sel":"#st3","at":83.8,"end":88.84},{"type":"cursor","cur":"#cur6","rip":"#rip6","moves":[{"at":89.2,"x":1114,"y":326,"click":true,"d":0.29},{"at":90.56,"x":979,"y":472,"click":true,"d":0.55},{"at":91.29,"x":746,"y":388,"click":true,"d":0.55},{"at":98.72,"x":746,"y":506,"click":false,"d":0.55},{"at":100.8,"x":734,"y":636,"click":true,"d":0.55},{"at":101.57,"x":734,"y":561,"click":true,"d":0.55},{"at":102.2,"x":734,"y":607,"click":true,"d":0.5},{"at":102.85,"x":734,"y":653,"click":true,"d":0.52}],"hides":[]},{"type":"cam","sel":"#cam6","keys":[{"at":88.84,"scale":1.9277,"x":-478,"y":-316},{"at":99.72,"scale":1.25,"x":0,"y":0}]},{"type":"reveal","sel":"#w6","at":88.84},{"type":"sting","sel":"#st4","at":103.28,"end":107.06},{"type":"cursor","cur":"#cur8","rip":"#rip8","moves":[{"at":107.55,"x":582,"y":326,"click":false,"d":0.39},{"at":110.19,"x":491,"y":326,"click":true,"d":0.55},{"at":112.43,"x":518,"y":397,"click":true,"d":0.55},{"at":114.11,"x":562,"y":737,"click":true,"d":0.55},{"at":116.59,"x":348,"y":515,"click":true,"d":0.55},{"at":118.29,"x":1138,"y":315,"click":true,"d":0.55},{"at":120.45,"x":1138,"y":384,"click":true,"d":0.55},{"at":124.69,"x":746,"y":444,"click":true,"d":0.55},{"at":126.21,"x":731,"y":560,"click":true,"d":0.55},{"at":128.84,"x":890,"y":432,"click":true,"d":0.55},{"at":130.45,"x":890,"y":269,"click":true,"d":0.55},{"at":131.65,"x":1098,"y":822,"click":true,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam8","keys":[{"at":107.06,"scale":1.8722,"x":-16,"y":-454},{"at":115.56,"scale":1.9433,"x":-490,"y":-142},{"at":130.57,"scale":1.25,"x":0,"y":0}]},{"type":"reveal","sel":"#w8","at":107.06},{"type":"sting","sel":"#st5","at":132.8,"end":137.9},{"type":"cursor","cur":"#cur10","rip":"#rip10","moves":[{"at":138.26,"x":527,"y":403,"click":false,"d":0.29},{"at":139.62,"x":632,"y":485,"click":true,"d":0.55},{"at":141.3,"x":778,"y":557,"click":false,"d":0.55},{"at":143.38,"x":852,"y":636,"click":true,"d":0.55},{"at":146.28,"x":651,"y":555,"click":false,"d":0.55},{"at":148.36,"x":420,"y":528,"click":true,"d":0.55},{"at":149.62,"x":1153,"y":284,"click":true,"d":0.55},{"at":150.68,"x":1153,"y":362,"click":true,"d":0.55},{"at":151.59,"x":440,"y":453,"click":false,"d":0.55},{"at":152.46,"x":367,"y":506,"click":true,"d":0.55},{"at":153.19,"x":414,"y":506,"click":true,"d":0.55},{"at":153.96,"x":446,"y":579,"click":true,"d":0.55},{"at":156.56,"x":721,"y":620,"click":true,"d":0.55},{"at":157.7,"x":1153,"y":620,"click":true,"d":0.55},{"at":158.84,"x":721,"y":712,"click":true,"d":0.55},{"at":160.05,"x":873,"y":168,"click":true,"d":0.55},{"at":161.41,"x":449,"y":237,"click":false,"d":0.55},{"at":164.61,"x":1153,"y":468,"click":true,"d":0.55},{"at":169.01,"x":1144,"y":785,"click":true,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam10","keys":[{"at":137.9,"scale":1.7539,"x":-495,"y":-435},{"at":143.73,"scale":2.125,"x":-1344,"y":-756},{"at":145.19,"scale":1.8243,"x":-441,"y":-368},{"at":158.82,"scale":1.9699,"x":-553,"y":-83},{"at":167.77,"scale":1.2884,"x":-59,"y":-33}]},{"type":"reveal","sel":"#w10","at":137.9},{"type":"sting","sel":"#st6","at":170.13,"end":172.98},{"type":"cursor","cur":"#cur12","rip":"#rip12","moves":[{"at":173.34,"x":1200,"y":287,"click":false,"d":0.29},{"at":175.85,"x":1326,"y":214,"click":true,"d":0.55},{"at":176.7,"x":1398,"y":214,"click":true,"d":0.55},{"at":179.34,"x":1404,"y":123,"click":true,"d":0.55},{"at":180.54,"x":1300,"y":284,"click":true,"d":0.55},{"at":181.82,"x":871,"y":292,"click":false,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam12","keys":[{"at":172.98,"scale":2.125,"x":-1344,"y":0},{"at":180.71,"scale":1.711,"x":-500,"y":-25}]},{"type":"reveal","sel":"#w12","at":172.98},{"type":"sting","sel":"#st7","at":187.51,"end":190.74},{"type":"cursor","cur":"#cur14","rip":"#rip14","moves":[{"at":191.15,"x":431,"y":336,"click":false,"d":0.33},{"at":192.51,"x":527,"y":374,"click":true,"d":0.55},{"at":193.95,"x":519,"y":336,"click":false,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam14","keys":[{"at":190.74,"scale":2.125,"x":-143,"y":-216}]},{"type":"reveal","sel":"#w14","at":190.74},{"type":"sting","sel":"#st8","at":199.41,"end":204.47},{"type":"phone","sel":"#ph16","start":204.47,"end":230.37,"wins":[[204.83,213.5],[229.89,230.37]],"urlAt":210.35,"zooms":[{"at":219.58,"z":1.22,"cx":959.75,"cy":527.2,"hold":3.2}]},{"type":"reveal","sel":"#ph16-cam","at":204.47},{"type":"speed","sel":"#spd16-22658","at":226.58},{"type":"sting","sel":"#st9","at":230.37,"end":233.78},{"type":"cursor","cur":"#cur18","rip":"#rip18","moves":[{"at":235.66,"x":804,"y":177,"click":false,"d":0.55},{"at":237.58,"x":1161,"y":394,"click":false,"d":0.55},{"at":239.16,"x":417,"y":606,"click":true,"d":0.55},{"at":240.3,"x":762,"y":152,"click":false,"d":0.55},{"at":241.02,"x":979,"y":152,"click":false,"d":0.55},{"at":241.66,"x":1197,"y":152,"click":false,"d":0.51},{"at":242.38,"x":1415,"y":152,"click":false,"d":0.55},{"at":243.18,"x":979,"y":152,"click":true,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam18","keys":[{"at":234.61,"scale":2.125,"x":-1336,"y":-64},{"at":234.61,"scale":2.125,"x":-1336,"y":-64},{"at":238.1,"scale":1.3311,"x":-125,"y":0},{"at":242.12,"scale":1.4679,"x":-335,"y":-24}]},{"type":"reveal","sel":"#w18","at":233.78},{"type":"speed","sel":"#spd18-23931","at":239.31},{"type":"sting","sel":"#st10","at":247.45,"end":251.26},{"type":"phone","sel":"#ph20","start":251.26,"end":257.39,"wins":[[251.62,257.39]],"urlAt":251.62,"zooms":[{"at":251.12,"z":1.22,"cx":934.55,"cy":495.86,"hold":2.97}]},{"type":"reveal","sel":"#ph20-cam","at":251.26},{"type":"cursor","cur":"#cur21","rip":"#rip21","moves":[{"at":260.75,"x":679,"y":206,"click":true,"d":0.55},{"at":263.51,"x":1486,"y":206,"click":true,"d":0.55}],"hides":[]},{"type":"cam","sel":"#cam21","keys":[{"at":259.68,"scale":1.8803,"x":-968,"y":0},{"at":259.68,"scale":1.8803,"x":-968,"y":0},{"at":262.43,"scale":2.125,"x":-1344,"y":0}]},{"type":"reveal","sel":"#w21","at":257.39},{"type":"end","at":266.59,"endurl":272.47,"thanks":274.47},{"type":"fdlg","sel":"#fd-choose","start":27.17,"end":29.99,"c0":{"x":960,"y":760},"c1":{"x":973,"y":386},"c2":{"x":1294,"y":817},"g1":0.7,"g2":0.45,"pickAt":28.27,"openAt":29.54}];
+// Builds the one paused timeline from PLAN (written by build.mjs). Every tween is fromTo with
+// immediateRender off (or a set), so seeking to any time gives the same frame.
+const q = (s, r = document) => r.querySelector(s);
+const qa = (s, r = document) => [...r.querySelectorAll(s)];
+
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  const pop = (el, at, from = { y: 24, opacity: 0 }) => el && tl.fromTo(el, from, { y: 0, x: 0, scale: 1, opacity: 1, duration: 0.45, ease: 'power3.out', immediateRender: false }, at);
+  const fade = (el, at, a, b, d = 0.2) => el && tl.fromTo(el, { opacity: a }, { opacity: b, duration: d, ease: 'power1.out', immediateRender: false }, at);
+  // Footage wrappers are shown only inside their own window. (Two sets at time 0 collide — the
+  // hide wins — so one that opens at 0 is simply never hidden first.)
+  qa('[data-on]').forEach((el) => {
+    const on = +el.dataset.on;
+    if (on > 0) { tl.set(el, { autoAlpha: 0 }, 0); tl.set(el, { autoAlpha: 1 }, on); }
+    tl.set(el, { autoAlpha: 0 }, +el.dataset.off);
+  });
+
+  for (const p of PLAN) {
+    if (p.type === 'cam') {
+      const el = q(p.sel);
+      tl.set(el, { transformOrigin: '0 0', ...p.keys[0] }, 0);
+      p.keys.slice(1).forEach((k, i) => {
+        const a = p.keys[i];
+        tl.fromTo(el, { scale: a.scale, x: a.x, y: a.y }, { scale: k.scale, x: k.x, y: k.y, duration: 0.9, ease: 'power2.inOut', immediateRender: false }, k.at);
+      });
+    }
+    if (p.type === 'reveal') {
+      // The section's window opens into the frame.
+      const el = q(p.sel);
+      tl.fromTo(el, { scale: 0.9, opacity: 0, borderRadius: 34 }, { scale: 1, opacity: 1, borderRadius: 0, duration: 0.55, ease: 'power3.out', immediateRender: false }, p.at);
+    }
+    if (p.type === 'shot') {
+      const el = q(p.sel);
+      tl.set(el, { transformOrigin: p.from.x === 0 && p.from.y !== undefined && p.sel.startsWith('#mt') && q(p.sel).classList.contains('pcam') ? '50% 50%' : '0 0' }, 0);
+      tl.fromTo(el, p.from, { ...p.to, duration: p.dur, ease: 'sine.inOut', immediateRender: false }, p.at);
+    }
+    if (p.type === 'cursor') {
+      // Glides between recorded points; a ripple on every click.
+      const cur = q(p.cur), rip = q(p.rip);
+      tl.set(cur, { x: p.moves[0].x, y: p.moves[0].y, opacity: 1 }, 0);
+      tl.set(rip, { opacity: 0 }, 0);
+      let prev = p.moves[0];
+      for (const m of p.moves.slice(1)) {
+        if (m.x !== prev.x || m.y !== prev.y) tl.fromTo(cur, { x: prev.x, y: prev.y }, { x: m.x, y: m.y, duration: m.d, ease: 'power2.inOut', immediateRender: false }, m.at - m.d);
+        if (m.click) tl.fromTo(rip, { x: m.x, y: m.y, scale: 0.5, opacity: 0.95 }, { x: m.x, y: m.y, scale: 1.9, opacity: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, m.at);
+        prev = m;
+      }
+      for (const [a, b] of p.hides) { fade(cur, a, 1, 0, 0.15); fade(cur, b, 0, 1, 0.15); }
+    }
+    if (p.type === 'phone') {
+      const scene = q(p.sel), cam = q(p.sel + '-cam'), pv = q(p.sel + '-pv'), chrome = q(p.sel + '-chrome'), tbar = q(p.sel + '-tbar');
+      // Browser bars while the page is not full screen; the page lifts above the bottom toolbar.
+      tl.set([chrome, tbar], { opacity: 0 }, 0);
+      tl.set(pv, { y: 0 }, 0);
+      for (const [a, b] of p.wins) {
+        tl.set([chrome, tbar], { opacity: 1 }, a);
+        tl.set(pv, { y: -62 }, a);
+        if (b < p.end - 0.01) { tl.set([chrome, tbar], { opacity: 0 }, b); tl.set(pv, { y: 0 }, b); }
+      }
+      tl.set(q('.u1', scene), { display: 'inline' }, 0);
+      tl.set(q('.u2', scene), { display: 'none' }, 0);
+      tl.set(q('.u1', scene), { display: 'none' }, p.urlAt);
+      tl.set(q('.u2', scene), { display: 'inline' }, p.urlAt);
+      // Punch-ins on the moments that matter, then back out.
+      tl.set(cam, { transformOrigin: '0 0', scale: 1, x: 0, y: 0 }, 0);
+      for (const z of p.zooms) {
+        const x = Math.max(1920 * (1 - z.z), Math.min(0, z.cx * (1 - z.z) + (960 - z.cx) * 0.55));
+        const y = Math.max(1080 * (1 - z.z), Math.min(0, z.cy * (1 - z.z) + (540 - z.cy) * 0.55));
+        tl.fromTo(cam, { scale: 1, x: 0, y: 0 }, { scale: z.z, x, y, duration: 0.6, ease: 'power2.inOut', immediateRender: false }, z.at);
+        tl.fromTo(cam, { scale: z.z, x, y }, { scale: 1, x: 0, y: 0, duration: 0.6, ease: 'power2.inOut', immediateRender: false }, z.at + 0.6 + z.hold);
+      }
+    }
+    if (p.type === 'fdlg') {
+      // Open box: in, cursor to the file, select, cursor to Open, click, out.
+      const el = q(p.sel), cur = q('.fcur', el), tile = q('.tile.pick', el), win = q('.fwin', el);
+      tl.set(el, { opacity: 0 }, 0);
+      tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.18, immediateRender: false }, p.start);
+      tl.fromTo(win, { scale: 0.96, y: 18 }, { scale: 1, y: 0, duration: 0.3, ease: 'power3.out', immediateRender: false }, p.start);
+      tl.set(tile, { className: 'tile pick' }, 0);
+      tl.fromTo(cur, { x: p.c0.x, y: p.c0.y }, { x: p.c1.x, y: p.c1.y, duration: p.g1, ease: 'power2.inOut', immediateRender: false }, p.start + 0.15);
+      tl.set(tile, { className: 'tile pick sel' }, p.pickAt);
+      tl.set(q('.fname em', el), { opacity: 0 }, 0);
+      tl.set(q('.fname em', el), { opacity: 1 }, p.pickAt);
+      tl.fromTo(cur, { x: p.c1.x, y: p.c1.y }, { x: p.c2.x, y: p.c2.y, duration: p.g2, ease: 'power2.inOut', immediateRender: false }, p.pickAt + 0.12);
+      tl.fromTo(q('.btn.open', el), { scale: 1 }, { scale: 0.94, duration: 0.08, yoyo: true, repeat: 1, immediateRender: false }, p.openAt);
+      tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.18, immediateRender: false }, p.end - 0.18);
+    }
+    if (p.type === 'speed') pop(q(p.sel), p.at, { x: 30, opacity: 0 });
+    if (p.type === 'title') {
+      const el = q(p.sel);
+      tl.fromTo(q('.wm', el), { y: 40, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out', immediateRender: false }, p.at + 0.05);
+      tl.fromTo(q('.ten span', el), { scale: 0.55, opacity: 0, filter: 'blur(24px)' }, { scale: 1, opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', immediateRender: false }, p.at + 0.25);
+      qa('.dots i', el).forEach((d, i) => tl.fromTo(d, { scale: 0.3, opacity: 0, backgroundColor: 'rgba(148,163,184,.25)' }, { scale: 1, opacity: 1, backgroundColor: '#38bdf8', duration: 0.3, ease: 'back.out(2)', immediateRender: false }, p.at + 0.8 + i * 0.09));
+    }
+    if (p.type === 'sting') {
+      const el = q(p.sel), num = q('.num span', el), on = q('.dots i.on', el);
+      tl.fromTo(num, { y: 140, scale: 0.7, opacity: 0, filter: 'blur(22px)' }, { y: 0, scale: 1, opacity: 1, filter: 'blur(0px)', duration: 0.6, ease: 'expo.out', immediateRender: false }, p.at + 0.02);
+      tl.fromTo(q('.dots', el), { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out', immediateRender: false }, p.at + 0.15);
+      tl.fromTo(on, { scale: 0.4 }, { scale: 1.25, duration: 0.35, ease: 'back.out(3)', immediateRender: false }, p.at + 0.4);
+      tl.fromTo(num, { scale: 1 }, { scale: 1.04, duration: p.end - p.at - 0.9, ease: 'sine.inOut', immediateRender: false }, p.at + 0.62);
+      tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.28, ease: 'power1.in', immediateRender: false }, p.end - 0.28);
+    }
+    if (p.type === 'end') {
+      const sc = q('#end');
+      tl.fromTo(q('.wm', sc), { y: 50, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', immediateRender: false }, p.at + 0.2);
+      pop(q('.pills', sc), p.endurl - 0.1, { y: 30, opacity: 0 });
+      tl.fromTo('#subpill', { scale: 1 }, { scale: 1.12, duration: 0.35, yoyo: true, repeat: 3, ease: 'sine.inOut', immediateRender: false }, p.thanks + 0.3);
+    }
+  }
+  window.__timelines = window.__timelines || {};
+  window.__timelines['main'] = tl;
+});
+
+</script>
+</body></html>

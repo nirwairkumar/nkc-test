@@ -1,5 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import { safeSessionStorage, safeLocalStorage } from '@/utils/safeStorage';
+import type { ResultView } from '@/lib/resultView';
 
 export interface TestSection {
     id: string;
@@ -8,6 +9,8 @@ export interface TestSection {
     marks_per_question?: number | string;
     negative_marks?: number | string;
     question_type?: string;
+    /** Timed sections: this section's own minutes (see utils/sectionTiming.ts). */
+    duration_minutes?: number;
     questions: Question[];
     attempt_control?: {
         enabled: boolean;
@@ -78,6 +81,7 @@ export interface TestSettings {
     force_fullscreen?: boolean;
     shuffle_questions?: boolean;
     show_results_immediate?: boolean;
+    result_view?: ResultView; // what the result page shows candidates (lib/resultView.ts)
     violation_limit?: number | null; // null = warn only, number = auto-submit after N violations
     schedule?: {
         enabled: boolean;
@@ -96,6 +100,7 @@ export interface TestSettings {
         conduct_slug: string; // secure slug >10 chars used for exam link
         original_slug?: string; // preserved original slug (public tests)
     };
+    exam_interface_mode?: 'nta' | 'corporate'; // Layout mode: 'nta' (default) or 'corporate'
 }
 
 /** Generate a secure conduct slug (always >10 chars): title-slug + 8-char random hex */
@@ -125,7 +130,8 @@ export interface Question {
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
     marks?: number | string;
     negativeMarks?: number | string;
-    typingMode?: 'en' | 'hi';
+    partialMarking?: 'proportional' | 'per_option'; // Multiple correct only; default proportional
+    typingMode?: string; // builder only ('en' | 'second'); stripped before saving
     originalIndex?: number; // Added to strictly track index when shuffling
     topic?: string; // AI generated or manual topic
 }
@@ -185,11 +191,15 @@ export async function importTestJson(file: File) {
     }
 }
 
-export async function fetchAdvancedAnalysis(test: any, answers: Record<number, string>) {
+export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>) {
     try {
         const response = await apiClient.post('results/analyze', {
             test,
-            answers
+            answers,
+            question_times,
+            // C4: the browser no longer receives correctAnswer, so the server reloads
+            // the answer key by id and scores the attempt itself.
+            test_id: test?.id
         });
         return { data: response.data, error: null };
     } catch (error: any) {
@@ -197,10 +207,20 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, s
     }
 }
 
+export function invalidateTestCache(id: string) {
+    try {
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_true`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_true`);
+    } catch {}
+}
+
 export async function updateTest(id: string, updates: Partial<Test>, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.put(endpoint, updates);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -238,6 +258,7 @@ export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.delete(endpoint);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -349,6 +370,21 @@ export async function fetchTestsByCreator(
 // Alias for compatibility
 export const fetchTestsByUserId = fetchTestsByCreator;
 
+/**
+ * Every test the creator has conducted online (live first, then ended), independent of the
+ * dashboard's 9-per-page grid — so a live exam is never hidden on an unloaded page. The
+ * backend filters in Postgres, so this is typically a handful of small rows.
+ */
+export async function fetchConductedTestsByCreator(userId: string, signal?: AbortSignal) {
+    try {
+        const response = await apiClient.get(`tests/user/${userId}/conducted`, { signal });
+        return { data: (response.data || []) as any[], error: null };
+    } catch (error: any) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') throw error;
+        return { data: null, error };
+    }
+}
+
 let snippetQueue: string[] = [];
 let snippetResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
 let snippetTimeout: any = null;
@@ -459,9 +495,9 @@ function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false
     safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
 }
 
-export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
-    // Serve stale cache immediately, revalidate in background
-    const cached = _getCachedTest(id, excludeQuestions);
+export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false, bypassCache: boolean = false) {
+    // Serve stale cache immediately, revalidate in background (unless bypassCache is true)
+    const cached = !bypassCache ? _getCachedTest(id, excludeQuestions) : null;
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
@@ -524,76 +560,6 @@ const getUserIdFromToken = () => {
         return null;
     }
 };
-
-export async function voteTest(testId: string, voteType: 1 | -1, userIdArg?: string) {
-    try {
-        const userId = userIdArg || getUserIdFromToken();
-        if (!userId) throw new Error("Not authenticated");
-        const response = await apiClient.post(`social/tests/${testId}/vote`, {
-            user_id: userId,
-            vote_type: voteType
-        });
-        return { error: null, vote: response.data.vote };
-    } catch (error) {
-        return { error };
-    }
-}
-
-let voteQueue: string[] = [];
-let voteResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
-let voteTimeout: any = null;
-
-export function getTestVoteStats(testId: string, userIdArg?: string): Promise<{ upvotes: number, downvotes: number, user_vote: number, error: any }> {
-    return new Promise((resolve, reject) => {
-        const userId = userIdArg || getUserIdFromToken();
-
-        if (!voteResolvers.has(testId)) {
-            voteResolvers.set(testId, []);
-            voteQueue.push(testId);
-        }
-        voteResolvers.get(testId)!.push({ resolve, reject });
-
-        if (!voteTimeout) {
-            voteTimeout = setTimeout(() => processVoteQueue(userId), 50);
-        }
-    });
-}
-
-async function processVoteQueue(userId: string | null) {
-    const idsToFetch = [...voteQueue];
-    const resolversMap = new Map(voteResolvers);
-
-    voteQueue = [];
-    voteResolvers.clear();
-    voteTimeout = null;
-
-    try {
-        const chunkSize = 20;
-        for (let i = 0; i < idsToFetch.length; i += chunkSize) {
-            const chunk = idsToFetch.slice(i, i + chunkSize);
-            const params: any = { ids: chunk.join(',') };
-            if (userId) params.user_id = userId;
-
-            const response = await apiClient.get('social/tests/batch/votes', { params });
-            const fetchedData = response.data || [];
-            const dataMap = new Map();
-            fetchedData.forEach((d: any) => dataMap.set(d.test_id, d));
-
-            for (const id of chunk) {
-                const resolvers = resolversMap.get(id);
-                if (resolvers) {
-                    const data = dataMap.get(id) || { upvotes: 0, downvotes: 0, user_vote: 0 };
-                    resolvers.forEach(({ resolve }) => resolve({ ...data, error: null }));
-                    resolversMap.delete(id);
-                }
-            }
-        }
-    } catch (error: any) {
-        for (const [id, resolvers] of resolversMap.entries()) {
-            resolvers.forEach(({ resolve }) => resolve({ upvotes: 0, downvotes: 0, user_vote: 0, error }));
-        }
-    }
-}
 
 let progressQueue: string[] = [];
 let progressResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();

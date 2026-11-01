@@ -1,0 +1,142 @@
+[
+ {
+  "w": "अब",
+  "r": "ab",
+  "start": 0.02,
+  "end": 0.12,
+  "score": 0.996
+ },
+ {
+  "w": "एक",
+  "r": "ek",
+  "start": 0.24,
+  "end": 0.381,
+  "score": 0.991
+ },
+ {
+  "w": "equilibrium।",
+  "r": "equilibrium",
+  "start": 0.541,
+  "end": 1.262,
+  "score": 0.537
+ },
+ {
+  "w": "पहली",
+  "r": "pahalii",
+  "start": 1.563,
+  "end": 1.843,
+  "score": 0.929
+ },
+ {
+  "w": "लाइन",
+  "r": "laain",
+  "start": 1.843,
+  "end": 2.024,
+  "score": 0.896
+ },
+ {
+  "w": "टाइप",
+  "r": "ttaaip",
+  "start": 2.044,
+  "end": 2.264,
+  "score": 0.958
+ },
+ {
+  "w": "कीजिए,",
+  "r": "kiijie",
+  "start": 2.304,
+  "end": 2.565,
+  "score": 0.764
+ },
+ {
+  "w": "फिर",
+  "r": "phir",
+  "start": 3.086,
+  "end": 3.226,
+  "score": 0.905
+ },
+ {
+  "w": "Formula,",
+  "r": "formula",
+  "start": 3.326,
+  "end": 3.827,
+  "score": 0.824
+ },
+ {
+  "w": "A,",
+  "r": "a",
+  "start": 3.867,
+  "end": 3.887,
+  "score": 0.97
+ },
+ {
+  "w": "gas",
+  "r": "gas",
+  "start": 5.23,
+  "end": 5.47,
+  "score": 0.998
+ },
+ {
+  "w": "वाला",
+  "r": "vaalaa",
+  "start": 5.55,
+  "end": 5.751,
+  "score": 0.972
+ },
+ {
+  "w": "बटन,",
+  "r": "battan",
+  "start": 5.751,
+  "end": 6.051,
+  "score": 0.94
+ },
+ {
+  "w": "reversible",
+  "r": "reversible",
+  "start": 6.532,
+  "end": 7.133,
+  "score": 0.65
+ },
+ {
+  "w": "arrow,",
+  "r": "arrow",
+  "start": 7.173,
+  "end": 7.554,
+  "score": 0.398
+ },
+ {
+  "w": "B,",
+  "r": "b",
+  "start": 7.915,
+  "end": 7.935,
+  "score": 0.976
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 8.716,
+  "end": 8.836,
+  "score": 0.99
+ },
+ {
+  "w": "फिर",
+  "r": "phir",
+  "start": 8.916,
+  "end": 9.057,
+  "score": 0.937
+ },
+ {
+  "w": "से",
+  "r": "se",
+  "start": 9.117,
+  "end": 9.197,
+  "score": 0.992
+ },
+ {
+  "w": "gas।",
+  "r": "gas",
+  "start": 9.277,
+  "end": 9.518,
+  "score": 0.993
+ }
+]

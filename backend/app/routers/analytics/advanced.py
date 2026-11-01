@@ -4,12 +4,15 @@ from supabase import Client
 from datetime import datetime, timedelta
 from typing import Optional
 from .track import classify_user_agent
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 # ─── Test Funnel Stats ─────────────────────────────────────────
 @router.get("/tests/funnel")
-async def get_test_funnel(
+def get_test_funnel(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -84,13 +87,13 @@ async def get_test_funnel(
             "reg_in_progress": total_in_progress,
         }
     except Exception as e:
-        print(f"Error in test funnel: {e}")
+        logger.error(f"Error in test funnel: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Abandonment Breakdown ─────────────────────────────────────
 @router.get("/tests/abandonment")
-async def get_abandonment_analysis(
+def get_abandonment_analysis(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -135,13 +138,13 @@ async def get_abandonment_analysis(
             "drop_off_buckets": buckets,
         }
     except Exception as e:
-        print(f"Error in abandonment analysis: {e}")
+        logger.error(f"Error in abandonment analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Test Matrix (detailed per-test stats) ─────────────────────
 @router.get("/tests/matrix")
-async def get_test_matrix(
+def get_test_matrix(
     days: int = 30,
     limit: int = 50,
     db: Client = Depends(get_db)
@@ -237,13 +240,13 @@ async def get_test_matrix(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in test matrix: {e}")
+        logger.error(f"Error in test matrix: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── User Matrix (detailed per-user stats) ─────────────────────
 @router.get("/users/matrix")
-async def get_user_matrix(
+def get_user_matrix(
     days: int = 30,
     limit: int = 50,
     db: Client = Depends(get_db)
@@ -340,13 +343,13 @@ async def get_user_matrix(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in user matrix: {e}")
+        logger.error(f"Error in user matrix: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Test Creation Stats ───────────────────────────────────────
 @router.get("/tests/creation")
-async def get_test_creation_stats(
+def get_test_creation_stats(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -378,79 +381,13 @@ async def get_test_creation_stats(
             "daily_trend": daily_trend,
         }
     except Exception as e:
-        print(f"Error in test creation stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ─── Upload Logs (Materials) ──────────────────────────────────
-@router.get("/uploads/logs")
-async def get_upload_logs(
-    days: int = 30,
-    limit: int = 100,
-    db: Client = Depends(get_db)
-):
-    """
-    Returns recent file/link uploads from the materials table,
-    enriched with uploader profile info.
-    """
-    try:
-        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
-
-        mats = supabase.table("materials")\
-            .select("id, user_id, title, type, url, file_path, created_at")\
-            .gte("created_at", start_date)\
-            .order("created_at", desc=True)\
-            .limit(limit)\
-            .execute()
-
-        data = mats.data or []
-
-        # Enrich with uploader profiles
-        user_ids = list(set(m.get("user_id") for m in data if m.get("user_id")))
-        profiles_map = {}
-        if user_ids:
-            p_res = supabase.table("profiles")\
-                .select("id, full_name, email")\
-                .in_("id", user_ids)\
-                .execute()
-            for p in (p_res.data or []):
-                profiles_map[p["id"]] = p
-
-        result = []
-        for m in data:
-            profile = profiles_map.get(m.get("user_id"), {})
-            # Estimate file size from URL path info (not available directly)
-            file_ext = ""
-            if m.get("file_path"):
-                parts = m["file_path"].rsplit(".", 1)
-                file_ext = parts[-1].upper() if len(parts) > 1 else ""
-            elif m.get("url"):
-                file_ext = "LINK"
-
-            result.append({
-                "id": m["id"],
-                "title": m.get("title", "Untitled"),
-                "type": m.get("type", "file"),
-                "url": m.get("url", ""),
-                "file_ext": file_ext,
-                "uploader_name": profile.get("full_name", "Unknown"),
-                "uploader_email": profile.get("email", ""),
-                "uploaded_at": m.get("created_at"),
-            })
-
-        return {
-            "total": len(result),
-            "uploads": result
-        }
-
-    except Exception as e:
-        print(f"Error in upload logs: {e}")
+        logger.error(f"Error in test creation stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Visitor Location Stats ───────────────────────────────────
 @router.get("/visitors/locations")
-async def get_visitor_locations(
+def get_visitor_locations(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -496,13 +433,13 @@ async def get_visitor_locations(
             "top_cities": cities,
         }
     except Exception as e:
-        print(f"Error in visitor locations: {e}")
+        logger.error(f"Error in visitor locations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Anonymous Summary ─────────────────────────────────────────
 @router.get("/anon/summary")
-async def get_anon_summary(
+def get_anon_summary(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -587,13 +524,13 @@ async def get_anon_summary(
             "daily_trend": daily_trend,
         }
     except Exception as e:
-        print(f"Error in anon/summary: {e}")
+        logger.error(f"Error in anon/summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Detailed Attempt Logs ─────────────────────────────────────
 @router.get("/attempts/logs")
-async def get_attempt_logs(
+def get_attempt_logs(
     days: int = 30,
     limit: int = 200,
     db: Client = Depends(get_db)
@@ -648,7 +585,7 @@ async def get_attempt_logs(
                     if uid and tid and created_at:
                         user_submissions[(uid, tid)] = created_at
             except Exception as sub_err:
-                print(f"Warning: could not fetch user submissions for live logs: {sub_err}")
+                logger.error(f"Warning: could not fetch user submissions for live logs: {sub_err}")
 
         # Process registered
         for r in (regs.data or []):
@@ -746,13 +683,13 @@ async def get_attempt_logs(
         return logs[:limit]
 
     except Exception as e:
-        print(f"Error in attempt logs: {e}")
+        logger.error(f"Error in attempt logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Detailed Visitor Stats ────────────────────────────────────
 @router.get("/visitors/detailed")
-async def get_detailed_visitors(
+def get_detailed_visitors(
     days: int = 30,
     limit: int = 100,
     db: Client = Depends(get_db)
@@ -787,13 +724,14 @@ async def get_detailed_visitors(
             for p in (p_res.data or []):
                 profiles_map[p["id"]] = p
 
-        # Get stay time / duration for each visitor from sessions
+        # Get stay time / duration for each visitor from sessions and detect platform
         v_ids = [v["id"] for v in visitors]
         visitor_stay_map = {}
+        visitor_platform_map = {}
         if v_ids:
             try:
                 s_res = supabase.table("sessions")\
-                    .select("visitor_id, started_at, ended_at, duration_secs, page_count")\
+                    .select("visitor_id, started_at, ended_at, duration_secs, page_count, entry_page")\
                     .in_("visitor_id", v_ids)\
                     .execute()
                 for s in (s_res.data or []):
@@ -814,8 +752,38 @@ async def get_detailed_visitors(
                     if dur <= 0:
                         dur = pg_cnt * 15
                     visitor_stay_map[vid] = visitor_stay_map.get(vid, 0) + max(dur, 10)
+
+                    entry = (s.get("entry_page") or "").lower()
+                    if vid not in visitor_platform_map:
+                        visitor_platform_map[vid] = {"pdf": False, "main": False}
+                    if "pdf.testoza.com" in entry or entry.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf", "/how-to-edit-a-pdf")) or "/pdf" in entry:
+                        visitor_platform_map[vid]["pdf"] = True
+                    elif entry:
+                        visitor_platform_map[vid]["main"] = True
             except Exception as s_err:
-                print(f"Warning fetching visitor session durations: {s_err}")
+                logger.warning(f"Warning fetching visitor session durations: {s_err}")
+
+            # Also check page_views to detect any PDF page views accurately
+            try:
+                pv_res = supabase.table("page_views")\
+                    .select("visitor_id, page_path, page_title")\
+                    .in_("visitor_id", v_ids)\
+                    .limit(1000)\
+                    .execute()
+                for pv in (pv_res.data or []):
+                    vid = pv.get("visitor_id")
+                    path = (pv.get("page_path") or "").lower()
+                    title = (pv.get("page_title") or "").lower()
+                    if not vid:
+                        continue
+                    if vid not in visitor_platform_map:
+                        visitor_platform_map[vid] = {"pdf": False, "main": False}
+                    if "pdf.testoza.com" in path or path.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf", "/how-to-edit-a-pdf")) or "panna" in title or ("pdf" in title and "testoza" in title):
+                        visitor_platform_map[vid]["pdf"] = True
+                    elif path:
+                        visitor_platform_map[vid]["main"] = True
+            except Exception as pv_err:
+                logger.warning(f"Warning fetching visitor page view platforms: {pv_err}")
                 
         result = []
         for v in visitors:
@@ -838,6 +806,14 @@ async def get_detailed_visitors(
             total_stay = visitor_stay_map.get(vid)
             if total_stay is None:
                 total_stay = max(total_page_views * 15, 10)
+
+            plat_data = visitor_platform_map.get(vid, {"pdf": False, "main": True})
+            if plat_data["pdf"] and plat_data["main"]:
+                platform_label = "both"
+            elif plat_data["pdf"]:
+                platform_label = "pdf"
+            else:
+                platform_label = "main"
                 
             result.append({
                 "id": vid,
@@ -858,17 +834,20 @@ async def get_detailed_visitors(
                 "is_bot": traffic_info["is_bot"],
                 "traffic_category": traffic_info["category"],
                 "traffic_label": traffic_info["label"],
+                "platform": platform_label,
+                "has_pdf": plat_data["pdf"],
+                "has_main": plat_data["main"],
                 "page_views": []  # Lazy loaded on demand
             })
             
         return result
     except Exception as e:
-        print(f"Error in detailed visitors: {e}")
+        logger.error(f"Error in detailed visitors: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/visitors/{visitor_id}/pages")
-async def get_visitor_pages(
+def get_visitor_pages(
     visitor_id: str,
     db: Client = Depends(get_db)
 ):
@@ -928,5 +907,5 @@ async def get_visitor_pages(
         result.reverse()
         return result
     except Exception as e:
-        print(f"Error in visitor pages timeline: {e}")
+        logger.error(f"Error in visitor pages timeline: {e}")
         raise HTTPException(status_code=500, detail=str(e))

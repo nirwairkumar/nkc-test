@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- A phone photo of one DPP page lying on a study desk, daylight from a window on the left.
+     ?src=pages/page-1.png&rz=-1.6&rx=7&v=0 -->
+<style>
+  html, body { margin: 0; width: 1200px; height: 1600px; overflow: hidden; }
+  body { background: radial-gradient(130% 100% at 30% 20%, #d9c3a3 0%, #b89a74 55%, #8a6d4c 100%); }
+  .grainwood { position: absolute; inset: 0; opacity: .22; mix-blend-mode: multiply;
+    background: repeating-linear-gradient(97deg, rgba(90,60,30,.0) 0 26px, rgba(90,60,30,.35) 27px 29px, rgba(90,60,30,0) 30px 61px); }
+  .stage { position: absolute; inset: 0; perspective: 1900px; }
+  .page { position: absolute; left: 96px; top: 70px; width: 1008px; height: 1426px; background-size: 100% 100%;
+    box-shadow: 0 30px 60px rgba(40,25,10,.45), 0 4px 10px rgba(40,25,10,.3); }
+  .page::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(0,0,0,.05), rgba(0,0,0,0) 30%, rgba(0,0,0,.06) 70%, rgba(0,0,0,.12)); }
+  .light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply;
+    background: radial-gradient(85% 70% at 22% 25%, rgba(255,255,255,1) 0%, rgba(245,240,230,1) 45%, rgba(190,180,165,1) 100%); }
+  .shadow { position: absolute; right: -140px; bottom: -120px; width: 760px; height: 620px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(30,20,10,.22), rgba(30,20,10,0)); }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27><filter id=%27n%27><feTurbulence type=%27fractalNoise%27 baseFrequency=%271.7%27 numOctaves=%272%27/></filter><rect width=%27300%27 height=%27300%27 filter=%27url(%23n)%27/></svg>"); }
+</style></head>
+<body><div class="grainwood"></div><div class="stage"><div class="page" id="pg"></div></div>
+<div class="light"></div><div class="shadow" id="sh"></div><div class="grain"></div>
+<script>
+  const P = new URLSearchParams(location.search);
+  const pg = document.getElementById('pg');
+  pg.style.backgroundImage = `url(${P.get('src')})`;
+  pg.style.transform = `rotateX(${P.get('rx') || 7}deg) rotateZ(${P.get('rz') || 0}deg)`;
+  // a hand/phone shadow that sits in a slightly different place on each shot
+  const v = +P.get('v') || 0;
+  const sh = document.getElementById('sh');
+  sh.style.right = [-140, -220, -180][v] + 'px';
+  sh.style.bottom = [-120, -200, -90][v] + 'px';
+</script></body></html>

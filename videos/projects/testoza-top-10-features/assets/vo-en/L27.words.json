@@ -1,0 +1,38 @@
+[
+  {
+    "id": "w0",
+    "text": "Number",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "9.",
+    "start": 0.48,
+    "end": 1.12
+  },
+  {
+    "id": "w2",
+    "text": "Watch",
+    "start": 1.12,
+    "end": 1.52
+  },
+  {
+    "id": "w3",
+    "text": "the",
+    "start": 1.52,
+    "end": 1.68
+  },
+  {
+    "id": "w4",
+    "text": "exam",
+    "start": 1.68,
+    "end": 2.16
+  },
+  {
+    "id": "w5",
+    "text": "live.",
+    "start": 2.16,
+    "end": 2.64
+  }
+]

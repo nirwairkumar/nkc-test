@@ -1,52 +1,45 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
+from app.core.auth import verify_is_admin
 from app.core.database import get_db
 from supabase import Client
 
 from typing import Optional, List, Dict, Any
 from app.routers.tests.utils import enrich_tests
 from app.routers.tests.cache_config import bust_test_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @router.get("/all")
-async def get_all_tests(
+def get_all_tests(
+    request: Request,
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
     search_query: Optional[str] = None,
     db: Client = Depends(get_db)
 ):
+    # Lists private tests and their exam links, so admins only.
+    verify_is_admin(request, db)
     try:
         # 1. Calculate Pagination
         start = (page - 1) * limit
         end = start + limit - 1
 
-        # 2. Build Query
+        # 2. Build Query. Search used to go through search_tests_ranked(), which returns
+        # `questions` (~157 kB a test) for every hit; the pickers that call this only need
+        # the small columns below.
+        query = db.table("tests")\
+            .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
+            .order("created_at", desc=True)
         if search_query:
-            try:
-                # RPC Search
-                response = db.rpc("search_tests_ranked", {
-                    "search_query": search_query,
-                    "limit_val": limit,
-                    "offset_val": start,
-                    "is_admin": True # Ensures admin sees all visible relevant tests
-                }).execute()
-                tests = response.data
-            except Exception as rpc_error:
-                print(f"RPC Admin Search Error: {rpc_error}")
-                # Fallback
-                cleaned_query = search_query.replace(",", "")
-                query = db.table("tests")\
-                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
-                    .order("created_at", desc=True)
+            # Commas and parentheses would break the or() filter syntax.
+            cleaned_query = "".join(ch for ch in search_query.strip().lstrip("#") if ch not in ",()")[:100]
+            if cleaned_query:
                 query = query.or_(f"title.ilike.%{cleaned_query}%,custom_id.ilike.%{cleaned_query}%")
-                response = query.range(start, end).execute()
-                tests = response.data
-        else:
-            query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name)")\
-                .order("created_at", desc=True)
-            response = query.range(start, end).execute()
-            tests = response.data
+        response = query.range(start, end).execute()
+        tests = response.data
 
         enriched = enrich_tests(tests, db)
 
@@ -58,12 +51,12 @@ async def get_all_tests(
             }
         }
     except Exception as e:
-        print(f"Error fetching all tests: {e}")
+        logger.error(f"Error fetching all tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/next-id")
-async def get_next_test_id(
+def get_next_test_id(
     prefix: str = Query("M", pattern="^(M|YT)$"),
     db: Client = Depends(get_db)
 ):
@@ -94,31 +87,38 @@ async def get_next_test_id(
              return {"next_id": f"{prefix}001"}
 
     except Exception as e:
-        print(f"Error fetching next ID: {e}")
+        logger.error(f"Error fetching next ID: {e}")
         # Default fallback
         return {"next_id": f"{prefix}001"}
 
 @router.put("/admin/{test_id}")
-async def admin_update_test(
+def admin_update_test(
     test_id: str,
     payload: Dict[str, Any],
+    request: Request,
 ):
+    # Service-role write that skips the owner check, so admins only.
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
+        from app.services.question_images import externalize_images
+        externalize_images(admin_db, payload)
         # Update using Service Role Key (bypasses RLS)
         response = admin_db.table("tests").update(payload).eq("id", test_id).execute()
         if response.data:
             bust_test_cache(test_id)
         return response.data[0] if response.data else None
     except Exception as e:
-        print(f"Error updating test (admin): {e}")
+        logger.error(f"Error updating test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/admin/{test_id}")
-async def admin_delete_test(
-    test_id: str
+def admin_delete_test(
+    test_id: str,
+    request: Request,
 ):
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
         # Delete using Service Role Key (bypasses RLS)
@@ -126,15 +126,17 @@ async def admin_delete_test(
         bust_test_cache(test_id)
         return {"success": True}
     except Exception as e:
-        print(f"Error deleting test (admin): {e}")
+        logger.error(f"Error deleting test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/admin/{test_id}/clone")
-async def admin_clone_test(
+def admin_clone_test(
     test_id: str,
     payload: dict, # Using dict directly to avoid import issues or schema complexity
+    request: Request,
 ):
+    verify_is_admin(request)
     try:
         target_user_id = payload.get("target_user_id")
         if not target_user_id:
@@ -191,23 +193,26 @@ async def admin_clone_test(
                 new_tc_rows = [{"test_id": clone_id, "category_id": tc["category_id"]} for tc in tc_res.data]
                 admin_db.table("test_categories").insert(new_tc_rows).execute()
         except Exception as cat_err:
-            print(f"Warning: Failed to copy categories for admin clone {clone_id}: {cat_err}")
+            logger.error(f"Warning: Failed to copy categories for admin clone {clone_id}: {cat_err}")
 
-        print(f"[admin clone] Test {test_id} cloned as {clone_id} for user {target_user_id}")
+        logger.debug(f"[admin clone] Test {test_id} cloned as {clone_id} for user {target_user_id}")
         return cloned_test
 
     except Exception as e:
-        print(f"Error cloning test (admin): {e}")
+        logger.error(f"Error cloning test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/admin/conduct-mode-tests")
-async def get_conduct_mode_tests():
+def get_conduct_mode_tests(request: Request):
+    # Returns every live exam link and creator emails, so admins only.
+    verify_is_admin(request)
     try:
         from app.core.database import supabase as admin_db
-        # 1. Fetch all tests with settings, created_by, created_at
+        # 1. Fetch conduct mode tests directly at database level (massive egress saving)
         response = admin_db.table("tests")\
-            .select("id, title, custom_id, settings, created_by, created_at")\
+            .select("id, title, custom_id, duration, total_questions, settings, created_by, created_at, is_public, visibility, slug")\
+            .eq("settings->conduct_exam->>enabled", "true")\
             .execute()
         
         all_tests = response.data or []
@@ -228,13 +233,30 @@ async def get_conduct_mode_tests():
                 # Check if schedule end_time has passed
                 schedule = settings.get("schedule") or {}
                 end_time_str = schedule.get("end_time")
-                if end_time_str:
+                if schedule.get("enabled") and end_time_str:
                     try:
                         end_time = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
                         if end_time < now:
-                            continue # Has ended
+                            # Auto-deactivate ended scheduled exam in database
+                            try:
+                                updated_settings = {
+                                    **settings,
+                                    "conduct_exam": {
+                                        **conduct_exam,
+                                        "enabled": False,
+                                        "ended_at": now.isoformat()
+                                    }
+                                }
+                                admin_db.table("tests").update({
+                                    "settings": updated_settings,
+                                    "visibility": "private",
+                                    "is_public": False
+                                }).eq("id", t["id"]).execute()
+                            except Exception as deact_err:
+                                logger.error(f"Error auto-deactivating expired test {t['id']}: {deact_err}")
+                            continue # Has ended and auto-deactivated
                     except Exception as parse_err:
-                        print(f"Error parsing schedule end_time for test {t['id']}: {parse_err}")
+                        logger.error(f"Error parsing schedule end_time for test {t['id']}: {parse_err}")
                 
                 conduct_candidates.append(t)
                 if t.get("created_by"):
@@ -247,13 +269,37 @@ async def get_conduct_mode_tests():
         profiles_map = {}
         if creator_ids:
             profiles_res = admin_db.table("profiles")\
-                .select("id, full_name, email")\
+                .select("id, full_name, email, avatar_url, is_verified_creator")\
                 .in_("id", list(creator_ids))\
                 .execute()
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
                 
-        # 4. Enrich and format response
+        # 4. Fetch submission counts & conduct attempt timestamps for candidates
+        candidate_ids = [t["id"] for t in conduct_candidates]
+        submission_counts_map = {}
+        first_conduct_attempt_map = {}
+        if candidate_ids:
+            try:
+                # Only the two flags, not the whole metadata (start-form answers, stats,
+                # proctoring logs): this runs on every admin page load for the sidebar badge.
+                attempts_res = admin_db.table("user_tests")\
+                    .select("test_id, created_at, conduct:metadata->conduct_exam, conducted:metadata->is_conducted_attempt")\
+                    .in_("test_id", candidate_ids)\
+                    .order("created_at", desc=False)\
+                    .execute()
+                if attempts_res.data:
+                    from collections import Counter
+                    submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
+                    for a in attempts_res.data:
+                        tid = a["test_id"]
+                        if a.get("conduct") or a.get("conducted"):
+                            if tid not in first_conduct_attempt_map and a.get("created_at"):
+                                first_conduct_attempt_map[tid] = a.get("created_at")
+            except Exception as se:
+                logger.warning(f"Warning fetching submission counts for conduct tests: {se}")
+
+        # 5. Enrich and format response
         conduct_tests = []
         for t in conduct_candidates:
             creator_id = t.get("created_by")
@@ -261,23 +307,51 @@ async def get_conduct_mode_tests():
             creator_name = profile.get("full_name") or "Unknown"
             
             settings = t.get("settings") or {}
+            conduct_exam = settings.get("conduct_exam") or {}
             schedule = settings.get("schedule") or {}
-            end_time_str = schedule.get("end_time")
+            start_time_str = schedule.get("start_time") if schedule.get("enabled") else None
+            end_time_str = schedule.get("end_time") if schedule.get("enabled") else None
+            
+            # The timestamp when this test went live with the recent/current link:
+            # 1. conduct_exam.started_at (exact moment creator confirmed link / went live)
+            # 2. schedule start_time (if scheduled test)
+            # 3. first attempt under this conduct exam link
+            # 4. created_at ONLY if created recently (< 48 hours ago), otherwise None
+            recent_live_at = conduct_exam.get("started_at") or start_time_str or first_conduct_attempt_map.get(t["id"])
+            if not recent_live_at and t.get("created_at"):
+                try:
+                    c_dt = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00"))
+                    if (now - c_dt).total_seconds() < 172800:
+                        recent_live_at = t["created_at"]
+                except Exception:
+                    pass
+            made_live_at = recent_live_at
             
             conduct_tests.append({
                 "id": t["id"],
                 "title": t["title"],
                 "custom_id": t.get("custom_id"),
+                "duration": t.get("duration"),
+                "total_questions": t.get("total_questions"),
+                "slug": t.get("slug"),
+                "visibility": t.get("visibility"),
                 "creator_name": creator_name,
                 "creator_email": profile.get("email"),
+                "creator_avatar": profile.get("avatar_url"),
+                "creator_verified": profile.get("is_verified_creator", False),
                 "created_by": creator_id,
+                "created_at": t.get("created_at"),
+                "made_live_at": made_live_at,
+                "start_time": start_time_str,
                 "end_time": end_time_str,
-                "settings": settings
+                "is_scheduled": bool(schedule.get("enabled") and (start_time_str or end_time_str)),
+                "settings": settings,
+                "submission_count": submission_counts_map.get(t["id"], 0)
             })
             
         return conduct_tests
     except Exception as e:
-        print(f"Error fetching conduct mode tests: {e}")
+        logger.error(f"Error fetching conduct mode tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

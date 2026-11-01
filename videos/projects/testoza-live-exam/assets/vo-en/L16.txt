@@ -1,0 +1,2 @@
+Strict Timer runs on our server.
+Refresh the page, close the browser — the clock keeps running. Always on, for real exams.

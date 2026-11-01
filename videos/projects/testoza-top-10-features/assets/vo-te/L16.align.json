@@ -1,0 +1,205 @@
+[
+ {
+  "w": "తర్వాతి",
+  "r": "tarvaati",
+  "start": 0.0,
+  "end": 0.4,
+  "score": 0.925
+ },
+ {
+  "w": "step",
+  "r": "step",
+  "start": 0.441,
+  "end": 0.661,
+  "score": 0.941
+ },
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 0.761,
+  "end": 1.201,
+  "score": 0.853
+ },
+ {
+  "w": "నే",
+  "r": "nee",
+  "start": 1.261,
+  "end": 1.382,
+  "score": 0.979
+ },
+ {
+  "w": "చెబుతుంది:",
+  "r": "cebutumdi",
+  "start": 1.402,
+  "end": 1.822,
+  "score": 0.78
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.363,
+  "end": 2.723,
+  "score": 0.735
+ },
+ {
+  "w": "room",
+  "r": "room",
+  "start": 2.803,
+  "end": 2.943,
+  "score": 0.501
+ },
+ {
+  "w": "set",
+  "r": "set",
+  "start": 3.024,
+  "end": 3.184,
+  "score": 0.651
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 3.224,
+  "end": 3.604,
+  "score": 0.949
+ },
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 4.125,
+  "end": 4.305,
+  "score": 0.506
+ },
+ {
+  "w": "screen.",
+  "r": "screen",
+  "start": 4.345,
+  "end": 4.665,
+  "score": 0.563
+ },
+ {
+  "w": "Tab,",
+  "r": "tab",
+  "start": 4.705,
+  "end": 5.426,
+  "score": 0.595
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 5.847,
+  "end": 5.987,
+  "score": 0.429
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 6.047,
+  "end": 6.287,
+  "score": 0.462
+ },
+ {
+  "w": "దొరికిపోతుంది,",
+  "r": "dorikipootumdi",
+  "start": 6.347,
+  "end": 7.008,
+  "score": 0.974
+ },
+ {
+  "w": "limit",
+  "r": "limit",
+  "start": 7.509,
+  "end": 7.769,
+  "score": 0.937
+ },
+ {
+  "w": "పెట్టండి",
+  "r": "pettttamddi",
+  "start": 7.809,
+  "end": 8.23,
+  "score": 0.994
+ },
+ {
+  "w": "మూడు",
+  "r": "muuddu",
+  "start": 8.57,
+  "end": 8.79,
+  "score": 0.995
+ },
+ {
+  "w": "warnings",
+  "r": "warnings",
+  "start": 8.83,
+  "end": 9.291,
+  "score": 0.729
+ },
+ {
+  "w": "test",
+  "r": "test",
+  "start": 9.811,
+  "end": 10.032,
+  "score": 0.999
+ },
+ {
+  "w": "దానంతట",
+  "r": "daanamtatta",
+  "start": 10.132,
+  "end": 10.672,
+  "score": 0.991
+ },
+ {
+  "w": "అదే",
+  "r": "adee",
+  "start": 10.692,
+  "end": 10.833,
+  "score": 0.791
+ },
+ {
+  "w": "submit.",
+  "r": "submit",
+  "start": 10.873,
+  "end": 11.273,
+  "score": 0.829
+ },
+ {
+  "w": "Copy-paste,",
+  "r": "copypaste",
+  "start": 11.714,
+  "end": 12.374,
+  "score": 0.461
+ },
+ {
+  "w": "right-click,",
+  "r": "rightclick",
+  "start": 12.695,
+  "end": 13.175,
+  "score": 0.596
+ },
+ {
+  "w": "back",
+  "r": "back",
+  "start": 13.496,
+  "end": 13.696,
+  "score": 0.734
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 13.756,
+  "end": 14.056,
+  "score": 0.659
+ },
+ {
+  "w": "అన్నీ",
+  "r": "annii",
+  "start": 14.437,
+  "end": 14.737,
+  "score": 0.798
+ },
+ {
+  "w": "block.",
+  "r": "block",
+  "start": 14.757,
+  "end": 14.997,
+  "score": 0.628
+ }
+]

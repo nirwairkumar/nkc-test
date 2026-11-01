@@ -1,0 +1,355 @@
+1
+00:00:00,600 --> 00:00:04,090
+Questions in Hindi and English, side by side…
+
+2
+00:00:04,090 --> 00:00:06,620
+a diagram straight from the paper…
+
+3
+00:00:06,620 --> 00:00:10,670
+chemistry structures… and full JEE-level maths.
+
+4
+00:00:10,680 --> 00:00:15,380
+In the next few minutes, you're going to build this entire paper yourself.
+
+5
+00:00:21,470 --> 00:00:22,310
+Hi!
+
+6
+00:00:22,310 --> 00:00:29,340
+Today we'll take this JEE Main sample paper, and turn selected questions into a complete test on TestoZa.
+
+7
+00:00:29,350 --> 00:00:32,100
+Every question teaches you one new trick.
+
+8
+00:00:32,100 --> 00:00:33,350
+So, let's get started.
+
+9
+00:00:34,750 --> 00:00:37,880
+In the menu on the left, click Create Test.
+
+10
+00:00:37,890 --> 00:00:40,460
+At the top, type the test name — JEE Main Mini Mock.
+
+11
+00:00:40,460 --> 00:00:46,110
+Just below it, add a one-line description.
+
+12
+00:00:46,110 --> 00:00:48,490
+Candidates see this before they start.
+
+13
+00:00:48,490 --> 00:00:48,540
+Now pick the time.
+
+14
+00:00:48,550 --> 00:00:54,880
+Tap the three-hour button, and it fills in a hundred and eighty minutes for you.
+
+15
+00:00:54,880 --> 00:01:00,700
+"Only my students" means the test is visible only to the people you send the link to.
+
+16
+00:01:00,700 --> 00:01:07,750
+In Marking, choose JEE / NEET — plus four for a right answer, and minus one for a wrong one.
+
+17
+00:01:07,750 --> 00:01:12,980
+And if you open Institution branding, you can add your institute's name and logo too.
+
+18
+00:01:13,780 --> 00:01:15,770
+Now scroll down to Questions.
+
+19
+00:01:15,770 --> 00:01:17,590
+The first one is physics.
+
+20
+00:01:17,600 --> 00:01:24,840
+Let's type it in English first — a stone, a string of length L, and a vertical circle.
+
+21
+00:01:25,640 --> 00:01:27,880
+Now, the same question in Hindi.
+
+22
+00:01:27,880 --> 00:01:34,530
+Above the question, click the button next to English, search for Hindi in the menu, and pick it.
+
+23
+00:01:34,540 --> 00:01:37,680
+Now just type in English letters — e, k…
+
+24
+00:01:37,670 --> 00:01:42,420
+p, a, t, t, h, a, r — and the moment you press space, each word turns into Hindi.
+
+25
+00:01:42,420 --> 00:01:47,330
+So right below the English question, you get the same question in Hindi.
+
+26
+00:01:47,330 --> 00:01:53,110
+The options need a square root, so open Maths & symbols. This is Sy Pad.
+
+27
+00:01:53,110 --> 00:01:57,170
+Click option A, write the root, and press Insert.
+
+28
+00:01:57,170 --> 00:02:02,170
+All four options are in. Now click the letter of the correct answer — D. That's it.
+
+29
+00:02:02,170 --> 00:02:04,770
+One question, two languages.
+
+30
+00:02:05,570 --> 00:02:08,860
+To add the second question, press Add question.
+
+31
+00:02:08,860 --> 00:02:15,100
+Small tip — a new question opens in the last language you used, so tap English first.
+
+32
+00:02:15,110 --> 00:02:20,060
+This question has a diagram, and there's no need to redraw it.
+
+33
+00:02:20,050 --> 00:02:23,360
+Click Picture, and choose the screen button.
+
+34
+00:02:23,370 --> 00:02:31,220
+Now, in the PDF, press Windows, Shift and S together, drag a box around the diagram, come back, and press Control V.
+
+35
+00:02:31,220 --> 00:02:37,150
+Look — the diagram sits under the question and above the options, exactly like the paper.
+
+36
+00:02:37,150 --> 00:02:39,890
+The fraction options come from Sy Pad.
+
+37
+00:02:39,900 --> 00:02:41,470
+Correct answer: B.
+
+38
+00:02:42,270 --> 00:02:47,400
+Question three is chemistry, and here the structure sits right inside the sentence.
+
+39
+00:02:47,400 --> 00:02:53,530
+TestoZa doesn't have a structure-drawing tool, so we simply cut it from the paper.
+
+40
+00:02:53,530 --> 00:02:56,650
+In Picture, choose the cloud button.
+
+41
+00:02:56,640 --> 00:02:59,860
+It places the image exactly where your cursor is.
+
+42
+00:02:59,860 --> 00:03:05,090
+Next to it, the reaction arrow from Sy Pad — ozone on top, zinc and water below.
+
+43
+00:03:05,090 --> 00:03:07,370
+This one is numerical.
+
+44
+00:03:07,370 --> 00:03:14,200
+Up in Question type, choose Numerical answer, click Exact value, and type the answer — one.
+
+45
+00:03:15,000 --> 00:03:18,760
+Now it's time for maths. Open Maths & symbols.
+
+46
+00:03:18,760 --> 00:03:25,120
+At the top it says "Goes into Question 4", so the formula lands in question four.
+
+47
+00:03:25,120 --> 00:03:29,410
+f of x equals the integral… inside, a fraction…
+
+48
+00:03:29,410 --> 00:03:31,670
+x squared dx on top…
+
+49
+00:03:31,670 --> 00:03:39,910
+and two brackets below — one plus x squared in the first, and in the second, one plus the root of one plus x squared.
+
+50
+00:03:39,910 --> 00:03:42,070
+Watch the preview at the top.
+
+51
+00:03:42,070 --> 00:03:47,820
+As you type, the question builds up exactly like the paper.
+
+52
+00:03:47,820 --> 00:03:51,920
+Press Insert, and type the rest of the line.
+
+53
+00:03:51,920 --> 00:03:55,570
+The options use log, root and pi by four — all from Sy Pad.
+
+54
+00:03:55,570 --> 00:03:59,200
+The last option is plain text: None of these.
+
+55
+00:03:59,200 --> 00:04:00,960
+Correct answer: B.
+
+56
+00:04:01,760 --> 00:04:07,790
+And now, the biggest question in this video — a JEE-level multistep reaction.
+
+57
+00:04:07,780 --> 00:04:13,420
+First, the bromobenzene structure, with the cloud button, right at the cursor.
+
+58
+00:04:13,420 --> 00:04:20,940
+Then open Chemistry in Sy Pad, and pick the arrow with conditions above and below.
+
+59
+00:04:20,930 --> 00:04:26,510
+Press plus on top to make three rows, and remove the bottom one.
+
+60
+00:04:26,520 --> 00:04:27,340
+Now the three sets of reagents.
+
+61
+00:04:27,330 --> 00:04:32,020
+One: magnesium and ether, then carbon dioxide and H plus.
+
+62
+00:04:32,020 --> 00:04:37,350
+Two: ammonia and heat. Three: bromine and sodium hydroxide.
+
+63
+00:04:37,350 --> 00:04:40,990
+And this time, the options are structures too.
+
+64
+00:04:41,000 --> 00:04:45,360
+Use the picture button next to each option to add its image.
+
+65
+00:04:45,350 --> 00:04:50,060
+Five diagrams in a single question, and it's still perfectly clean.
+
+66
+00:04:50,060 --> 00:04:52,810
+Correct answer: B — aniline.
+
+67
+00:04:53,610 --> 00:04:58,510
+For a match-the-list question, you don't need to draw a table.
+
+68
+00:04:58,520 --> 00:05:01,370
+In Sy Pad, open Tables and choose Match List.
+
+69
+00:05:01,370 --> 00:05:04,440
+Reactants on the left, products on the right.
+
+70
+00:05:04,440 --> 00:05:06,960
+Fill in the boxes, and press Insert.
+
+71
+00:05:06,970 --> 00:05:08,500
+Correct answer: C.
+
+72
+00:05:09,300 --> 00:05:10,640
+Our paper is ready.
+
+73
+00:05:10,640 --> 00:05:16,860
+Now let's split it into Physics, Chemistry and Mathematics, just like the real JEE.
+
+74
+00:05:16,860 --> 00:05:22,580
+First, grab the integral question by its handle, and drag it to the very bottom.
+
+75
+00:05:23,380 --> 00:05:27,940
+Turn on "Split into sections", and every question lands in Section A.
+
+76
+00:05:27,940 --> 00:05:38,620
+Click the plus between two questions, choose New question here, and add one more chemistry question — with the complex's formula from Sy Pad's chemistry keys.
+
+77
+00:05:39,420 --> 00:05:46,350
+At the bottom, press Add a new section, name it Bonus, and add a maths question to it.
+
+78
+00:05:48,840 --> 00:05:51,080
+Now let's split Section A in two.
+
+79
+00:05:51,070 --> 00:05:56,310
+Where chemistry begins, click the plus, and choose Split section here.
+
+80
+00:05:56,310 --> 00:06:00,310
+Name the first part Physics, and the new one Chemistry.
+
+81
+00:06:00,310 --> 00:06:07,150
+The integral question is still sitting in Chemistry, so split that out too, and name it Mathematics.
+
+82
+00:06:07,150 --> 00:06:10,690
+And finally, merge Bonus into Mathematics.
+
+83
+00:06:10,690 --> 00:06:14,020
+Physics, Chemistry, Mathematics — just like JEE.
+
+84
+00:06:14,820 --> 00:06:18,810
+Now click Save test. Your test is in My Tests.
+
+85
+00:06:18,810 --> 00:06:25,100
+And this is exactly what your candidates will see — sections, Hindi, diagrams, maths…
+
+86
+00:06:25,100 --> 00:06:25,960
+everything.
+
+87
+00:06:27,360 --> 00:06:31,330
+So go ahead — make your first test today at testoza.com.
+
+88
+00:06:31,340 --> 00:06:33,830
+If you liked this video, do subscribe.
+
+89
+00:06:33,820 --> 00:06:35,020
+See you in the next one!

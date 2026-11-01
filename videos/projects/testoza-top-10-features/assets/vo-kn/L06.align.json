@@ -1,0 +1,51 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.361,
+  "score": 0.62
+ },
+ {
+  "w": "two:",
+  "r": "two",
+  "start": 0.461,
+  "end": 0.601,
+  "score": 0.21
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 0.942,
+  "end": 1.303,
+  "score": 0.471
+ },
+ {
+  "w": "science",
+  "r": "science",
+  "start": 1.343,
+  "end": 1.663,
+  "score": 0.391
+ },
+ {
+  "w": "ಸರಿಯಾಗಿ",
+  "r": "sariyaagi",
+  "start": 1.703,
+  "end": 2.104,
+  "score": 0.966
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.164,
+  "end": 2.425,
+  "score": 0.563
+ },
+ {
+  "w": "ಮಾಡಬಹುದು.",
+  "r": "maaddabahudu",
+  "start": 2.425,
+  "end": 2.906,
+  "score": 0.722
+ }
+]

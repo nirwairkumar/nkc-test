@@ -1,0 +1,100 @@
+[
+ {
+  "w": "அப்புறம்",
+  "r": "appuram",
+  "start": 0.02,
+  "end": 0.301,
+  "score": 0.622
+ },
+ {
+  "w": "Conduct",
+  "r": "conduct",
+  "start": 0.462,
+  "end": 0.803,
+  "score": 0.317
+ },
+ {
+  "w": "exam,",
+  "r": "exam",
+  "start": 0.843,
+  "end": 1.104,
+  "score": 0.712
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 1.164,
+  "end": 1.405,
+  "score": 0.395
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 1.466,
+  "end": 1.747,
+  "score": 0.837
+ },
+ {
+  "w": "link-ஐ",
+  "r": "linkai",
+  "start": 2.008,
+  "end": 2.309,
+  "score": 0.822
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 2.349,
+  "end": 2.57,
+  "score": 0.254
+ },
+ {
+  "w": "பண்ணுங்க",
+  "r": "pannungka",
+  "start": 2.65,
+  "end": 2.951,
+  "score": 0.837
+ },
+ {
+  "w": "இல்லனா",
+  "r": "illanaa",
+  "start": 3.192,
+  "end": 3.513,
+  "score": 0.937
+ },
+ {
+  "w": "ஆறு",
+  "r": "aaru",
+  "start": 3.654,
+  "end": 3.835,
+  "score": 0.733
+ },
+ {
+  "w": "இலக்க",
+  "r": "ilakka",
+  "start": 3.895,
+  "end": 4.156,
+  "score": 0.929
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 4.296,
+  "end": 4.537,
+  "score": 0.517
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 4.618,
+  "end": 4.858,
+  "score": 0.491
+ },
+ {
+  "w": "அனுப்புங்க.",
+  "r": "anuppungka",
+  "start": 4.858,
+  "end": 5.16,
+  "score": 0.967
+ }
+]

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "w0",
+    "text": "Students",
+    "start": 0,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "open",
+    "start": 0.56,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "the",
+    "start": 0.88,
+    "end": 0.96
+  },
+  {
+    "id": "w3",
+    "text": "link,",
+    "start": 0.96,
+    "end": 1.36
+  },
+  {
+    "id": "w4",
+    "text": "type",
+    "start": 1.36,
+    "end": 1.68
+  },
+  {
+    "id": "w5",
+    "text": "their",
+    "start": 1.68,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "name,",
+    "start": 1.92,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "start,",
+    "start": 2.4,
+    "end": 2.96
+  },
+  {
+    "id": "w8",
+    "text": "and",
+    "start": 2.96,
+    "end": 3.28
+  },
+  {
+    "id": "w9",
+    "text": "boom,",
+    "start": 3.28,
+    "end": 4
+  },
+  {
+    "id": "w10",
+    "text": "your",
+    "start": 4,
+    "end": 4.16
+  },
+  {
+    "id": "w11",
+    "text": "logo",
+    "start": 4.24,
+    "end": 4.72
+  },
+  {
+    "id": "w12",
+    "text": "and",
+    "start": 4.72,
+    "end": 4.96
+  },
+  {
+    "id": "w13",
+    "text": "name",
+    "start": 4.96,
+    "end": 5.36
+  },
+  {
+    "id": "w14",
+    "text": "right",
+    "start": 5.36,
+    "end": 5.6
+  },
+  {
+    "id": "w15",
+    "text": "on",
+    "start": 5.6,
+    "end": 5.76
+  },
+  {
+    "id": "w16",
+    "text": "top.",
+    "start": 5.76,
+    "end": 6.08
+  }
+]

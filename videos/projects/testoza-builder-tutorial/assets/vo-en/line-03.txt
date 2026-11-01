@@ -1,0 +1,5 @@
+In the menu on the left, click Create Test. At the top, type the test name — JEE Main Mini Mock. Just below it, add a one-line description. Candidates see this before they start.
+Now pick the time. Tap the three-hour button, and it fills in a hundred and eighty minutes for you.
+"Only my students" means the test is visible only to the people you send the link to.
+In Marking, choose JEE / NEET — plus four for a right answer, and minus one for a wrong one.
+And if you open Institution branding, you can add your institute's name and logo too.

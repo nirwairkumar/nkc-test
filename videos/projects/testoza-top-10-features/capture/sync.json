@@ -1,0 +1,639 @@
+[
+  {
+    "line": "L03",
+    "cue": "upload",
+    "click": 25.96,
+    "word": 26.15,
+    "lead": 0.19
+  },
+  {
+    "line": "L03",
+    "cue": "choose",
+    "click": 27.02,
+    "word": 27.91,
+    "lead": 0.89
+  },
+  {
+    "line": "L03",
+    "cue": "extract",
+    "click": 31.39,
+    "word": 31.51,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "reading",
+    "click": 33.44,
+    "word": 33.56,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "q1",
+    "click": 36.88,
+    "word": 37,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "preview",
+    "click": 42.4,
+    "word": 42.52,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "answers",
+    "click": 45.4,
+    "word": 45.52,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "save",
+    "click": 50.42,
+    "word": 51.52,
+    "lead": 1.1
+  },
+  {
+    "line": "L05",
+    "cue": "newcard",
+    "click": 51.8,
+    "word": 51.92,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "edit",
+    "click": 58.22,
+    "word": 58.34,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "addq",
+    "click": 61.51,
+    "word": 61.94,
+    "lead": 0.43
+  },
+  {
+    "line": "L07",
+    "cue": "q13text",
+    "click": 62.62,
+    "word": 62.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "sypad",
+    "click": 64.62,
+    "word": 64.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "h",
+    "click": 68.95,
+    "word": 69.07,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "frac",
+    "click": 71.43,
+    "word": 71.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "power",
+    "click": 74.55,
+    "word": 74.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "formula",
+    "click": 77.67,
+    "word": 77.79,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "insert",
+    "click": 80.39,
+    "word": 80.51,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "lang",
+    "click": 89.2,
+    "word": 89.32,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "hindi",
+    "click": 90.56,
+    "word": 90.68,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "hitype",
+    "click": 91.52,
+    "word": 91.64,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "hindone",
+    "click": 98.72,
+    "word": 98.84,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "opts",
+    "click": 100.8,
+    "word": 100.92,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "marks",
+    "click": 107.55,
+    "word": 107.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "qtype",
+    "click": 110.19,
+    "word": 110.31,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "multi",
+    "click": 112.43,
+    "word": 112.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "jeeadv",
+    "click": 114.11,
+    "word": 114.23,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "correct",
+    "click": 116.59,
+    "word": 116.71,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "sections",
+    "click": 118.29,
+    "word": 118.41,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "timed",
+    "click": 120.45,
+    "word": 120.57,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "gap",
+    "click": 124.69,
+    "word": 124.81,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "split",
+    "click": 126.21,
+    "word": 126.33,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "mina",
+    "click": 128.84,
+    "word": 129.61,
+    "lead": 0.77
+  },
+  {
+    "line": "L13",
+    "cue": "minb",
+    "click": 130.45,
+    "word": 130.73,
+    "lead": 0.28
+  },
+  {
+    "line": "L13",
+    "cue": "save",
+    "click": 131.65,
+    "word": 131.77,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "card",
+    "click": 138.26,
+    "word": 138.38,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "conduct",
+    "click": 139.62,
+    "word": 139.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "link",
+    "click": 141.3,
+    "word": 141.42,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "start",
+    "click": 143.38,
+    "word": 143.5,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "live",
+    "click": 144.58,
+    "word": 144.7,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "tip1",
+    "click": 146.28,
+    "word": 146.4,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "settings",
+    "click": 148.36,
+    "word": 148.48,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "fs",
+    "click": 149.62,
+    "word": 150,
+    "lead": 0.39
+  },
+  {
+    "line": "L16",
+    "cue": "tab",
+    "click": 150.68,
+    "word": 151.36,
+    "lead": 0.68
+  },
+  {
+    "line": "L16",
+    "cue": "count",
+    "click": 152.46,
+    "word": 153.36,
+    "lead": 0.9
+  },
+  {
+    "line": "L16",
+    "cue": "threepick",
+    "click": 153.96,
+    "word": 154.08,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "copyoff",
+    "click": 156.56,
+    "word": 156.96,
+    "lead": 0.41
+  },
+  {
+    "line": "L16",
+    "cue": "right",
+    "click": 157.7,
+    "word": 158.24,
+    "lead": 0.54
+  },
+  {
+    "line": "L16",
+    "cue": "back",
+    "click": 158.84,
+    "word": 158.96,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "results",
+    "click": 160.05,
+    "word": 160.17,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "resultview",
+    "click": 161.41,
+    "word": 161.53,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "shuffle",
+    "click": 164.61,
+    "word": 164.73,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "saveset",
+    "click": 169.01,
+    "word": 169.13,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "tip2",
+    "click": 173.34,
+    "word": 173.46,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "copy",
+    "click": 175.85,
+    "word": 176.02,
+    "lead": 0.17
+  },
+  {
+    "line": "L19",
+    "cue": "share",
+    "click": 176.7,
+    "word": 176.82,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "menu",
+    "click": 179.34,
+    "word": 179.46,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "getcode",
+    "click": 180.54,
+    "word": 180.66,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "code",
+    "click": 181.82,
+    "word": 181.94,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "inputs",
+    "click": 191.15,
+    "word": 191.27,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "roll",
+    "click": 192.51,
+    "word": 192.95,
+    "lead": 0.45
+  },
+  {
+    "line": "L21",
+    "cue": "inputsdone",
+    "click": 193.95,
+    "word": 194.07,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "join",
+    "click": 204.83,
+    "word": 204.95,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "code6",
+    "click": 208.75,
+    "word": 208.87,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "details",
+    "click": 210.35,
+    "word": 210.47,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "name",
+    "click": 211.67,
+    "word": 211.99,
+    "lead": 0.31
+  },
+  {
+    "line": "L23",
+    "cue": "rollin",
+    "click": 212.56,
+    "word": 212.71,
+    "lead": 0.14
+  },
+  {
+    "line": "L23",
+    "cue": "go",
+    "click": 213.47,
+    "word": 213.59,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "exam",
+    "click": 214.24,
+    "word": 214.36,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "ans1",
+    "click": 216.96,
+    "word": 217.08,
+    "lead": 0.12
+  },
+  {
+    "line": "L24",
+    "cue": "next1",
+    "click": 218.16,
+    "word": 218.28,
+    "lead": 0.12
+  },
+  {
+    "line": "L25",
+    "cue": "violation",
+    "click": 220.08,
+    "word": 220.2,
+    "lead": 0.12
+  },
+  {
+    "line": "L25",
+    "cue": "warnok",
+    "click": 225.04,
+    "word": 225.16,
+    "lead": 0.12
+  },
+  {
+    "line": "L26",
+    "cue": "rush",
+    "click": 226.58,
+    "word": 226.7,
+    "lead": 0.12
+  },
+  {
+    "line": "L26",
+    "cue": "submit",
+    "click": 228.33,
+    "word": 228.54,
+    "lead": 0.21
+  },
+  {
+    "line": "L26",
+    "cue": "yes",
+    "click": 229.06,
+    "word": 229.18,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "dash",
+    "click": 234.14,
+    "word": 234.26,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "writing",
+    "click": 235.66,
+    "word": 235.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "subm",
+    "click": 237.58,
+    "word": 237.7,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "panel",
+    "click": 239.16,
+    "word": 239.3,
+    "lead": 0.14
+  },
+  {
+    "line": "L28",
+    "cue": "started",
+    "click": 240.3,
+    "word": 240.42,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "writ",
+    "click": 241.02,
+    "word": 241.14,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "two",
+    "click": 241.66,
+    "word": 241.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "zero",
+    "click": 242.38,
+    "word": 242.5,
+    "lead": 0.12
+  },
+  {
+    "line": "L28",
+    "cue": "names",
+    "click": 243.18,
+    "word": 243.3,
+    "lead": 0.12
+  },
+  {
+    "line": "L30",
+    "cue": "score",
+    "click": 251.62,
+    "word": 251.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L30",
+    "cue": "solkey",
+    "click": 254.74,
+    "word": 254.86,
+    "lead": 0.12
+  },
+  {
+    "line": "L31",
+    "cue": "all",
+    "click": 257.75,
+    "word": 257.87,
+    "lead": 0.12
+  },
+  {
+    "line": "L31",
+    "cue": "rank",
+    "click": 260.75,
+    "word": 261.23,
+    "lead": 0.49
+  },
+  {
+    "line": "L31",
+    "cue": "scrolllist",
+    "click": 262.15,
+    "word": 262.27,
+    "lead": 0.13
+  },
+  {
+    "line": "L31",
+    "cue": "export",
+    "click": 263.51,
+    "word": 263.63,
+    "lead": 0.12
+  }
+]

@@ -1,0 +1,751 @@
+[
+  {
+    "line": "L02",
+    "cue": "create",
+    "click": 21.12,
+    "word": 22.06,
+    "lead": 0.93
+  },
+  {
+    "line": "L02",
+    "cue": "name",
+    "click": 22.58,
+    "word": 23.34,
+    "lead": 0.76
+  },
+  {
+    "line": "L02",
+    "cue": "marking",
+    "click": 24.1,
+    "word": 24.22,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "questions",
+    "click": 25.62,
+    "word": 25.74,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "q1text",
+    "click": 31.24,
+    "word": 31.61,
+    "lead": 0.38
+  },
+  {
+    "line": "L03",
+    "cue": "sypad",
+    "click": 34.45,
+    "word": 34.57,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "chem",
+    "click": 37.81,
+    "word": 37.93,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "formula",
+    "click": 44.02,
+    "word": 44.14,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "mn",
+    "click": 46.32,
+    "word": 47.58,
+    "lead": 1.26
+  },
+  {
+    "line": "L04",
+    "cue": "sub",
+    "click": 49.16,
+    "word": 50.14,
+    "lead": 0.98
+  },
+  {
+    "line": "L04",
+    "cue": "charge",
+    "click": 50.95,
+    "word": 53.5,
+    "lead": 2.55
+  },
+  {
+    "line": "L05",
+    "cue": "rest",
+    "click": 54.91,
+    "word": 57.45,
+    "lead": 2.54
+  },
+  {
+    "line": "L05",
+    "cue": "ins1a",
+    "click": 60.46,
+    "word": 61.05,
+    "lead": 0.59
+  },
+  {
+    "line": "L05",
+    "cue": "f1b",
+    "click": 61.73,
+    "word": 61.85,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "ins1",
+    "click": 70.65,
+    "word": 70.81,
+    "lead": 0.16
+  },
+  {
+    "line": "L05",
+    "cue": "lands1",
+    "click": 71.49,
+    "word": 71.61,
+    "lead": 0.12
+  },
+  {
+    "line": "L05",
+    "cue": "opts1",
+    "click": 73.03,
+    "word": 74.49,
+    "lead": 1.45
+  },
+  {
+    "line": "L05",
+    "cue": "correct1",
+    "click": 76.13,
+    "word": 76.25,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "q2add",
+    "click": 76.98,
+    "word": 78.11,
+    "lead": 1.13
+  },
+  {
+    "line": "L06",
+    "cue": "q2text",
+    "click": 78.53,
+    "word": 79.95,
+    "lead": 1.42
+  },
+  {
+    "line": "L06",
+    "cue": "formula2",
+    "click": 81.03,
+    "word": 81.15,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "a",
+    "click": 81.7,
+    "word": 82.35,
+    "lead": 0.65
+  },
+  {
+    "line": "L06",
+    "cue": "gas",
+    "click": 82.79,
+    "word": 82.91,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "rev",
+    "click": 83.91,
+    "word": 84.03,
+    "lead": 0.12
+  },
+  {
+    "line": "L06",
+    "cue": "b",
+    "click": 84.51,
+    "word": 85.39,
+    "lead": 0.88
+  },
+  {
+    "line": "L06",
+    "cue": "gas2",
+    "click": 85.83,
+    "word": 85.95,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "up",
+    "click": 89.04,
+    "word": 89.16,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "down",
+    "click": 90.24,
+    "word": 90.36,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "heat",
+    "click": 91.28,
+    "word": 91.4,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "deg",
+    "click": 91.84,
+    "word": 91.96,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "aq",
+    "click": 93.12,
+    "word": 93.24,
+    "lead": 0.12
+  },
+  {
+    "line": "L07",
+    "cue": "consts",
+    "click": 95.36,
+    "word": 95.48,
+    "lead": 0.12
+  },
+  {
+    "line": "L08",
+    "cue": "ins2",
+    "click": 97.52,
+    "word": 99.66,
+    "lead": 2.14
+  },
+  {
+    "line": "L08",
+    "cue": "rest2",
+    "click": 98.77,
+    "word": 100.7,
+    "lead": 1.93
+  },
+  {
+    "line": "L08",
+    "cue": "opts2",
+    "click": 104.45,
+    "word": 106.22,
+    "lead": 1.77
+  },
+  {
+    "line": "L08",
+    "cue": "correct2",
+    "click": 107.46,
+    "word": 107.58,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "q3add",
+    "click": 109.71,
+    "word": 109.83,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "formula3",
+    "click": 113.07,
+    "word": 113.19,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "arrowkey",
+    "click": 116.03,
+    "word": 116.15,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "rows",
+    "click": 119.55,
+    "word": 119.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "rowminus",
+    "click": 124.99,
+    "word": 125.11,
+    "lead": 0.12
+  },
+  {
+    "line": "L09",
+    "cue": "rowins",
+    "click": 126.59,
+    "word": 126.71,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "qmark",
+    "click": 127.91,
+    "word": 128.03,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "delta",
+    "click": 130.87,
+    "word": 130.99,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "step",
+    "click": 132.55,
+    "word": 132.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L10",
+    "cue": "prod",
+    "click": 132.82,
+    "word": 134.75,
+    "lead": 1.93
+  },
+  {
+    "line": "L10",
+    "cue": "ins3a",
+    "click": 136.07,
+    "word": 136.19,
+    "lead": 0.12
+  },
+  {
+    "line": "L11",
+    "cue": "line2",
+    "click": 136.67,
+    "word": 137.66,
+    "lead": 0.99
+  },
+  {
+    "line": "L11",
+    "cue": "arrow2",
+    "click": 139.79,
+    "word": 140.86,
+    "lead": 1.07
+  },
+  {
+    "line": "L11",
+    "cue": "words",
+    "click": 141.78,
+    "word": 141.9,
+    "lead": 0.12
+  },
+  {
+    "line": "L11",
+    "cue": "flame",
+    "click": 142.12,
+    "word": 143.74,
+    "lead": 1.63
+  },
+  {
+    "line": "L11",
+    "cue": "ins3b",
+    "click": 149.06,
+    "word": 149.18,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "line3",
+    "click": 149.99,
+    "word": 150.11,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "ins3c",
+    "click": 161.85,
+    "word": 162.59,
+    "lead": 0.74
+  },
+  {
+    "line": "L12",
+    "cue": "q3rest",
+    "click": 163,
+    "word": 163.71,
+    "lead": 0.71
+  },
+  {
+    "line": "L12",
+    "cue": "opts3",
+    "click": 164.87,
+    "word": 164.99,
+    "lead": 0.12
+  },
+  {
+    "line": "L12",
+    "cue": "correct3",
+    "click": 168.07,
+    "word": 168.19,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "q4add",
+    "click": 170.41,
+    "word": 171.68,
+    "lead": 1.27
+  },
+  {
+    "line": "L13",
+    "cue": "tables",
+    "click": 173.88,
+    "word": 174,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "match",
+    "click": 175.96,
+    "word": 176.08,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "editor",
+    "click": 177.4,
+    "word": 177.52,
+    "lead": 0.12
+  },
+  {
+    "line": "L13",
+    "cue": "labels",
+    "click": 178.97,
+    "word": 180.16,
+    "lead": 1.18
+  },
+  {
+    "line": "L13",
+    "cue": "tins",
+    "click": 183.24,
+    "word": 183.36,
+    "lead": 0.12
+  },
+  {
+    "line": "L14",
+    "cue": "blue",
+    "click": 184.18,
+    "word": 184.3,
+    "lead": 0.12
+  },
+  {
+    "line": "L14",
+    "cue": "box1",
+    "click": 186.42,
+    "word": 186.54,
+    "lead": 0.12
+  },
+  {
+    "line": "L14",
+    "cue": "f1",
+    "click": 187.3,
+    "word": 187.42,
+    "lead": 0.12
+  },
+  {
+    "line": "L14",
+    "cue": "xe",
+    "click": 187.87,
+    "word": 188.38,
+    "lead": 0.51
+  },
+  {
+    "line": "L14",
+    "cue": "box2",
+    "click": 190.32,
+    "word": 190.54,
+    "lead": 0.23
+  },
+  {
+    "line": "L14",
+    "cue": "fill",
+    "click": 192.82,
+    "word": 192.94,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "tins2",
+    "click": 203.88,
+    "word": 204.85,
+    "lead": 0.97
+  },
+  {
+    "line": "L15",
+    "cue": "table",
+    "click": 205.53,
+    "word": 205.65,
+    "lead": 0.12
+  },
+  {
+    "line": "L15",
+    "cue": "opts4",
+    "click": 211.26,
+    "word": 211.57,
+    "lead": 0.32
+  },
+  {
+    "line": "L15",
+    "cue": "correct4",
+    "click": 215.37,
+    "word": 215.49,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "q5add",
+    "click": 217.84,
+    "word": 217.96,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "qtype",
+    "click": 222.48,
+    "word": 222.6,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "numerical",
+    "click": 223.92,
+    "word": 224.04,
+    "lead": 0.12
+  },
+  {
+    "line": "L16",
+    "cue": "wrong",
+    "click": 228.96,
+    "word": 229.08,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "q5text",
+    "click": 234.14,
+    "word": 234.26,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "pic",
+    "click": 236.78,
+    "word": 236.9,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "cloud",
+    "click": 237.9,
+    "word": 238.02,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "cloudwhy",
+    "click": 239.66,
+    "word": 239.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L17",
+    "cue": "choose",
+    "click": 242.58,
+    "word": 243.7,
+    "lead": 1.13
+  },
+  {
+    "line": "L17",
+    "cue": "pick",
+    "click": 245.78,
+    "word": 246.02,
+    "lead": 0.25
+  },
+  {
+    "line": "L17",
+    "cue": "placed",
+    "click": 246.94,
+    "word": 247.06,
+    "lead": 0.12
+  },
+  {
+    "line": "L18",
+    "cue": "arrow5",
+    "click": 251.66,
+    "word": 251.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L18",
+    "cue": "heat5",
+    "click": 253.66,
+    "word": 253.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L18",
+    "cue": "x",
+    "click": 256.42,
+    "word": 256.98,
+    "lead": 0.55
+  },
+  {
+    "line": "L18",
+    "cue": "second",
+    "click": 259.58,
+    "word": 259.7,
+    "lead": 0.12
+  },
+  {
+    "line": "L18",
+    "cue": "y",
+    "click": 271.75,
+    "word": 271.94,
+    "lead": 0.18
+  },
+  {
+    "line": "L18",
+    "cue": "ins5",
+    "click": 272.94,
+    "word": 273.06,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "seen",
+    "click": 274.91,
+    "word": 275.03,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "exact",
+    "click": 277.23,
+    "word": 277.35,
+    "lead": 0.12
+  },
+  {
+    "line": "L19",
+    "cue": "four",
+    "click": 278.67,
+    "word": 278.79,
+    "lead": 0.12
+  },
+  {
+    "line": "L20",
+    "cue": "q6add",
+    "click": 282.38,
+    "word": 282.5,
+    "lead": 0.12
+  },
+  {
+    "line": "L20",
+    "cue": "qtype6",
+    "click": 284.11,
+    "word": 286.34,
+    "lead": 2.23
+  },
+  {
+    "line": "L20",
+    "cue": "multi",
+    "click": 285.05,
+    "word": 287.3,
+    "lead": 2.25
+  },
+  {
+    "line": "L20",
+    "cue": "photo",
+    "click": 286.06,
+    "word": 288.5,
+    "lead": 2.43
+  },
+  {
+    "line": "L20",
+    "cue": "choose6",
+    "click": 287.36,
+    "word": 290.18,
+    "lead": 2.81
+  },
+  {
+    "line": "L20",
+    "cue": "reading",
+    "click": 291.5,
+    "word": 291.62,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "filled",
+    "click": 293.53,
+    "word": 293.65,
+    "lead": 0.12
+  },
+  {
+    "line": "L21",
+    "cue": "ticked",
+    "click": 300.33,
+    "word": 300.45,
+    "lead": 0.12
+  },
+  {
+    "line": "L22",
+    "cue": "check",
+    "click": 304.55,
+    "word": 304.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L22",
+    "cue": "partial",
+    "click": 306.39,
+    "word": 306.51,
+    "lead": 0.12
+  },
+  {
+    "line": "L22",
+    "cue": "jeeadv",
+    "click": 308.55,
+    "word": 308.67,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "save",
+    "click": 316.14,
+    "word": 318.88,
+    "lead": 2.74
+  },
+  {
+    "line": "L23",
+    "cue": "saved",
+    "click": 320.04,
+    "word": 320.16,
+    "lead": 0.12
+  },
+  {
+    "line": "L23",
+    "cue": "ready",
+    "click": 322.92,
+    "word": 323.04,
+    "lead": 0.12
+  }
+]

@@ -1,0 +1,37 @@
+[
+ {
+  "w": "नंबर",
+  "r": "nambar",
+  "start": 0.061,
+  "end": 0.323,
+  "score": 0.99
+ },
+ {
+  "w": "चार:",
+  "r": "caar",
+  "start": 0.424,
+  "end": 0.666,
+  "score": 0.85
+ },
+ {
+  "w": "असली",
+  "r": "asalii",
+  "start": 1.17,
+  "end": 1.514,
+  "score": 0.976
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.554,
+  "end": 1.857,
+  "score": 0.705
+ },
+ {
+  "w": "patterns।",
+  "r": "patterns",
+  "start": 1.937,
+  "end": 2.422,
+  "score": 0.669
+ }
+]

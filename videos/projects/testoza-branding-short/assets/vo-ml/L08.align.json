@@ -1,0 +1,51 @@
+[
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 0.04,
+  "end": 0.461,
+  "score": 0.932
+ },
+ {
+  "w": "institute.",
+  "r": "institute",
+  "start": 0.461,
+  "end": 0.942,
+  "score": 0.48
+ },
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 1.203,
+  "end": 1.624,
+  "score": 0.981
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 1.704,
+  "end": 1.964,
+  "score": 0.64
+ },
+ {
+  "w": "ഇന്നുതന്നെ",
+  "r": "innutanne",
+  "start": 2.205,
+  "end": 2.586,
+  "score": 0.699
+ },
+ {
+  "w": "തുടങ്ങൂ",
+  "r": "tuttangnguu",
+  "start": 2.606,
+  "end": 2.947,
+  "score": 0.805
+ },
+ {
+  "w": "testoza.com-ൽ.",
+  "r": "testozacomla",
+  "start": 3.167,
+  "end": 4.049,
+  "score": 0.631
+ }
+]

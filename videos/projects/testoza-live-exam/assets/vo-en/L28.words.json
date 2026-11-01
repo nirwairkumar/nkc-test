@@ -1,0 +1,110 @@
+[
+  {
+    "id": "w0",
+    "text": "No",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "phone,",
+    "start": 0.32,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "no",
+    "start": 0.88,
+    "end": 1.12
+  },
+  {
+    "id": "w3",
+    "text": "problem.",
+    "start": 1.12,
+    "end": 1.68
+  },
+  {
+    "id": "w4",
+    "text": "Any",
+    "start": 1.68,
+    "end": 2
+  },
+  {
+    "id": "w5",
+    "text": "browser",
+    "start": 2,
+    "end": 2.4
+  },
+  {
+    "id": "w6",
+    "text": "testosar.com",
+    "start": 2.64,
+    "end": 3.84
+  },
+  {
+    "id": "w7",
+    "text": "slash",
+    "start": 3.92,
+    "end": 4.32
+  },
+  {
+    "id": "w8",
+    "text": "join.",
+    "start": 4.32,
+    "end": 4.8
+  },
+  {
+    "id": "w9",
+    "text": "Type",
+    "start": 4.8,
+    "end": 5.12
+  },
+  {
+    "id": "w10",
+    "text": "the",
+    "start": 5.12,
+    "end": 5.28
+  },
+  {
+    "id": "w11",
+    "text": "six",
+    "start": 5.28,
+    "end": 5.52
+  },
+  {
+    "id": "w12",
+    "text": "digits",
+    "start": 5.52,
+    "end": 5.92
+  },
+  {
+    "id": "w13",
+    "text": "from",
+    "start": 5.92,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "the",
+    "start": 6.08,
+    "end": 6.16
+  },
+  {
+    "id": "w15",
+    "text": "board",
+    "start": 6.16,
+    "end": 6.48
+  },
+  {
+    "id": "w16",
+    "text": "and",
+    "start": 6.56,
+    "end": 6.8
+  },
+  {
+    "id": "w17",
+    "text": "therein.",
+    "start": 6.8,
+    "end": 7.36
+  }
+]

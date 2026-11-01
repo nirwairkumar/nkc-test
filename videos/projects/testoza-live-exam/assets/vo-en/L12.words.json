@@ -1,0 +1,176 @@
+[
+  {
+    "id": "w0",
+    "text": "Scheduled",
+    "start": 0.08,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "access",
+    "start": 0.56,
+    "end": 1.04
+  },
+  {
+    "id": "w2",
+    "text": "opens",
+    "start": 1.04,
+    "end": 1.36
+  },
+  {
+    "id": "w3",
+    "text": "and",
+    "start": 1.36,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "closes",
+    "start": 1.52,
+    "end": 1.92
+  },
+  {
+    "id": "w5",
+    "text": "the",
+    "start": 1.92,
+    "end": 2
+  },
+  {
+    "id": "w6",
+    "text": "exam",
+    "start": 2,
+    "end": 2.32
+  },
+  {
+    "id": "w7",
+    "text": "at",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w8",
+    "text": "times",
+    "start": 2.48,
+    "end": 2.8
+  },
+  {
+    "id": "w9",
+    "text": "you",
+    "start": 2.8,
+    "end": 2.96
+  },
+  {
+    "id": "w10",
+    "text": "choose,",
+    "start": 2.96,
+    "end": 3.52
+  },
+  {
+    "id": "w11",
+    "text": "perfect",
+    "start": 3.52,
+    "end": 3.84
+  },
+  {
+    "id": "w12",
+    "text": "when",
+    "start": 3.92,
+    "end": 4.16
+  },
+  {
+    "id": "w13",
+    "text": "the",
+    "start": 4.16,
+    "end": 4.24
+  },
+  {
+    "id": "w14",
+    "text": "whole",
+    "start": 4.24,
+    "end": 4.4
+  },
+  {
+    "id": "w15",
+    "text": "batch",
+    "start": 4.4,
+    "end": 4.8
+  },
+  {
+    "id": "w16",
+    "text": "must",
+    "start": 4.8,
+    "end": 5.04
+  },
+  {
+    "id": "w17",
+    "text": "start",
+    "start": 5.04,
+    "end": 5.28
+  },
+  {
+    "id": "w18",
+    "text": "together.",
+    "start": 5.28,
+    "end": 5.92
+  },
+  {
+    "id": "w19",
+    "text": "We",
+    "start": 5.92,
+    "end": 6.08
+  },
+  {
+    "id": "w20",
+    "text": "are",
+    "start": 6.08,
+    "end": 6.24
+  },
+  {
+    "id": "w21",
+    "text": "starting",
+    "start": 6.24,
+    "end": 6.64
+  },
+  {
+    "id": "w22",
+    "text": "right",
+    "start": 6.64,
+    "end": 6.8
+  },
+  {
+    "id": "w23",
+    "text": "now,",
+    "start": 6.8,
+    "end": 7.12
+  },
+  {
+    "id": "w24",
+    "text": "so",
+    "start": 7.12,
+    "end": 7.28
+  },
+  {
+    "id": "w25",
+    "text": "I'll",
+    "start": 7.28,
+    "end": 7.52
+  },
+  {
+    "id": "w26",
+    "text": "leave",
+    "start": 7.52,
+    "end": 7.76
+  },
+  {
+    "id": "w27",
+    "text": "it",
+    "start": 7.76,
+    "end": 7.84
+  },
+  {
+    "id": "w28",
+    "text": "off.",
+    "start": 7.84,
+    "end": 8.08
+  }
+]

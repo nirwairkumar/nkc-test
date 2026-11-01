@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { safeJsonLd } from '@/utils/sanitize';
 
 interface SEOProps {
     title: string;
@@ -89,7 +90,7 @@ export const SEO: React.FC<SEOProps> = ({
             {/* Structured Data (JSON-LD) */}
             {schemas.map((schema, index) => (
                 <script key={index} type="application/ld+json">
-                    {JSON.stringify(schema)}
+                    {safeJsonLd(schema)}
                 </script>
             ))}
         </Helmet>

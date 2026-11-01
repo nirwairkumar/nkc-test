@@ -1,14 +1,59 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request, Response
 from app.core.database import get_db, supabase
+from app.utils.rate_limiter import _get_client_ip
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
+import threading
 import time
 import random
 import os
+import re
+import uuid
+
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Bot/crawler regex
+BOT_REGEX = re.compile(
+    r"(bot|crawl|spider|slurp|facebookexternalhit|whatsapp|twitterbot|discordbot|slackbot|applebot|bingbot|googlebot|yandex|duckduckbot|baiduspider|embedly|quora link preview|outbrain|pinterest|linkedinbot)",
+    re.IGNORECASE
+)
+
+# In-memory deduplication cooldown cache: key = f"{post_id}:{ident}", value = timestamp
+VIEW_COOLDOWN_SECONDS = 86400  # 24 hours
+_post_view_cache: dict[str, float] = {}
+# Handlers run in FastAPI's thread pool; the cleanup below iterates the dict.
+_post_view_lock = threading.Lock()
+
+def _is_view_eligible(post_id: str, client_ip: str, user_agent: str, user_id: Optional[str] = None) -> bool:
+    # 1. Discard bots and crawlers
+    if BOT_REGEX.search(user_agent or ""):
+        return False
+
+    now = time.time()
+
+    # 3. Deduplication key (per user if logged in, otherwise per IP)
+    ident = f"u:{user_id}" if user_id else f"ip:{client_ip}"
+    cache_key = f"{post_id}:{ident}"
+
+    with _post_view_lock:
+        # 2. Occasional cleanup if cache grows large
+        if len(_post_view_cache) > 5000:
+            expired_keys = [k for k, ts in _post_view_cache.items() if now - ts > VIEW_COOLDOWN_SECONDS]
+            for k in expired_keys:
+                _post_view_cache.pop(k, None)
+
+        last_view = _post_view_cache.get(cache_key)
+        if last_view and (now - last_view < VIEW_COOLDOWN_SECONDS):
+            return False  # Cooldown active, deduplicated
+
+        _post_view_cache[cache_key] = now
+        return True
+
 
 # --- Pydantic Models ---
 class PostCreate(BaseModel):
@@ -58,7 +103,7 @@ def _is_user_admin(user_id: str, db: Client) -> bool:
                 admin_res = db.table("admins").select("email").eq("email", email).execute()
                 return bool(admin_res.data)
     except Exception as e:
-        print(f"Error checking admin status: {e}")
+        logger.error(f"Error checking admin status: {e}")
     return False
 
 def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
@@ -81,6 +126,9 @@ def require_verified_creator(user_id: str, request: Request, db: Client):
         raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
 from fastapi.responses import Response
+from app.utils.upload_validation import validate_upload, UploadRejected
+from app.utils.rate_limiter import enforce_limit, upload_per_user
+
 
 def generate_slug(title: str, custom_slug: Optional[str] = None) -> str:
     import re
@@ -112,7 +160,7 @@ def _attach_author_profiles(posts: List[Dict[str, Any]], db: Client) -> List[Dic
             for prof in (prof_res.data or []):
                 profiles_map[prof["id"]] = prof
         except Exception as pe:
-            print(f"Warning: Failed to fetch author profiles: {pe}")
+            logger.error(f"Warning: Failed to fetch author profiles: {pe}")
             
     for p in posts:
         p["profiles"] = profiles_map.get(p.get("author_id"), {
@@ -127,7 +175,7 @@ def _attach_author_profiles(posts: List[Dict[str, Any]], db: Client) -> List[Dic
 # --- Endpoints ---
 
 @router.get("/feed")
-async def get_posts_feed(
+def get_posts_feed(
     page: int = 1,
     limit: int = 12,
     category: Optional[str] = Query(None),
@@ -160,11 +208,11 @@ async def get_posts_feed(
         posts = response.data or []
         return _attach_author_profiles(posts, db)
     except Exception as e:
-        print(f"Error fetching feed: {e}")
+        logger.error(f"Error fetching feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my")
-async def get_my_posts(
+def get_my_posts(
     request: Request,
     user_id: str = Query(...), # Passed by frontend or auth middleware
     db: Client = Depends(get_db)
@@ -182,11 +230,11 @@ async def get_my_posts(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching my posts: {e}")
+        logger.error(f"Error fetching my posts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/id/{post_id}")
-async def get_post_by_id(
+def get_post_by_id(
     post_id: str,
     db: Client = Depends(get_db)
 ):
@@ -199,11 +247,11 @@ async def get_post_by_id(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching post by id: {e}")
+        logger.error(f"Error fetching post by id: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sitemap.xml")
-async def get_blog_sitemap(db: Client = Depends(get_db)):
+def get_blog_sitemap(db: Client = Depends(get_db)):
     """Generate XML sitemap of all published blog posts for Google Search Console."""
     try:
         response = db.table("posts").select("slug, updated_at, published_at").eq("status", "published").order("published_at", desc=True).execute()
@@ -244,40 +292,76 @@ async def get_blog_sitemap(db: Client = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def _is_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(value)
+        return True
+    except ValueError:
+        return False
+
 @router.get("/{slug}")
-async def get_post_by_slug(
+def get_post_by_slug(
     slug: str,
     db: Client = Depends(get_db)
 ):
+    """Pure read-only fetch for post by slug or ID. Does not mutate view_count."""
     try:
         response = db.table("posts").select("*").eq("slug", slug).execute()
-        
+
         if not response.data:
-            # Fallback: check if slug is a post ID UUID
+            # Fallback: the value may be a post ID. Postgres rejects a non-UUID id, which
+            # used to turn every unknown slug into a 500 instead of a 404.
+            if not _is_uuid(slug):
+                raise HTTPException(status_code=404, detail="Post not found")
             response = db.table("posts").select("*").eq("id", slug).execute()
             if not response.data:
                 raise HTTPException(status_code=404, detail="Post not found")
             
         posts = _attach_author_profiles(response.data, db)
-        post = posts[0]
-        
-        # Increment view count (if published)
-        if post.get("status") == "published":
-            try:
-                db.table("posts").update({"view_count": (post.get("view_count") or 0) + 1}).eq("id", post["id"]).execute()
-                post["view_count"] = (post.get("view_count") or 0) + 1
-            except Exception as ve:
-                print(f"Warning: Failed to increment view count: {ve}")
-            
-        return post
+        return posts[0]
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching post: {e}")
+        logger.error(f"Error fetching post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/{post_id}/view")
+def record_post_view(
+    post_id: str,
+    request: Request,
+    user_id: Optional[str] = Query(None),
+    db: Client = Depends(get_db)
+):
+    """
+    Industry-grade view counter:
+    - Pure, decoupled from GET requests
+    - Bot & crawler filtering
+    - 24-hour IP & User deduplication cooldown
+    - Atomic increment
+    """
+    try:
+        client_ip = _get_client_ip(request)
+        user_agent = request.headers.get("user-agent", "")
+
+        if not _is_view_eligible(post_id, client_ip, user_agent, user_id):
+            return {"recorded": False, "reason": "cooldown_or_bot"}
+
+        # Attempt atomic increment via Supabase RPC, fallback to direct update
+        try:
+            db.rpc("increment_post_view", {"p_post_id": post_id}).execute()
+        except Exception:
+            post_res = db.table("posts").select("id, view_count, status").eq("id", post_id).execute()
+            if post_res.data and post_res.data[0].get("status") == "published":
+                current_views = post_res.data[0].get("view_count") or 0
+                db.table("posts").update({"view_count": current_views + 1}).eq("id", post_id).execute()
+
+        return {"recorded": True}
+    except Exception as e:
+        logger.error(f"Error recording view: {e}")
+        return {"recorded": False, "error": str(e)}
+
 @router.post("")
-async def create_post(
+def create_post(
     payload: PostCreate,
     request: Request,
     user_id: str = Query(...), 
@@ -302,11 +386,11 @@ async def create_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error creating post: {e}")
+        logger.error(f"Error creating post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{post_id}")
-async def update_post(
+def update_post(
     post_id: str,
     payload: PostUpdate,
     request: Request,
@@ -346,11 +430,11 @@ async def update_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating post: {e}")
+        logger.error(f"Error updating post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{post_id}")
-async def delete_post(
+def delete_post(
     post_id: str,
     request: Request,
     user_id: str = Query(...),
@@ -379,7 +463,7 @@ async def delete_post(
                     file_path = parts[1]
                     db.storage.from_("post-images").remove([file_path])
             except Exception as store_err:
-                print(f"Failed to delete cover image: {store_err}")
+                logger.error(f"Failed to delete cover image: {store_err}")
                 
         # Delete post
         db.table("posts").delete().eq("id", post_id).execute()
@@ -387,7 +471,7 @@ async def delete_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting post: {e}")
+        logger.error(f"Error deleting post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload-image")
@@ -401,12 +485,24 @@ async def upload_post_image(
     try:
         require_verified_creator(user_id, request, db)
         
-        file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'webp'
-        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+        enforce_limit(upload_per_user, user_id, "Upload limit reached. Please try again later.")
         file_content = await file.read()
-        
+
+        # M8: post-images is public-read; validate from the bytes so nothing
+        # script-bearing (HTML/SVG) can be stored and served as a document.
+        try:
+            content_type, file_ext = validate_upload(
+                "post-images", file_content, filename=file.filename, claimed_type=file.content_type
+            )
+        except UploadRejected as rejected:
+            raise HTTPException(status_code=400, detail=str(rejected))
+
+        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+
         # Upload
-        db.storage.from_("post-images").upload(file_name, file_content)
+        db.storage.from_("post-images").upload(
+            file_name, file_content, file_options={"content-type": content_type}
+        )
         
         # Get public URL
         public_url = db.storage.from_("post-images").get_public_url(file_name)
@@ -415,11 +511,11 @@ async def upload_post_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error uploading image: {e}")
+        logger.error(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{post_id}/like")
-async def toggle_like(
+def toggle_like(
     post_id: str,
     request: Request,
     user_id: str = Query(...),
@@ -453,11 +549,11 @@ async def toggle_like(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error toggling like: {e}")
+        logger.error(f"Error toggling like: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{post_id}/liked")
-async def check_liked(
+def check_liked(
     post_id: str,
     request: Request,
     user_id: str = Query(...),
@@ -471,5 +567,5 @@ async def check_liked(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error checking like status: {e}")
+        logger.error(f"Error checking like status: {e}")
         raise HTTPException(status_code=500, detail=str(e))

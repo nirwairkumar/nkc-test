@@ -1,0 +1,149 @@
+[
+ {
+  "w": "അവസാന",
+  "r": "avasaana",
+  "start": 0.04,
+  "end": 0.461,
+  "score": 0.984
+ },
+ {
+  "w": "page-ലെ",
+  "r": "pagele",
+  "start": 0.501,
+  "end": 0.861,
+  "score": 0.498
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 1.062,
+  "end": 1.422,
+  "score": 0.61
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 1.442,
+  "end": 1.563,
+  "score": 0.407
+ },
+ {
+  "w": "പോലും",
+  "r": "poolum",
+  "start": 1.623,
+  "end": 1.843,
+  "score": 0.905
+ },
+ {
+  "w": "വായിച്ചു,",
+  "r": "vaayiccu",
+  "start": 1.863,
+  "end": 2.204,
+  "score": 0.996
+ },
+ {
+  "w": "അതുകൊണ്ട്",
+  "r": "atukonntt",
+  "start": 2.684,
+  "end": 3.045,
+  "score": 0.972
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 3.285,
+  "end": 3.566,
+  "score": 0.994
+ },
+ {
+  "w": "answer-ഉം",
+  "r": "answerum",
+  "start": 3.606,
+  "end": 4.007,
+  "score": 0.752
+ },
+ {
+  "w": "ഇതിനകം",
+  "r": "itinakam",
+  "start": 4.187,
+  "end": 4.547,
+  "score": 0.979
+ },
+ {
+  "w": "mark",
+  "r": "mark",
+  "start": 4.587,
+  "end": 4.908,
+  "score": 0.745
+ },
+ {
+  "w": "ആയിട്ടുണ്ട്.",
+  "r": "aayittttunntt",
+  "start": 4.908,
+  "end": 5.309,
+  "score": 0.937
+ },
+ {
+  "w": "ഒന്ന്",
+  "r": "onn",
+  "start": 5.89,
+  "end": 6.03,
+  "score": 0.998
+ },
+ {
+  "w": "നോക്കൂ,",
+  "r": "nookkuu",
+  "start": 6.11,
+  "end": 6.41,
+  "score": 0.857
+ },
+ {
+  "w": "Save",
+  "r": "save",
+  "start": 6.811,
+  "end": 7.072,
+  "score": 0.502
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 7.112,
+  "end": 7.372,
+  "score": 0.839
+ },
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 7.713,
+  "end": 8.133,
+  "score": 0.938
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 8.173,
+  "end": 8.434,
+  "score": 0.614
+ },
+ {
+  "w": "ഇപ്പോൾ",
+  "r": "ippoolla",
+  "start": 8.654,
+  "end": 8.935,
+  "score": 0.983
+ },
+ {
+  "w": "ഒരു",
+  "r": "oru",
+  "start": 8.955,
+  "end": 9.035,
+  "score": 0.902
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 9.135,
+  "end": 9.275,
+  "score": 0.722
+ }
+]

@@ -1,0 +1,260 @@
+[
+  {
+    "id": "w0",
+    "text": "Now",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "three",
+    "start": 0.48,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "reactions",
+    "start": 0.88,
+    "end": 1.44
+  },
+  {
+    "id": "w3",
+    "text": "with",
+    "start": 1.44,
+    "end": 1.68
+  },
+  {
+    "id": "w4",
+    "text": "conditions",
+    "start": 1.68,
+    "end": 2.16
+  },
+  {
+    "id": "w5",
+    "text": "on",
+    "start": 2.16,
+    "end": 2.32
+  },
+  {
+    "id": "w6",
+    "text": "the",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w7",
+    "text": "arrows",
+    "start": 2.48,
+    "end": 3.12
+  },
+  {
+    "id": "w8",
+    "text": "formula",
+    "start": 3.36,
+    "end": 4
+  },
+  {
+    "id": "w9",
+    "text": "sodium",
+    "start": 4.24,
+    "end": 4.8
+  },
+  {
+    "id": "w10",
+    "text": "tetraborate",
+    "start": 4.8,
+    "end": 5.84
+  },
+  {
+    "id": "w11",
+    "text": "then",
+    "start": 6.32,
+    "end": 6.56
+  },
+  {
+    "id": "w12",
+    "text": "the",
+    "start": 6.88,
+    "end": 7.12
+  },
+  {
+    "id": "w13",
+    "text": "arrow",
+    "start": 7.12,
+    "end": 7.6
+  },
+  {
+    "id": "w14",
+    "text": "with",
+    "start": 7.6,
+    "end": 7.84
+  },
+  {
+    "id": "w15",
+    "text": "a",
+    "start": 7.84,
+    "end": 7.92
+  },
+  {
+    "id": "w16",
+    "text": "box",
+    "start": 7.92,
+    "end": 8.32
+  },
+  {
+    "id": "w17",
+    "text": "above",
+    "start": 8.32,
+    "end": 8.8
+  },
+  {
+    "id": "w18",
+    "text": "and",
+    "start": 8.8,
+    "end": 8.96
+  },
+  {
+    "id": "w19",
+    "text": "below.",
+    "start": 8.96,
+    "end": 9.84
+  },
+  {
+    "id": "w20",
+    "text": "Here",
+    "start": 9.84,
+    "end": 10.16
+  },
+  {
+    "id": "w21",
+    "text": "you",
+    "start": 10.16,
+    "end": 10.4
+  },
+  {
+    "id": "w22",
+    "text": "choose",
+    "start": 10.4,
+    "end": 10.8
+  },
+  {
+    "id": "w23",
+    "text": "how",
+    "start": 10.8,
+    "end": 10.96
+  },
+  {
+    "id": "w24",
+    "text": "many",
+    "start": 10.96,
+    "end": 11.2
+  },
+  {
+    "id": "w25",
+    "text": "lines",
+    "start": 11.2,
+    "end": 11.6
+  },
+  {
+    "id": "w26",
+    "text": "go",
+    "start": 11.6,
+    "end": 11.84
+  },
+  {
+    "id": "w27",
+    "text": "above",
+    "start": 11.84,
+    "end": 12.24
+  },
+  {
+    "id": "w28",
+    "text": "and",
+    "start": 12.24,
+    "end": 12.4
+  },
+  {
+    "id": "w29",
+    "text": "below.",
+    "start": 12.4,
+    "end": 13.12
+  },
+  {
+    "id": "w30",
+    "text": "We",
+    "start": 13.12,
+    "end": 13.44
+  },
+  {
+    "id": "w31",
+    "text": "only",
+    "start": 13.44,
+    "end": 13.76
+  },
+  {
+    "id": "w32",
+    "text": "need",
+    "start": 13.76,
+    "end": 14.08
+  },
+  {
+    "id": "w33",
+    "text": "one",
+    "start": 14.08,
+    "end": 14.32
+  },
+  {
+    "id": "w34",
+    "text": "on",
+    "start": 14.48,
+    "end": 14.72
+  },
+  {
+    "id": "w35",
+    "text": "top,",
+    "start": 14.72,
+    "end": 15.28
+  },
+  {
+    "id": "w36",
+    "text": "so",
+    "start": 15.28,
+    "end": 15.6
+  },
+  {
+    "id": "w37",
+    "text": "remove",
+    "start": 15.6,
+    "end": 16
+  },
+  {
+    "id": "w38",
+    "text": "the",
+    "start": 16,
+    "end": 16.16
+  },
+  {
+    "id": "w39",
+    "text": "bottom",
+    "start": 16.16,
+    "end": 16.64
+  },
+  {
+    "id": "w40",
+    "text": "one",
+    "start": 16.64,
+    "end": 16.88
+  },
+  {
+    "id": "w41",
+    "text": "and",
+    "start": 16.88,
+    "end": 17.2
+  },
+  {
+    "id": "w42",
+    "text": "insert.",
+    "start": 17.2,
+    "end": 17.76
+  }
+]

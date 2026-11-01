@@ -1,0 +1,66 @@
+/* ════════════════════════════════════════════════════════════════
+   Frame for the real showcase components inside the V2 feature sections.
+
+   ManualEditorShowcase (.sim-device, max 640px / 580px tall) and
+   SettingsShowcase (.ss-device, max 560px) were built for the live page's
+   full-width two-column layout. This wrapper lets them sit in the V2 grid
+   without being cropped, and adds a matching halo so they read as part of
+   the same visual system as the Surface cards.
+
+   Deliberately no scaling transform: these are interactive animations, and
+   a scale() would blur their sub-pixel text. Instead the grid column they
+   sit in is widened (0.85fr / 1.15fr) to give them room.
+════════════════════════════════════════════════════════════════ */
+
+.lv2-showcase-frame {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Soft halo, matching the Surface treatment elsewhere on the page. */
+.lv2-showcase-frame::before {
+    content: '';
+    position: absolute;
+    inset: -8% -4%;
+    border-radius: 48px;
+    background: radial-gradient(
+        ellipse 60% 55% at 50% 45%,
+        rgba(56, 189, 248, 0.16),
+        transparent 70%
+    );
+    filter: blur(44px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.lv2-showcase-frame > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* The live-page shadows are tuned for a white section. Soften them here so
+   they do not read as a hard drop on the muted/dark backgrounds. */
+.lv2-showcase-frame .sim-device,
+.lv2-showcase-frame .ss-device {
+    box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.07),
+        0 24px 56px -20px rgba(15, 23, 42, 0.28);
+}
+
+:is(.dark) .lv2-showcase-frame .sim-device,
+:is(.dark) .lv2-showcase-frame .ss-device {
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 28px 64px -20px rgba(0, 0, 0, 0.85);
+}
+
+/* ── Narrow viewports ──────────────────────────────────────────
+   Below the lg breakpoint the showcases sit full width. Scale the taller
+   builder down a little so it does not dominate a phone screen.          */
+@media (max-width: 639px) {
+    .lv2-showcase-frame .sim-device {
+        height: 480px;
+    }
+}

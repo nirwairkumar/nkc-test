@@ -1,0 +1,188 @@
+[
+  {
+    "id": "w0",
+    "text": "Open",
+    "start": 0.16,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "the",
+    "start": 0.4,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "test",
+    "start": 0.48,
+    "end": 0.64
+  },
+  {
+    "id": "w3",
+    "text": "in",
+    "start": 0.72,
+    "end": 0.88
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 0.88,
+    "end": 0.96
+  },
+  {
+    "id": "w5",
+    "text": "builder,",
+    "start": 0.96,
+    "end": 1.6
+  },
+  {
+    "id": "w6",
+    "text": "all",
+    "start": 1.6,
+    "end": 1.76
+  },
+  {
+    "id": "w7",
+    "text": "12",
+    "start": 1.84,
+    "end": 2.32
+  },
+  {
+    "id": "w8",
+    "text": "questions",
+    "start": 2.32,
+    "end": 2.72
+  },
+  {
+    "id": "w9",
+    "text": "are",
+    "start": 2.72,
+    "end": 2.88
+  },
+  {
+    "id": "w10",
+    "text": "already",
+    "start": 2.88,
+    "end": 3.28
+  },
+  {
+    "id": "w11",
+    "text": "here.",
+    "start": 3.28,
+    "end": 3.76
+  },
+  {
+    "id": "w12",
+    "text": "Add",
+    "start": 3.76,
+    "end": 4.08
+  },
+  {
+    "id": "w13",
+    "text": "a",
+    "start": 4.08,
+    "end": 4.24
+  },
+  {
+    "id": "w14",
+    "text": "question",
+    "start": 4.24,
+    "end": 4.56
+  },
+  {
+    "id": "w15",
+    "text": "and",
+    "start": 4.56,
+    "end": 4.8
+  },
+  {
+    "id": "w16",
+    "text": "type",
+    "start": 4.8,
+    "end": 5.12
+  },
+  {
+    "id": "w17",
+    "text": "the",
+    "start": 5.12,
+    "end": 5.28
+  },
+  {
+    "id": "w18",
+    "text": "words",
+    "start": 5.28,
+    "end": 5.68
+  },
+  {
+    "id": "w19",
+    "text": "as",
+    "start": 5.68,
+    "end": 5.84
+  },
+  {
+    "id": "w20",
+    "text": "usual.",
+    "start": 5.84,
+    "end": 6.56
+  },
+  {
+    "id": "w21",
+    "text": "For",
+    "start": 6.56,
+    "end": 6.8
+  },
+  {
+    "id": "w22",
+    "text": "the",
+    "start": 6.8,
+    "end": 6.88
+  },
+  {
+    "id": "w23",
+    "text": "formula,",
+    "start": 6.88,
+    "end": 7.52
+  },
+  {
+    "id": "w24",
+    "text": "open",
+    "start": 7.52,
+    "end": 7.92
+  },
+  {
+    "id": "w25",
+    "text": "maths",
+    "start": 7.92,
+    "end": 8.4
+  },
+  {
+    "id": "w26",
+    "text": "and",
+    "start": 8.4,
+    "end": 8.56
+  },
+  {
+    "id": "w27",
+    "text": "symbols.",
+    "start": 8.56,
+    "end": 9.2
+  },
+  {
+    "id": "w28",
+    "text": "This",
+    "start": 9.2,
+    "end": 9.36
+  },
+  {
+    "id": "w29",
+    "text": "is",
+    "start": 9.36,
+    "end": 9.6
+  },
+  {
+    "id": "w30",
+    "text": "SciPad.",
+    "start": 9.6,
+    "end": 10.48
+  }
+]

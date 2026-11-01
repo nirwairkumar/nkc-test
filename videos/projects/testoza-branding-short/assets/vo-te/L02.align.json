@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.241,
+  "score": 0.78
+ },
+ {
+  "w": "కి",
+  "r": "ki",
+  "start": 0.301,
+  "end": 0.382,
+  "score": 0.968
+ },
+ {
+  "w": "పేరు",
+  "r": "peeru",
+  "start": 0.462,
+  "end": 0.683,
+  "score": 0.77
+ },
+ {
+  "w": "పెట్టి,",
+  "r": "petttti",
+  "start": 0.724,
+  "end": 1.025,
+  "score": 0.798
+ },
+ {
+  "w": "Institution",
+  "r": "institution",
+  "start": 1.306,
+  "end": 1.849,
+  "score": 0.516
+ },
+ {
+  "w": "branding",
+  "r": "branding",
+  "start": 1.909,
+  "end": 2.291,
+  "score": 0.745
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 2.452,
+  "end": 2.653,
+  "score": 0.518
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 2.693,
+  "end": 3.055,
+  "score": 0.919
+ }
+]

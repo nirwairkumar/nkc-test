@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css';
 import 'katex/dist/contrib/mhchem'; // Registers \ce{} and \pu{} on this katex instance
 import { cn } from '@/lib/utils';
 import { Maximize2 } from 'lucide-react';
+import { katexTrust, sanitizeHtml } from '@/utils/sanitize';
 import {
     Dialog,
     DialogContent,
@@ -165,7 +166,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                             renderedCell = katex.renderToString(cell.trim() || '\\text{ }', {
                                 displayMode: false,
                                 throwOnError: false,
-                                trust: true,
+                                trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                                 strict: false,
                             });
                         } catch (err) {
@@ -182,7 +183,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 // Wrap table with interactive controls
                 const wrappedHtml = `
                     <div class="table-wrapper">
-                        <button class="table-maximize-btn" data-table-id="${tableId}" title="Full Screen View">
+                        <button type="button" class="table-maximize-btn" data-table-id="${tableId}" title="Full Screen View">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize-2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                         </button>
                         <div class="overflow-x-auto">
@@ -225,7 +226,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     const html = katex.renderToString(finalTex, {
                         displayMode,
                         throwOnError: false,
-                        trust: true,
+                        trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                         strict: false,
                     });
 
@@ -306,7 +307,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
                 onClick={handleContainerClick}
             >
-                <span dangerouslySetInnerHTML={{ __html: rendered }} />
+                <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(rendered) }} />
             </div>
 
             <Dialog open={!!maximizedTable} onOpenChange={(open) => !open && setMaximizedTable(null)}>
@@ -316,7 +317,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                             {maximizedTable && (
                                 <div
                                     className="latex-renderer-container"
-                                    dangerouslySetInnerHTML={{ __html: maximizedTable }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(maximizedTable) }}
                                 />
                             )}
                         </div>

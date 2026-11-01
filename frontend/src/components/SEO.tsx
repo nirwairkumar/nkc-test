@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { safeJsonLd } from '@/utils/sanitize';
+import { publicUrl } from '@/utils/marketingPaths';
 
 interface SEOProps {
     title: string;
@@ -19,9 +21,16 @@ const DEFAULT_IMAGE = "https://testoza.com/default-og.png";
 const SITE_URL = "https://testoza.com";
 const DEFAULT_SITE_NAME = "TestoZa";
 
+// testoza.com answers app pages with a 301 to app.testoza.com (utils/marketingPaths.ts),
+// so their canonical and og:url name app.testoza.com — the URL people actually land on.
+const toPublicUrl = (href: string) =>
+    href === SITE_URL || href.startsWith(`${SITE_URL}/`) || href.startsWith(`${SITE_URL}?`)
+        ? publicUrl(href.slice(SITE_URL.length) || '/')
+        : href;
+
 export const SEO: React.FC<SEOProps> = ({
     title,
-    description = "Create online tests instantly with TestoZa. AI-powered quiz maker from PDF, text, or YouTube. Free mock tests for JEE, NEET, GATE, and more.",
+    description = "Create, conduct, and manage online tests with AI. TestoZa is the best free test maker for teachers, educators, and coaching institutes — generate quizzes from PDFs, text, or YouTube.",
     url,
     image,
     type = 'website',
@@ -32,14 +41,20 @@ export const SEO: React.FC<SEOProps> = ({
     schemas = [],
     noindex = false
 }) => {
-    const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - AI Test Maker`;
+    // A title that already carries the site name ("TestoZa Blog – …", "… | TestoZa") is used as-is.
+    const fullTitle = !title
+        ? `${siteName} - AI Test Maker`
+        : title.startsWith(siteName) || title.endsWith(`| ${siteName}`)
+            ? title
+            : `${title} | ${siteName}`;
     const metaImage = image || DEFAULT_IMAGE;
 
-    // Ensure URL is absolute if provided, otherwise use current path on the main domain to consolidate indexing authority.
-    const metaUrl = url 
-        ? (url.startsWith('http') ? url : `${SITE_URL}${url}`) 
-        : `${SITE_URL}${window.location.pathname}${window.location.search}`;
-    const finalCanonicalUrl = canonicalUrl || metaUrl;
+    // Ensure URL is absolute if provided, otherwise use the current path: marketing pages on
+    // testoza.com, app pages on app.testoza.com.
+    const metaUrl = url
+        ? (url.startsWith('http') ? toPublicUrl(url) : publicUrl(url))
+        : publicUrl(`${window.location.pathname}${window.location.search}`);
+    const finalCanonicalUrl = canonicalUrl ? toPublicUrl(canonicalUrl) : metaUrl;
 
     // Build description including categories if relevant
     let finalDescription = description;
@@ -48,25 +63,15 @@ export const SEO: React.FC<SEOProps> = ({
     }
 
     // Default keywords if none provided
-    const matchKeywords = keywords.length > 0
+    const finalKeywords = keywords.length > 0
         ? keywords.join(', ')
-        : "online test maker, AI quiz generator, create test from PDF, free mock tests, exam preparation, TestoZa";
-
-    // Dynamic keyword boost for JEE or Previous Year content
-    const lowerTitle = (title || "").toLowerCase();
-    const isJEE = lowerTitle.includes('jee');
-    const isPYQ = lowerTitle.includes('previous year') || lowerTitle.includes('pyq') || lowerTitle.includes('202') || lowerTitle.includes('shift');
-
-    let finalKeywords = matchKeywords;
-    if (isJEE) finalKeywords = `JEE Main 2026, JEE Mock Test, JEE Practice Paper, ${finalKeywords}`;
-    if (isPYQ) finalKeywords = `Previous Year Questions, PYQ 2026, Solved Papers, ${finalKeywords}`;
+        : "online test maker for teachers, AI quiz generator, create test from PDF, free online exam software, assessment platform for educators, TestoZa";
 
     return (
         <Helmet>
             {/* Standard Meta Tags */}
             <title>{fullTitle}</title>
             <meta name="description" content={finalDescription} />
-            <meta name="keywords" content={matchKeywords} />
             <meta name="author" content="TestoZa Team" />
             <link rel="canonical" href={finalCanonicalUrl} />
 
@@ -89,7 +94,7 @@ export const SEO: React.FC<SEOProps> = ({
             {/* Structured Data (JSON-LD) */}
             {schemas.map((schema, index) => (
                 <script key={index} type="application/ld+json">
-                    {JSON.stringify(schema)}
+                    {safeJsonLd(schema)}
                 </script>
             ))}
         </Helmet>

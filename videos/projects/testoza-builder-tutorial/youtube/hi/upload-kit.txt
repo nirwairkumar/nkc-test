@@ -1,0 +1,73 @@
+VIDEO FILE
+videos/exports/testoza-builder-tutorial-hi-v4.mp4   (6:10, 1080p)
+
+THUMBNAIL
+youtube/hi/thumbnail-hi.png
+
+SUBTITLES
+youtube/hi/subtitles-en.srt   (English translation of the Hindi voice)
+Subtitles → Add language → English → Upload file → With timing
+(Also add Hindi with YouTube's auto-captions; check them once, they misspell "TestoZa" and "Sy Pad".)
+
+────────────────────────────────────────
+TITLE (≈90 characters)
+Online Test कैसे बनाएँ? Hindi + English, Diagram, Chemistry, JEE Maths | TestoZa पूरा Tutorial
+
+────────────────────────────────────────
+DESCRIPTION
+
+Online test kaise banaye? इस Hindi tutorial में आप TestoZa के असली Create Test पेज पर, step by step, एक पूरा JEE-level टेस्ट बनाना सीखेंगे — सवाल हिंदी और English दोनों में, पेपर से सीधा diagram, chemistry structures, Sy Pad से पूरा गणित, और JEE जैसे sections. सब कुछ 7 मिनट से कम में.
+
+आप क्या सीखेंगे:
+• एक ही सवाल हिंदी और English में (English अक्षरों में टाइप करें, हिंदी बन जाए)
+• Question paper से सीधा diagram (Win + Shift + S, फिर Ctrl + V)
+• सवाल के अंदर chemistry structure, और options में structure की फ़ोटो
+• Sy Pad से JEE maths: integral, fraction, root, log, π
+• Reagents वाला multistep reaction, और Match the list टेबल
+• Sections: Physics, Chemistry, Mathematics (add, split, rename, merge)
+• Save करें, और देखें candidates को टेस्ट कैसा दिखेगा
+
+Chapters
+0:00 तैयार पेपर की झलक
+0:18 आज हम क्या बनाएँगे
+0:32 Test details
+1:14 एक सवाल, दो भाषाएँ
+2:05 पेपर से diagram
+2:43 Chemistry structures
+3:13 Sy Pad से गणित
+3:55 सबसे बड़ा reaction
+4:31 Match the list
+4:49 Sections
+5:46 Save
+5:58 अपना पहला टेस्ट बनाइए
+
+अपना पहला टेस्ट free बनाइए: https://testoza.com
+
+English version: (paste the English video link here after both are live)
+
+Questions used: Allen JEE (Main) Sample Test Paper 04 (selected questions, for teaching).
+
+#OnlineTest #HindiTutorial #JEEMain #TestoZa
+
+────────────────────────────────────────
+TAGS (paste into the Tags box)
+online test kaise banaye, online test kaise banaen, online test maker, online test banane wala app, hindi question paper maker, question paper kaise banaye, jee mock test maker, mock test platform, online exam kaise le, test maker for teachers, coaching institute test software, chemistry question paper maker, math test maker, sy pad, testoza
+
+────────────────────────────────────────
+PINNED COMMENT
+अपना पहला टेस्ट free बनाइए 👉 https://testoza.com
+अगला video किस पर चाहिए — Sy Pad maths, chemistry structures, या live exam कैसे लें? Comment में बताइए 👇
+
+────────────────────────────────────────
+SETTINGS
+Audience ............ No, it's not made for kids
+Category ............ Education  →  Type: How-to  →  Problems: leave empty
+Video language ...... Hindi
+Title & description language  Hindi
+Caption certification  None of these
+AI use .............. YES (AI presenter + AI voice)
+License ............. Standard YouTube License
+Comments ............ On
+Playlist ............ "TestoZa Tutorials" (same as the English one)
+End screen .......... from 5:58: Subscribe element + the English video (or "Best for viewer")
+Cards ............... optional: link card to the English version

@@ -9,6 +9,9 @@ import threading
 import httpx
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request as GoogleAuthRequest
+import logging
+
+logger = logging.getLogger(__name__)
 
 SCOPES = ["https://www.googleapis.com/auth/indexing"]
 INDEXING_ENDPOINT = "https://indexing.googleapis.com/v3/urlNotifications:publish"
@@ -26,7 +29,7 @@ def _get_credentials():
         return _credentials
 
     if not os.path.exists(KEY_FILE):
-        print(f"⚠️ [Indexing] Service account key not found at {KEY_FILE}. Skipping.")
+        logger.warning(f"⚠️ [Indexing] Service account key not found at {KEY_FILE}. Skipping.")
         return None
 
     try:
@@ -35,7 +38,7 @@ def _get_credentials():
         )
         return _credentials
     except Exception as e:
-        print(f"❌ [Indexing] Failed to load credentials: {e}")
+        logger.error(f"❌ [Indexing] Failed to load credentials: {e}")
         return None
 
 
@@ -65,12 +68,12 @@ def notify_google(url: str, action: str = "URL_UPDATED"):
             response = httpx.post(INDEXING_ENDPOINT, json=body, headers=headers, timeout=10)
 
             if response.status_code == 200:
-                print(f"✅ [Indexing] Google notified about: {url}")
+                logger.debug(f"✅ [Indexing] Google notified about: {url}")
             else:
-                print(f"⚠️ [Indexing] Google returned {response.status_code}: {response.text}")
+                logger.debug(f"⚠️ [Indexing] Google returned {response.status_code}: {response.text}")
 
         except Exception as e:
-            print(f"❌ [Indexing] Error notifying Google: {e}")
+            logger.error(f"❌ [Indexing] Error notifying Google: {e}")
 
     # Run in a background thread so it doesn't slow down the API
     thread = threading.Thread(target=_send, daemon=True)
@@ -87,10 +90,10 @@ def notify_test_created(test_data: dict):
     elif test_id:
         url = f"{SITE_URL}/test-intro/{test_id}"
     else:
-        print("⚠️ [Indexing] No slug or ID found, skipping Google notification.")
+        logger.warning("⚠️ [Indexing] No slug or ID found, skipping Google notification.")
         return
 
-    print(f"🔔 [Indexing] New test created, notifying Google: {url}")
+    logger.debug(f"🔔 [Indexing] New test created, notifying Google: {url}")
     notify_google(url)
 
 
@@ -106,5 +109,5 @@ def notify_test_updated(test_data: dict):
     else:
         return
 
-    print(f"🔔 [Indexing] Test updated, notifying Google: {url}")
+    logger.debug(f"🔔 [Indexing] Test updated, notifying Google: {url}")
     notify_google(url)

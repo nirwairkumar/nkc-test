@@ -1,0 +1,195 @@
+<template>
+<link rel="stylesheet" href="assets/app.css" />
+<link rel="stylesheet" href="assets/film.css" />
+<style>
+@font-face{font-family:'Outfit';font-weight:500;font-display:block;src:url("assets/fonts/Outfit-500.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:600;font-display:block;src:url("assets/fonts/Outfit-600.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:700;font-display:block;src:url("assets/fonts/Outfit-700.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:800;font-display:block;src:url("assets/fonts/Outfit-800.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:900;font-display:block;src:url("assets/fonts/Outfit-900.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:400;font-display:block;src:url("assets/fonts/Mukta-400.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:500;font-display:block;src:url("assets/fonts/Mukta-500.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:600;font-display:block;src:url("assets/fonts/Mukta-600.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:700;font-display:block;src:url("assets/fonts/Mukta-700.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:800;font-display:block;src:url("assets/fonts/Mukta-800.woff2") format("woff2");}
+@font-face{font-family:'Apple Color Emoji';src:local('Apple Color Emoji');}
+@font-face{font-family:'Segoe UI Emoji';src:local('Segoe UI Emoji');}
+@font-face{font-family:'Segoe UI Symbol';src:local('Segoe UI Symbol');}
+@font-face{font-family:'Noto Color Emoji';src:local('Noto Color Emoji');}
+@font-face{font-family:'SFMono-Regular';src:local('SFMono-Regular');}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #f03-file {
+    position: absolute; left: 0; top: 0; z-index: 40; width: 300px;
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px;
+    border-radius: 16px; background: #fff;
+    box-shadow: 0 24px 60px -18px rgba(15, 23, 42, 0.55), 0 0 0 1px rgba(15, 23, 42, 0.06);
+    font-family: 'Mukta', sans-serif;
+  }
+  #f03-file i { width: 44px; height: 54px; border-radius: 8px; background: #f43f5e; position: relative; flex: none; }
+  #f03-file i::after { content: 'PDF'; position: absolute; left: 0; right: 0; bottom: 7px; text-align: center; font: 800 11px/1 'Outfit', sans-serif; color: #fff; letter-spacing: 0.04em; }
+  #f03-file b { display: block; font-weight: 600; font-size: 14px; color: #0f172a; line-height: 1.2; }
+  #f03-file span { display: block; font-size: 12px; color: #64748b; }
+</style>
+
+<div id="root" data-composition-id="f03-upload" data-width="1920" data-height="1080">
+  <div class="tz-film">
+    <div id="f03-upload-stage" class="clip tz-stage" data-start="0" data-duration="5.6" data-track-index="0"></div>
+    <div id="f03-t" class="tz-super">Drop in <em>any paper.</em></div>
+    <div class="tz-rig">
+      <div class="tz-win">
+        <div class="tz-chrome"><div class="tz-dots"><i></i><i></i><i></i></div><div class="tz-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>testoza.com<b>/generate-with-ai</b></span></div></div>
+        <div class="tz-view">
+          <div class="tz-page">
+            <div class="tz-state f03-a"><div class="min-h-[calc(100vh-4rem)] w-full bg-slate-50"><div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16"><div class="max-w-2xl mx-auto"><p class="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">AI-Powered</p><p class="text-2xl font-bold text-white">Create Your Online Test</p><p class="text-sm text-slate-400 mt-1">Turn your question paper or notes into an online test in minutes.</p></div></div><div class="px-4 -mt-10 pb-8 max-w-2xl mx-auto space-y-4"><div id="s1-upload" class="bg-white rounded-2xl shadow-sm border overflow-hidden border-slate-100"><div class="px-4 pt-4 pb-3 border-b border-slate-100 flex items-center justify-between gap-3"><div class="flex items-center gap-2.5 min-w-0"><div class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up h-4 w-4 text-indigo-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M12 12v6"></path><path d="m15 15-3-3-3 3"></path></svg></div><div class="min-w-0"><p class="text-sm font-bold text-slate-800">Upload Question Paper, Notes or Chapter</p><p class="text-[11px] text-slate-400">PDF or photos</p></div></div><span class="shrink-0 whitespace-nowrap text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200/60">⭐ Recommended</span></div><div class="p-4 space-y-3.5"><p class="text-xs text-slate-500 leading-relaxed">Select a PDF or photos of a question paper, class notes or study material. We&#x27;ll turn it into an online test. Word or PowerPoint? Save it as PDF first.</p><button id="s1-choose" type="button" class="w-full inline-flex items-center justify-center gap-2 bg-[#007AFF] text-white font-semibold text-sm h-11 rounded-xl shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg><span>Choose File</span></button><div class="flex items-center justify-center gap-2 text-[11px] text-slate-400"><span>⚡ Ready in ~2–3 minutes</span></div></div></div><div class="group bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><div class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line h-4 w-4 text-slate-600"><path d="M12 20h9"></path><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"></path><path d="m15 5 3 3"></path></svg></div><div class="min-w-0"><p class="text-sm font-bold text-slate-800">Create Test Manually</p><p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">Type or paste questions with full control.</p></div></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4 text-slate-400 shrink-0"><path d="m9 18 6-6-6-6"></path></svg></div><div class="pt-1 flex justify-center"><span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-slate-500"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-help w-3.5 h-3.5 text-indigo-500"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg><span>How it works</span></span></div></div></div></div>
+            <div class="tz-state f03-b"><div id="f03-scroll"><div class="container mx-auto pt-4 px-4 pb-8 max-w-2xl"><div class="space-y-4"><div class="flex items-center justify-between gap-2"><div class="flex items-center gap-1 min-w-0"><span class="h-8 w-8 -ml-2 rounded-full text-slate-500 inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left w-4 h-4"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></span><h1 class="text-[15px] font-semibold text-slate-800 truncate">Selected files</h1><span class="ml-1 text-[11px] font-medium tabular-nums text-slate-500 bg-slate-100 rounded-full px-1.5 py-px">1</span></div></div><div id="s2-composer" class="relative rounded-2xl border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)] border-slate-200"><div class="p-3 grid grid-cols-1 gap-2"><div id="s2-file" class="relative flex items-center gap-3 min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 pr-10"><div class="w-10 h-10 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div><div class="min-w-0"><p class="text-[13px] font-medium text-slate-800 truncate">JEE_Main_Physics_Mock_01.pdf</p><p class="text-[11px] text-slate-400">PDF · 2.4 MB</p></div><span class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-3.5 h-3.5"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></span></div></div><div class="flex items-center justify-between gap-2 px-2.5 pb-2.5"><div class="flex items-center gap-2 min-w-0"><span class="w-9 h-9 shrink-0 rounded-full border border-slate-200 flex items-center justify-center text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus w-[18px] h-[18px]"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span><span class="text-xs text-slate-400 truncate">Add more pages, or drop files here</span></div><span class="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-2 rounded-lg text-[13px] font-medium text-slate-700 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-3.5 h-3.5 text-indigo-500"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><span>High accuracy</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down w-3.5 h-3.5 text-slate-400"><path d="m6 9 6 6 6-6"></path></svg></span></div></div><div class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5 flex items-center justify-between gap-3"><div class="flex items-start gap-3 min-w-0"><div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key w-4 h-4"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"></path><path d="m21 2-9.6 9.6"></path><circle cx="7.5" cy="15.5" r="5.5"></circle></svg></div><div class="min-w-0"><p class="text-[13px] font-semibold text-slate-800">Answer key <span class="font-normal text-slate-400">· Optional</span></p><p class="text-[11px] leading-snug text-slate-500">Are the answers not next to each question, like an answer key on the last pages? Upload them here.</p></div></div><span class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs h-8 px-3 shrink-0 rounded-lg">Upload key</span></div><div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm"><div class="flex items-center justify-between pb-2 border-b border-slate-100"><div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-4 h-4 text-indigo-500"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg><h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">AI Settings &amp; Constraints</h3></div><span class="text-[10px] text-slate-400">Customizable</span></div><div class="grid grid-cols-2 gap-4"><div class="space-y-1.5"><span class="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><span>🌐 Language Output</span></span><div class="flex items-center gap-1.5 flex-wrap"><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-600 text-white shadow-sm">Same as Material</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">English</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">Hindi</span></div></div><div class="space-y-1.5"><span class="text-xs font-semibold text-slate-600">🎯 Target Difficulty</span><div class="flex items-center gap-1.5"><span class="flex-1 py-1 rounded-lg text-xs font-medium text-center bg-slate-100 text-slate-600">🟢 Easy</span><span class="flex-1 py-1 rounded-lg text-xs font-medium text-center bg-amber-600 text-white shadow-sm">🟡 Moderate</span><span class="flex-1 py-1 rounded-lg text-xs font-medium text-center bg-slate-100 text-slate-600">🔴 Tough</span></div></div></div><div class="space-y-2 pt-1"><span class="text-xs font-semibold text-slate-600">⚖️ Marking</span><div class="grid grid-cols-2 gap-3"><div class="space-y-1.5"><span class="text-[11px] font-medium text-slate-500">Marks per question</span><div class="flex items-center gap-1.5 flex-wrap"><div class="flex items-center rounded-lg border bg-slate-50/50 border-slate-200"><span class="pl-2.5 text-xs font-semibold text-slate-400">+</span><span class="w-16 bg-transparent px-1.5 py-1 text-xs font-normal text-slate-400">Auto</span></div><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">1</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">2</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">3</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">4</span></div></div><div class="space-y-1.5"><span class="text-[11px] font-medium text-slate-500">Negative marks per wrong answer</span><div class="flex items-center gap-1.5 flex-wrap"><div class="flex items-center rounded-lg border bg-slate-50/50 border-slate-200"><span class="pl-2.5 text-xs font-semibold text-slate-400">−</span><span class="w-16 bg-transparent px-1.5 py-1 text-xs font-normal text-slate-400">Auto</span></div><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">0</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">0.25</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">0.5</span><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">1</span></div></div></div></div></div><div class="text-center space-y-1 mt-5 px-2"><h2 class="text-lg font-bold text-slate-800 leading-snug tracking-tight">How do you want to process this file?</h2><p class="text-xs text-slate-500">Choose a mode based on your goal</p></div><div class="grid grid-cols-2 gap-4 max-w-2xl mx-auto mt-4"><div id="s2-extract" class="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 group flex flex-col justify-between"><div class="border-beam-gradient-blue"></div><div class="rounded-lg border-0 bg-white relative z-10 w-full h-full flex flex-col justify-between rounded-[15px]"><div class="p-6 text-center flex flex-col justify-between h-full space-y-4"><div class="space-y-4 flex-1"><div class="w-14 h-14 mx-auto rounded-full bg-blue-50 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list w-7 h-7 text-blue-600"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg></div><div><h3 class="text-lg font-bold text-slate-800">Extract Questions</h3><p class="text-xs text-slate-500 mt-1 leading-relaxed">Extract exact questions, options, and diagrams from the exam paper as-is</p></div><div class="flex flex-wrap gap-1.5 justify-center"><span class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold text-[10px] bg-slate-100 text-slate-600 border-transparent">Best for: Exam papers, question banks</span><span class="inline-flex items-center rounded-full px-2.5 font-semibold text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-2.5 h-2.5 mr-0.5"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>ULTRA-FAST</span></div></div><span id="s2-extract-btn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 px-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm">Extract Questions →</span></div></div></div><div class="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 group flex flex-col justify-between"><div class="border-beam-gradient-purple"></div><div class="rounded-lg border-0 bg-white relative z-10 w-full h-full flex flex-col justify-between rounded-[15px]"><div class="p-6 text-center flex flex-col justify-between h-full space-y-4"><div class="space-y-4 flex-1"><div class="w-14 h-14 mx-auto rounded-full bg-purple-50 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-7 h-7 text-purple-600"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg></div><div><h3 class="text-lg font-bold text-slate-800">Generate New Questions</h3><p class="text-xs text-slate-500 mt-1 leading-relaxed">AI creates original questions based on the content and topics in the document</p></div><div class="flex flex-wrap gap-1.5 justify-center"><span class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold text-[10px] bg-slate-100 text-slate-600 border-transparent">Best for: Textbooks, notes, study material</span><span class="inline-flex items-center rounded-full px-2.5 font-semibold text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-2.5 h-2.5 mr-0.5"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>ULTRA-FAST</span></div></div><span class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 px-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm">Generate Questions →</span></div></div></div></div></div></div></div></div>
+          </div>
+        </div>
+        <div id="f03-file"><i></i><div><b>JEE_Main_Physics_Mock_01.pdf</b><span>PDF · 6 pages · 2.4 MB</span></div></div>
+        <div class="tz-curlayer" style="position:absolute;inset:0;z-index:70;pointer-events:none">
+<div class="tz-cursor"><svg viewBox="0 0 34 34"><path d="M3 2 L3 26 L9.2 20.4 L13.4 30 L17.6 28.2 L13.5 18.8 L22 18.8 Z" fill="#0b0f17" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/></svg></div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f03-upload';
+  /* ── shared film helpers (inlined by tools/build-frames.mjs; needs const ID) ── */
+const R = document.querySelector('[data-composition-id="' + ID + '"]');
+const q = (s) => R.querySelector(s);
+const qa = (s) => Array.from(R.querySelectorAll(s));
+const tl = gsap.timeline({ paused: true });
+
+/* Camera. The window sits at (240,126) in rig space; the rig scales about (960,548). */
+const REST = { scale: 0.82, x: 0, y: 0 };
+const O = { x: 960, y: 548 };
+/** Rig transform that puts window point p at screen point T with zoom s. */
+function focus(p, s, T) {
+  T = T || { x: 960, y: 560 };
+  const px = 240 + p.x, py = 126 + p.y;
+  return { scale: s, x: T.x - O.x - s * (px - O.x), y: T.y - O.y - s * (py - O.y) };
+}
+function cam(t, to, d, ease) {
+  tl.to(q('.tz-rig'), Object.assign({ duration: d || 1.2, ease: ease || 'power3.inOut' }, to), t);
+}
+
+/* Cursor: points are window coordinates (chrome included), as measured. */
+const CUR = q('.tz-cursor');
+const LAYER = q('.tz-curlayer');
+function cursorAt(t, p) { tl.set(CUR, { x: p.x - 4, y: p.y - 3, autoAlpha: 1 }, t); }
+function move(t, p, d, ease) {
+  tl.to(CUR, { x: p.x - 4, y: p.y - 3, duration: d || 0.75, ease: ease || 'power2.inOut' }, t);
+}
+function press(t, el, k) {
+  if (!el) return;
+  tl.to(el, { scale: k || 0.95, duration: 0.09, ease: 'power2.out' }, t);
+  tl.to(el, { scale: 1, duration: 0.32, ease: 'back.out(3)' }, t + 0.09);
+}
+function click(t, p, el) {
+  tl.to(CUR, { scale: 0.84, duration: 0.08, ease: 'power2.out', transformOrigin: '4px 3px' }, t);
+  tl.to(CUR, { scale: 1, duration: 0.25, ease: 'back.out(3)' }, t + 0.08);
+  const r = document.createElement('div');
+  r.className = 'tz-ripple';
+  (LAYER || R).appendChild(r);
+  tl.fromTo(r, { x: p.x, y: p.y, scale: 0.25, opacity: 0.95 }, { scale: 1.6, opacity: 0, duration: 0.6, ease: 'power2.out' }, t);
+  press(t, el);
+}
+
+/* States stacked in one place; swap is a hard cut, like a page update. */
+function only(t, show, all) {
+  all.forEach((el) => tl.set(el, { autoAlpha: el === show ? 1 : 0 }, t));
+}
+
+/* Keynote supers: words rise out of a blur, one after another. */
+function split(el) {
+  if (el.dataset.split) return Array.from(el.querySelectorAll('.tz-word'));
+  const out = [];
+  Array.from(el.childNodes).forEach((n) => {
+    if (n.nodeType === 3) {
+      n.textContent.split(/(\s+)/).forEach((w) => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { el.insertBefore(document.createTextNode(w), n); return; }
+        const s = document.createElement('span');
+        s.className = 'tz-word';
+        s.textContent = w;
+        el.insertBefore(s, n);
+        out.push(s);
+      });
+      el.removeChild(n);
+    } else {
+      n.classList.add('tz-word');
+      out.push(n);
+    }
+  });
+  el.dataset.split = '1';
+  return out;
+}
+function superIn(t, el, stagger) {
+  const w = split(el);
+  tl.set(el, { autoAlpha: 1 }, t);
+  tl.fromTo(w, { y: 44, opacity: 0, filter: 'blur(14px)' },
+    { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.75, ease: 'expo.out', stagger: stagger || 0.075 }, t);
+}
+function superOut(t, el) { tl.set(el, { autoAlpha: 0 }, t); }
+
+/* Typing: characters appear one by one (spaces included, so wrapping never jumps). */
+function typeIn(t, el, d) {
+  const text = el.textContent;
+  el.textContent = '';
+  const chars = Array.from(text).map((c) => {
+    const s = document.createElement('span');
+    s.textContent = c;
+    el.appendChild(s);
+    return s;
+  });
+  tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.001, stagger: d / chars.length, ease: 'none' }, t);
+  return chars;
+}
+
+/* Counter text driven by a tween (seek-safe: the value is a pure function of time). */
+function countUp(t, el, from, to, d, fmt) {
+  const o = { v: from };
+  const f = fmt || ((v) => String(Math.round(v)));
+  el.textContent = f(from);
+  tl.fromTo(o, { v: from }, { v: to, duration: d, ease: 'power1.inOut', onUpdate: () => { el.textContent = f(o.v); } }, t);
+}
+/* ── end helpers ── */
+
+  const M = {"choose":{"x":720,"y":332,"l":417,"t":310,"r":1023,"b":354},"card":{"x":720,"y":288,"l":400,"t":175,"r":1040,"b":401},"file":{"x":720,"y":150,"l":413,"t":121,"r":1027,"b":178},"extract":{"x":556,"y":914,"l":426,"t":894,"r":687,"b":934},"extractCard":{"x":556,"y":803,"l":400,"t":648,"r":712,"b":959}};
+  const rig = q('.tz-rig'), A = q('.f03-a'), B = q('.f03-b');
+  const P = (k, d) => M[k] || d;
+  const choose = P('choose', { x: 720, y: 360 }), card = P('card', { x: 720, y: 300 });
+  const file = P('file', { x: 560, y: 120 }), ext = P('extract', { x: 560, y: 1030 }), extCard = P('extractCard', { x: 560, y: 900 });
+  const SCROLL = Math.max(0, ext.y + 60 - 800);
+
+  tl.set(rig, REST, 0);
+  only(0, A, [A, B]);
+  superIn(0.15, q('#f03-t'));
+  cursorAt(0, { x: 470, y: 480 });
+  move(0.25, choose, 0.9);
+  click(1.2, choose, q('.f03-a #s1-choose'));
+
+  // the paper arrives from outside the window and drops into the upload card
+  tl.fromTo('#f03-file', { x: -340, y: 120, rotation: -9, scale: 1.08, opacity: 1 },
+    { x: card.x - 150, y: card.y - 40, rotation: 0, scale: 1, duration: 0.8, ease: 'expo.out' }, 1.35);
+  tl.to('#f03-file', { scale: 0.55, opacity: 0, duration: 0.3, ease: 'power2.in' }, 2.2);
+  cam(1.3, focus({ x: 720, y: 330 }, 0.9, { x: 960, y: 560 }), 1.1);
+
+  // page updates: the selected file, then the two modes
+  only(2.45, B, [A, B]);
+  tl.fromTo('.f03-b #s2-file', { boxShadow: '0 0 0 0 rgba(0,122,255,0)' }, { boxShadow: '0 0 0 4px rgba(0,122,255,0.28)', duration: 0.4, ease: 'power2.out' }, 2.5);
+  tl.fromTo('#f03-scroll', { y: 0 }, { y: -SCROLL, duration: 1.0, ease: 'power3.inOut' }, 3.0);
+  cam(3.0, focus({ x: extCard.x, y: extCard.y - SCROLL }, 1.12, { x: 960, y: 590 }), 1.3);
+  move(2.6, { x: file.x + 120, y: file.y + 40 }, 0.5);
+  move(3.35, { x: ext.x + 40, y: ext.y - SCROLL + 4 }, 0.9);
+  click(4.35, { x: ext.x + 40, y: ext.y - SCROLL + 4 }, q('.f03-b #s2-extract-btn'));
+  tl.fromTo('.f03-b #s2-extract', { boxShadow: '0 0 0 0 rgba(37,99,235,0)' },
+    { boxShadow: '0 0 0 5px rgba(37,99,235,0.35), 0 24px 50px -20px rgba(37,99,235,0.6)', duration: 0.45, ease: 'power2.out' }, 4.35);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

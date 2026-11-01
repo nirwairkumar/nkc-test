@@ -1,7 +1,13 @@
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+from cachetools import TTLCache
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from app.core.auth import verify_auth_claims, verify_auth_token, is_admin_email
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
+from app.utils.rate_limiter import anon_submit_per_ip, anon_start_per_ip, enforce_limit, client_ip
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -29,38 +35,153 @@ from app.services.attempt_service import (
     process_anon_abandon
 )
 from app.utils.attempt_control import apply_section_attempt_control, calculate_test_max_marks
+import logging
+
+logger = logging.getLogger(__name__)
 
 def _verify_auth_token_attempts(request: Request, db: Client) -> str:
     """Verify JWT from Authorization header and return requesting user's ID."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
-    token = auth_header.replace("Bearer ", "")
-    try:
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_response.user.id
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+    return verify_auth_token(request, db)
+
+def _save_session_attempt(payload: SaveAttemptRequest, token: str):
+    """
+    A student sitting an exam session (joined with a code at /join). Identity, the time
+    limit and one-attempt-per-student all come from the session, not from the payload.
+    """
+    from app.services import exam_sessions as session_rules
+    from app.services import exam_session_store as session_store
+
+    participant, session = session_store.participant_by_token(supabase, token)
+    if participant.get("status") == "submitted" and participant.get("attempt_id"):
+        existing = session_store._first(
+            supabase.table("user_tests").select("*").eq("id", participant["attempt_id"]).limit(1).execute()
+        )
+        if existing:  # a retried submission: hand back the attempt already saved
+            return {"data": existing, "error": None}
+
+    paper = session_store.load_paper(supabase, session["test_id"])
+    if payload.test_id not in (paper["id"], paper.get("slug"), paper.get("custom_id")):
+        raise HTTPException(status_code=400, detail="This attempt is for a different test.")
+    if paper.get("enable_section_mode") and paper.get("sections"):
+        try:
+            apply_section_attempt_control(paper["sections"], payload.answers)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    allowed, late_seconds = session_rules.may_submit(session, participant, paper.get("duration"))
+    if not allowed:
+        raise session_store.SessionError(
+            403, "time_over",
+            "The exam time is over. Your examiner can still collect your last saved answers.",
+        )
+    row = session_store.submit_attempt(
+        supabase, session=session, participant=participant, test=paper,
+        answers=payload.answers or {}, metadata=payload.metadata,
+        late_seconds=late_seconds, completion_percentage=payload.completion_percentage,
+    )
+    return {"data": row, "error": None}
+
 
 @router.post("/save")
-async def save_attempt(
+def save_attempt(
     payload: SaveAttemptRequest,
     request: Request,
     db: Client = Depends(get_db)
 ):
+    exam_token = request.headers.get("X-Exam-Token")
+    if exam_token:
+        return _save_session_attempt(payload, exam_token)
     try:
-        # Security: Verify JWT and use authenticated user_id
-        authenticated_user_id = _verify_auth_token_attempts(request, db)
-        # Override client-supplied user_id with the authenticated one
-        effective_user_id = authenticated_user_id
+        # Security: Check auth header first
+        auth_header = request.headers.get("Authorization")
+        effective_user_id = None
+        # Set only when a token is present AND verifies (see the H4 identity check below).
+        authenticated_user_id = None
 
-        # Fetch test details for attempt control validation
-        test_res = supabase.table("tests").select("id, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
-        test_data = test_res.data
+        # Fetch test details for attempt control validation, notification, and conduct verification
+        test_data = None
+        try:
+            test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings, questions").eq("id", payload.test_id).limit(1).execute()
+            if test_res.data and len(test_res.data) > 0:
+                test_data = test_res.data[0]
+            else:
+                test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings, questions").or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}").limit(1).execute()
+                if test_res.data and len(test_res.data) > 0:
+                    test_data = test_res.data[0]
+        except Exception as te:
+            logger.error(f"Warning: error looking up test {payload.test_id} in save_attempt: {te}")
+
+        settings_dict = (test_data.get("settings") or {}) if test_data else {}
+        is_conduct_exam = bool(settings_dict.get("conduct_exam", {}).get("enabled", False))
+        is_login_required = bool(settings_dict.get("login_required", False))
+        has_start_form = bool(settings_dict.get("start_form", {}).get("enabled", False))
+        has_form_submission = bool((payload.metadata or {}).get("startFormData"))
+
+        # Verify schedule window (grace period of 5 minutes for submissions already in progress)
+        schedule_dict = settings_dict.get("schedule") or {}
+        if schedule_dict.get("enabled"):
+            from datetime import datetime, timezone, timedelta
+            now_utc = datetime.now(timezone.utc)
+            end_time_str = schedule_dict.get("end_time")
+            if end_time_str:
+                try:
+                    end_time_dt = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
+                    if now_utc > (end_time_dt + timedelta(minutes=5)):
+                        raise HTTPException(status_code=403, detail="The scheduled window for this exam has ended.")
+                except HTTPException:
+                    raise
+                except Exception as parse_err:
+                    logger.warning(f"Warning parsing schedule end_time in save_attempt: {parse_err}")
+
+        # Determine if unauthenticated submission is allowed:
+        # Allowed if login is NOT explicitly required, OR if conduct exam is active, OR if candidate start form was filled
+        allow_unauthenticated = (not is_login_required) or is_conduct_exam or has_start_form or has_form_submission
+
+        if auth_header and auth_header.strip():
+            try:
+                authenticated_user_id = _verify_auth_token_attempts(request, db)
+                effective_user_id = authenticated_user_id
+            except HTTPException as auth_err:
+                if allow_unauthenticated and payload.user_id:
+                    effective_user_id = payload.user_id
+                else:
+                    raise auth_err
+        else:
+            if allow_unauthenticated and payload.user_id:
+                effective_user_id = payload.user_id
+            elif payload.user_id and not is_login_required:
+                effective_user_id = payload.user_id
+            else:
+                raise HTTPException(status_code=401, detail="Missing Authorization header: Login is required to submit this exam")
+
+        # ── H4: identity checks for unauthenticated submissions ──────────────
+        # Two separate abuses were possible here:
+        #   1. POST with someone else's user_id and no token -> the attempt is filed
+        #      against a REAL account (junk data in their history and the creator's
+        #      dashboard). Claiming an identity requires proving it.
+        #   2. Scripted submissions, each minting a permanent guest auth.users row.
+        is_authenticated = effective_user_id == authenticated_user_id and authenticated_user_id is not None
+        if not is_authenticated:
+            enforce_limit(
+                anon_submit_per_ip, client_ip(request),
+                "Too many submissions from this network. Please try again later.",
+            )
+            if payload.user_id:
+                # Reject only when the claimed id belongs to a real (non-guest) account.
+                # A token that merely expired mid-exam is recovered by the frontend's
+                # 401 refresh-and-retry interceptor, so no submission is lost.
+                try:
+                    claimed = supabase.auth.admin.get_user_by_id(payload.user_id)
+                    claimed_user = getattr(claimed, "user", None) if claimed else None
+                except Exception:
+                    claimed_user = None
+                if claimed_user is not None:
+                    is_guest = bool((getattr(claimed_user, "user_metadata", None) or {}).get("is_guest_candidate"))
+                    if not is_guest:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Please sign in again to submit this attempt.",
+                        )
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
             try:
@@ -69,15 +190,73 @@ async def save_attempt(
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
 
+        target_test_id = (test_data.get("id") if test_data else None) or payload.test_id
+
+        import uuid
+        if not effective_user_id:
+            effective_user_id = str(uuid.uuid4())
+
+        # Ensure effective_user_id exists in auth.users to satisfy foreign key constraint fk_user
+        try:
+            user_exists = False
+            try:
+                user_check = supabase.auth.admin.get_user_by_id(effective_user_id)
+                if user_check and getattr(user_check, "user", None):
+                    user_exists = True
+            except Exception:
+                user_exists = False
+
+            if not user_exists:
+                clean_id = effective_user_id.replace("-", "")[:12]
+                anon_email = f"candidate_{clean_id}@guest.testoza.com"
+                supabase.auth.admin.create_user({
+                    "id": effective_user_id,
+                    "email": anon_email,
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "is_guest_candidate": True,
+                        "startFormData": (payload.metadata or {}).get("startFormData", {})
+                    }
+                })
+        except Exception as ue:
+            logger.warning(f"Notice: guest user check/create for {effective_user_id}: {ue}")
+
         metadata = payload.metadata or {}
-        if test_data and test_data.get("settings", {}).get("conduct_exam", {}).get("enabled", False):
+        if is_conduct_exam or has_start_form or has_form_submission:
             metadata["is_conducted_attempt"] = True
+
+        # C4: the score is computed here from the stored answer key and the client-supplied
+        # `payload.score` is discarded. Falling back to the client value would reopen the
+        # hole, so a test we cannot load is rejected rather than trusted.
+        if not test_data:
+            raise HTTPException(status_code=404, detail="Test not found")
+
+        from app.services.scoring import score_attempt
+        scored = score_attempt(test_data, payload.answers)
+        server_score = scored["score"]
+
+        # Keep the client's own tally for auditing, but let the server stats win.
+        client_stats = metadata.get("stats")
+        if client_stats is not None:
+            metadata["client_reported_stats"] = client_stats
+        if payload.score is not None and abs(float(payload.score) - server_score) > 0.01:
+            metadata["client_reported_score"] = payload.score
+        metadata["stats"] = {
+            "positiveScore": scored["positiveScore"],
+            "negativeScore": scored["negativeScore"],
+            "correctCount": scored["correctCount"],
+            "partialCount": scored["partialCount"],
+            "wrongCount": scored["wrongCount"],
+            "unattemptedCount": scored["unattemptedCount"],
+            "totalQuestions": scored["totalQuestions"],
+        }
+        metadata["scored_by"] = "server"
 
         response = supabase.table("user_tests").insert({
             "user_id": effective_user_id,
-            "test_id": payload.test_id,
+            "test_id": target_test_id,
             "answers": payload.answers,
-            "score": payload.score,
+            "score": server_score,
             "metadata": metadata
         }).execute()
         
@@ -93,12 +272,32 @@ async def save_attempt(
                     "last_active_at": now
                 })\
                 .eq("user_id", effective_user_id)\
-                .eq("test_id", payload.test_id)\
+                .eq("test_id", target_test_id)\
                 .neq("status", "submitted")\
                 .execute()
         except Exception:
             pass  # Non-critical: don't block submission
         
+        # Notify the test creator about the candidate submission
+        try:
+            creator_id = test_data.get("created_by") if test_data else None
+            test_title = test_data.get("title", "Mock Test") if test_data else "Mock Test"
+            if creator_id and creator_id != effective_user_id:
+                from app.utils.notifications import send_notification
+                send_notification(
+                    user_id=creator_id,
+                    title="New Test Submission",
+                    message=f'A candidate completed and submitted your test "{test_title}".',
+                    link=f"/test-analysis/{target_test_id}",
+                    custom_test_id=target_test_id,
+                    db=supabase
+                )
+                # …and by email at milestones (1st, 5th, 10th…), off the request path.
+                from app.services.submission_email import notify_creator_in_background
+                notify_creator_in_background(supabase, creator_id, target_test_id, test_title)
+        except Exception as ne:
+            logger.error(f"Failed to send submission notification: {ne}")
+
         # In v2, insert returns APIResponse. .data contains array of inserted rows.
         if response.data:
             return {"data": response.data[0], "error": None}
@@ -109,7 +308,7 @@ async def save_attempt(
         raise HTTPException(status_code=500, detail="Failed to save attempt")
 
 @router.get("/user/{user_id}")
-async def get_user_attempts(
+def get_user_attempts(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -173,7 +372,7 @@ async def get_user_attempts(
                 if tests_res.data:
                     tests_map = {t["id"]: t for t in tests_res.data}
             except Exception as e:
-                print(f"Error fetching related tests: {e}")
+                logger.error(f"Error fetching related tests: {e}")
 
         # Step C: Merge Data
         enriched = []
@@ -190,7 +389,8 @@ async def get_user_attempts(
                     "test_title": "Deleted Test",
                     "test_settings": {},
                     "violation_count": item.get("violation_count") or 0,
-                    "questions_attempted": item.get("questions_attempted") or 0
+                    "questions_attempted": item.get("questions_attempted") or 0,
+                    "metadata": item.get("metadata") or {}
                 }
             else:
                 flat = {
@@ -202,14 +402,15 @@ async def get_user_attempts(
                     "test_settings": test.get("settings") or {},
                     "total_max_marks": test.get("total_max_marks") or 0,
                     "violation_count": item.get("violation_count") or 0,
-                    "questions_attempted": item.get("questions_attempted") or 0
+                    "questions_attempted": item.get("questions_attempted") or 0,
+                    "metadata": item.get("metadata") or {}
                 }
             enriched.append(flat)
             
         return enriched
         
     except Exception as e:
-        print(f"!!! ERROR in get_user_attempts: {e}")
+        logger.error(f"!!! ERROR in get_user_attempts: {e}")
         import traceback
         traceback.print_exc()
         if isinstance(e, HTTPException):
@@ -217,7 +418,7 @@ async def get_user_attempts(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/batch-status")
-async def get_batch_status(
+def get_batch_status(
     payload: BatchStatusRequest,
     db: Client = Depends(get_db)
 ):
@@ -274,15 +475,15 @@ async def get_batch_status(
                     if tid_str in results:
                         results[tid_str]["total_marks"] = t.get("total_max_marks", 0)
             except Exception as e:
-                print(f"Batch-status Exception: {e}")
+                logger.error(f"Batch-status Exception: {e}")
 
         return results
     except Exception as e:
-        print(f"Error fetching batch status: {e}")
+        logger.error(f"Error fetching batch status: {e}")
         return {}
 
 @router.get("/check/{user_id}/{test_id}")
-async def check_attempt_status(
+def check_attempt_status(
     user_id: str,
     test_id: str,
     db: Client = Depends(get_db)
@@ -313,12 +514,72 @@ async def check_attempt_status(
         return {"hasAttempted": has_attempted}
 
     except Exception as e:
-        print(f"Error checking attempt status: {e}")
+        logger.error(f"Error checking attempt status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+def _clean_start_form(form: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    """The start form as short plain text: at most 12 fields."""
+    out: Dict[str, str] = {}
+    for key, value in list((form or {}).items())[:12]:
+        label = str(key).strip()[:60]
+        if label and value is not None:
+            out[label] = str(value).strip()[:200]
+    return out
+
+
+def _ensure_registrant(user_id: str, test_id: str, start_form: Dict[str, str], request: Request) -> bool:
+    """
+    True when `user_id` has an auth.users row, which test_registrations needs.
+
+    A candidate on a live exam link has no login until they submit, so their start was
+    dropped and the examiner saw nobody writing. On live exam links they now get the
+    guest login at start, the same one submitting would have made.
+    """
+    import uuid as _uuid
+    try:
+        _uuid.UUID(user_id)
+        _uuid.UUID(test_id)
+    except ValueError:
+        return False
+
+    def has_login() -> bool:
+        try:
+            found = supabase.auth.admin.get_user_by_id(user_id)
+            return bool(found and getattr(found, "user", None))
+        except Exception:
+            return False
+
+    if has_login():
+        return True
+    try:
+        test_res = supabase.table("tests").select("settings").eq("id", test_id).limit(1).execute()
+    except Exception:
+        return False
+    settings = ((test_res.data or [{}])[0].get("settings") or {})
+    if not (settings.get("conduct_exam") or {}).get("enabled"):
+        return False
+    allowed, _remaining, _reset = anon_start_per_ip.check(client_ip(request))
+    if not allowed:
+        return False
+    clean_id = user_id.replace("-", "")[:12]
+    try:
+        supabase.auth.admin.create_user({
+            "id": user_id,
+            "email": f"candidate_{clean_id}@guest.testoza.com",
+            "email_confirm": True,
+            "user_metadata": {"is_guest_candidate": True, "startFormData": start_form},
+        })
+    except Exception as e:
+        # A second tab starting at the same moment may have made it first.
+        logger.warning(f"Guest login at exam start for {user_id}: {e}")
+        return has_login()
+    return True
+
+
 @router.post("/register")
-async def register_start(
+def register_start(
     payload: RegisterRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
@@ -326,15 +587,21 @@ async def register_start(
             # Anonymous users are tracked exclusively via anon_test_attempts
             return {"success": True}
 
+        start_form = _clean_start_form(payload.start_form)
+        if not _ensure_registrant(payload.user_id, payload.test_id, start_form, request):
+            return {"success": False}
+
         # Build the insert data
         insert_data: Dict[str, Any] = {
             "test_id": payload.test_id,
             "user_id": payload.user_id
         }
+        if start_form:
+            insert_data["metadata"] = {"startFormData": start_form}
 
         # Check if already registered (for non-anonymous only)
         existing = supabase.table("test_registrations")\
-            .select("id, status")\
+            .select("id, status, metadata")\
             .eq("user_id", payload.user_id)\
             .eq("test_id", payload.test_id)\
             .execute()
@@ -343,9 +610,17 @@ async def register_start(
             # Reset to in_progress if re-starting (not submitted)
             row = existing.data[0]
             if row.get("status") != "submitted":
+                from datetime import datetime, timezone
+                restart: Dict[str, Any] = {
+                    "status": "in_progress",
+                    "completion_percentage": 0,
+                    "last_active_at": datetime.now(timezone.utc).isoformat(),
+                }
+                if start_form:
+                    restart["metadata"] = {**(row.get("metadata") or {}), "startFormData": start_form}
                 try:
                     supabase.table("test_registrations")\
-                        .update({"status": "in_progress", "completion_percentage": 0})\
+                        .update(restart)\
                         .eq("id", row["id"]).execute()
                 except Exception:
                     pass  # columns may not exist yet
@@ -367,28 +642,21 @@ async def register_start(
         return {"success": True}
 
     except Exception as e:
-        print(f"Error registering start: {e}")
+        logger.error(f"Error registering start: {e}")
         # Non-critical: don't block the test start
         return {"success": False}
 
 @router.get("/{attempt_id}")
-async def get_attempt_detail(
+def get_attempt_detail(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
 ):
     try:
         # Check authentication
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = auth_header.replace("Bearer ", "")
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user_id = user_response.user.id
-        
+        claims = verify_auth_claims(request, db)
+        user_id = claims["sub"]
+
         # Fetch attempt
         response = supabase.table("user_tests")\
             .select("*")\
@@ -407,8 +675,7 @@ async def get_attempt_detail(
             if test_res.data and test_res.data.get("created_by") == user_id:
                 is_creator = True
 
-        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-        is_admin = admin_res.data and len(admin_res.data) > 0
+        is_admin = is_admin_email(claims.get("email"), supabase)
 
         if attempt.get("user_id") != user_id:
             if not is_admin and not is_creator:
@@ -420,107 +687,194 @@ async def get_attempt_detail(
                   
         return attempt
     except Exception as e:
-        print(f"Error fetching attempt detail: {e}")
+        logger.error(f"Error fetching attempt detail: {e}")
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
 
+# The results sheet asks on every open and every 30 s refresh; these site-wide
+# switches change rarely, so a minute of staleness is fine.
+_premium_for_all_cache: TTLCache = TTLCache(maxsize=1, ttl=60)
+_premium_for_all_lock = threading.Lock()
+
+
+def _premium_for_all() -> bool:
+    """True when every creator gets premium: the global unlock is on, or no plan is on sale."""
+    with _premium_for_all_lock:
+        cached = _premium_for_all_cache.get("value")
+    if cached is not None:
+        return cached
+
+    settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
+    unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
+
+    plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
+    has_active_plans = plans_res.data and len(plans_res.data) > 0
+
+    value = bool(unlock_all or not has_active_plans)
+    with _premium_for_all_lock:
+        _premium_for_all_cache["value"] = value
+    return value
+
+
+def _results_access(test_id: str, request: Request, db: Client):
+    """
+    Who may read a test's results: its creator or an admin.
+    Returns (test row, is_admin, is_premium); a non-premium creator sees names hidden.
+    """
+    # The token check and the test lookup don't depend on each other, so they run
+    # together: each is a full round trip to the database.
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        test_future = pool.submit(
+            lambda: supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).limit(1).execute()
+        )
+        claims = verify_auth_claims(request, db)
+        test_rows = test_future.result().data
+
+    user_id = claims["sub"]
+    is_admin = is_admin_email(claims.get("email"), supabase)
+
+    # Retrieve test details to verify existence and check conduct mode settings
+    if not test_rows:
+        raise HTTPException(status_code=404, detail="Test not found")
+    test_data = test_rows[0]
+
+    if is_admin:
+        return test_data, True, True
+
+    # Only the creator or admin can view results
+    if user_id != test_data.get("created_by"):
+        raise HTTPException(status_code=403, detail="Not authorized to view these results")
+
+    is_premium = _premium_for_all()
+
+    if not is_premium:
+        profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
+        if profile_res.data:
+            profile = profile_res.data[0]
+            if profile.get("is_premium") and profile.get("premium_expiry"):
+                from datetime import datetime, timezone
+                try:
+                    # Safely parse UTC string from postgres
+                    expiry = datetime.fromisoformat(profile["premium_expiry"].replace('Z', '+00:00'))
+                    if expiry.tzinfo is None:
+                        expiry = expiry.replace(tzinfo=timezone.utc)
+                    is_premium = expiry > datetime.now(timezone.utc)
+                except Exception as parse_error:
+                    logger.error(f"Error parsing expiry date: {parse_error}")
+
+    return test_data, False, is_premium
+
+
+@router.get("/test/{test_id}/started")
+def get_started_candidates(
+    test_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    """
+    Candidates who started this test and have not submitted: writing now, or left.
+    For a live exam only starts since the exam went live count, so the creator's
+    earlier practice runs stay out.
+    """
+    try:
+        test_data, is_admin, is_premium = _results_access(test_id, request, db)
+        from datetime import datetime, timezone
+
+        conduct = (test_data.get("settings") or {}).get("conduct_exam") or {}
+        query = supabase.table("test_registrations")\
+            .select("id, user_id, status, started_at, last_active_at, completion_percentage, abandoned_reason, metadata")\
+            .eq("test_id", test_id)\
+            .neq("status", "submitted")
+        if conduct.get("started_at"):
+            query = query.gte("started_at", conduct["started_at"])
+
+        # A submit that could not mark its registration still counts as submitted.
+        # Both reads are independent, so they run together.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            regs_future = pool.submit(lambda: query.order("started_at", desc=True).limit(1000).execute())
+            submitted_future = pool.submit(
+                lambda: supabase.table("user_tests").select("user_id").eq("test_id", test_id).execute()
+            )
+            regs = regs_future.result().data or []
+            submitted_res = submitted_future.result()
+        submitted = {r.get("user_id") for r in (submitted_res.data or [])}
+        creator = test_data.get("created_by")
+
+        candidates = []
+        for r in regs:
+            uid = r.get("user_id")
+            if uid in submitted or (uid == creator and not is_admin):
+                continue
+            meta = r.get("metadata") or {}
+            form = meta.get("startFormData") or {}
+            if not is_premium and form:
+                form = {"Candidate": "Anonymous User"}
+            candidates.append({
+                "id": r.get("id"),
+                "status": r.get("status") or "in_progress",
+                "started_at": r.get("started_at"),
+                "last_active_at": r.get("last_active_at"),
+                "completion": r.get("completion_percentage") or 0,
+                "answered": meta.get("answered"),
+                "left_reason": r.get("abandoned_reason"),
+                "startFormData": form,
+            })
+
+        return {"now": datetime.now(timezone.utc).isoformat(), "candidates": candidates}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching started candidates: {e}")
+        raise HTTPException(status_code=500, detail="Could not load who started")
+
+
 @router.get("/test/{test_id}")
-async def get_test_attempts(
+def get_test_attempts(
     test_id: str,
     request: Request,
     exclude_answers: bool = False,
     db: Client = Depends(get_db)
 ):
     try:
-        # Check authentication
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = auth_header.replace("Bearer ", "")
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user_id = user_response.user.id
-
-        # Verify admin status
-        from app.core.database import supabase
-        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-        is_admin = admin_res.data and len(admin_res.data) > 0
-
-        # Determine Premium Access
-        is_premium = False
-        is_conduct_exam = False
-
-        # Retrieve test details to verify existence and check conduct mode settings
-        test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
-        if not test_ownership_res.data:
-            raise HTTPException(status_code=404, detail="Test not found")
-
-        test_data = test_ownership_res.data
-        test_created_by = test_data.get("created_by")
-        test_visibility = test_data.get("visibility", "public")
+        test_data, is_admin, is_premium = _results_access(test_id, request, db)
         is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
-
-        if is_admin:
-            is_premium = True
-        else:
-            # Only the creator or admin can view results
-            if user_id != test_created_by:
-                raise HTTPException(status_code=403, detail="Not authorized to view these results")
-
-            # Check global premium unlock and active plans
-            settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
-            unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
-            
-            plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
-            has_active_plans = plans_res.data and len(plans_res.data) > 0
-            
-            is_premium = unlock_all or not has_active_plans
-
-            if not is_premium:
-                profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
-                if profile_res.data:
-                    profile = profile_res.data[0]
-                    if profile.get("is_premium") and profile.get("premium_expiry"):
-                        from datetime import datetime, timezone
-                        try:
-                            # Safely parse UTC string from postgres
-                            expiry = datetime.fromisoformat(profile["premium_expiry"].replace('Z', '+00:00'))
-                            if expiry.tzinfo is None:
-                                expiry = expiry.replace(tzinfo=timezone.utc)
-                            now = datetime.now(timezone.utc)
-                            is_premium = expiry > now
-                        except Exception as parse_error:
-                            print(f"Error parsing expiry date: {parse_error}")
 
         # Fetch all attempts for specific test (including those user deleted from their own history)
         select_cols = "id, test_id, user_id, score, created_at, metadata, violation_count, questions_attempted"
         if not exclude_answers:
             select_cols += ", answers, violation_log"
 
-        response = supabase.table("user_tests")\
-            .select(select_cols)\
-            .eq("test_id", test_id)\
-            .order("score", desc=True)\
-            .execute()
-            
-        data = response.data or []
-
-        # Fetch registrations for this test to map user_id -> started_at fallback
-        reg_start_map = {}
-        try:
-            regs_res = supabase.table("test_registrations")\
-                .select("user_id, started_at")\
+        def _fetch_attempts():
+            return supabase.table("user_tests")\
+                .select(select_cols)\
                 .eq("test_id", test_id)\
+                .order("score", desc=True)\
                 .execute()
-            for r in (regs_res.data or []):
-                uid = r.get("user_id")
-                sat = r.get("started_at")
-                if uid and sat:
-                    reg_start_map[uid] = sat
-        except Exception as reg_err:
-            print(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+
+        # Registrations map user_id -> started_at fallback; a failure there is not fatal.
+        def _fetch_registrations():
+            try:
+                return supabase.table("test_registrations")\
+                    .select("user_id, started_at")\
+                    .eq("test_id", test_id)\
+                    .execute().data or []
+            except Exception as reg_err:
+                logger.error(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+                return []
+
+        # Both reads are independent, so they run together.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            attempts_future = pool.submit(_fetch_attempts)
+            regs_future = pool.submit(_fetch_registrations)
+            data = attempts_future.result().data or []
+            regs = regs_future.result()
+
+        reg_start_map = {}
+        for r in regs:
+            uid = r.get("user_id")
+            sat = r.get("started_at")
+            if uid and sat:
+                reg_start_map[uid] = sat
 
         # Enrich metadata with startedAt if missing
         from datetime import datetime
@@ -547,15 +901,14 @@ async def get_test_attempts(
                 meta["startedAt"] = fallback_start or attempt.get("created_at")
                 attempt["metadata"] = meta
 
-        # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
-        # Admin bypasses the filtering and sees ALL attempts.
+        # Filter attempts: allow conducted attempts, attempts with candidate form data, and all attempts for open tests
         if not is_admin:
             filtered_data = []
+            is_login_req = bool(test_data.get("settings", {}).get("login_required", False)) if test_data else False
             for a in data:
                 meta = a.get("metadata") or {}
-                # Allow if it's explicitly marked as conducted, OR if the test is currently a conduct exam 
-                # (which covers legacy attempts created before we added this flag, if any)
-                if meta.get("is_conducted_attempt") or is_conduct_exam:
+                # Allow if it's marked as conducted, or test is conduct exam, or has candidate startFormData, or if test is open
+                if meta.get("is_conducted_attempt") or is_conduct_exam or meta.get("startFormData") or not is_login_req:
                     filtered_data.append(a)
             data = filtered_data
         
@@ -584,14 +937,16 @@ async def get_test_attempts(
                 }
                 anonymized.append(anon_attempt)
             return anonymized
-            
+
         return data
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error fetching test attempts: {e}")
+        logger.error(f"Error fetching test attempts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{attempt_id}")
-async def delete_attempt(
+def delete_attempt(
     attempt_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -645,7 +1000,7 @@ async def delete_attempt(
         raise HTTPException(status_code=500, detail="Failed to delete attempt")
 
 @router.delete("/registration/{test_id}/{user_id}")
-async def delete_registration(
+def delete_registration(
     test_id: str,
     user_id: str,
     request: Request,
@@ -675,7 +1030,7 @@ async def delete_registration(
 
 # ─── Progress Tracking ─────────────────────────────────────────
 @router.post("/progress")
-async def update_progress(
+def update_progress(
     payload: ProgressUpdateRequest,
     background_tasks: BackgroundTasks
 ):
@@ -686,7 +1041,7 @@ async def update_progress(
 
 # ─── Abandonment Tracking ──────────────────────────────────────
 @router.post("/abandon")
-async def mark_abandoned(
+def mark_abandoned(
     payload: AbandonRequest,
     background_tasks: BackgroundTasks
 ):
@@ -697,7 +1052,7 @@ async def mark_abandoned(
 
 
 @router.post("/anon/start")
-async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
+def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
     """Register an anonymous user starting a test."""
     try:
         from datetime import datetime, timezone
@@ -732,12 +1087,12 @@ async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
         }).execute()
         return {"success": True, "resumed": False}
     except Exception as e:
-        print(f"Error in anon/start: {e}")
+        logger.error(f"Error in anon/start: {e}")
         return {"success": False}
 
 
 @router.post("/anon/progress")
-async def anon_progress(
+def anon_progress(
     payload: AnonProgressRequest,
     background_tasks: BackgroundTasks
 ):
@@ -747,17 +1102,34 @@ async def anon_progress(
 
 
 @router.post("/anon/submit")
-async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
-    """Mark an anonymous test as submitted, storing answers and score."""
+def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
+    """Mark an anonymous test as submitted, storing answers and a server-computed score."""
     try:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat()
+
+        # C4: score anonymous attempts server-side too — payload.score is ignored.
+        # test_id may be a UUID, a slug or a custom_id; `id.eq.<non-uuid>` would error.
+        import uuid as _uuid
+        cols = "id, enable_section_mode, sections, questions"
+        try:
+            _uuid.UUID(payload.test_id)
+            test_res = supabase.table("tests").select(cols).eq("id", payload.test_id).limit(1).execute()
+        except ValueError:
+            test_res = supabase.table("tests").select(cols)\
+                .or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}")\
+                .limit(1).execute()
+        if not test_res.data:
+            return {"success": False}
+
+        from app.services.scoring import score_attempt
+        server_score = score_attempt(test_res.data[0], payload.answers)["score"]
 
         supabase.table("anon_test_attempts")\
             .update({
                 "status": "submitted",
                 "answers": payload.answers or {},
-                "score": payload.score or 0,
+                "score": server_score,
                 "completion_pct": 100,
                 "submitted_at": now,
                 "last_active_at": now
@@ -768,12 +1140,12 @@ async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
             .execute()
         return {"success": True}
     except Exception as e:
-        print(f"Error in anon/submit: {e}")
+        logger.error(f"Error in anon/submit: {e}")
         return {"success": False}
 
 
 @router.post("/anon/abandon")
-async def anon_abandon(
+def anon_abandon(
     payload: AnonAbandonRequest,
     background_tasks: BackgroundTasks
 ):

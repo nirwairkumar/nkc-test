@@ -1,0 +1,198 @@
+[
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 0.04,
+  "end": 0.461,
+  "score": 0.969
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.501,
+  "end": 0.861,
+  "score": 0.422
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 0.901,
+  "end": 1.202,
+  "score": 0.616
+ },
+ {
+  "w": "PDF",
+  "r": "pdf",
+  "start": 1.382,
+  "end": 1.642,
+  "score": 0.663
+ },
+ {
+  "w": "ആണോ,",
+  "r": "aannoo",
+  "start": 1.742,
+  "end": 2.103,
+  "score": 0.994
+ },
+ {
+  "w": "അതോ",
+  "r": "atoo",
+  "start": 2.263,
+  "end": 2.483,
+  "score": 0.814
+ },
+ {
+  "w": "വെറും",
+  "r": "verrum",
+  "start": 2.503,
+  "end": 2.724,
+  "score": 0.891
+ },
+ {
+  "w": "photos",
+  "r": "photos",
+  "start": 2.784,
+  "end": 3.184,
+  "score": 0.995
+ },
+ {
+  "w": "ആണോ?",
+  "r": "aannoo",
+  "start": 3.184,
+  "end": 3.444,
+  "score": 0.843
+ },
+ {
+  "w": "Generate",
+  "r": "generate",
+  "start": 4.065,
+  "end": 4.506,
+  "score": 0.405
+ },
+ {
+  "w": "with",
+  "r": "with",
+  "start": 4.506,
+  "end": 4.626,
+  "score": 0.322
+ },
+ {
+  "w": "AI",
+  "r": "ai",
+  "start": 4.826,
+  "end": 4.946,
+  "score": 0.65
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 5.127,
+  "end": 5.387,
+  "score": 0.74
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 5.447,
+  "end": 5.687,
+  "score": 0.822
+ },
+ {
+  "w": "file",
+  "r": "file",
+  "start": 6.168,
+  "end": 6.488,
+  "score": 0.251
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 6.528,
+  "end": 6.809,
+  "score": 0.472
+ },
+ {
+  "w": "ചെയ്യൂ",
+  "r": "ceyyuu",
+  "start": 6.849,
+  "end": 7.109,
+  "score": 0.844
+ },
+ {
+  "w": "മൂന്ന്",
+  "r": "muunn",
+  "start": 7.55,
+  "end": 7.79,
+  "score": 0.771
+ },
+ {
+  "w": "page",
+  "r": "page",
+  "start": 7.89,
+  "end": 7.99,
+  "score": 0.493
+ },
+ {
+  "w": "PDF,",
+  "r": "pdf",
+  "start": 8.15,
+  "end": 8.531,
+  "score": 0.665
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 8.891,
+  "end": 9.272,
+  "score": 0.679
+ },
+ {
+  "w": "key",
+  "r": "key",
+  "start": 9.332,
+  "end": 9.432,
+  "score": 0.557
+ },
+ {
+  "w": "അടക്കം",
+  "r": "attakkam",
+  "start": 9.512,
+  "end": 9.833,
+  "score": 0.992
+ },
+ {
+  "w": "എന്നിട്ട്",
+  "r": "ennitttt",
+  "start": 10.313,
+  "end": 10.634,
+  "score": 0.926
+ },
+ {
+  "w": "Extract",
+  "r": "extract",
+  "start": 11.034,
+  "end": 11.415,
+  "score": 0.505
+ },
+ {
+  "w": "Questions",
+  "r": "questions",
+  "start": 11.475,
+  "end": 11.915,
+  "score": 0.482
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 12.096,
+  "end": 12.276,
+  "score": 0.938
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 12.376,
+  "end": 12.616,
+  "score": 0.838
+ }
+]

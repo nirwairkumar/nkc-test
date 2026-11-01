@@ -1,0 +1,170 @@
+[
+ {
+  "w": "नाम",
+  "r": "naam",
+  "start": 0.1,
+  "end": 0.301,
+  "score": 0.994
+ },
+ {
+  "w": "default",
+  "r": "default",
+  "start": 0.421,
+  "end": 0.782,
+  "score": 0.457
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 0.802,
+  "end": 0.882,
+  "score": 0.992
+ },
+ {
+  "w": "पूछा",
+  "r": "puuchaa",
+  "start": 0.902,
+  "end": 1.163,
+  "score": 0.968
+ },
+ {
+  "w": "जाता",
+  "r": "jaataa",
+  "start": 1.183,
+  "end": 1.424,
+  "score": 0.975
+ },
+ {
+  "w": "है।",
+  "r": "hai",
+  "start": 1.424,
+  "end": 1.504,
+  "score": 0.997
+ },
+ {
+  "w": "Roll",
+  "r": "roll",
+  "start": 1.885,
+  "end": 2.026,
+  "score": 0.749
+ },
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 2.086,
+  "end": 2.326,
+  "score": 0.654
+ },
+ {
+  "w": "जोड़िए,",
+  "r": "joddie",
+  "start": 2.367,
+  "end": 2.687,
+  "score": 0.996
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 2.948,
+  "end": 3.089,
+  "score": 0.988
+ },
+ {
+  "w": "कुछ",
+  "r": "kuch",
+  "start": 3.129,
+  "end": 3.289,
+  "score": 0.972
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 3.389,
+  "end": 3.51,
+  "score": 0.997
+ },
+ {
+  "w": "भी",
+  "r": "bhii",
+  "start": 3.57,
+  "end": 3.71,
+  "score": 0.973
+ },
+ {
+  "w": "batch,",
+  "r": "batch",
+  "start": 4.011,
+  "end": 4.312,
+  "score": 0.592
+ },
+ {
+  "w": "school,",
+  "r": "school",
+  "start": 4.653,
+  "end": 4.954,
+  "score": 0.334
+ },
+ {
+  "w": "phone।",
+  "r": "phone",
+  "start": 5.335,
+  "end": 6.197,
+  "score": 0.795
+ },
+ {
+  "w": "Candidates",
+  "r": "candidates",
+  "start": 6.197,
+  "end": 6.658,
+  "score": 0.485
+ },
+ {
+  "w": "शुरू",
+  "r": "shuruu",
+  "start": 6.698,
+  "end": 6.899,
+  "score": 0.978
+ },
+ {
+  "w": "करने",
+  "r": "karane",
+  "start": 6.899,
+  "end": 7.12,
+  "score": 0.92
+ },
+ {
+  "w": "से",
+  "r": "se",
+  "start": 7.16,
+  "end": 7.24,
+  "score": 0.96
+ },
+ {
+  "w": "पहले",
+  "r": "pahale",
+  "start": 7.3,
+  "end": 7.561,
+  "score": 0.992
+ },
+ {
+  "w": "इसे",
+  "r": "ise",
+  "start": 7.621,
+  "end": 7.761,
+  "score": 0.942
+ },
+ {
+  "w": "भरते",
+  "r": "bharate",
+  "start": 7.801,
+  "end": 8.042,
+  "score": 0.996
+ },
+ {
+  "w": "हैं।",
+  "r": "haim",
+  "start": 8.062,
+  "end": 8.142,
+  "score": 0.525
+ }
+]

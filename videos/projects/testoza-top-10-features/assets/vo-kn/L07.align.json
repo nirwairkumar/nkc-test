@@ -1,0 +1,198 @@
+[
+ {
+  "w": "Test",
+  "r": "test",
+  "start": 0.02,
+  "end": 0.24,
+  "score": 0.979
+ },
+ {
+  "w": "ಅನ್ನು",
+  "r": "annu",
+  "start": 0.26,
+  "end": 0.441,
+  "score": 0.998
+ },
+ {
+  "w": "builder",
+  "r": "builder",
+  "start": 0.521,
+  "end": 0.842,
+  "score": 0.714
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 0.902,
+  "end": 1.082,
+  "score": 0.874
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 1.242,
+  "end": 1.463,
+  "score": 0.748
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 1.503,
+  "end": 1.743,
+  "score": 0.988
+ },
+ {
+  "w": "ಹನ್ನೆರಡು",
+  "r": "hanneraddu",
+  "start": 2.064,
+  "end": 2.505,
+  "score": 0.938
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 2.525,
+  "end": 2.885,
+  "score": 0.294
+ },
+ {
+  "w": "ಇಲ್ಲೇ",
+  "r": "illee",
+  "start": 3.006,
+  "end": 3.246,
+  "score": 0.9
+ },
+ {
+  "w": "ಇವೆ.",
+  "r": "ive",
+  "start": 3.286,
+  "end": 3.426,
+  "score": 0.874
+ },
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 3.907,
+  "end": 4.088,
+  "score": 0.995
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 4.148,
+  "end": 4.448,
+  "score": 0.224
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 4.609,
+  "end": 4.829,
+  "score": 0.984
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 4.869,
+  "end": 5.13,
+  "score": 0.988
+ },
+ {
+  "w": "words",
+  "r": "words",
+  "start": 5.41,
+  "end": 5.711,
+  "score": 0.287
+ },
+ {
+  "w": "ಎಂದಿನಂತೆ",
+  "r": "emdinamte",
+  "start": 5.871,
+  "end": 6.312,
+  "score": 0.967
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 6.412,
+  "end": 6.613,
+  "score": 0.5
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 6.633,
+  "end": 6.853,
+  "score": 0.999
+ },
+ {
+  "w": "Formula",
+  "r": "formula",
+  "start": 7.374,
+  "end": 7.835,
+  "score": 0.797
+ },
+ {
+  "w": "ಗೆ,",
+  "r": "ge",
+  "start": 7.935,
+  "end": 8.035,
+  "score": 0.994
+ },
+ {
+  "w": "Maths",
+  "r": "maths",
+  "start": 8.296,
+  "end": 8.596,
+  "score": 0.733
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 8.696,
+  "end": 8.817,
+  "score": 0.664
+ },
+ {
+  "w": "symbols",
+  "r": "symbols",
+  "start": 8.917,
+  "end": 9.338,
+  "score": 0.743
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 9.498,
+  "end": 9.698,
+  "score": 0.747
+ },
+ {
+  "w": "ಮಾಡಿ",
+  "r": "maaddi",
+  "start": 9.738,
+  "end": 9.999,
+  "score": 0.933
+ },
+ {
+  "w": "ಇದೇ",
+  "r": "idee",
+  "start": 10.239,
+  "end": 10.44,
+  "score": 0.948
+ },
+ {
+  "w": "Sy",
+  "r": "sy",
+  "start": 10.52,
+  "end": 10.68,
+  "score": 0.5
+ },
+ {
+  "w": "Pad.",
+  "r": "pad",
+  "start": 10.74,
+  "end": 10.961,
+  "score": 0.886
+ }
+]

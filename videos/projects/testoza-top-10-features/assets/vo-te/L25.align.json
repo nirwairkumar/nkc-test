@@ -1,0 +1,121 @@
+[
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 0.02,
+  "end": 0.301,
+  "score": 0.996
+ },
+ {
+  "w": "తను",
+  "r": "tanu",
+  "start": 0.341,
+  "end": 0.541,
+  "score": 0.998
+ },
+ {
+  "w": "వేరే",
+  "r": "veeree",
+  "start": 0.722,
+  "end": 1.023,
+  "score": 0.981
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 1.103,
+  "end": 1.243,
+  "score": 0.66
+ },
+ {
+  "w": "కి",
+  "r": "ki",
+  "start": 1.304,
+  "end": 1.384,
+  "score": 0.991
+ },
+ {
+  "w": "వెళ్తుంది",
+  "r": "velltumdi",
+  "start": 1.384,
+  "end": 1.805,
+  "score": 0.779
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.186,
+  "end": 2.487,
+  "score": 0.728
+ },
+ {
+  "w": "వెంటనే",
+  "r": "vemttanee",
+  "start": 2.547,
+  "end": 2.948,
+  "score": 0.98
+ },
+ {
+  "w": "పట్టేస్తుంది.",
+  "r": "patttteestumdi",
+  "start": 2.968,
+  "end": 3.49,
+  "score": 0.893
+ },
+ {
+  "w": "Warning",
+  "r": "warning",
+  "start": 3.951,
+  "end": 4.332,
+  "score": 0.559
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 4.713,
+  "end": 4.853,
+  "score": 0.344
+ },
+ {
+  "w": "of",
+  "r": "of",
+  "start": 4.853,
+  "end": 4.974,
+  "score": 0.183
+ },
+ {
+  "w": "three.",
+  "r": "three",
+  "start": 5.034,
+  "end": 5.214,
+  "score": 0.346
+ },
+ {
+  "w": "నేరుగా",
+  "r": "neerugaa",
+  "start": 5.856,
+  "end": 6.317,
+  "score": 0.995
+ },
+ {
+  "w": "మళ్ళీ",
+  "r": "mallllii",
+  "start": 6.438,
+  "end": 6.778,
+  "score": 0.913
+ },
+ {
+  "w": "paper",
+  "r": "paper",
+  "start": 6.819,
+  "end": 7.119,
+  "score": 0.6
+ },
+ {
+  "w": "కి.",
+  "r": "ki",
+  "start": 7.159,
+  "end": 7.24,
+  "score": 0.991
+ }
+]

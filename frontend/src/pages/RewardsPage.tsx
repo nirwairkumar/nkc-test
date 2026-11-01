@@ -75,11 +75,11 @@ export default function RewardsPage() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate('/my-tests')}
+                        onClick={() => navigate('/settings?tab=rewards')}
                         className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 gap-1.5 cursor-pointer"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        <span>Back to My Tests</span>
+                        <span>Back to Settings</span>
                     </Button>
                     <Badge variant="outline" className="border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 gap-1 font-semibold">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />

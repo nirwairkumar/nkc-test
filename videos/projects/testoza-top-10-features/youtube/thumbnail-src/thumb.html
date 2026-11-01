@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- YouTube thumbnail (1280x720), English only. Real app screens from the takes (capture/rec):
+     ranked results, the AI's "12/12 answers set", the phone's tab-switch warning. Render: node shot.mjs -->
+<style>
+  @font-face { font-family: 'Outfit'; font-weight: 900; src: url('../../assets/fonts/Outfit-900.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 800; src: url('../../assets/fonts/Outfit-800.woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 700; src: url('../../assets/fonts/Outfit-700.woff2'); }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; }
+  .bg { position: absolute; inset: 0; background:
+      radial-gradient(700px 520px at 22% 60%, rgba(14,165,233,.35), rgba(2,6,23,0) 70%),
+      radial-gradient(620px 460px at 85% 25%, rgba(99,102,241,.40), rgba(2,6,23,0) 70%),
+      linear-gradient(160deg, #071233, #020617 70%); }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(148,163,184,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.07) 1px, transparent 1px); background-size: 48px 48px; }
+  .wm { position: absolute; left: 56px; top: 44px; height: 58px; }
+  .top { position: absolute; left: 46px; top: 128px; font: 900 196px/0.86 'Outfit'; letter-spacing: -.045em; }
+  .top span { background: linear-gradient(135deg, #7dd3fc, #38bdf8 40%, #818cf8 72%, #facc15); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 18px 40px rgba(56,189,248,.45)); }
+  .feat { position: absolute; left: 54px; top: 318px; font: 900 104px/1 'Outfit'; letter-spacing: -.02em; color: #fff; text-shadow: 0 10px 30px rgba(0,0,0,.6); }
+  .pill { position: absolute; left: 58px; top: 452px; padding: 14px 26px; border-radius: 18px; background: #facc15; color: #0b1220; font: 800 40px/1 'Outfit'; letter-spacing: -.01em; box-shadow: 0 16px 34px -10px rgba(250,204,21,.55); }
+  .sub { position: absolute; left: 60px; top: 548px; font: 700 34px/1.25 'Outfit'; color: #cbd5e1; }
+  .sub b { color: #fff; }
+  .card { position: absolute; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 40px 80px -20px rgba(0,0,0,.85), 0 0 0 3px rgba(255,255,255,.08); }
+  .rank { left: 716px; top: 96px; width: 520px; height: 501px; transform: rotate(-4deg); }
+  .rank img { width: 520px; display: block; }
+  .ai { left: 610px; top: 36px; width: 520px; height: 58px; transform: rotate(-4deg); border-radius: 14px; }
+  .ai img { width: 520px; display: block; }
+  .phone { position: absolute; left: 1028px; top: 214px; width: 232px; padding: 9px; border-radius: 40px; background: #0b0f19; box-shadow: 0 0 0 2px #1e293b, 0 40px 70px -16px rgba(0,0,0,.9); transform: rotate(6deg); }
+  .phone img { width: 232px; display: block; border-radius: 32px; }
+  .burst { position: absolute; left: 1040px; top: 142px; padding: 10px 18px; border-radius: 14px; background: #dc2626; color: #fff; font: 800 30px/1 'Outfit'; transform: rotate(6deg); box-shadow: 0 14px 30px -8px rgba(220,38,38,.7); }
+</style></head><body>
+<div class="bg"></div><div class="grid"></div>
+<img class="wm" src="../../assets/img/wordmark.png" alt="TestoZa">
+<div class="top"><span>TOP 10</span></div>
+<div class="feat">FEATURES</div>
+<div class="pill">Online Exam Platform</div>
+<div class="sub">PDF → Test → <b>Ranked Results</b></div>
+<div class="card rank"><img src="crop-rank.png" alt=""></div>
+<div class="phone"><img src="phone-warning.png" alt=""></div>
+<div class="burst">Cheating caught!</div>
+</body></html>

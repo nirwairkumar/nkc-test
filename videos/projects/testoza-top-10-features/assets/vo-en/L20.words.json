@@ -1,0 +1,44 @@
+[
+  {
+    "id": "w0",
+    "text": "Number",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "7.",
+    "start": 0.48,
+    "end": 1.12
+  },
+  {
+    "id": "w2",
+    "text": "Collect",
+    "start": 1.12,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "the",
+    "start": 1.6,
+    "end": 1.68
+  },
+  {
+    "id": "w4",
+    "text": "details",
+    "start": 1.68,
+    "end": 2.08
+  },
+  {
+    "id": "w5",
+    "text": "you",
+    "start": 2.08,
+    "end": 2.24
+  },
+  {
+    "id": "w6",
+    "text": "need.",
+    "start": 2.24,
+    "end": 2.48
+  }
+]

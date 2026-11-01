@@ -1,0 +1,233 @@
+[
+ {
+  "w": "h",
+  "r": "h",
+  "start": 0.02,
+  "end": 0.04,
+  "score": 0.988
+ },
+ {
+  "w": "equals",
+  "r": "equals",
+  "start": 0.06,
+  "end": 0.921,
+  "score": 0.337
+ },
+ {
+  "w": "u",
+  "r": "u",
+  "start": 1.502,
+  "end": 1.522,
+  "score": 0.971
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 1.682,
+  "end": 1.702,
+  "score": 0.988
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 1.842,
+  "end": 2.183,
+  "score": 0.797
+ },
+ {
+  "w": "ಅಂತ",
+  "r": "amta",
+  "start": 2.303,
+  "end": 2.503,
+  "score": 0.992
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.663,
+  "end": 2.924,
+  "score": 0.499
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 2.944,
+  "end": 3.224,
+  "score": 0.966
+ },
+ {
+  "w": "fraction",
+  "r": "fraction",
+  "start": 3.725,
+  "end": 4.185,
+  "score": 0.352
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 4.305,
+  "end": 5.106,
+  "score": 0.33
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 5.126,
+  "end": 5.407,
+  "score": 0.335
+ },
+ {
+  "w": "over",
+  "r": "over",
+  "start": 5.467,
+  "end": 5.667,
+  "score": 0.576
+ },
+ {
+  "w": "two,",
+  "r": "two",
+  "start": 5.727,
+  "end": 5.867,
+  "score": 0.278
+ },
+ {
+  "w": "ಆಮೇಲೆ",
+  "r": "aameele",
+  "start": 6.328,
+  "end": 6.708,
+  "score": 0.844
+ },
+ {
+  "w": "power",
+  "r": "power",
+  "start": 6.788,
+  "end": 7.049,
+  "score": 0.401
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 7.169,
+  "end": 7.769,
+  "score": 0.332
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 7.809,
+  "end": 7.829,
+  "score": 0.985
+ },
+ {
+  "w": "square",
+  "r": "square",
+  "start": 7.97,
+  "end": 8.31,
+  "score": 0.335
+ },
+ {
+  "w": "ಗೆ.",
+  "r": "ge",
+  "start": 8.37,
+  "end": 8.47,
+  "score": 0.98
+ },
+ {
+  "w": "ಒಂದು",
+  "r": "omdu",
+  "start": 9.311,
+  "end": 9.491,
+  "score": 0.996
+ },
+ {
+  "w": "proper",
+  "r": "proper",
+  "start": 9.572,
+  "end": 9.932,
+  "score": 0.668
+ },
+ {
+  "w": "formula",
+  "r": "formula",
+  "start": 9.992,
+  "end": 10.393,
+  "score": 0.633
+ },
+ {
+  "w": "ಯಾವ",
+  "r": "yaava",
+  "start": 10.953,
+  "end": 11.274,
+  "score": 0.955
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 11.374,
+  "end": 11.594,
+  "score": 0.498
+ },
+ {
+  "w": "ಕಲಿಯೋ",
+  "r": "kaliyoo",
+  "start": 11.634,
+  "end": 11.954,
+  "score": 0.926
+ },
+ {
+  "w": "ಅಗತ್ಯ",
+  "r": "agatya",
+  "start": 12.035,
+  "end": 12.415,
+  "score": 0.991
+ },
+ {
+  "w": "ಇಲ್ಲ.",
+  "r": "illa",
+  "start": 12.495,
+  "end": 12.675,
+  "score": 0.967
+ },
+ {
+  "w": "Insert,",
+  "r": "insert",
+  "start": 13.396,
+  "end": 13.877,
+  "score": 0.568
+ },
+ {
+  "w": "ಅದು",
+  "r": "adu",
+  "start": 14.177,
+  "end": 14.337,
+  "score": 0.996
+ },
+ {
+  "w": "ನೇರವಾಗಿ",
+  "r": "neeravaagi",
+  "start": 14.417,
+  "end": 14.958,
+  "score": 0.987
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 15.058,
+  "end": 15.419,
+  "score": 0.262
+ },
+ {
+  "w": "ಒಳಗೆ",
+  "r": "ollage",
+  "start": 15.479,
+  "end": 15.719,
+  "score": 0.942
+ },
+ {
+  "w": "ಬರುತ್ತೆ.",
+  "r": "barutte",
+  "start": 15.779,
+  "end": 16.099,
+  "score": 0.94
+ }
+]

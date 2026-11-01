@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Test, TestSettings, updateTest, generateTopics, Question, fetchTestById } from '@/lib/testsApi';
+import React, { useState, useEffect, useRef } from 'react';
+import { Test, TestSettings, updateTest, generateTopics, Question, fetchTestById, fetchSolutions } from '@/lib/testsApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ResultViewPart, resolveResultView } from '@/lib/resultView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight, Monitor, Info } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { CANDIDATE_INPUTS_TITLE, cleanInputs, suggestLabel, switchInputs } from '@/lib/candidateInputs';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -46,7 +50,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         shuffle_questions: false,
         show_results_immediate: true,
         schedule: { enabled: false },
-        start_form: { enabled: false, fields: [] },
+        start_form: { enabled: true, fields: [{ label: 'Name', required: true }] },
+        exam_interface_mode: 'nta',
         ...test.settings // Merge existing settings
     });
 
@@ -59,6 +64,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
     const [showConductPrompt, setShowConductPrompt] = useState(false);
     const [openSection, setOpenSection] = useState<'proctoring' | 'access' | 'results' | 'ai' | null>('proctoring');
+    // null while checking; the Solutions checkbox stays faded until something is uploaded.
+    const [hasSolutions, setHasSolutions] = useState<boolean | null>(null);
+    const [confirmLeave, setConfirmLeave] = useState(false);
+    // Set by the creator's own edits, so leaving for the solutions editor can warn first.
+    const dirtyRef = useRef(false);
 
     // Premium status check
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
@@ -70,7 +80,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 (test.sections && test.sections.length > 0);
 
             if (!hasQuestionsOrSections) {
-                const { data } = await fetchTestById(test.id);
+                const { data } = await fetchTestById(test.id, undefined, true);
                 if (data) {
                     setCurrentTest(data);
                     if (data.settings) {
@@ -95,6 +105,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         }
 
         loadFullTest();
+        // Tests never carry `solutions`; this endpoint says whether any are written.
+        fetchSolutions(test.id).then(({ data }) => setHasSolutions(!!data?.has_solutions));
     }, [test.id]);
 
     const formatForDateTimeLocal = (dateStr?: string) => {
@@ -166,7 +178,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 ...settings,
                 schedule: settings.schedule?.enabled
                     ? settings.schedule
-                    : { enabled: false }
+                    : { enabled: false },
+                ...(settings.start_form
+                    ? { start_form: { ...settings.start_form, fields: cleanInputs(settings.start_form.fields || []) } }
+                    : {}),
             };
 
             const { data, error } = await updateTest(test.id, {
@@ -204,6 +219,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     };
 
     const updateSetting = (key: string, value: any) => {
+        dirtyRef.current = true;
         setSettings(prev => {
             const updated = { ...prev, [key]: value };
             if (onSettingsChange) {
@@ -211,6 +227,28 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             }
             return updated;
         });
+    };
+
+    const updateSettings = (fn: (prev: TestSettings) => TestSettings) => {
+        dirtyRef.current = true;
+        setSettings(prev => {
+            const updated = fn(prev);
+            if (onSettingsChange) {
+                onSettingsChange(updated);
+            }
+            return updated;
+        });
+    };
+
+    // The first change stores every part, so a later change of defaults can't flip a saved choice.
+    const setResultView = (part: ResultViewPart, on: boolean) => {
+        updateSettings(prev => ({ ...prev, result_view: { ...resolveResultView(prev), [part]: on } }));
+    };
+
+    const goToSolutionsEditor = () => {
+        const userId = new URLSearchParams(window.location.search).get('userId');
+        onClose();
+        navigate(`/solutions-editor/${test.id}${userId ? `?userId=${userId}` : ''}`);
     };
 
     const handleAutoAssignTopics = async () => {
@@ -221,10 +259,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
         setTopicGenerating(true);
         try {
+            let activeTest = currentTest;
+            const hasQuestions = (activeTest.enable_section_mode && activeTest.sections?.some(s => s.questions && s.questions.length > 0))
+                || (activeTest.questions && activeTest.questions.length > 0);
+
+            if (!hasQuestions) {
+                const { data: fullTest } = await fetchTestById(test.id, undefined, false);
+                if (fullTest) {
+                    activeTest = fullTest;
+                    setCurrentTest(fullTest);
+                }
+            }
+
             // Flatten questions from both modes
-            const questions: Question[] = currentTest.enable_section_mode && currentTest.sections
-                ? currentTest.sections.flatMap(s => s.questions || [])
-                : currentTest.questions || [];
+            const questions: Question[] = activeTest.enable_section_mode && activeTest.sections
+                ? activeTest.sections.flatMap(s => s.questions || [])
+                : activeTest.questions || [];
 
             if (questions.length === 0) {
                 toast.error("No questions found in this test.");
@@ -250,10 +300,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             }));
 
             let updatePayload: any = {};
-            if (currentTest.enable_section_mode && currentTest.sections) {
+            if (activeTest.enable_section_mode && activeTest.sections) {
                 // We need to re-structure them back into sections
                 let qIndex = 0;
-                const updatedSections = currentTest.sections.map(sec => {
+                const updatedSections = activeTest.sections.map(sec => {
                     const secQs = (sec.questions || []).map(() => updatedQuestions[qIndex++]);
                     return { ...sec, questions: secQs };
                 });
@@ -525,29 +575,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 <div className="flex flex-col gap-4 border p-4 rounded-lg" id={mode === 'desktop' ? "tour-start-form-container" : undefined}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> Start Form</Label>
-                            <p className="text-sm text-muted-foreground">Collect details before start (Name is default).</p>
+                            <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> {CANDIDATE_INPUTS_TITLE}</Label>
+                            <p className="text-sm text-muted-foreground">What candidates fill in before the test starts (Name is default).</p>
                         </div>
                         <Switch
                             id={mode === 'desktop' ? "tour-start-form" : undefined}
                             checked={settings.start_form?.enabled}
                             onCheckedChange={(c) => {
-                                const currentFields = settings.start_form?.fields || [];
-                                const newFields = currentFields.length > 0
-                                    ? currentFields
-                                    : [{ label: 'Name', required: true }];
-                                const newState = { ...settings.start_form, enabled: c, fields: newFields };
-                                updateSetting('start_form', newState);
-                                if (!c && !settings.show_results_immediate) {
-                                    updateSetting('show_results_immediate', true);
-                                    toast.info("Result Visibility enabled automatically since Start Form was disabled.");
-                                }
+                                const { settings: next, notice } = switchInputs(settings, c);
+                                updateSettings(() => next);
+                                if (notice) toast.info(notice);
                             }}
                         />
                     </div>
                     {settings.start_form?.enabled && (
                         <div className="space-y-3 pt-1">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Form Fields</p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Inputs</p>
                             <div className="space-y-2">
                                 {(settings.start_form?.fields || []).map((field, idx) => (
                                     <div key={idx} className={`flex gap-2 items-center p-2 rounded-lg border ${idx === 0 ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
@@ -564,7 +607,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                                 newFields[idx] = { ...newFields[idx], label: e.target.value };
                                                 updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                             }}
-                                            placeholder={idx === 0 ? "e.g. Name" : "Field label (e.g. Roll No)"}
+                                            placeholder={idx === 0 ? "Name" : suggestLabel(settings.start_form?.fields || [])}
                                             className={`h-8 text-sm flex-1 ${idx === 0 ? 'border-indigo-300 dark:border-indigo-700 focus-visible:ring-indigo-400' : ''}`}
                                         />
                                         <div className="flex items-center gap-1.5 shrink-0">
@@ -602,7 +645,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     const newFields = [...(settings.start_form?.fields || []), { label: '', required: true }];
                                     updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                 }}
-                            >+ Add Another Field</Button>
+                            >+ Add another input</Button>
                         </div>
                     )}
                 </div>
@@ -610,30 +653,105 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         </div>
     );
 
+    const renderResultView = (mode: string) => {
+        const view = resolveResultView(settings);
+        const rows: { part: ResultViewPart; title: string; body: string }[] = [
+            { part: 'solution_key', title: 'Solution key', body: 'Each question with their answer, the correct answer and time taken.' },
+            {
+                part: 'time_matrix', title: 'Time & cognitive matrix',
+                body: view.solution_key
+                    ? 'Where their time went, plus topic strengths.'
+                    : 'Compact view only: question numbers and time, no answers.',
+            },
+            { part: 'ai_analysis', title: 'Analysis with AI', body: 'An AI chat that explains their result.' },
+            { part: 'feedback', title: 'Exam feedback', body: 'Asks for stars and a short note. You get it in Reports & feedback.' },
+            { part: 'solutions', title: 'Solutions', body: 'Your step-by-step solutions.' },
+        ];
+        const solutionsReady = hasSolutions === true;
+        const allOff = rows.every(r => !(r.part === 'solutions' ? view.solutions && solutionsReady : view[r.part]));
+
+        return (
+            <div className="border-t px-4 pb-4 pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Candidates can see</p>
+                {/* Two columns on wide screens; the top border is dropped on the first row of each layout */}
+                <div className="mt-1 grid gap-x-6 md:grid-cols-2">
+                    {rows.map(({ part, title, body }) => {
+                        const isSolutions = part === 'solutions';
+                        const locked = isSolutions && !solutionsReady;
+                        const id = `${mode}-result-view-${part}`;
+                        return (
+                            <div key={part} className="border-t border-slate-100 py-3 first:border-t-0 dark:border-slate-800 md:[&:nth-child(2)]:border-t-0">
+                                <div className={`flex items-start gap-3 ${locked ? 'opacity-50' : ''}`}>
+                                    <Checkbox
+                                        id={id}
+                                        className="mt-0.5"
+                                        checked={locked ? false : view[part]}
+                                        disabled={locked}
+                                        onCheckedChange={(c) => setResultView(part, c === true)}
+                                    />
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                        <label htmlFor={id} className={`block text-sm font-medium leading-tight ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                            {title}
+                                        </label>
+                                        <p className="text-xs text-muted-foreground">
+                                            {locked ? (hasSolutions === null ? 'Checking for solutions…' : 'No solutions uploaded yet.') : body}
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Outside the faded row so the link stays readable */}
+                                {isSolutions && (
+                                    <button
+                                        type="button"
+                                        onClick={() => (dirtyRef.current ? setConfirmLeave(true) : goToSolutionsEditor())}
+                                        className="ml-7 mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    >
+                                        {solutionsReady ? 'Edit solutions' : 'Upload solutions'} <ChevronRight className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-muted-foreground dark:bg-slate-900">
+                    {allOff
+                        ? 'Candidates will see only their marks (and section marks).'
+                        : 'Marks are always shown. Untick everything to show marks only.'}
+                </p>
+            </div>
+        );
+    };
+
     const renderResults = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between border p-4 rounded-lg">
-                    <div className="space-y-0.5">
-                        <Label className="flex items-center gap-2"><Eye className="w-4 h-4" /> Result Visibility</Label>
-                        <p className="text-sm text-muted-foreground">Show detailed analysis immediately after submit.</p>
+                <div className="border rounded-lg">
+                    <div className="flex items-center justify-between p-4">
+                        <div className="space-y-0.5">
+                            <Label className="flex items-center gap-2"><Eye className="w-4 h-4" /> Result Visibility</Label>
+                            <p className="text-sm text-muted-foreground">
+                                {settings.show_results_immediate !== false
+                                    ? 'Candidates see their result right after they submit.'
+                                    : 'Results are held. Candidates see a "submitted" page.'}
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings.show_results_immediate !== false}
+                            onCheckedChange={(c) => {
+                                updateSetting('show_results_immediate', c);
+                                if (!c) {
+                                    const currentFields = settings.start_form?.fields || [];
+                                    const hasName = currentFields.some(f => f.label.toLowerCase() === 'name');
+                                    const newFields = hasName ? currentFields : [{ label: 'Name', required: true }, ...currentFields];
+                                    updateSetting('start_form', {
+                                        enabled: true,
+                                        fields: newFields
+                                    });
+                                    toast.info(`${CANDIDATE_INPUTS_TITLE} turned on, so held results can be matched to names.`);
+                                }
+                            }}
+                        />
                     </div>
-                    <Switch
-                        checked={settings.show_results_immediate}
-                        onCheckedChange={(c) => {
-                            updateSetting('show_results_immediate', c);
-                            if (!c) {
-                                const currentFields = settings.start_form?.fields || [];
-                                const hasName = currentFields.some(f => f.label.toLowerCase() === 'name');
-                                const newFields = hasName ? currentFields : [{ label: 'Name', required: true }, ...currentFields];
-                                updateSetting('start_form', {
-                                    enabled: true,
-                                    fields: newFields
-                                });
-                                toast.info("Start Form enabled automatically for security.");
-                            }
-                        }}
-                    />
+                    {settings.show_results_immediate !== false && renderResultView(mode)}
                 </div>
 
                 <div className="flex items-center justify-between border p-4 rounded-lg">
@@ -676,6 +794,250 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         checked={settings.shuffle_questions}
                         onCheckedChange={(c) => updateSetting('shuffle_questions', c)}
                     />
+                </div>
+
+                {/* Exam Layout & Interface Mode Selector (Compact with Info Tooltips) */}
+                <div className="flex flex-col gap-3.5 border p-4 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <Label className="text-sm sm:text-base font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                                <Monitor className="w-4 h-4 text-indigo-600" /> Exam Interface Layout
+                            </Label>
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Info className="w-3.5 h-3.5" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                        Select the test-taking interface your students will see during the examination.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800">
+                            Candidate Experience
+                        </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Standard Mode Card */}
+                        <div
+                            onClick={() => updateSetting('exam_interface_mode', 'nta')}
+                            className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between gap-2.5 relative ${
+                                (settings.exam_interface_mode || 'nta') === 'nta'
+                                    ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs ring-2 ring-indigo-500/20'
+                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-950/40'
+                            }`}
+                        >
+                            {/* Header with Radio, Title & Info Button */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                        (settings.exam_interface_mode || 'nta') === 'nta'
+                                            ? 'border-indigo-600 bg-indigo-600'
+                                            : 'border-slate-400 dark:border-slate-600'
+                                    }`}>
+                                        {(settings.exam_interface_mode || 'nta') === 'nta' && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                    </div>
+                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <span>🏛️ Standard Mode</span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            Default
+                                        </span>
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Info className="w-3 h-3" />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                                    Traditional JEE / NEET / Government exam format with right-side question palette.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Realistic Mini Visual Mockup - Standard Layout */}
+                            <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-2 space-y-1.5 select-none pointer-events-none">
+                                {/* Mockup Top Header */}
+                                <div className="flex items-center justify-between px-1.5 py-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-8 h-2 bg-purple-100 dark:bg-purple-900/60 rounded text-[6px] text-purple-700 dark:text-purple-300 text-center font-bold">01:45</div>
+                                        <div className="w-6 h-2 bg-red-500 rounded text-[6px] text-white text-center font-bold">Submit</div>
+                                    </div>
+                                </div>
+
+                                {/* Mockup Body: Split Left Question + Right Palette */}
+                                <div className="flex gap-1.5 h-19">
+                                    {/* Left Question Area (65%) */}
+                                    <div className="flex-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 p-1.5 flex flex-col justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <div className="w-8 h-1.5 bg-indigo-500 rounded" />
+                                                <div className="w-6 h-1 bg-emerald-400 rounded" />
+                                            </div>
+                                            <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                            <div className="w-3/4 h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                        </div>
+                                        {/* Mockup Options */}
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
+                                                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                <div className="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded" />
+                                            </div>
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-400">
+                                                <div className="w-2 h-2 rounded-full bg-blue-600" />
+                                                <div className="w-12 h-1 bg-blue-400 rounded" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Question Palette (35%) */}
+                                    <div className="w-16 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 p-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="text-[6px] font-bold text-slate-400 uppercase text-center mb-1">Palette</div>
+                                            <div className="grid grid-cols-3 gap-0.5">
+                                                <div className="h-2.5 rounded-xs bg-emerald-500 text-[6px] text-white font-bold flex items-center justify-center">1</div>
+                                                <div className="h-2.5 rounded-xs bg-red-500 text-[6px] text-white font-bold flex items-center justify-center">2</div>
+                                                <div className="h-2.5 rounded-xs bg-purple-600 text-[6px] text-white font-bold flex items-center justify-center">3</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">4</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">5</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">6</div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                    </div>
+                                </div>
+
+                                {/* Mockup Bottom Controls */}
+                                <div className="flex items-center justify-between px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-6 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-6 h-1.5 bg-purple-500 rounded" />
+                                        <div className="w-8 h-1.5 bg-blue-600 rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modern Mode Card */}
+                        <div
+                            onClick={() => updateSetting('exam_interface_mode', 'corporate')}
+                            className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between gap-2.5 relative ${
+                                settings.exam_interface_mode === 'corporate'
+                                    ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs ring-2 ring-indigo-500/20'
+                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-950/40'
+                            }`}
+                        >
+                            {/* Header with Radio, Title & Info Button */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                        settings.exam_interface_mode === 'corporate'
+                                            ? 'border-indigo-600 bg-indigo-600'
+                                            : 'border-slate-400 dark:border-slate-600'
+                                    }`}>
+                                        {settings.exam_interface_mode === 'corporate' && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                    </div>
+                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <span>💼 Modern Mode</span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 uppercase">
+                                            Modern
+                                        </span>
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Info className="w-3 h-3" />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                                    Distraction-free centered card layout, top progress bar & clean options.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Realistic Mini Visual Mockup - Modern Layout */}
+                            <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-2 space-y-1.5 select-none pointer-events-none">
+                                {/* Mockup Top Header */}
+                                <div className="flex items-center justify-between px-1.5 py-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-2.5 h-2.5 rounded bg-indigo-600" />
+                                        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-7 h-2 bg-slate-100 dark:bg-slate-700 rounded text-[6px] text-slate-600 dark:text-slate-300 text-center font-bold">Q 4/20</div>
+                                        <div className="w-8 h-2 bg-slate-100 dark:bg-slate-700 rounded text-[6px] text-slate-600 dark:text-slate-300 text-center font-bold">01:45</div>
+                                        <div className="w-6 h-2 bg-rose-600 rounded text-[6px] text-white text-center font-bold">Submit</div>
+                                    </div>
+                                </div>
+
+                                {/* Top Progress Line */}
+                                <div className="w-full h-0.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div className="w-1/3 h-full bg-indigo-600" />
+                                </div>
+
+                                {/* Mockup Centered Question Card */}
+                                <div className="h-19 flex justify-center">
+                                    <div className="w-[85%] bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1.5 flex flex-col justify-between shadow-2xs">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <div className="w-10 h-1.5 bg-indigo-600 rounded" />
+                                                <div className="w-8 h-1 bg-emerald-500 rounded" />
+                                            </div>
+                                            <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                            <div className="w-4/5 h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                        </div>
+                                        {/* Mockup Centered Elevated Options */}
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700">
+                                                <div className="w-2 h-2 rounded bg-slate-200 dark:bg-slate-600 text-[5px] flex items-center justify-center font-bold">A</div>
+                                                <div className="w-12 h-1 bg-slate-300 dark:bg-slate-600 rounded" />
+                                            </div>
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-500">
+                                                <div className="w-2 h-2 rounded bg-indigo-600 text-[5px] text-white flex items-center justify-center font-bold">B</div>
+                                                <div className="w-14 h-1 bg-indigo-400 rounded" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Mockup Docked Bottom Action Bar */}
+                                <div className="flex items-center justify-between px-2 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-7 h-1.5 bg-slate-200 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-6 h-1.5 bg-slate-200 dark:bg-slate-600 rounded" />
+                                        <div className="w-8 h-1.5 bg-indigo-600 rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -914,6 +1276,23 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             handleSave(true);
                         }} className="bg-indigo-600 hover:bg-indigo-700">
                             Save & Move to Conduct Exam
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+                <AlertDialogContent className="max-w-[min(420px,calc(100vw-32px))] rounded-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your settings changes aren't saved yet. Save first, or leave and lose them.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl">Stay</AlertDialogCancel>
+                        <AlertDialogAction onClick={goToSolutionsEditor} className="rounded-xl bg-red-600 hover:bg-red-700">
+                            Leave
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

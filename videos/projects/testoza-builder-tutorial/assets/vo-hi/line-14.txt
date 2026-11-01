@@ -1,0 +1,3 @@
+अब Section A को दो में बाँटते हैं। जहाँ से केमिस्ट्री शुरू होती है, वहाँ प्लस पर क्लिक करके Split section here। पहले हिस्से का नाम Physics, नए का Chemistry।
+Integral वाला सवाल अभी भी Chemistry में है — उसे भी split करके नाम दिया Mathematics। और आख़िर में, Bonus को Mathematics में Merge कर दिया।
+Physics, Chemistry, Mathematics — बिल्कुल JEE जैसा।

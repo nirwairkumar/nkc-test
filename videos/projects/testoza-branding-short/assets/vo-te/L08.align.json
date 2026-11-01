@@ -1,0 +1,65 @@
+[
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 0.06,
+  "end": 0.201,
+  "score": 0.991
+ },
+ {
+  "w": "institute.",
+  "r": "institute",
+  "start": 0.282,
+  "end": 0.945,
+  "score": 0.882
+ },
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 1.146,
+  "end": 1.287,
+  "score": 0.994
+ },
+ {
+  "w": "test.",
+  "r": "test",
+  "start": 1.388,
+  "end": 1.689,
+  "score": 0.998
+ },
+ {
+  "w": "ఈరోజే",
+  "r": "iiroojee",
+  "start": 2.011,
+  "end": 2.393,
+  "score": 0.855
+ },
+ {
+  "w": "తయారు",
+  "r": "tayaaru",
+  "start": 2.393,
+  "end": 2.675,
+  "score": 0.632
+ },
+ {
+  "w": "చేయండి",
+  "r": "ceeyamddi",
+  "start": 2.715,
+  "end": 3.117,
+  "score": 0.929
+ },
+ {
+  "w": "testoza.com",
+  "r": "testozacom",
+  "start": 3.378,
+  "end": 4.304,
+  "score": 0.728
+ },
+ {
+  "w": "లో.",
+  "r": "loo",
+  "start": 4.364,
+  "end": 4.484,
+  "score": 0.713
+ }
+]

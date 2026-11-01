@@ -33,7 +33,7 @@ export default function HomeHero({ onRefresh, isLoading }: HomeHeroProps) {
                 <div className="space-y-3 z-10 max-w-2xl">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800">
-                            Dashboard Workspace
+                            Explore Tests
                         </span>
                     </div>
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">

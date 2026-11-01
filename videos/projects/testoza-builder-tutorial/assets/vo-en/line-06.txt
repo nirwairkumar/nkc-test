@@ -1,0 +1,3 @@
+To add the second question, press Add question. Small tip — a new question opens in the last language you used, so tap English first.
+This question has a diagram, and there's no need to redraw it. Click Picture, and choose the screen button. Now, in the PDF, press Windows, Shift and S together, drag a box around the diagram, come back, and press Control V.
+Look — the diagram sits under the question and above the options, exactly like the paper. The fraction options come from Sy Pad. Correct answer: B.

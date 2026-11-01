@@ -5,38 +5,53 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio, Mail, Bell
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy, Gift
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import AdminLoginPanel from './AdminLoginPanel';
-import AdminAnalyticsPanel from './AdminAnalyticsPanel';
+import AnalyticsPanel from './analytics/AnalyticsPanel';
+import ExamOpsPanel from './activity/ExamOpsPanel';
+import UsersPanel from './users/UsersPanel';
+import ReferralsPanel from './referrals/ReferralsPanel';
+import TestsPanel from './tests/TestsPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
 import AITestImporter from './AITestImporter';
-import MaterialsManager from './MaterialsManager';
 import NewsFeed from './NewsFeed';
 import AdminFeatureControlPanel from './AdminFeatureControlPanel';
 import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
-import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
+import EmailPanel from './email/EmailPanel';
 import AdminNotificationsPanel from './AdminNotificationsPanel';
+import AdminTestingToolsPanel from './AdminTestingToolsPanel';
+import SupportPanel from './support/SupportPanel';
+import { supportApi } from './support/api';
 import { useNotifications } from '@/hooks/useNotifications';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'referrals' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
-    const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
+    const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
     const { unreadCount } = useNotifications();
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
     const [conductCount, setConductCount] = useState<number>(0);
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+    // Help messages still waiting for an answer (badge on Support).
+    const { data: supportWaiting = 0 } = useQuery({
+        queryKey: ['support', 'waiting'],
+        queryFn: async () => (await supportApi.list({ view: 'open', limit: 1 })).counts.open,
+        enabled: !!user && isAdmin,
+        refetchInterval: 60_000,
+        staleTime: 30_000,
+    });
 
     useEffect(() => {
         const loadInitialConductCount = async () => {
@@ -60,10 +75,10 @@ export default function AdminDashboard() {
 
     const handleLogout = async () => {
         try {
-            await authApi.logout();
+            await signOut();
             toast.success('Logged out from admin panel');
-            refreshSession();
         } catch (error) {
+            console.error("Logout failed:", error);
             toast.error('Logout failed');
         }
     };
@@ -80,11 +95,13 @@ export default function AdminDashboard() {
         {
             title: "Core Platform",
             items: [
-                { id: 'analytics' as const, label: 'Analytics & Matrix', icon: BarChart3 },
+                { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
                 { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+                { id: 'support' as const, label: 'Support', icon: LifeBuoy },
                 { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
                 { id: 'categories' as const, label: 'Categories', icon: BookOpen },
                 { id: 'users' as const, label: 'Users', icon: Users },
+                { id: 'referrals' as const, label: 'Referrals', icon: Gift },
                 { id: 'verified_creators' as const, label: 'Verified Creators', icon: GraduationCap },
                 { id: 'combined' as const, label: 'Combined Sessions', icon: Layers },
                 { id: 'activity' as const, label: 'Live Activity', icon: Radio },
@@ -96,9 +113,15 @@ export default function AdminDashboard() {
         {
             title: "Content & Resources",
             items: [
-                { id: 'materials' as const, label: 'Class Materials', icon: GraduationCap },
                 { id: 'posts' as const, label: 'News & Announcements', icon: Newspaper },
                 { id: 'email_broadcast' as const, label: 'Email Broadcast', icon: Mail },
+            ]
+        },
+        {
+            title: "Testing Tools",
+            items: [
+                // Preview surfaces before they ship. Nothing here is live or indexed.
+                { id: 'testing_tools' as const, label: 'Landing Page V2', icon: FlaskConical },
             ]
         },
         {
@@ -214,6 +237,13 @@ export default function AdminDashboard() {
                                             {unreadCount}
                                         </span>
                                     )}
+                                    {item.id === 'support' && supportWaiting > 0 && (
+                                        <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono ${
+                                            activeTab === 'support' ? 'bg-white/20 text-white border border-white/30' : 'bg-amber-500 text-white'
+                                        }`} title="Waiting for a reply">
+                                            {supportWaiting}
+                                        </span>
+                                    )}
                                     {item.id === 'activity' && (
                                         <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
                                             activeTab === 'activity'
@@ -248,21 +278,26 @@ export default function AdminDashboard() {
             {/* Main Panel Content */}
             <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
-                    {activeTab === 'analytics' && <AdminAnalyticsPanel />}
+                    {activeTab === 'analytics' && <AnalyticsPanel />}
+                    {activeTab === 'users' && <UsersPanel />}
+                    {activeTab === 'referrals' && <ReferralsPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
-                    {['tests', 'categories', 'users', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
+                    {activeTab === 'support' && <SupportPanel />}
+                    {activeTab === 'activity' && <ExamOpsPanel />}
+                    {activeTab === 'tests' && <TestsPanel />}
+                    {['categories', 'verified_creators', 'combined'].includes(activeTab) && (
                         <ManageTests activeTab={activeTab} />
                     )}
                     {activeTab === 'builder' && <CreateTestPage />}
                     {activeTab === 'importer' && <AITestImporter />}
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
-                    {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
-                    {activeTab === 'email_broadcast' && <AdminEmailBroadcastPanel />}
+                    {activeTab === 'email_broadcast' && <EmailPanel />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}
                     {activeTab === 'pricing' && <AdminPricingPanel />}
                     {activeTab === 'promos' && <AdminPromoCodesPanel />}
                     {activeTab === 'migration' && <AdminMigrationPanel />}
+                    {activeTab === 'testing_tools' && <AdminTestingToolsPanel />}
                 </div>
             </main>
         </div>

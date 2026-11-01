@@ -1,0 +1,72 @@
+[
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 0.02,
+  "end": 0.28,
+  "score": 0.999
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 0.32,
+  "end": 0.881,
+  "score": 0.348
+ },
+ {
+  "w": "సరైన",
+  "r": "saraina",
+  "start": 1.382,
+  "end": 1.762,
+  "score": 0.969
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 1.863,
+  "end": 2.203,
+  "score": 0.446
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.283,
+  "end": 2.463,
+  "score": 0.93
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 2.524,
+  "end": 2.904,
+  "score": 0.964
+ },
+ {
+  "w": "తర్వాతది,",
+  "r": "tarvaatadi",
+  "start": 3.164,
+  "end": 3.705,
+  "score": 0.996
+ },
+ {
+  "w": "ఇంకొకటి.",
+  "r": "imkokatti",
+  "start": 4.106,
+  "end": 4.586,
+  "score": 0.933
+ },
+ {
+  "w": "తర్వాత",
+  "r": "tarvaata",
+  "start": 4.947,
+  "end": 5.387,
+  "score": 0.996
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 5.948,
+  "end": 6.249,
+  "score": 0.454
+ }
+]

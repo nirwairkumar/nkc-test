@@ -1,0 +1,21 @@
+prebuild details
+prebuild q1
+prebuild q2
+prebuild q3
+prebuild q4
+prebuild q5
+  mark e:x-start @ 0.007
+record q6
+  mark e:q6add @ 2.065
+  mark e:qtype6 @ 4.684
+  mark e:multi @ 6.434
+  mark e:photo @ 8.354
+  mark e:choose6 @ 10.673
+  mark e:x-pick6 @ 14.016
+  mark e:reading @ 15.701
+  mark e:filled @ 28.16
+  mark e:ticked @ 31.815
+  mark e:check @ 34.286
+  mark e:partial @ 36.718
+  mark e:jeeadv @ 38.382
+✓ e.mp4  183 frames  13 marks  sync {"lagMedian":0.781,"lagMax":1.049,"unread":0}

@@ -1,0 +1,140 @@
+[
+  {
+    "id": "w0",
+    "text": "Here's",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "a",
+    "start": 0.4,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "student",
+    "start": 0.48,
+    "end": 0.88
+  },
+  {
+    "id": "w3",
+    "text": "on",
+    "start": 0.88,
+    "end": 1.04
+  },
+  {
+    "id": "w4",
+    "text": "her",
+    "start": 1.04,
+    "end": 1.2
+  },
+  {
+    "id": "w5",
+    "text": "phone",
+    "start": 1.2,
+    "end": 1.52
+  },
+  {
+    "id": "w6",
+    "text": "at",
+    "start": 1.52,
+    "end": 1.52
+  },
+  {
+    "id": "w7",
+    "text": "testosa.com",
+    "start": 1.68,
+    "end": 2.8
+  },
+  {
+    "id": "w8",
+    "text": "slash",
+    "start": 2.88,
+    "end": 3.28
+  },
+  {
+    "id": "w9",
+    "text": "join.",
+    "start": 3.28,
+    "end": 3.92
+  },
+  {
+    "id": "w10",
+    "text": "She",
+    "start": 3.92,
+    "end": 4.16
+  },
+  {
+    "id": "w11",
+    "text": "types",
+    "start": 4.16,
+    "end": 4.56
+  },
+  {
+    "id": "w12",
+    "text": "the",
+    "start": 4.56,
+    "end": 4.64
+  },
+  {
+    "id": "w13",
+    "text": "six",
+    "start": 4.64,
+    "end": 4.96
+  },
+  {
+    "id": "w14",
+    "text": "digits",
+    "start": 4.96,
+    "end": 5.44
+  },
+  {
+    "id": "w15",
+    "text": "and",
+    "start": 5.52,
+    "end": 5.68
+  },
+  {
+    "id": "w16",
+    "text": "her",
+    "start": 5.68,
+    "end": 5.84
+  },
+  {
+    "id": "w17",
+    "text": "exam",
+    "start": 5.84,
+    "end": 6.32
+  },
+  {
+    "id": "w18",
+    "text": "opens.",
+    "start": 6.32,
+    "end": 7.04
+  },
+  {
+    "id": "w19",
+    "text": "Name,",
+    "start": 7.04,
+    "end": 7.76
+  },
+  {
+    "id": "w20",
+    "text": "roll",
+    "start": 7.76,
+    "end": 8.16
+  },
+  {
+    "id": "w21",
+    "text": "number,",
+    "start": 8.16,
+    "end": 8.64
+  },
+  {
+    "id": "w22",
+    "text": "start.",
+    "start": 8.64,
+    "end": 9.04
+  }
+]

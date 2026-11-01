@@ -25,14 +25,22 @@ export default function UpdatePassword() {
         e.preventDefault();
         setLoading(true);
 
-        const { updatePassword } = await import('@/lib/usersApi');
-        const { error } = await updatePassword(password);
+        // M5: this is the forgot-password flow — the user cannot supply their current
+        // password, so it must NOT go through /auth/password-update (which now requires
+        // re-authentication). Update through the Supabase recovery session instead:
+        // Supabase itself authorises the change against the emailed recovery token.
+        try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            const { error } = await supabase.auth.updateUser({ password });
 
-        if (error) {
-            toast.error(error.message);
-        } else {
-            toast.success('Password updated successfully!');
-            navigate('/login');
+            if (error) {
+                toast.error(error.message || 'Could not update password. Request a new reset link.');
+            } else {
+                toast.success('Password updated successfully!');
+                navigate('/login');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Could not update password. Request a new reset link.');
         }
         setLoading(false);
     };

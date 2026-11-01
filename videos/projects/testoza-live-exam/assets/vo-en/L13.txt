@@ -1,0 +1,4 @@
+Assign to Class keeps this exam's results with the right batch.
+Attempt Limit — one exam, one attempt. No retakes after seeing the paper.
+And Require Candidate Login stays off for a class test.
+Students just open the link, type their name, and start. No accounts. No app.

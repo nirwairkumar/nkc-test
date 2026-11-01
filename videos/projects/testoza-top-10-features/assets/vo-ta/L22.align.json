@@ -1,0 +1,72 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.08,
+  "end": 0.362,
+  "score": 0.443
+ },
+ {
+  "w": "eight:",
+  "r": "eight",
+  "start": 0.422,
+  "end": 0.704,
+  "score": 0.062
+ },
+ {
+  "w": "எந்த",
+  "r": "enta",
+  "start": 1.066,
+  "end": 1.287,
+  "score": 0.99
+ },
+ {
+  "w": "phone-லயும்",
+  "r": "phonelayum",
+  "start": 1.347,
+  "end": 1.789,
+  "score": 0.588
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.89,
+  "end": 2.192,
+  "score": 0.724
+ },
+ {
+  "w": "room.",
+  "r": "room",
+  "start": 2.292,
+  "end": 2.393,
+  "score": 0.492
+ },
+ {
+  "w": "App",
+  "r": "app",
+  "start": 2.935,
+  "end": 3.056,
+  "score": 0.672
+ },
+ {
+  "w": "வேண்டாம்,",
+  "r": "veendaam",
+  "start": 3.116,
+  "end": 3.498,
+  "score": 0.913
+ },
+ {
+  "w": "sign-up",
+  "r": "signup",
+  "start": 3.639,
+  "end": 3.961,
+  "score": 0.488
+ },
+ {
+  "w": "வேண்டாம்.",
+  "r": "veendaam",
+  "start": 4.001,
+  "end": 4.323,
+  "score": 0.933
+ }
+]

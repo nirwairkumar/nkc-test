@@ -1,0 +1,184 @@
+[
+ {
+  "w": "Test-ஐ",
+  "r": "testai",
+  "start": 0.02,
+  "end": 0.5,
+  "score": 0.49
+ },
+ {
+  "w": "builder-ல",
+  "r": "builderla",
+  "start": 0.5,
+  "end": 0.941,
+  "score": 0.652
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 1.001,
+  "end": 1.201,
+  "score": 0.658
+ },
+ {
+  "w": "பண்ணுங்க",
+  "r": "pannungka",
+  "start": 1.241,
+  "end": 1.561,
+  "score": 0.918
+ },
+ {
+  "w": "பன்னிரண்டு",
+  "r": "pannirandu",
+  "start": 1.962,
+  "end": 2.382,
+  "score": 0.642
+ },
+ {
+  "w": "questions-உம்",
+  "r": "questionsum",
+  "start": 2.422,
+  "end": 2.983,
+  "score": 0.368
+ },
+ {
+  "w": "இங்கயே",
+  "r": "ingkayee",
+  "start": 3.043,
+  "end": 3.403,
+  "score": 0.721
+ },
+ {
+  "w": "இருக்கு.",
+  "r": "irukku",
+  "start": 3.443,
+  "end": 3.683,
+  "score": 0.765
+ },
+ {
+  "w": "ஒரு",
+  "r": "oru",
+  "start": 4.124,
+  "end": 4.244,
+  "score": 0.998
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 4.264,
+  "end": 4.664,
+  "score": 0.446
+ },
+ {
+  "w": "add",
+  "r": "add",
+  "start": 4.704,
+  "end": 4.864,
+  "score": 0.656
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 4.945,
+  "end": 5.265,
+  "score": 0.907
+ },
+ {
+  "w": "words-ஐ",
+  "r": "wordsai",
+  "start": 5.725,
+  "end": 6.106,
+  "score": 0.278
+ },
+ {
+  "w": "வழக்கம்",
+  "r": "valakkam",
+  "start": 6.106,
+  "end": 6.426,
+  "score": 0.895
+ },
+ {
+  "w": "போல",
+  "r": "poola",
+  "start": 6.446,
+  "end": 6.626,
+  "score": 0.975
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 6.726,
+  "end": 6.946,
+  "score": 0.313
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 6.946,
+  "end": 7.247,
+  "score": 0.893
+ },
+ {
+  "w": "Formula-க்கு,",
+  "r": "formulakku",
+  "start": 7.667,
+  "end": 8.248,
+  "score": 0.697
+ },
+ {
+  "w": "Maths",
+  "r": "maths",
+  "start": 8.388,
+  "end": 8.708,
+  "score": 0.489
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 8.748,
+  "end": 8.848,
+  "score": 0.628
+ },
+ {
+  "w": "symbols",
+  "r": "symbols",
+  "start": 8.888,
+  "end": 9.229,
+  "score": 0.289
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 9.309,
+  "end": 9.489,
+  "score": 0.743
+ },
+ {
+  "w": "பண்ணுங்க",
+  "r": "pannungka",
+  "start": 9.529,
+  "end": 9.849,
+  "score": 0.895
+ },
+ {
+  "w": "இதுதான்",
+  "r": "itutaan",
+  "start": 10.189,
+  "end": 10.51,
+  "score": 0.854
+ },
+ {
+  "w": "Sy",
+  "r": "sy",
+  "start": 10.53,
+  "end": 10.67,
+  "score": 0.406
+ },
+ {
+  "w": "Pad.",
+  "r": "pad",
+  "start": 10.75,
+  "end": 10.95,
+  "score": 0.994
+ }
+]

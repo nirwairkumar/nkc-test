@@ -1,0 +1,100 @@
+[
+ {
+  "w": "Phone-ലാണോ?",
+  "r": "phonelaannoo",
+  "start": 0.04,
+  "end": 0.542,
+  "score": 0.818
+ },
+ {
+  "w": "Code",
+  "r": "code",
+  "start": 0.862,
+  "end": 1.083,
+  "score": 0.103
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.083,
+  "end": 1.344,
+  "score": 0.58
+ },
+ {
+  "w": "ചെയ്ത്,",
+  "r": "ceyt",
+  "start": 1.344,
+  "end": 1.464,
+  "score": 0.29
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 1.504,
+  "end": 1.885,
+  "score": 0.538
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 1.905,
+  "end": 2.046,
+  "score": 0.893
+ },
+ {
+  "w": "ചെയ്താൽ,",
+  "r": "ceytaala",
+  "start": 2.126,
+  "end": 2.427,
+  "score": 0.965
+ },
+ {
+  "w": "അവിടെയും",
+  "r": "avitteyum",
+  "start": 2.547,
+  "end": 2.888,
+  "score": 0.92
+ },
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 2.888,
+  "end": 3.229,
+  "score": 0.978
+ },
+ {
+  "w": "brand.",
+  "r": "brand",
+  "start": 3.229,
+  "end": 3.47,
+  "score": 0.572
+ },
+ {
+  "w": "ഓരോ",
+  "r": "ooroo",
+  "start": 3.791,
+  "end": 4.011,
+  "score": 0.957
+ },
+ {
+  "w": "question-ഉം,",
+  "r": "questionum",
+  "start": 4.031,
+  "end": 4.433,
+  "score": 0.41
+ },
+ {
+  "w": "നിങ്ങളുടെ",
+  "r": "ningngallutte",
+  "start": 4.553,
+  "end": 4.894,
+  "score": 0.959
+ },
+ {
+  "w": "പേരിൽ.",
+  "r": "peerila",
+  "start": 4.894,
+  "end": 5.115,
+  "score": 0.707
+ }
+]

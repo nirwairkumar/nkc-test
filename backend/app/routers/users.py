@@ -1,15 +1,15 @@
 import math
-import base64
-import json
-import time
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from app.core.database import get_db, supabase # Import global supabase client
 from supabase import Client
 from typing import Optional, List, Dict, Any
-from cachetools import TTLCache
+import logging
+from postgrest.types import ReturnMethod
+from app.core.auth import is_admin_user, is_admin_email, verify_auth_claims
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
-admin_cache = TTLCache(maxsize=1000, ttl=300) # 5 minutes in-memory cache for admin email checks
 
 def _verify_auth_token(request: Request, db: Client) -> str:
     """Verify JWT from Authorization header and return requesting user's ID."""
@@ -20,45 +20,21 @@ def _verify_auth_token(request: Request, db: Client) -> str:
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
     token = auth_header.replace("Bearer ", "")
 
-    # Fast path: decode JWT payload locally to eliminate 300ms network roundtrip to Supabase Auth API
+    # get_claims() verifies the signature (locally via cached JWKS for asymmetric keys,
+    # via Supabase Auth for HS256). Never trust an unverified JWT payload.
     try:
-        parts = token.split(".")
-        if len(parts) == 3:
-            payload_b64 = parts[1]
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload = json.loads(base64.b64decode(payload_b64).decode("utf-8"))
-            user_id = payload.get("sub")
-            exp = payload.get("exp")
-            if user_id and exp and time.time() < exp:
-                return user_id
+        claims_response = db.auth.get_claims(token)
     except Exception:
-        pass
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    try:
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_response.user.id
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+    user_id = claims_response["claims"].get("sub") if claims_response else None
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user_id
 
 def _verify_is_admin(request: Request, db: Client) -> str:
     requesting_user_id = _verify_auth_token(request, db)
-    
-    # Check if admin
-    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
-    is_admin = False
-    if profile_res.data:
-        email = profile_res.data[0].get("email")
-        if email:
-            if email in admin_cache:
-                is_admin = admin_cache[email]
-            else:
-                admin_res = db.table("admins").select("email").eq("email", email).execute()
-                is_admin = bool(admin_res.data)
-                admin_cache[email] = is_admin
-            
-    if not is_admin:
+    if not is_admin_user(requesting_user_id, db):
         raise HTTPException(status_code=403, detail="Admin authorization required")
     return requesting_user_id
 
@@ -66,51 +42,37 @@ def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
     requesting_user_id = _verify_auth_token(request, db)
     if requesting_user_id == user_id:
         return requesting_user_id
-        
-    # Check if admin
-    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
-    is_admin = False
-    if profile_res.data:
-        email = profile_res.data[0].get("email")
-        if email:
-            if email in admin_cache:
-                is_admin = admin_cache[email]
-            else:
-                admin_res = db.table("admins").select("email").eq("email", email).execute()
-                is_admin = bool(admin_res.data)
-                admin_cache[email] = is_admin
-            
-    if not is_admin:
+    if not is_admin_user(requesting_user_id, db):
         raise HTTPException(status_code=403, detail="Unauthorized access")
     return requesting_user_id
 
 @router.put("/{user_id}/verify")
-async def verify_creator(
+def verify_creator(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
 ):
-    print(f"\n{'='*60}")
-    print(f"VERIFY CREATOR REQUEST for user_id: {user_id}")
-    print(f"{'='*60}")
+    logger.debug(f"\n{'='*60}")
+    logger.debug(f"VERIFY CREATOR REQUEST for user_id: {user_id}")
+    logger.debug(f"{'='*60}")
     
     try:
         _verify_is_admin(request, db)
         from datetime import datetime, timezone
         
         # Step 1: Check if profile exists
-        print(f"Checking if profile exists...")
+        logger.debug(f"Checking if profile exists...")
         profile_check = supabase.table("profiles").select("id").eq("id", user_id).execute()
-        print(f"Profile check result: {profile_check.data}")
+        logger.debug(f"Profile check result: {profile_check.data}")
         
         if not profile_check.data or len(profile_check.data) == 0:
-            print(f"⚠ Profile doesn't exist for user {user_id}")
-            print(f"Fetching user details from auth.users...")
+            logger.debug(f"⚠ Profile doesn't exist for user {user_id}")
+            logger.debug(f"Fetching user details from auth.users...")
             
             # Get user details from auth
             try:
                 auth_user = supabase.auth.admin.get_user_by_id(user_id)
-                print(f"Auth user found: {auth_user}")
+                logger.debug(f"Auth user found: {auth_user}")
                 
                 # Create profile
                 profile_data = {
@@ -119,11 +81,11 @@ async def verify_creator(
                     "full_name": auth_user.user.user_metadata.get("full_name") if auth_user and auth_user.user and auth_user.user.user_metadata else None,
                 }
                 
-                print(f"Creating profile with data: {profile_data}")
+                logger.debug(f"Creating profile with data: {profile_data}")
                 create_result = supabase.table("profiles").insert(profile_data).execute()
-                print(f"Profile created: {create_result.data}")
+                logger.debug(f"Profile created: {create_result.data}")
             except Exception as create_error:
-                print(f"Error creating profile: {create_error}")
+                logger.error(f"Error creating profile: {create_error}")
                 raise HTTPException(status_code=500, detail=f"User profile doesn't exist and couldn't be created: {str(create_error)}")
         
         # Step 2: Update with verification
@@ -132,28 +94,28 @@ async def verify_creator(
             "verified_at": datetime.now(timezone.utc).isoformat()
         }
         
-        print(f"Updates to apply: {updates}")
+        logger.debug(f"Updates to apply: {updates}")
         
         # Use global 'supabase' client to bypass RLS for admin action
         response = supabase.table("profiles").update(updates).eq("id", user_id).execute()
         
-        print(f"Response: {response}")
-        print(f"Response Data: {response.data}")
+        logger.debug(f"Response: {response}")
+        logger.debug(f"Response Data: {response.data}")
         
         if response.data and len(response.data) > 0:
-            print(f"✓ Verification successful!")
-            print(f"{'='*60}\n")
+            logger.debug(f"✓ Verification successful!")
+            logger.debug(f"{'='*60}\n")
             return response.data[0]
         
-        print(f"✗ No data returned from update - user might not exist")
-        print(f"{'='*60}\n")
+        logger.debug(f"✗ No data returned from update - user might not exist")
+        logger.debug(f"{'='*60}\n")
         raise HTTPException(status_code=404, detail="User profile not found")
     except HTTPException:
         raise
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"Error verifying creator: {e}")
+        logger.error(f"Error verifying creator: {e}")
         # Check if it's a known error type
         if hasattr(e, 'message'):
             detail = e.message
@@ -164,7 +126,7 @@ async def verify_creator(
         raise HTTPException(status_code=500, detail=f"Failed to verify: {detail}")
 
 @router.put("/{user_id}/revoke")
-async def revoke_verification(
+def revoke_verification(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -185,41 +147,42 @@ async def revoke_verification(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error revoking verification: {e}")
+        logger.error(f"Error revoking verification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/check-admin")
-async def check_admin(
+def check_admin(
     request: Request,
     user_id: str,
     db: Client = Depends(get_db)
 ):
+    # L2: this endpoint is what the admin frontend gates its UI on. The real security
+    # boundary is _verify_is_admin on each privileged route (C5), but two things here
+    # were wrong:
+    #   1. the 401 from _verify_auth_token was swallowed by the bare `except` below and
+    #      returned as HTTP 200 + false, so an admin whose access token had merely
+    #      EXPIRED was silently demoted in the UI instead of the client refreshing it;
+    #   2. any logged-in user could pass someone else's user_id and learn whether that
+    #      account is an admin.
+    requesting_user_id = _verify_auth_token(request, db)
+    if user_id != requesting_user_id and not is_admin_user(requesting_user_id, db):
+        # Answer only about yourself, unless you are already an admin.
+        return False
+
     try:
-        _verify_auth_token(request, db)
         # 1. Fetch user's email from profiles
         user_profile = supabase.table("profiles").select("email").eq("id", user_id).execute()
         if not user_profile.data:
             return False
             
-        user_email = user_profile.data[0].get("email")
-        if not user_email:
-            return False
-
-        # Check in-memory cache first
-        if user_email in admin_cache:
-            return admin_cache[user_email]
-
-        # 2. Check if email exists in admins table
-        response = supabase.table("admins").select("email").eq("email", user_email).execute()
-        is_admin = bool(response.data)
-        admin_cache[user_email] = is_admin
-        return is_admin
+        # 2. Check if email exists in admins table (cached)
+        return is_admin_email(user_profile.data[0].get("email"))
     except Exception as e:
-        print(f"Error checking admin: {e}")
+        logger.error(f"Error checking admin: {e}")
         return False
 
 @router.get("/")
-async def get_all_users(
+def get_all_users(
     request: Request,
     ids: Optional[str] = None,
     page: Optional[int] = None,
@@ -267,7 +230,7 @@ async def get_all_users(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching users: {e}")
+        logger.error(f"Error fetching users: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 ALLOWED_PROFILE_FIELDS = {
@@ -284,8 +247,11 @@ ALLOWED_PROFILE_FIELDS = {
     "verified_by_admin_id"
 }
 
+# The verified tick is granted by an admin (PUT /{user_id}/verify), never self-set.
+ADMIN_ONLY_PROFILE_FIELDS = {"is_verified_creator", "verified_role", "verified_at", "verified_by_admin_id"}
+
 @router.put("/{user_id}")
-async def update_user_profile(
+def update_user_profile(
     user_id: str,
     updates: Dict[str, Any],
     request: Request,
@@ -293,11 +259,26 @@ async def update_user_profile(
 ):
     try:
         # 1. Authorize: user can update own profile, or admin can update any profile
-        _verify_owner_or_admin(user_id, request, db)
-        
+        claims = verify_auth_claims(request, db)
+        requesting_user_id = claims["sub"]
+        caller_is_admin = is_admin_user(requesting_user_id, db)
+        if requesting_user_id != user_id and not caller_is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized access")
+
         # 2. Sanitize payload fields to prevent 400 Bad Request on unknown columns (e.g., updated_at)
         sanitized_updates = {k: v for k, v in updates.items() if k in ALLOWED_PROFILE_FIELDS and v is not None}
-        
+
+        # Admin checks read the profile email, so for everyone else it always follows
+        # the login's verified email: setting it to an admin's address must not work.
+        if not caller_is_admin:
+            for field in ADMIN_ONLY_PROFILE_FIELDS:
+                sanitized_updates.pop(field, None)
+            if "email" in sanitized_updates:
+                if claims.get("email"):
+                    sanitized_updates["email"] = claims["email"]
+                else:
+                    sanitized_updates.pop("email")
+
         if not sanitized_updates:
             # Fallback if empty dictionary sent, return existing profile
             existing = supabase.table("profiles").select("*").eq("id", user_id).execute()
@@ -309,7 +290,7 @@ async def update_user_profile(
         profile_check = supabase.table("profiles").select("id").eq("id", user_id).execute()
         
         if not profile_check.data:
-            print(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
+            logger.debug(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
             insert_data = dict(sanitized_updates)
             insert_data["id"] = user_id
             if "email" not in insert_data:
@@ -318,7 +299,7 @@ async def update_user_profile(
                     if auth_user and auth_user.user:
                         insert_data["email"] = auth_user.user.email
                 except Exception as auth_err:
-                    print(f"Error fetching email from auth in update_user_profile: {auth_err}")
+                    logger.error(f"Error fetching email from auth in update_user_profile: {auth_err}")
             
             response = supabase.table("profiles").insert(insert_data).execute()
         else:
@@ -339,7 +320,7 @@ async def update_user_profile(
             try:
                 supabase.auth.admin.update_user_by_id(user_id, {"user_metadata": meta_updates})
             except Exception as auth_meta_err:
-                print(f"Non-critical: error syncing user_metadata for {user_id}: {auth_meta_err}")
+                logger.error(f"Non-critical: error syncing user_metadata for {user_id}: {auth_meta_err}")
 
         # 5. Sync with Tests (if name or avatar changed)
         if "full_name" in sanitized_updates or "avatar_url" in sanitized_updates:
@@ -350,7 +331,9 @@ async def update_user_profile(
                 test_updates["creator_avatar"] = sanitized_updates["avatar_url"]
             
             if test_updates:
-                supabase.table("tests").update(test_updates).eq("created_by", user_id).execute()
+                # Minimal: the default sends every updated test back, questions and all.
+                supabase.table("tests").update(test_updates, returning=ReturnMethod.minimal)\
+                    .eq("created_by", user_id).execute()
 
         if response.data and len(response.data) > 0:
             return response.data[0]
@@ -364,11 +347,11 @@ async def update_user_profile(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating user profile: {e}")
+        logger.error(f"Error updating user profile: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{user_id}")
-async def get_user_details(
+def get_user_details(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -379,7 +362,7 @@ async def get_user_details(
         if response.data and len(response.data) > 0:
             return response.data[0]
             
-        print(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
+        logger.debug(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
         try:
             auth_user = supabase.auth.admin.get_user_by_id(user_id)
             if auth_user and auth_user.user:
@@ -393,21 +376,21 @@ async def get_user_details(
                     "email": email,
                     "full_name": full_name,
                 }
-                print(f"Auto-creating profile in get_user_details: {profile_data}")
+                logger.debug(f"Auto-creating profile in get_user_details: {profile_data}")
                 create_result = db.table("profiles").insert(profile_data).execute()
                 if create_result.data:
                     return create_result.data[0]
         except Exception as create_error:
-            print(f"Error auto-creating profile in get_user_details: {create_error}")
+            logger.error(f"Error auto-creating profile in get_user_details: {create_error}")
         return None
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching user details: {e}")
+        logger.error(f"Error fetching user details: {e}")
         raise HTTPException(status_code=500, detail=str(e))
             
 @router.delete("/{user_id}")
-async def delete_user_permanently(
+def delete_user_permanently(
     user_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -422,17 +405,17 @@ async def delete_user_permanently(
         try:
             supabase.auth.admin.delete_user(user_id)
         except Exception as auth_err:
-            print(f"Warning: could not delete auth user {user_id}: {auth_err}")
+            logger.error(f"Warning: could not delete auth user {user_id}: {auth_err}")
             
         return {"success": True, "message": f"User {user_id} deleted permanently"}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting user {user_id}: {e}")
+        logger.error(f"Error deleting user {user_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/admin/ai-history-all")
-async def get_all_ai_history(
+def get_all_ai_history(
     request: Request,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -444,12 +427,14 @@ async def get_all_ai_history(
         _verify_is_admin(request, db)
 
         # 1. Fetch AI generation history items (using global service-role client 'supabase' to bypass RLS)
-        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
+        # Note: Exclude heavy parsed_data JSON (can be 5MB+ per row) from list endpoint to save massive egress.
+        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at")
         history_res = query.order("created_at", desc=True).execute()
         ai_raw = history_res.data or []
 
         # 2. Fetch all tests created directly on the platform (tests table for manual tests)
-        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, questions, created_at").order("created_at", desc=True).execute()
+        # Note: Exclude questions JSONB from list endpoint
+        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, created_at").order("created_at", desc=True).execute()
         all_tests = tests_res.data or []
 
         # Track existing history IDs to avoid duplicate manual entries for tests created via AI/YouTube
@@ -467,8 +452,7 @@ async def get_all_ai_history(
             if custom_id.startswith("YT") or tid in existing_history_ids:
                 continue
             
-            qs = t.get("questions") or []
-            q_count = t.get("total_questions") or len(qs)
+            q_count = t.get("total_questions") or 0
 
             manual_raw.append({
                 "id": t.get("id"),
@@ -568,13 +552,11 @@ async def get_all_ai_history(
                 if search_lower not in user_str and search_lower not in title_str:
                     continue
 
-            # LIGHTWEIGHT PAYLOAD: Strip heavy questions & full text arrays from list endpoint
-            light_parsed = dict(parsed)
-            light_parsed.pop("questions", None)
-            light_parsed.pop("questions_input", None)
-            light_parsed.pop("generated_topics", None)
-            light_parsed.pop("full_text", None)
-            item["parsed_data"] = light_parsed
+            # LIGHTWEIGHT PAYLOAD: Provide tool_type and execution time without heavy question blobs
+            item["parsed_data"] = {
+                "tool_type": item_tool,
+                "execution_time_seconds": 0 if item_tool == 'manual' else (parsed.get("execution_time_seconds") or 2.4)
+            }
 
             filtered_items.append(item)
 
@@ -599,11 +581,11 @@ async def get_all_ai_history(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching all AI history: {e}")
+        logger.error(f"Error fetching all AI history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/admin/ai-history-detail/{history_id}")
-async def get_ai_history_detail(
+def get_ai_history_detail(
     history_id: str,
     request: Request,
     db: Client = Depends(get_db)
@@ -658,7 +640,7 @@ async def get_ai_history_detail(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching AI history detail: {e}")
+        logger.error(f"Error fetching AI history detail: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

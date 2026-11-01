@@ -3,11 +3,14 @@ from app.core.database import get_db, supabase
 from supabase import Client
 from datetime import datetime, timedelta
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @router.get("/overview")
-async def get_analytics_overview(
+def get_analytics_overview(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -43,12 +46,12 @@ async def get_analytics_overview(
             "bounce_rate": bounce_rate
         }
     except Exception as e:
-        print(f"Error in analytics overview: {e}")
+        logger.error(f"Error in analytics overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/daily")
-async def get_daily_trends(
+def get_daily_trends(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -104,12 +107,12 @@ async def get_daily_trends(
         return result
 
     except Exception as e:
-        print(f"Error in daily trends: {e}")
+        logger.error(f"Error in daily trends: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/pages")
-async def get_top_pages(
+def get_top_pages(
     days: int = 30,
     limit: int = 10,
     db: Client = Depends(get_db)
@@ -138,12 +141,12 @@ async def get_top_pages(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in top pages: {e}")
+        logger.error(f"Error in top pages: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/referrers")
-async def get_top_referrers(
+def get_top_referrers(
     days: int = 30,
     db: Client = Depends(get_db)
 ):
@@ -173,12 +176,12 @@ async def get_top_referrers(
         return result[:10]
 
     except Exception as e:
-        print(f"Error in referrers: {e}")
+        logger.error(f"Error in referrers: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/live")
-async def get_live_visitors(
+def get_live_visitors(
     db: Client = Depends(get_db)
 ):
     """
@@ -189,6 +192,7 @@ async def get_live_visitors(
         active = supabase.table("sessions")\
             .select("id", count="exact")\
             .gte("ended_at", five_mins_ago)\
+            .limit(0)\
             .execute()
         return {"live_visitors": active.count if hasattr(active, 'count') and active.count else 0}
     except Exception as e:

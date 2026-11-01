@@ -1,0 +1,68 @@
+VIDEO FILE
+videos/exports/testoza-builder-tutorial-en-v4.mp4   (6:37, 1080p)
+
+SUBTITLES
+youtube/en/subtitles-en.srt   (Subtitles → Add language → English → Upload file → With timing)
+
+────────────────────────────────────────
+TITLE (97 characters)
+How to Create an Online Test: Hindi + English, Diagrams, Chemistry & JEE Maths | TestoZa Tutorial
+
+────────────────────────────────────────
+DESCRIPTION
+
+Build a complete JEE-level online test, step by step, on the real TestoZa Create Test page. Questions in two languages, diagrams straight from the paper, chemistry structures, full maths with Sy Pad, and JEE-style sections, all in under 7 minutes.
+
+What you'll learn:
+• Questions in English and Hindi together (type in English letters, get Hindi)
+• Diagrams straight from a question paper (Win + Shift + S, then Ctrl + V)
+• Chemistry structures inside the question, and structure pictures as options
+• Full JEE maths with Sy Pad: integrals, fractions, roots, log, π
+• Multistep reactions with reagents on the arrow, and Match-the-list tables
+• Sections: Physics, Chemistry, Mathematics (add, split, rename, merge)
+• Save, and see exactly what your candidates see
+
+Chapters
+0:00 The finished paper
+0:18 What we will build
+0:34 Test details
+1:13 One question, two languages
+2:05 A diagram from the paper
+2:41 Chemistry structures
+3:14 Maths with Sy Pad
+4:01 The big reaction
+4:53 Match the list
+5:12 Sections
+6:14 Save
+6:25 Make your first test
+
+Make your first test free: https://testoza.com
+
+Questions used: Allen JEE (Main) Sample Test Paper 04 (selected questions, for teaching).
+
+#OnlineTest #TestMaker #JEEMain #TestoZa
+
+────────────────────────────────────────
+TAGS (paste into the Tags box)
+how to create online test, online test maker, create online test for students, online exam software, jee mock test maker, mock test platform, question paper maker, hindi question paper maker, chemistry question paper maker, math test maker, test maker for teachers, coaching institute test software, sy pad, testoza, testoza tutorial
+
+────────────────────────────────────────
+PINNED COMMENT
+Make your first test free 👉 https://testoza.com
+Which part should I make a deeper video on next: Sy Pad maths, chemistry structures, or conducting the live exam?
+
+────────────────────────────────────────
+SETTINGS
+Audience ............ No, it's not made for kids
+Category ............ Education
+Video language ...... English
+Caption certification  None of these (captions were made by us)
+Altered content ..... YES. The presenter in the corner circle is an AI-generated person, and the voice is AI-generated.
+                      (YouTube requires this for realistic synthetic people/voices.)
+Recording date/place  optional, skip
+License ............. Standard YouTube License
+Comments ............ On
+Playlist ............ "TestoZa Tutorials" (create it now; the Hindi version goes in too)
+End screen .......... from 6:25: Subscribe element + "Best for viewer" video
+Cards ............... optional: at 6:25 a link card to the Hindi version once it's live
+Thumbnail ........... not made yet (ask Claude for one)

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 190" width="260" height="190">
+<rect width="260" height="190" fill="#fbfaf6"/>
+<g fill="none" stroke="#2b2b2b" stroke-width="1.8" stroke-linejoin="round">
+<path d="M48 28 L48 158 L222 158 Z"/>
+<path d="M48 144 L62 144 L62 158"/>
+</g>
+<g font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#1f1f1f">
+<text x="34" y="26" font-style="italic">A</text>
+<text x="30" y="172" font-style="italic">B</text>
+<text x="226" y="172" font-style="italic">C</text>
+<text x="14" y="98">6 cm</text>
+<text x="116" y="180">8 cm</text>
+</g>
+<text x="250" y="20" text-anchor="end" font-family="Georgia, serif" font-size="12" fill="#6b6b6b">Fig. 2</text>
+</svg>

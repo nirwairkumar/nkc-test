@@ -1,0 +1,212 @@
+[
+ {
+  "w": "Language",
+  "r": "language",
+  "start": 0.04,
+  "end": 0.401,
+  "score": 0.499
+ },
+ {
+  "w": "switch-ஐ",
+  "r": "switchai",
+  "start": 0.441,
+  "end": 0.741,
+  "score": 0.365
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 0.841,
+  "end": 1.001,
+  "score": 0.499
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 1.041,
+  "end": 1.342,
+  "score": 0.814
+ },
+ {
+  "w": "இங்க",
+  "r": "ingka",
+  "start": 1.803,
+  "end": 2.043,
+  "score": 0.965
+ },
+ {
+  "w": "Hindi",
+  "r": "hindi",
+  "start": 2.203,
+  "end": 2.483,
+  "score": 0.62
+ },
+ {
+  "w": "select",
+  "r": "select",
+  "start": 2.564,
+  "end": 2.804,
+  "score": 0.327
+ },
+ {
+  "w": "பண்றோம்",
+  "r": "panroom",
+  "start": 2.844,
+  "end": 3.184,
+  "score": 0.872
+ },
+ {
+  "w": "தமிழும்",
+  "r": "tamilum",
+  "start": 3.485,
+  "end": 3.885,
+  "score": 0.723
+ },
+ {
+  "w": "இருக்கு",
+  "r": "irukku",
+  "start": 3.885,
+  "end": 4.126,
+  "score": 0.821
+ },
+ {
+  "w": "English",
+  "r": "english",
+  "start": 4.807,
+  "end": 5.187,
+  "score": 0.698
+ },
+ {
+  "w": "letters-ல",
+  "r": "lettersla",
+  "start": 5.207,
+  "end": 5.608,
+  "score": 0.461
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 5.708,
+  "end": 5.928,
+  "score": 0.251
+ },
+ {
+  "w": "பண்ணுங்க.",
+  "r": "pannungka",
+  "start": 5.928,
+  "end": 6.249,
+  "score": 0.881
+ },
+ {
+  "w": "Space",
+  "r": "space",
+  "start": 6.789,
+  "end": 7.19,
+  "score": 0.56
+ },
+ {
+  "w": "அடிச்சதும்",
+  "r": "adiccatum",
+  "start": 7.21,
+  "end": 7.611,
+  "score": 0.858
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 7.751,
+  "end": 8.091,
+  "score": 0.972
+ },
+ {
+  "w": "word-உம்",
+  "r": "wordum",
+  "start": 8.131,
+  "end": 8.432,
+  "score": 0.644
+ },
+ {
+  "w": "மாறிடும்",
+  "r": "maaridum",
+  "start": 8.472,
+  "end": 8.892,
+  "score": 0.832
+ },
+ {
+  "w": "தனி",
+  "r": "tani",
+  "start": 9.213,
+  "end": 9.433,
+  "score": 0.996
+ },
+ {
+  "w": "keyboard",
+  "r": "keyboard",
+  "start": 9.533,
+  "end": 9.894,
+  "score": 0.388
+ },
+ {
+  "w": "தேவையில்லை.",
+  "r": "teevaiyillai",
+  "start": 9.934,
+  "end": 11.496,
+  "score": 0.867
+ },
+ {
+  "w": "இப்போ",
+  "r": "ippoo",
+  "start": 11.516,
+  "end": 11.716,
+  "score": 0.725
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 11.756,
+  "end": 12.197,
+  "score": 0.247
+ },
+ {
+  "w": "ரெண்டு",
+  "r": "rendu",
+  "start": 12.197,
+  "end": 12.477,
+  "score": 0.985
+ },
+ {
+  "w": "மொழியிலயும்",
+  "r": "moliyilayum",
+  "start": 12.517,
+  "end": 12.978,
+  "score": 0.615
+ },
+ {
+  "w": "இருக்கு,",
+  "r": "irukku",
+  "start": 12.998,
+  "end": 13.218,
+  "score": 0.824
+ },
+ {
+  "w": "options-உம்",
+  "r": "optionsum",
+  "start": 13.539,
+  "end": 14.08,
+  "score": 0.248
+ },
+ {
+  "w": "அதே",
+  "r": "atee",
+  "start": 14.14,
+  "end": 14.32,
+  "score": 0.955
+ },
+ {
+  "w": "மாதிரி.",
+  "r": "maatiri",
+  "start": 14.36,
+  "end": 14.62,
+  "score": 0.907
+ }
+]

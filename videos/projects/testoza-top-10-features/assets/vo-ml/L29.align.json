@@ -1,0 +1,44 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.322,
+  "score": 0.435
+ },
+ {
+  "w": "ten:",
+  "r": "ten",
+  "start": 0.342,
+  "end": 0.523,
+  "score": 0.538
+ },
+ {
+  "w": "submit",
+  "r": "submit",
+  "start": 0.925,
+  "end": 1.287,
+  "score": 0.608
+ },
+ {
+  "w": "ചെയ്ത",
+  "r": "ceyta",
+  "start": 1.387,
+  "end": 1.588,
+  "score": 0.57
+ },
+ {
+  "w": "ഉടൻ",
+  "r": "uttana",
+  "start": 1.669,
+  "end": 1.97,
+  "score": 0.355
+ },
+ {
+  "w": "results.",
+  "r": "results",
+  "start": 2.171,
+  "end": 2.614,
+  "score": 0.393
+ }
+]

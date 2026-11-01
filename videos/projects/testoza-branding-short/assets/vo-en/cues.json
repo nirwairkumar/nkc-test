@@ -1,0 +1,100 @@
+{
+  "L01": {
+    "duration": 5.288958,
+    "cues": {
+      "hook": 0,
+      "how": 3.36
+    },
+    "dist": 0,
+    "words": 15,
+    "missing": []
+  },
+  "L02": {
+    "duration": 2.57725,
+    "cues": {
+      "title": 0,
+      "branding": 0.8
+    },
+    "dist": 0,
+    "words": 7,
+    "missing": []
+  },
+  "L03": {
+    "duration": 5.720417,
+    "cues": {
+      "logo": 0,
+      "name": 1.04,
+      "color": 2.48,
+      "font": 3.36,
+      "branded": 4.24
+    },
+    "dist": 1,
+    "words": 18,
+    "missing": [
+      "colour"
+    ]
+  },
+  "L04": {
+    "duration": 5.719125,
+    "cues": {
+      "q1": 0,
+      "right1": 1.28,
+      "add3": 3.2,
+      "save": 4.88
+    },
+    "dist": 0,
+    "words": 19,
+    "missing": []
+  },
+  "L05": {
+    "duration": 4.638208,
+    "cues": {
+      "conduct": 0,
+      "start": 1.36,
+      "copy": 2.08,
+      "code": 2.88
+    },
+    "dist": 0,
+    "words": 15,
+    "missing": []
+  },
+  "L06": {
+    "duration": 6.148667,
+    "cues": {
+      "dopen": 0,
+      "cname": 1.36,
+      "dgo": 2.4,
+      "dbrand": 2.96
+    },
+    "dist": 0,
+    "words": 17,
+    "missing": []
+  },
+  "L07": {
+    "duration": 5.902917,
+    "cues": {
+      "typecode": 0,
+      "pgo": 1.6,
+      "pbrand": 2.4,
+      "ans1": 4.16
+    },
+    "dist": 2,
+    "words": 21,
+    "missing": [
+      "tap",
+      "start"
+    ]
+  },
+  "L08": {
+    "duration": 4.145958,
+    "cues": {
+      "endcard": 0,
+      "endurl": 1.92
+    },
+    "dist": 1,
+    "words": 9,
+    "missing": [
+      "testozacom"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+Online test kaise banaye? In this complete Hindi tutorial you build a full JEE-level question paper on TestoZa — step by step, on the real Create Test page.
+
+What you learn:
+• Questions in Hindi and English together (type in English letters, get Hindi)
+• Diagrams straight from a question paper (Win + Shift + S, Ctrl + V)
+• Chemistry structures inside the question, and structure pictures as options
+• Full JEE maths with Sy Pad: integrals, fractions, roots, log, π
+• Multistep reactions with reagents on the arrow, Match-the-list tables
+• Sections: Physics, Chemistry, Mathematics — add, split, rename, merge
+• Save and see exactly what candidates see
+
+Chapters
+0:00 The finished paper
+0:18 What we will build
+0:32 Test details
+1:09 One question, two languages
+1:57 A diagram from the paper
+2:34 Chemistry structures
+3:06 Maths with Sy Pad
+3:43 The big reaction
+4:25 Match the list
+4:43 Sections
+5:41 Save
+5:53 Make your first test
+
+Make your first test free: https://testoza.com
+
+Questions used: Allen JEE (Main) Sample Test Paper 04 (selected questions, for teaching).
+
+#OnlineTest #TestMaker #JEEMain #HindiTutorial #TestoZa #MockTest #QuestionPaper

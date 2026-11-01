@@ -1,0 +1,128 @@
+[
+  {
+    "id": "w0",
+    "text": "Strict",
+    "start": 0,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "timer",
+    "start": 0.48,
+    "end": 0.8
+  },
+  {
+    "id": "w2",
+    "text": "runs",
+    "start": 0.8,
+    "end": 1.12
+  },
+  {
+    "id": "w3",
+    "text": "on",
+    "start": 1.12,
+    "end": 1.2
+  },
+  {
+    "id": "w4",
+    "text": "a",
+    "start": 1.2,
+    "end": 1.36
+  },
+  {
+    "id": "w5",
+    "text": "server.",
+    "start": 1.36,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "Refresh",
+    "start": 1.92,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "the",
+    "start": 2.4,
+    "end": 2.48
+  },
+  {
+    "id": "w8",
+    "text": "page,",
+    "start": 2.48,
+    "end": 2.88
+  },
+  {
+    "id": "w9",
+    "text": "close",
+    "start": 2.88,
+    "end": 3.2
+  },
+  {
+    "id": "w10",
+    "text": "the",
+    "start": 3.2,
+    "end": 3.28
+  },
+  {
+    "id": "w11",
+    "text": "browser.",
+    "start": 3.28,
+    "end": 3.84
+  },
+  {
+    "id": "w12",
+    "text": "The",
+    "start": 3.84,
+    "end": 4
+  },
+  {
+    "id": "w13",
+    "text": "clock",
+    "start": 4,
+    "end": 4.48
+  },
+  {
+    "id": "w14",
+    "text": "keeps",
+    "start": 4.48,
+    "end": 4.8
+  },
+  {
+    "id": "w15",
+    "text": "running.",
+    "start": 4.8,
+    "end": 5.44
+  },
+  {
+    "id": "w16",
+    "text": "Always",
+    "start": 5.44,
+    "end": 5.76
+  },
+  {
+    "id": "w17",
+    "text": "on",
+    "start": 5.76,
+    "end": 6
+  },
+  {
+    "id": "w18",
+    "text": "for",
+    "start": 6,
+    "end": 6.24
+  },
+  {
+    "id": "w19",
+    "text": "real",
+    "start": 6.24,
+    "end": 6.32
+  },
+  {
+    "id": "w20",
+    "text": "exams.",
+    "start": 6.48,
+    "end": 6.88
+  }
+]

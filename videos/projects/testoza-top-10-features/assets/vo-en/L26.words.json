@@ -1,0 +1,56 @@
+[
+  {
+    "id": "w0",
+    "text": "Let's",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "fast",
+    "start": 0.32,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "forward",
+    "start": 0.64,
+    "end": 0.96
+  },
+  {
+    "id": "w3",
+    "text": "to",
+    "start": 0.96,
+    "end": 1.12
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 1.12,
+    "end": 1.36
+  },
+  {
+    "id": "w5",
+    "text": "end.",
+    "start": 1.36,
+    "end": 1.84
+  },
+  {
+    "id": "w6",
+    "text": "Submit",
+    "start": 1.84,
+    "end": 2.48
+  },
+  {
+    "id": "w7",
+    "text": "and",
+    "start": 2.48,
+    "end": 2.72
+  },
+  {
+    "id": "w8",
+    "text": "confirm.",
+    "start": 2.72,
+    "end": 3.2
+  }
+]

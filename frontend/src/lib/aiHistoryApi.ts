@@ -104,7 +104,7 @@ export async function saveAiHistory(item: Omit<AiHistoryItem, 'id' | 'user_id' |
                 ...item,
                 user_id: user.id
             })
-            .select()
+            .select('id, title, question_count, created_at')
             .single();
 
         return { data, error };

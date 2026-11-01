@@ -50,24 +50,51 @@ class PromoCodeCreate(BaseModel):
     valid_till: Optional[str] = None
     is_active: bool = True
 
+import threading
+from cachetools import TTLCache
+import logging
+
+logger = logging.getLogger(__name__)
+
+_pricing_cache_lock = threading.Lock()
+_plans_cache: TTLCache = TTLCache(maxsize=10, ttl=600)
+_settings_cache: TTLCache = TTLCache(maxsize=10, ttl=600)
+
+def _bust_plans_cache():
+    with _pricing_cache_lock:
+        _plans_cache.clear()
+
+def _bust_settings_cache():
+    with _pricing_cache_lock:
+        _settings_cache.clear()
+
 # --- Plans Endpoints ---
 
 @router.get("/plans")
-async def get_plans(db: Client = Depends(get_db)):
+def get_plans(db: Client = Depends(get_db)):
+    with _pricing_cache_lock:
+        cached = _plans_cache.get("all")
+        if cached is not None:
+            return cached
+
     try:
         response = db.table("plans").select("*").order("price", desc=False).execute()
-        return response.data
+        data = response.data or []
+        with _pricing_cache_lock:
+            _plans_cache["all"] = data
+        return data
     except Exception as e:
-        print(f"Error fetching plans: {e}")
+        logger.error(f"Error fetching plans: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/plans")
-async def create_plan(payload: PlanCreate, request: Request, db: Client = Depends(get_db)):
+def create_plan(payload: PlanCreate, request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         data = payload.dict(exclude_unset=True)
         response = db.table("plans").insert(data).execute()
         if response.data:
+            _bust_plans_cache()
             return response.data[0]
         return None
     except HTTPException:
@@ -76,11 +103,12 @@ async def create_plan(payload: PlanCreate, request: Request, db: Client = Depend
         raise HTTPException(status_code=500, detail="Failed to create plan")
 
 @router.put("/plans/{plan_id}")
-async def update_plan(plan_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
+def update_plan(plan_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         response = db.table("plans").update(payload).eq("id", plan_id).execute()
         if response.data:
+            _bust_plans_cache()
             return response.data[0]
         return None
     except HTTPException:
@@ -89,7 +117,7 @@ async def update_plan(plan_id: str, payload: Dict[str, Any], request: Request, d
         raise HTTPException(status_code=500, detail="Failed to update plan")
 
 @router.delete("/plans/{plan_id}")
-async def delete_plan(plan_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_plan(plan_id: str, request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         response = db.table("plans").delete().eq("id", plan_id).execute()
@@ -102,16 +130,19 @@ async def delete_plan(plan_id: str, request: Request, db: Client = Depends(get_d
 # --- Promo Codes Endpoints ---
 
 @router.get("/promos")
-async def get_promos(db: Client = Depends(get_db)):
+def get_promos(request: Request, db: Client = Depends(get_db)):
+    # Every promo code, its discount and usage: admins only (Admin → Promo Codes).
+    # Buyers redeem through POST /promos/apply, which checks one code at a time.
+    _verify_admin_for_pricing(request, db)
     try:
         response = db.table("promo_codes").select("*").order("created_at", desc=False).execute()
         return response.data
     except Exception as e:
-        print(f"Error fetching promos: {e}")
+        logger.error(f"Error fetching promos: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/promos")
-async def create_promo(payload: PromoCodeCreate, request: Request, db: Client = Depends(get_db)):
+def create_promo(payload: PromoCodeCreate, request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         data = payload.dict(exclude_unset=True)
@@ -125,7 +156,7 @@ async def create_promo(payload: PromoCodeCreate, request: Request, db: Client = 
         raise HTTPException(status_code=500, detail="Failed to create promo")
 
 @router.put("/promos/{promo_id}")
-async def update_promo(promo_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
+def update_promo(promo_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         response = db.table("promo_codes").update(payload).eq("id", promo_id).execute()
@@ -138,7 +169,7 @@ async def update_promo(promo_id: str, payload: Dict[str, Any], request: Request,
         raise HTTPException(status_code=500, detail="Failed to update promo")
 
 @router.delete("/promos/{promo_id}")
-async def delete_promo(promo_id: str, request: Request, db: Client = Depends(get_db)):
+def delete_promo(promo_id: str, request: Request, db: Client = Depends(get_db)):
     try:
         _verify_admin_for_pricing(request, db)
         response = db.table("promo_codes").delete().eq("id", promo_id).execute()
@@ -153,13 +184,13 @@ class ApplyPromoRequest(BaseModel):
     plan_id: str
 
 @router.post("/promos/apply")
-async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
+def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     try:
         code = payload.code.strip().upper()
-        print(f"DEBUG API: code={code}, plan={payload.plan_id}")
+        logger.debug(f"DEBUG API: code={code}, plan={payload.plan_id}")
         # Fetch Promo using admin client (to bypass RLS for users)
         promo_res = supabase.table("promo_codes").select("*").eq("code", code).eq("is_active", True).execute()
-        print(f"DEBUG PROMO_RES: {promo_res.data}")
+        logger.debug(f"DEBUG PROMO_RES: {promo_res.data}")
         if not promo_res.data:
             raise HTTPException(status_code=400, detail="Invalid or inactive promo code")
         
@@ -210,29 +241,41 @@ async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     except HTTPException as he:
         raise he
     except Exception as e:
-        print(f"Error applying promo: {e}")
+        logger.error(f"Error applying promo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Global Premium Settings Endpoints ---
 
 @router.get("/settings")
-async def get_premium_settings(db: Client = Depends(get_db)):
+def get_premium_settings(db: Client = Depends(get_db)):
     """Get global premium unlock settings"""
+    with _pricing_cache_lock:
+        cached = _settings_cache.get("settings")
+        if cached is not None:
+            return cached
+
     try:
         response = db.table("app_settings").select("*").limit(1).execute()
         if response.data and len(response.data) > 0:
-            return response.data[0]
+            # Public route: `updated_by` is the admin's email (the C2 leak, through the API).
+            data = {k: v for k, v in response.data[0].items() if k != "updated_by"}
+            with _pricing_cache_lock:
+                _settings_cache["settings"] = data
+            return data
         # Return default if no settings exist
-        return {"unlock_all_premium": False}
+        default_settings = {"unlock_all_premium": False}
+        with _pricing_cache_lock:
+            _settings_cache["settings"] = default_settings
+        return default_settings
     except Exception as e:
-        print(f"Error fetching premium settings: {e}")
+        logger.error(f"Error fetching premium settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class UpdateSettingsRequest(BaseModel):
     unlock_all_premium: bool
 
 @router.put("/settings")
-async def update_premium_settings(payload: UpdateSettingsRequest, request: Request, db: Client = Depends(get_db)):
+def update_premium_settings(payload: UpdateSettingsRequest, request: Request, db: Client = Depends(get_db)):
     """Update global premium unlock settings (admin only)"""
     try:
         _verify_admin_for_pricing(request, db)
@@ -247,6 +290,7 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
             }).eq("id", settings_id).execute()
             
             if response.data:
+                _bust_settings_cache()
                 return response.data[0]
         else:
             # Insert new settings if none exist
@@ -255,6 +299,7 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
             }).execute()
             
             if response.data:
+                _bust_settings_cache()
                 return response.data[0]
         
         raise HTTPException(status_code=500, detail="Failed to update settings")
@@ -264,7 +309,7 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
         raise HTTPException(status_code=500, detail="Failed to update settings")
 
 @router.get("/check-premium-access")
-async def check_premium_access(db: Client = Depends(get_db)):
+def check_premium_access(db: Client = Depends(get_db)):
     """
     Check if premium features should be accessible.
     Returns access status based on:
@@ -294,10 +339,10 @@ async def check_premium_access(db: Client = Depends(get_db)):
             "premium_accessible": unlock_all or not has_active_plans
         }
     except Exception as e:
-        print(f"Error checking premium access: {e}")
+        logger.error(f"Error checking premium access: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 @router.post("/create-order")
-async def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
+def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
         # Invoke Edge Function (db client carries user auth)
         response = db.functions.invoke("create-order", {
@@ -310,11 +355,11 @@ async def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
             return json.loads(response.decode())
         return response
     except Exception as e:
-        print(f"Error invoking create-order: {e}")
+        logger.error(f"Error invoking create-order: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/verify-payment")
-async def verify_payment(payload: Dict[str, Any], db: Client = Depends(get_db)):
+def verify_payment(payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
         # Invoke Edge Function (db client carries user auth)
         response = db.functions.invoke("verify-payment", {
@@ -326,5 +371,5 @@ async def verify_payment(payload: Dict[str, Any], db: Client = Depends(get_db)):
             return json.loads(response.decode())
         return response
     except Exception as e:
-        print(f"Error invoking verify-payment: {e}")
+        logger.error(f"Error invoking verify-payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))

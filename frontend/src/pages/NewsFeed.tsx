@@ -12,6 +12,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { SEO } from '@/components/SEO';
+import { BLOG_HOME_DESCRIPTION, BLOG_HOME_TITLE, BLOG_NAME, BLOG_URL, blogPostPath, blogPostUrl } from '@/lib/blog';
+import { STATIC_ARTICLE_METAS } from '@/blog/articles/meta';
+import type { StaticArticleMeta } from '@/blog/articles/types';
+import type { PostFeedResponse } from '@/lib/types';
+
+/** Static articles (src/blog/articles) live in the codebase, not the posts API; they join the feed as cards. */
+type FeedPost = PostFeedResponse & { is_static?: boolean };
+
+const staticFeedPost = (a: StaticArticleMeta): FeedPost => ({
+    id: `static:${a.slug}`,
+    title: a.title,
+    slug: a.slug,
+    summary: a.description,
+    cover_image: a.cover.src,
+    category: a.category,
+    tags: [],
+    published_at: a.datePublished,
+    view_count: 0,
+    like_count: 0,
+    is_pinned: false,
+    author_id: 'testoza',
+    profiles: { id: 'testoza', full_name: a.author, avatar_url: '/logo-testoza-square.svg', is_verified_creator: false },
+    is_static: true,
+});
 
 const CATEGORIES = [
     { value: "all", label: "All Topics" },
@@ -30,10 +54,24 @@ export default function NewsFeed() {
     const { user, profile, isAdmin } = useAuth();
     const navigate = useNavigate();
 
-    const { data: posts = [], isLoading: postsLoading, error } = useQuery({
+    const { data: apiPosts = [], isLoading: postsLoading, error } = useQuery({
         queryKey: ['posts', activeCategory, searchQuery],
         queryFn: () => postsApi.getFeed(1, 100, activeCategory === 'all' ? undefined : activeCategory, searchQuery),
     });
+
+    // Same order as the API: pinned first, then newest.
+    const posts = useMemo<FeedPost[]>(() => {
+        const q = searchQuery.trim().toLowerCase();
+        const extra = STATIC_ARTICLE_METAS.filter(
+            (a) =>
+                (activeCategory === 'all' || a.category === activeCategory) &&
+                (!q || [a.title, a.description, ...a.keywords].some((t) => t.toLowerCase().includes(q))),
+        ).map(staticFeedPost);
+        if (!extra.length) return apiPosts;
+        return [...apiPosts, ...extra].sort(
+            (a, b) => Number(b.is_pinned) - Number(a.is_pinned) || Date.parse(b.published_at) - Date.parse(a.published_at),
+        );
+    }, [apiPosts, activeCategory, searchQuery]);
 
     const [features, setFeatures] = useState<FeatureFlags | null>(null);
     const [featuresLoading, setFeaturesLoading] = useState(true);
@@ -80,28 +118,55 @@ export default function NewsFeed() {
         );
     }
 
+    // Same graph the Cloudflare worker puts in the page head. The WebSite node on
+    // the home page is where Google reads the site name "TestoZa Blog" from.
+    const blogHomeUrl = `${BLOG_URL}/`;
+    const publisher = {
+        "@type": "Organization",
+        "name": "TestoZa",
+        "url": "https://testoza.com/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://testoza.com/favicon.ico"
+        }
+    };
     const blogSchema = {
         "@context": "https://schema.org",
-        "@type": "Blog",
-        "name": "TestoZa Blog & News",
-        "description": "Latest exam notifications, study strategies, tips, and product announcements from TestoZa.",
-        "url": "https://blog.testoza.com",
-        "publisher": {
-            "@type": "Organization",
-            "name": "TestoZa",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "https://testoza.com/favicon.ico"
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": `${BLOG_URL}/#website`,
+                "name": BLOG_NAME,
+                "alternateName": "TestoZa Blog & News",
+                "url": blogHomeUrl,
+                "inLanguage": "en-IN",
+                "publisher": publisher
+            },
+            {
+                "@type": "Blog",
+                "@id": `${BLOG_URL}/#blog`,
+                "name": BLOG_NAME,
+                "url": blogHomeUrl,
+                "description": BLOG_HOME_DESCRIPTION,
+                "publisher": publisher,
+                "blogPost": posts.slice(0, 10).map((p) => ({
+                    "@type": "BlogPosting",
+                    "headline": p.title,
+                    "url": blogPostUrl(p.slug),
+                    "datePublished": p.published_at
+                }))
             }
-        }
+        ]
     };
 
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans pb-24">
             <SEO
-                title="TestoZa Blog - Exam Insights, Study Tips & Product Updates"
-                description="Explore top articles, exam preparation tips, JEE/NEET syllabus changes, quiz creator strategies, and platform announcements on TestoZa Blog."
-                canonicalUrl="https://blog.testoza.com"
+                title={BLOG_HOME_TITLE}
+                siteName={BLOG_NAME}
+                description={BLOG_HOME_DESCRIPTION}
+                url={blogHomeUrl}
+                canonicalUrl={blogHomeUrl}
                 schemas={[blogSchema]}
             />
 
@@ -184,7 +249,7 @@ export default function NewsFeed() {
                         {/* Featured Lead Article Hero */}
                         {featuredPost && (
                             <Link 
-                                to={`/news/${featuredPost.slug}`} 
+                                to={blogPostPath(featuredPost.slug)}
                                 className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
                             >
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-center">
@@ -260,7 +325,7 @@ export default function NewsFeed() {
                                     {regularPosts.map((post) => (
                                         <Link
                                             key={post.id}
-                                            to={`/news/${post.slug}`}
+                                            to={blogPostPath(post.slug)}
                                             className="group flex flex-col h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                                         >
                                             <div className="aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
@@ -309,10 +374,14 @@ export default function NewsFeed() {
                                                         </span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-blue-500" /> {post.view_count || 0}</span>
-                                                        <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {post.like_count || 0}</span>
-                                                    </div>
+                                                    {post.is_static ? (
+                                                        <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Guide</span>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                                            <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-blue-500" /> {post.view_count || 0}</span>
+                                                            <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {post.like_count || 0}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Link>

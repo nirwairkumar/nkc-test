@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.06,
+  "end": 0.241,
+  "score": 0.503
+ },
+ {
+  "w": "screen,",
+  "r": "screen",
+  "start": 0.321,
+  "end": 0.662,
+  "score": 0.5
+ },
+ {
+  "w": "clean,",
+  "r": "clean",
+  "start": 0.902,
+  "end": 1.263,
+  "score": 0.398
+ },
+ {
+  "w": "படிக்க",
+  "r": "padikka",
+  "start": 1.504,
+  "end": 1.844,
+  "score": 0.714
+ },
+ {
+  "w": "ஈஸி.",
+  "r": "iisi",
+  "start": 1.945,
+  "end": 2.185,
+  "score": 0.984
+ },
+ {
+  "w": "Answer-ஐ",
+  "r": "answerai",
+  "start": 2.767,
+  "end": 3.128,
+  "score": 0.422
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 3.148,
+  "end": 3.288,
+  "score": 0.621
+ },
+ {
+  "w": "பண்ணுங்க,",
+  "r": "pannungka",
+  "start": 3.308,
+  "end": 3.569,
+  "score": 0.509
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 3.889,
+  "end": 4.13,
+  "score": 0.491
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 4.13,
+  "end": 4.21,
+  "score": 0.502
+ },
+ {
+  "w": "next.",
+  "r": "next",
+  "start": 4.27,
+  "end": 4.451,
+  "score": 0.598
+ }
+]

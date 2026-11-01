@@ -1,0 +1,169 @@
+<template>
+<link rel="stylesheet" href="assets/app.css" />
+<link rel="stylesheet" href="assets/film.css" />
+<style>
+@font-face{font-family:'Outfit';font-weight:500;font-display:block;src:url("assets/fonts/Outfit-500.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:600;font-display:block;src:url("assets/fonts/Outfit-600.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:700;font-display:block;src:url("assets/fonts/Outfit-700.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:800;font-display:block;src:url("assets/fonts/Outfit-800.woff2") format("woff2");}
+@font-face{font-family:'Outfit';font-weight:900;font-display:block;src:url("assets/fonts/Outfit-900.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:400;font-display:block;src:url("assets/fonts/Mukta-400.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:500;font-display:block;src:url("assets/fonts/Mukta-500.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:600;font-display:block;src:url("assets/fonts/Mukta-600.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:700;font-display:block;src:url("assets/fonts/Mukta-700.woff2") format("woff2");}
+@font-face{font-family:'Mukta';font-weight:800;font-display:block;src:url("assets/fonts/Mukta-800.woff2") format("woff2");}
+@font-face{font-family:'Apple Color Emoji';src:local('Apple Color Emoji');}
+@font-face{font-family:'Segoe UI Emoji';src:local('Segoe UI Emoji');}
+@font-face{font-family:'Segoe UI Symbol';src:local('Segoe UI Symbol');}
+@font-face{font-family:'Noto Color Emoji';src:local('Noto Color Emoji');}
+@font-face{font-family:'SFMono-Regular';src:local('SFMono-Regular');}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #f02-shot { position: absolute; left: 0; top: 0; width: 1440px; height: 810px; display: block; }
+</style>
+
+<div id="root" data-composition-id="f02-landing" data-width="1920" data-height="1080">
+  <div class="tz-film">
+    <div id="f02-landing-stage" class="clip tz-stage" data-start="0" data-duration="4.4" data-track-index="0"></div>
+    <div id="f02-t" class="tz-super">This is <em>TestoZa.</em></div>
+    <div class="tz-rig">
+      <div class="tz-win">
+        <div class="tz-chrome"><div class="tz-dots"><i></i><i></i><i></i></div><div class="tz-url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>testoza.com<b></b></span></div></div>
+        <div class="tz-view">
+          <div class="tz-page">
+            <img id="f02-shot" src="capture/screenshots/scroll-000.png" alt="">
+            <!-- the hero's "Generate a test with AI" button, traced over the capture -->
+            <div id="f02-cta" style="position:absolute;left:258px;top:412px;width:177px;height:38px;border-radius:9px"></div>
+          </div>
+        </div>
+        <div class="tz-curlayer" style="position:absolute;inset:0;z-index:70;pointer-events:none">
+<div class="tz-cursor"><svg viewBox="0 0 34 34"><path d="M3 2 L3 26 L9.2 20.4 L13.4 30 L17.6 28.2 L13.5 18.8 L22 18.8 Z" fill="#0b0f17" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/></svg></div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f02-landing';
+  /* ── shared film helpers (inlined by tools/build-frames.mjs; needs const ID) ── */
+const R = document.querySelector('[data-composition-id="' + ID + '"]');
+const q = (s) => R.querySelector(s);
+const qa = (s) => Array.from(R.querySelectorAll(s));
+const tl = gsap.timeline({ paused: true });
+
+/* Camera. The window sits at (240,126) in rig space; the rig scales about (960,548). */
+const REST = { scale: 0.82, x: 0, y: 0 };
+const O = { x: 960, y: 548 };
+/** Rig transform that puts window point p at screen point T with zoom s. */
+function focus(p, s, T) {
+  T = T || { x: 960, y: 560 };
+  const px = 240 + p.x, py = 126 + p.y;
+  return { scale: s, x: T.x - O.x - s * (px - O.x), y: T.y - O.y - s * (py - O.y) };
+}
+function cam(t, to, d, ease) {
+  tl.to(q('.tz-rig'), Object.assign({ duration: d || 1.2, ease: ease || 'power3.inOut' }, to), t);
+}
+
+/* Cursor: points are window coordinates (chrome included), as measured. */
+const CUR = q('.tz-cursor');
+const LAYER = q('.tz-curlayer');
+function cursorAt(t, p) { tl.set(CUR, { x: p.x - 4, y: p.y - 3, autoAlpha: 1 }, t); }
+function move(t, p, d, ease) {
+  tl.to(CUR, { x: p.x - 4, y: p.y - 3, duration: d || 0.75, ease: ease || 'power2.inOut' }, t);
+}
+function press(t, el, k) {
+  if (!el) return;
+  tl.to(el, { scale: k || 0.95, duration: 0.09, ease: 'power2.out' }, t);
+  tl.to(el, { scale: 1, duration: 0.32, ease: 'back.out(3)' }, t + 0.09);
+}
+function click(t, p, el) {
+  tl.to(CUR, { scale: 0.84, duration: 0.08, ease: 'power2.out', transformOrigin: '4px 3px' }, t);
+  tl.to(CUR, { scale: 1, duration: 0.25, ease: 'back.out(3)' }, t + 0.08);
+  const r = document.createElement('div');
+  r.className = 'tz-ripple';
+  (LAYER || R).appendChild(r);
+  tl.fromTo(r, { x: p.x, y: p.y, scale: 0.25, opacity: 0.95 }, { scale: 1.6, opacity: 0, duration: 0.6, ease: 'power2.out' }, t);
+  press(t, el);
+}
+
+/* States stacked in one place; swap is a hard cut, like a page update. */
+function only(t, show, all) {
+  all.forEach((el) => tl.set(el, { autoAlpha: el === show ? 1 : 0 }, t));
+}
+
+/* Keynote supers: words rise out of a blur, one after another. */
+function split(el) {
+  if (el.dataset.split) return Array.from(el.querySelectorAll('.tz-word'));
+  const out = [];
+  Array.from(el.childNodes).forEach((n) => {
+    if (n.nodeType === 3) {
+      n.textContent.split(/(\s+)/).forEach((w) => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { el.insertBefore(document.createTextNode(w), n); return; }
+        const s = document.createElement('span');
+        s.className = 'tz-word';
+        s.textContent = w;
+        el.insertBefore(s, n);
+        out.push(s);
+      });
+      el.removeChild(n);
+    } else {
+      n.classList.add('tz-word');
+      out.push(n);
+    }
+  });
+  el.dataset.split = '1';
+  return out;
+}
+function superIn(t, el, stagger) {
+  const w = split(el);
+  tl.set(el, { autoAlpha: 1 }, t);
+  tl.fromTo(w, { y: 44, opacity: 0, filter: 'blur(14px)' },
+    { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.75, ease: 'expo.out', stagger: stagger || 0.075 }, t);
+}
+function superOut(t, el) { tl.set(el, { autoAlpha: 0 }, t); }
+
+/* Typing: characters appear one by one (spaces included, so wrapping never jumps). */
+function typeIn(t, el, d) {
+  const text = el.textContent;
+  el.textContent = '';
+  const chars = Array.from(text).map((c) => {
+    const s = document.createElement('span');
+    s.textContent = c;
+    el.appendChild(s);
+    return s;
+  });
+  tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.001, stagger: d / chars.length, ease: 'none' }, t);
+  return chars;
+}
+
+/* Counter text driven by a tween (seek-safe: the value is a pure function of time). */
+function countUp(t, el, from, to, d, fmt) {
+  const o = { v: from };
+  const f = fmt || ((v) => String(Math.round(v)));
+  el.textContent = f(from);
+  tl.fromTo(o, { v: from }, { v: to, duration: d, ease: 'power1.inOut', onUpdate: () => { el.textContent = f(o.v); } }, t);
+}
+/* ── end helpers ── */
+
+  const M = {"cta":{"x":347,"y":475,"l":258,"t":456,"r":435,"b":494}};
+  const rig = q('.tz-rig');
+  // the window rises into the room
+  tl.fromTo(rig, { scale: 0.76, x: 0, y: 190, opacity: 0 }, { scale: 0.82, x: 0, y: 0, opacity: 1, duration: 1.3, ease: 'expo.out' }, 0);
+  superIn(0.45, q('#f02-t'));
+  // push toward the call to action while the cursor finds it
+  const cta = M.cta || { x: 346, y: 475 };
+  cam(1.5, focus(cta, 1.25, { x: 860, y: 600 }), 2.6, 'power2.inOut');
+  cursorAt(0, { x: 1300, y: 780 });
+  tl.set(CUR, { autoAlpha: 0 }, 0);
+  tl.set(CUR, { autoAlpha: 1 }, 1.45);
+  move(1.45, { x: cta.x + 30, y: cta.y + 6 }, 1.5, 'power3.inOut');
+  click(3.2, { x: cta.x + 30, y: cta.y + 6 }, q('#f02-cta'));
+  tl.fromTo('#f02-cta', { boxShadow: '0 0 0 0 rgba(56,189,248,0)' }, { boxShadow: '0 0 0 6px rgba(56,189,248,0.45)', duration: 0.3, ease: 'power2.out' }, 3.2);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

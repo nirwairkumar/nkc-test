@@ -1,0 +1,226 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-te/L01.wav",
+    "duration": 16.199792,
+    "text": "ఒక question paper, online test గా మారిపోతుంది. Equations — కొన్ని సెకన్లలో. Students ఏ phone నుంచైనా join అవుతారు. Cheating వెంటనే దొరికిపోతుంది. ప్రతి result, rank తో వస్తుంది.\nఇదే Testoza — ఇవీ దీని top ten features, ఒక్కొక్కటి ఎలా వాడాలో చూద్దాం.",
+    "raw": "{m1}ఒక question paper, online test గా మారిపోతుంది. {m2}Equations — కొన్ని సెకన్లలో. {m3}Students ఏ phone నుంచైనా join అవుతారు. {m4}Cheating వెంటనే దొరికిపోతుంది. {m5}ప్రతి result, rank తో వస్తుంది.\n{title}ఇదే TestoZa — ఇవీ దీని top ten features, ఒక్కొక్కటి ఎలా వాడాలో చూద్దాం."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-te/L02.wav",
+    "duration": 2.538208,
+    "text": "Number one: Generate with AI.",
+    "raw": "Number one: Generate with AI."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-te/L03.wav",
+    "duration": 13.925792,
+    "text": "మీ question paper PDF లో ఉందా, లేదా photos మాత్రమేనా? Generate with AI open చేయండి, file select చేయండి — మూడు pages PDF, answer key తో సహా — తర్వాత Extract Questions tap చేయండి.",
+    "raw": "మీ question paper PDF లో ఉందా, లేదా photos మాత్రమేనా? {upload}Generate with AI open చేయండి, {choose}file select చేయండి — మూడు pages PDF, answer key తో సహా — {extract}తర్వాత Extract Questions tap చేయండి."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-te/L04.wav",
+    "duration": 10.095042,
+    "text": "ఇప్పుడు చూడండి. AI ప్రతి page చదువుతుంది, questions ఒక్కొక్కటిగా వస్తాయి — options, maths, అన్నీ. అర నిమిషంలో, పన్నెండు questions రెడీ.",
+    "raw": "{reading}ఇప్పుడు చూడండి. AI ప్రతి page చదువుతుంది, {q1}questions ఒక్కొక్కటిగా వస్తాయి — options, maths, అన్నీ. {preview}అర నిమిషంలో, పన్నెండు questions రెడీ."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-te/L05.wav",
+    "duration": 10.591417,
+    "text": "చివరి page లో ఉన్న answer key కూడా చదివేసింది, కాబట్టి ప్రతి answer ఇప్పటికే mark అయ్యి ఉంది. ఒకసారి చూడండి, Save చేయండి, మీ paper ఇప్పుడు ఒక test.",
+    "raw": "{answers}చివరి page లో ఉన్న answer key కూడా చదివేసింది, కాబట్టి ప్రతి answer ఇప్పటికే mark అయ్యి ఉంది. ఒకసారి చూడండి, {save}Save చేయండి, {newcard}మీ paper ఇప్పుడు ఒక test."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-te/L06.wav",
+    "duration": 3.629542,
+    "text": "Number two: maths, science — సరిగ్గా type చేయొచ్చు.",
+    "raw": "Number two: maths, science — సరిగ్గా type చేయొచ్చు."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-te/L07.wav",
+    "duration": 12.970958,
+    "text": "Test ని builder లో open చేయండి — పన్నెండు questions ఇక్కడే ఉన్నాయి. ఒక question add చేయండి, words ఎప్పటిలాగే type చేయండి. Formula కోసం, Maths and symbols open చేయండి — ఇదే Sy Pad.",
+    "raw": "{edit}Test ని builder లో open చేయండి — పన్నెండు questions ఇక్కడే ఉన్నాయి. {addq}ఒక question add చేయండి, {q13text}words ఎప్పటిలాగే type చేయండి. {sypad}Formula కోసం, Maths and symbols open చేయండి — ఇదే Sy Pad."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-te/L08.wav",
+    "duration": 14.556792,
+    "text": "h equals u t minus అని type చేయండి, fraction key, one over two, తర్వాత power key, t square కోసం. ఒక proper formula — code ఏమీ నేర్చుకోవక్కర్లేదు. Insert, అది నేరుగా question లోకి వెళ్తుంది.",
+    "raw": "{h}h equals u t minus అని type చేయండి, {frac}fraction key, one over two, {power}తర్వాత power key, t square కోసం. {formula}ఒక proper formula — code ఏమీ నేర్చుకోవక్కర్లేదు. {insert}Insert, అది నేరుగా question లోకి వెళ్తుంది."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-te/L09.wav",
+    "duration": 4.212542,
+    "text": "Number three: తెలుగు, హిందీ — నూట పంతొమ్మిది భాషల్లో type చేయొచ్చు.",
+    "raw": "Number three: తెలుగు, హిందీ — నూట పంతొమ్మిది భాషల్లో type చేయొచ్చు."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-te/L10.wav",
+    "duration": 14.312208,
+    "text": "Language switch tap చేయండి, ఇక్కడ Hindi ఎంచుకుంటున్నాం — తెలుగు కూడా ఉంది — English letters లో type చేయండి. Space నొక్కగానే ప్రతి word మారిపోతుంది — వేరే keyboard అవసరం లేదు. ఇప్పుడు question రెండు భాషల్లో ఉంది, options కూడా అలాగే.",
+    "raw": "{lang}Language switch tap చేయండి, {hindi}ఇక్కడ Hindi ఎంచుకుంటున్నాం — తెలుగు కూడా ఉంది — {hitype}English letters లో type చేయండి. Space నొక్కగానే ప్రతి word మారిపోతుంది — వేరే keyboard అవసరం లేదు. {hindone}ఇప్పుడు question రెండు భాషల్లో ఉంది, {opts}options కూడా అలాగే."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-te/L11.wav",
+    "duration": 2.60425,
+    "text": "Number four: real exam patterns.",
+    "raw": "Number four: real exam patterns."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-te/L12.wav",
+    "duration": 11.290417,
+    "text": "ప్రతి question కి plus four, minus one. JEE Advanced style కావాలా? Multiple correct గా మార్చండి, JEE Advanced partial marks ఎంచుకోండి, సరైన answer mark చేయండి.",
+    "raw": "{marks}ప్రతి question కి plus four, minus one. {qtype}JEE Advanced style కావాలా? {multi}Multiple correct గా మార్చండి, {jeeadv}JEE Advanced partial marks ఎంచుకోండి, {correct}సరైన answer mark చేయండి."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-te/L13.wav",
+    "duration": 16.727,
+    "text": "ఇప్పుడు paper ని sections గా విభజించండి, ప్రతి section కి సొంత timer — SSC లాగే. ఎక్కడైనా split చేయొచ్చు: questions ఏడు నుంచి పదమూడు Section B అయ్యాయి. ఇక్కడ పది నిమిషాలు, అక్కడ పది నిమిషాలు… Save.",
+    "raw": "{sections}ఇప్పుడు paper ని sections గా విభజించండి, {timed}ప్రతి section కి సొంత timer — SSC లాగే. {gap}ఎక్కడైనా split చేయొచ్చు: {split}questions ఏడు నుంచి పదమూడు Section B అయ్యాయి. {mina}ఇక్కడ పది నిమిషాలు, {minb}అక్కడ పది నిమిషాలు… {save}Save."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-te/L14.wav",
+    "duration": 4.390875,
+    "text": "Number five: ఒక్క click లో live — anti-cheating exam room లో.",
+    "raw": "Number five: ఒక్క click లో live — anti-cheating exam room లో."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-te/L15.wav",
+    "duration": 8.155042,
+    "text": "Test రెడీ అయ్యాక, Conduct exam tap చేయండి. మీకు ఒక secure exam link వస్తుంది. Start conducting, exam ఇప్పుడు live.",
+    "raw": "{card}Test రెడీ అయ్యాక, {conduct}Conduct exam tap చేయండి. {link}మీకు ఒక secure exam link వస్తుంది. {start}Start conducting, {live}exam ఇప్పుడు live."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-te/L16.wav",
+    "duration": 15.057458,
+    "text": "తర్వాతి step Testoza నే చెబుతుంది: exam room set చేయండి. Full screen. Tab, app switch దొరికిపోతుంది, limit పెట్టండి — మూడు warnings — test దానంతట అదే submit. Copy-paste, right-click, back button — అన్నీ block.",
+    "raw": "{tip1}తర్వాతి step TestoZa నే చెబుతుంది: {settings}exam room set చేయండి. {fs}Full screen. {tab}Tab, app switch దొరికిపోతుంది, {count}limit పెట్టండి — {threepick}మూడు warnings — test దానంతట అదే submit. {copyoff}Copy-paste, {right}right-click, {back}back button — అన్నీ block."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-te/L17.wav",
+    "duration": 9.906958,
+    "text": "Results tab లో, exam తర్వాత candidates ఏం చూడాలో మీరే నిర్ణయిస్తారు. Questions shuffle చేయండి, ఎవరికీ ఒకే order రాదు. Save.",
+    "raw": "{results}Results tab లో, {resultview}exam తర్వాత candidates ఏం చూడాలో మీరే నిర్ణయిస్తారు. {shuffle}Questions shuffle చేయండి, ఎవరికీ ఒకే order రాదు. {saveset}Save."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-te/L18.wav",
+    "duration": 2.359,
+    "text": "Number six: ఎక్కడైనా share చేయండి.",
+    "raw": "Number six: ఎక్కడైనా share చేయండి."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-te/L19.wav",
+    "duration": 16.604958,
+    "text": "తర్వాతి tip: candidates కి పంపండి. Link copy చేయండి, లేదా నేరుగా class WhatsApp group లో share చేయండి. Class లో phones లేవా? Join code తీసుకోండి. ఆరు digits. Board మీద రాయండి, students దాన్ని testoza dot com slash join లో type చేస్తారు.",
+    "raw": "{tip2}తర్వాతి tip: candidates కి పంపండి. {copy}Link copy చేయండి, {share}లేదా నేరుగా class WhatsApp group లో share చేయండి. {menu}Class లో phones లేవా? {getcode}Join code తీసుకోండి. {code}ఆరు digits. Board మీద రాయండి, students దాన్ని testoza dot com slash join లో type చేస్తారు."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-te/L20.wav",
+    "duration": 2.841583,
+    "text": "Number seven: కావాల్సిన details తీసుకోండి.",
+    "raw": "Number seven: కావాల్సిన details తీసుకోండి."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-te/L21.wav",
+    "duration": 9.98175,
+    "text": "Name default గా అడుగుతుంది. Roll Number add చేయండి, లేదా ఇంకేదైనా — batch, school, phone. Start చేసే ముందు candidates ఇది fill చేస్తారు.",
+    "raw": "{inputs}Name default గా అడుగుతుంది. {roll}Roll Number add చేయండి, {inputsdone}లేదా ఇంకేదైనా — batch, school, phone. Start చేసే ముందు candidates ఇది fill చేస్తారు."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-te/L22.wav",
+    "duration": 5.228292,
+    "text": "Number eight: ఏ phone లోనైనా exam room. App అక్కర్లేదు, sign-up అక్కర్లేదు.",
+    "raw": "Number eight: ఏ phone లోనైనా exam room. App అక్కర్లేదు, sign-up అక్కర్లేదు."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-te/L23.wav",
+    "duration": 11.104125,
+    "text": "ఇదిగో ఒక student, తన phone లో, testoza dot com slash join లో. ఆరు digits type చేస్తుంది, exam open అవుతుంది. Name, roll number, start.",
+    "raw": "{join}ఇదిగో ఒక student, తన phone లో, testoza dot com slash join లో. {code6}ఆరు digits type చేస్తుంది, {details}exam open అవుతుంది. {name}Name, {rollin}roll number, {go}start."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-te/L24.wav",
+    "duration": 6.323958,
+    "text": "Full screen, clean, చదవడానికి easy. Answer tap చేయండి, save and next.",
+    "raw": "{exam}Full screen, clean, చదవడానికి easy. {ans1}Answer tap చేయండి, {next1}save and next."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-te/L25.wav",
+    "duration": 7.299875,
+    "text": "ఇప్పుడు తను వేరే app కి వెళ్తుంది — exam వెంటనే పట్టేస్తుంది. Warning one of three. నేరుగా మళ్ళీ paper కి.",
+    "raw": "{violation}ఇప్పుడు తను వేరే app కి వెళ్తుంది — exam వెంటనే పట్టేస్తుంది. Warning one of three. {warnok}నేరుగా మళ్ళీ paper కి."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-te/L26.wav",
+    "duration": 4.484833,
+    "text": "చివరి వరకు fast-forward చేద్దాం. Submit, confirm.",
+    "raw": "{rush}చివరి వరకు fast-forward చేద్దాం. {submit}Submit, {yes}confirm."
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-te/L27.wav",
+    "duration": 2.525792,
+    "text": "Number nine: exam ని live గా చూడండి.",
+    "raw": "Number nine: exam ని live గా చూడండి."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-te/L28.wav",
+    "duration": 13.363958,
+    "text": "మీ dashboard లో: ఇప్పుడు ముప్పై మంది students రాస్తున్నారు, ఇద్దరు submit చేశారు. Results open చేయండి — started, writing, submitted, dropped. ఏ tile tap చేసినా, ఎవరు, ఎంతవరకు చేశారో తెలుస్తుంది.",
+    "raw": "{dash}మీ dashboard లో: {writing}ఇప్పుడు ముప్పై మంది students రాస్తున్నారు, {subm}ఇద్దరు submit చేశారు. {panel}Results open చేయండి — {started}started, {writ}writing, {two}submitted, {zero}dropped. {names}ఏ tile tap చేసినా, ఎవరు, ఎంతవరకు చేశారో తెలుస్తుంది."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-te/L29.wav",
+    "duration": 2.731042,
+    "text": "Number ten: submit చేయగానే results.",
+    "raw": "Number ten: submit చేయగానే results."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-te/L30.wav",
+    "duration": 5.536958,
+    "text": "తన score వెంటనే కనిపిస్తుంది — డెబ్బై ఐదు percent — మీరు allow చేస్తే, solution key తో.",
+    "raw": "{score}తన score వెంటనే కనిపిస్తుంది — డెబ్బై ఐదు percent — {solkey}మీరు allow చేస్తే, solution key తో."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-te/L31.wav",
+    "duration": 9.594708,
+    "text": "అందరూ పూర్తి చేశాక, ముప్పై రెండు results వచ్చేస్తాయి. Ranks on చేయండి, మొత్తం batch scroll చేయండి, అన్నీ ఒక్క click లో Excel లో download చేయండి.",
+    "raw": "{all}అందరూ పూర్తి చేశాక, ముప్పై రెండు results వచ్చేస్తాయి. {rank}Ranks on చేయండి, {scrolllist}మొత్తం batch scroll చేయండి, {export}అన్నీ ఒక్క click లో Excel లో download చేయండి."
+  },
+  {
+    "id": "L32",
+    "file": "assets/vo-te/L32.wav",
+    "duration": 8.3505,
+    "text": "ఇవే పది features — question paper నుంచి ranked results వరకు, అన్నీ ఒకే చోట. testoza dot com లో try చేయండి, ఇలాంటి videos కోసం subscribe చేయండి.",
+    "raw": "ఇవే పది features — question paper నుంచి ranked results వరకు, అన్నీ ఒకే చోట. {endurl}testoza dot com లో try చేయండి, {thanks}ఇలాంటి videos కోసం subscribe చేయండి."
+  }
+]

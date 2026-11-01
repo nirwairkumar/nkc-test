@@ -1,0 +1,5 @@
+cells 20
+match → "\\begin{array}{llll} \\textbf{\\,} & \\textbf{List-I} & \\textbf{\\,} & \\textbf{List-II} \\\\ A & ? & I & ? \\\\ B & ? & II & ? \\\\ C & ? & III & ? \\\\ D & ? & IV & ? \\end{array}"
+slots 8
+match + formula → "\\begin{array}{llll} \\textbf{\\,} & \\textbf{List-I} & \\textbf{\\,} & \\textbf{List-II} \\\\ A & \\ce{XeO3} & I & ? \\\\ B & ? & II & ? \\\\ C & ? & III & ? \\\\ D & ? & IV & ? \\end{array}"
+second → "\\begin{array}{llll} \\textbf{\\,} & \\textbf{List-I} & \\textbf{\\,} & \\textbf{List-II} \\\\ A & \\ce{XeO3} & I & ? \\\\ B & \\ce{BrF5} & II & ? \\\\ C & ? & III & ? \\\\ D & ? & IV & ? \\end{array}"

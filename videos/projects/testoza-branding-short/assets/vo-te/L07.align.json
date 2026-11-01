@@ -1,0 +1,114 @@
+[
+ {
+  "w": "Phone",
+  "r": "phone",
+  "start": 0.04,
+  "end": 0.3,
+  "score": 0.796
+ },
+ {
+  "w": "లోనా?",
+  "r": "loonaa",
+  "start": 0.3,
+  "end": 0.561,
+  "score": 0.805
+ },
+ {
+  "w": "Code",
+  "r": "code",
+  "start": 0.841,
+  "end": 1.082,
+  "score": 0.274
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 1.102,
+  "end": 1.322,
+  "score": 0.57
+ },
+ {
+  "w": "చేసి,",
+  "r": "ceesi",
+  "start": 1.322,
+  "end": 1.582,
+  "score": 0.912
+ },
+ {
+  "w": "Start",
+  "r": "start",
+  "start": 1.763,
+  "end": 2.103,
+  "score": 0.959
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.123,
+  "end": 2.283,
+  "score": 0.984
+ },
+ {
+  "w": "చేస్తే,",
+  "r": "ceestee",
+  "start": 2.323,
+  "end": 2.684,
+  "score": 0.814
+ },
+ {
+  "w": "అక్కడ",
+  "r": "akkadda",
+  "start": 2.844,
+  "end": 3.145,
+  "score": 0.881
+ },
+ {
+  "w": "కూడా",
+  "r": "kuuddaa",
+  "start": 3.165,
+  "end": 3.405,
+  "score": 0.844
+ },
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 3.425,
+  "end": 3.545,
+  "score": 0.992
+ },
+ {
+  "w": "brand.",
+  "r": "brand",
+  "start": 3.585,
+  "end": 3.866,
+  "score": 0.779
+ },
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 4.126,
+  "end": 4.366,
+  "score": 0.99
+ },
+ {
+  "w": "question,",
+  "r": "question",
+  "start": 4.427,
+  "end": 4.767,
+  "score": 0.272
+ },
+ {
+  "w": "మీ",
+  "r": "mii",
+  "start": 4.907,
+  "end": 5.047,
+  "score": 0.994
+ },
+ {
+  "w": "పేరుతోనే.",
+  "r": "peerutoonee",
+  "start": 5.088,
+  "end": 5.508,
+  "score": 0.702
+ }
+]

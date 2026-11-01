@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Depends, Body, Request
 from app.core.database import get_db
 from app.core.config import settings
 from supabase import Client
@@ -11,6 +11,16 @@ from google.genai import types
 import json
 import re
 import asyncio
+import hashlib
+
+from app.core.auth import verify_auth_token, verify_is_admin
+from app.utils.rate_limiter import (
+    ai_heavy_per_user, ai_light_per_user, ai_rank_per_ip,
+    enforce_limit, client_ip,
+)
+
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -24,13 +34,13 @@ try:
             client = genai.Client(
                 api_key=settings.GEMINI_API_KEY
             )
-            print("Initialized google-genai client using Google AI Studio API key.")
+            logger.debug("Initialized google-genai client using Google AI Studio API key.")
         else:
             client = genai.Client(
                 vertexai=True,
                 api_key=settings.GEMINI_API_KEY
             )
-            print("Initialized google-genai client with Vertex AI Express Mode.")
+            logger.debug("Initialized google-genai client with Vertex AI Express Mode.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
@@ -38,14 +48,17 @@ try:
             project=gcp_project,
             location="us-central1"
         )
-        print(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
+        logger.debug(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
 except Exception as e:
-    print(f"Error initializing Gemini client: {e}")
+    logger.error(f"Error initializing Gemini client: {e}")
 
 
 @router.get("/test-key")
 @router.post("/test-key")
-async def test_ai_key():
+async def test_ai_key(request: Request):
+    # H2: this confirms whether the Gemini key is live and burns a real call.
+    # Admin-only — it is a diagnostic for the admin AI audit panel.
+    verify_is_admin(request)
     import time
     start = time.time()
     try:
@@ -126,7 +139,7 @@ def extract_video_id(url: str) -> Optional[str]:
                     
     except Exception as e:  # catches yt_dlp.utils.DownloadError when lazy-loaded
         # Video might be private, deleted, or URL is invalid
-        print(f"yt-dlp extraction error: {e}")
+        logger.error(f"yt-dlp extraction error: {e}")
         
         # Fallback to regex-based extraction for common patterns
         regex_patterns = [
@@ -142,7 +155,7 @@ def extract_video_id(url: str) -> Optional[str]:
                 return match.group(1)
                 
     except Exception as e:
-        print(f"Unexpected error extracting video ID: {e}")
+        logger.error(f"Unexpected error extracting video ID: {e}")
         
     return None
 
@@ -156,13 +169,20 @@ def clean_json(text: str) -> str:
 @router.post("/generate/youtube")
 async def generate_youtube_test(
     payload: GenerateYoutubeRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2: was unauthenticated, and payload.user_id was attacker-controlled (the row is
+    # written as `created_by`). Identity now comes from the verified token only.
+    requesting_user_id = verify_auth_token(request, db)
+    payload.user_id = requesting_user_id
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI test generation. Please try again later.")
     if not client:
          raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
 
     video_id = extract_video_id(payload.url)
-    print(f"Extracted video ID: {video_id} from URL: {payload.url}")
+    logger.debug(f"Extracted video ID: {video_id} from URL: {payload.url}")
     if not video_id:
         raise HTTPException(status_code=400, detail="Invalid YouTube URL")
 
@@ -171,14 +191,14 @@ async def generate_youtube_test(
     
     # 1. Fetch Transcript
     try:
-        print(f"Attempting to fetch transcript for video ID: {video_id}")
+        logger.debug(f"Attempting to fetch transcript for video ID: {video_id}")
         from youtube_transcript_api import YouTubeTranscriptApi  # lazy-loaded
         # Prefer English, Hindi, or auto
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
         transcript_text = " ".join([t['text'] for t in transcript_list])
-        print(f"Successfully fetched transcript. Length: {len(transcript_text)} characters")
+        logger.debug(f"Successfully fetched transcript. Length: {len(transcript_text)} characters")
     except Exception as e:
-        print(f"Transcript Error: {e}. Falling back to Multimodal Video.")
+        logger.error(f"Transcript Error: {e}. Falling back to Multimodal Video.")
         used_method = "video"
 
     # 2. Prepare Prompt & Content
@@ -235,7 +255,7 @@ async def generate_youtube_test(
         
     else:
         # Multimodal Video Mode (Fallback)
-        print("Using Multimodal Video Mode")
+        logger.debug("Using Multimodal Video Mode")
         prompt = f"""
             You are an expert exam setter.
             Analyze the visual video content efficiently from the content.
@@ -296,12 +316,12 @@ async def generate_youtube_test(
     import time
     start_time = time.time()
     try:
-        print(f"Starting Gemini content generation for video: {payload.url}")
-        print(f"Using method: {used_method}")
+        logger.debug(f"Starting Gemini content generation for video: {payload.url}")
+        logger.debug(f"Using method: {used_method}")
         
         # Generate content with timeout to prevent hanging
         # Use asyncio.to_thread to run blocking SDK call in separate thread
-        print("Calling Gemini API...")
+        logger.debug("Calling Gemini API...")
         response = await asyncio.wait_for(
             asyncio.to_thread(
                 client.models.generate_content,
@@ -310,7 +330,7 @@ async def generate_youtube_test(
             ),
             timeout=120.0
         )
-        print("Gemini API call completed successfully")
+        logger.debug("Gemini API call completed successfully")
         
         text = response.text if response.text else ""
         if not text:
@@ -378,7 +398,7 @@ async def generate_youtube_test(
                 ai_log["mode"] = "generate"
                 db.table("ai_generation_history").insert(ai_log).execute()
             except Exception as e2:
-                print(f"Failed to log YouTube generation history: {e2}")
+                logger.error(f"Failed to log YouTube generation history: {e2}")
 
         if res.data:
             return res.data[0]
@@ -386,10 +406,10 @@ async def generate_youtube_test(
         raise HTTPException(status_code=500, detail="Failed to save test")
 
     except asyncio.TimeoutError:
-        print("AI Generation Error: Request timed out after 120 seconds")
+        logger.error("AI Generation Error: Request timed out after 120 seconds")
         raise HTTPException(status_code=504, detail="AI Generation Failed: The video analysis is taking too long. Please try with a shorter video.")
     except Exception as e:
-        print(f"AI Generation Error: {e}")
+        logger.error(f"AI Generation Error: {e}")
         raise HTTPException(status_code=500, detail=f"AI Generation Failed: {str(e)}")
 
 # --- PDF/Image Parsing Endpoint (Gemini Full-Page Vision Pipeline) ---
@@ -406,7 +426,10 @@ async def parse_document(
     mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones"),
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
-    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    marks_per_question: Optional[float] = Query(None, gt=0, le=100, description="Teacher's marks per question; blank = read from the paper, else +1"),
+    negative_marks: Optional[float] = Query(None, ge=0, le=100, description="Teacher's penalty per wrong answer; blank = read from the paper, else 0"),
+    request: Request = None,
 ):
     """
     Parses uploaded PDF/image files and returns structured questions.
@@ -416,6 +439,13 @@ async def parse_document(
     - extract: Extract exact questions from the exam paper as-is
     - generate: Create new original MCQs based on the content
     """
+    # H2: the heaviest AI paths (PDF-vision pipeline / multi-page Gemini calls). These
+    # were fully unauthenticated — a stranger could loop them and burn the Gemini budget.
+    # Require a login and cap per user.
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI document parsing. Please try again later.")
+
     logger.info(f"Received {len(files)} file(s) for AI processing (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     if answer_key:
@@ -462,8 +492,13 @@ async def parse_document(
             answer_key=answer_key_data,
             languages=languages,
             difficulty=difficulty,
-            user_instructions=user_instructions
+            user_instructions=user_instructions,
+            marks_per_question=marks_per_question,
+            negative_marks=negative_marks,
         )
+        # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
+        from ai_preview_importer.marking import resolve_marking
+        resolve_marking(result, marks_per_question, negative_marks)
         
         # 4. Return Result
         logger.info(f"Parsing complete ({mode} mode). Returning {len(result.get('questions', []))} questions.")
@@ -482,6 +517,55 @@ from fastapi.responses import StreamingResponse
 # process_files_stream is lazily imported inside the route to avoid loading heavy OCR libs at startup
 import asyncio
 
+# Longest one upload may stream before it is stopped with a timeout error.
+PARSE_STREAM_MAX_SECONDS = 600
+
+
+class _ParseRun:
+    """One upload being read: its AI job and the queue its browser's stream reads."""
+
+    def __init__(self, queue: asyncio.Queue, task: asyncio.Task):
+        self.queue = queue
+        self.task = task
+        self.stop_reason: Optional[str] = None
+
+    def stop(self, reason: str) -> None:
+        """Cancel the AI job if it is still running, logging why once."""
+        if self.task.done() or self.stop_reason is not None:
+            return
+        self.stop_reason = reason
+        logger.info(f"AI upload stopped: {reason}. Cancelling its AI job.")
+        self.task.cancel()
+
+
+# Uploads being read right now, keyed by person + file contents. Starting the same file
+# again (a retry, or a second tab) stops the earlier run, so one file never runs twice at
+# once. Kept per server instance.
+_active_parse_runs: Dict[str, _ParseRun] = {}
+
+
+def _parse_run_key(user_id: str, file_data: List[Dict[str, Any]]) -> str:
+    """Same person and same files (in any order) give the same key."""
+    digests = sorted(hashlib.sha256(f["content"]).hexdigest() for f in file_data)
+    return f"{user_id}:{hashlib.sha256(''.join(digests).encode()).hexdigest()}"
+
+
+class _ClosingStreamingResponse(StreamingResponse):
+    """
+    Closes the event generator however the response ends. When the browser disconnects while
+    a chunk is being sent, Starlette leaves the generator paused, and its `finally` (which stops
+    the AI job) would wait for the garbage collector, seconds to minutes later.
+    """
+
+    async def __call__(self, scope, receive, send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            aclose = getattr(self.body_iterator, "aclose", None)
+            if aclose is not None:
+                await aclose()
+
+
 @router.post("/parse-stream")
 async def parse_document_stream(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
@@ -490,7 +574,10 @@ async def parse_document_stream(
     algorithm: str = Query("parallel", pattern="^(parallel|stateful)$", description="Parsing pipeline: 'parallel' for fast chunked mode, 'stateful' for high-accuracy single stream"),
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
-    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    marks_per_question: Optional[float] = Query(None, gt=0, le=100, description="Teacher's marks per question; blank = read from the paper, else +1"),
+    negative_marks: Optional[float] = Query(None, ge=0, le=100, description="Teacher's penalty per wrong answer; blank = read from the paper, else 0"),
+    request: Request = None,
 ):
     """
     ULTRA-FAST streaming document parsing with real-time progress updates.
@@ -509,6 +596,13 @@ async def parse_document_stream(
     - complete: { final result }
     - error: { message }
     """
+    # H2: the heaviest AI paths (PDF-vision pipeline / multi-page Gemini calls). These
+    # were fully unauthenticated — a stranger could loop them and burn the Gemini budget.
+    # Require a login and cap per user.
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI document parsing. Please try again later.")
+
     logger.info(f"🚀 Starting ULTRA-FAST stream processing for {len(files)} file(s) (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     # IMPORTANT: Read ALL file content BEFORE starting the stream
@@ -549,7 +643,9 @@ async def parse_document_stream(
     except Exception as e:
         logger.error(f"File Read Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to read files: {str(e)}")
-    
+
+    run_key = _parse_run_key(requesting_user_id, file_data)
+
     async def event_generator():
         """Generate SSE events for the stream"""
         queue = asyncio.Queue()
@@ -588,9 +684,14 @@ async def parse_document_stream(
                     algorithm=algorithm,
                     languages=languages,
                     difficulty=difficulty,
-                    user_instructions=user_instructions
+                    user_instructions=user_instructions,
+                    marks_per_question=marks_per_question,
+                    negative_marks=negative_marks,
                 )
-                
+                # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
+                from ai_preview_importer.marking import resolve_marking
+                resolve_marking(result, marks_per_question, negative_marks)
+
                 final_result = result
                 processing_complete = True
                 
@@ -618,45 +719,68 @@ async def parse_document_stream(
                 })
                 processing_complete = True
         
+        # The same person starting the same file again replaces the earlier run: stop it,
+        # and tell its browser why if that tab is still open.
+        earlier = _active_parse_runs.get(run_key)
+        if earlier is not None and not earlier.task.done():
+            earlier.stop("the same file was started again")
+            earlier.queue.put_nowait({
+                'event': 'error',
+                'data': {'message': 'You started this file again, so this earlier run was stopped.', 'type': 'replaced'}
+            })
+
         # Start processing in background
-        asyncio.create_task(process_document())
-        
+        run = _ParseRun(queue, asyncio.create_task(process_document()))
+        _active_parse_runs[run_key] = run
+        end_reason = "the browser left before it finished"
+
         # Stream events with timeout
         start_time = asyncio.get_event_loop().time()
-        max_duration = 600  # 10 minutes max
-        
-        while True:
-            try:
-                # Check timeout
-                elapsed = asyncio.get_event_loop().time() - start_time
-                if elapsed > max_duration:
-                    yield f"event: error\ndata: {json.dumps({'message': 'Processing timeout - document too large', 'type': 'timeout'})}\n\n"
+        max_duration = PARSE_STREAM_MAX_SECONDS
+
+        try:
+            while True:
+                try:
+                    # Check timeout
+                    elapsed = asyncio.get_event_loop().time() - start_time
+                    if elapsed > max_duration:
+                        end_reason = f"it passed the {max_duration}-second limit"
+                        yield f"event: error\ndata: {json.dumps({'message': 'Processing timeout - document too large', 'type': 'timeout'})}\n\n"
+                        break
+
+                    # Wait for next event with shorter timeout to allow checking
+                    timeout = 1.0 if not processing_complete else 0.1
+                    event = await asyncio.wait_for(queue.get(), timeout=timeout)
+
+                    # Format as SSE
+                    yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
+
+                    # Exit on complete or error
+                    if event['event'] in ('complete', 'error'):
+                        break
+
+                except asyncio.TimeoutError:
+                    # Send keepalive to prevent connection timeout
+                    if not processing_complete:
+                        yield f": keepalive\n\n"
+                    else:
+                        # Check if processing is done
+                        break
+                except Exception as e:
+                    logger.error(f"Stream error: {e}")
+                    end_reason = "the stream failed"
+                    yield f"event: error\ndata: {json.dumps({'message': f'Stream error: {str(e)}', 'type': 'stream'})}\n\n"
                     break
-                
-                # Wait for next event with shorter timeout to allow checking
-                timeout = 1.0 if not processing_complete else 0.1
-                event = await asyncio.wait_for(queue.get(), timeout=timeout)
-                
-                # Format as SSE
-                yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
-                
-                # Exit on complete or error
-                if event['event'] in ('complete', 'error'):
-                    break
-                    
-            except asyncio.TimeoutError:
-                # Send keepalive to prevent connection timeout
-                if not processing_complete:
-                    yield f": keepalive\n\n"
-                else:
-                    # Check if processing is done
-                    break
-            except Exception as e:
-                logger.error(f"Stream error: {e}")
-                yield f"event: error\ndata: {json.dumps({'message': f'Stream error: {str(e)}', 'type': 'stream'})}\n\n"
-                break
-    
-    return StreamingResponse(
+        finally:
+            # Nobody can receive this run's result any more (the browser closed, cancelled or
+            # left the page, the time limit passed, or a retry replaced it), so stop the AI job
+            # instead of paying Gemini for the rest of the document. No await here: this also
+            # runs while the stream is being cancelled.
+            run.stop(end_reason)
+            if _active_parse_runs.get(run_key) is run:
+                del _active_parse_runs[run_key]
+
+    return _ClosingStreamingResponse(
         event_generator(),
         media_type="text/event-stream",
         headers={
@@ -668,11 +792,225 @@ async def parse_document_stream(
         )
 
 
+# --- Single question from a photo (test builder "Fill from photo") ---
+
+PHOTO_QUESTION_PROMPT = r"""
+You are reading ONE exam question from a photo a teacher took. The photo may be printed,
+typed, a screenshot, or HANDWRITTEN (messy writing, lined paper, taken at an angle, shadows).
+
+Return ONLY this JSON object, nothing else:
+{
+  "question": "question text",
+  "type": "single" | "multiple" | "numerical",
+  "options": {"A": "...", "B": "...", "C": "...", "D": "..."} or null,
+  "correctAnswer": "B" | ["A", "C"] | {"min": 2.5, "max": 2.5} | null,
+  "answerSource": "marked" | "answer_key" | "none",
+  "language": "en" | "hi",
+  "diagram_bbox": [ymin, xmin, ymax, xmax] or null,
+  "otherQuestionsInPhoto": 0
+}
+
+RULES
+1. Copy the wording exactly. Do not solve, rewrite, translate or improve the question.
+2. If the photo shows several questions, take only the first complete one (top-most) and
+   put how many other questions you can see in "otherQuestionsInPhoto".
+3. Drop the question number ("Q5.", "5)", "प्रश्न 5") from the start of the question text.
+4. Options: map labels like (a), (1), (i), A., (क) to A, B, C, D, E in order. The value is the
+   option content only, without its label.
+5. "numerical" only when there are no options and the answer is a number. "multiple" only when
+   the question says more than one option can be correct, or more than one option is marked.
+   Otherwise "single".
+6. correctAnswer comes ONLY from evidence in the photo: a tick, circle, underline, highlight,
+   star or box on an option ("marked"), or a written line like "Ans: (b)", "Answer - 3",
+   "उत्तर: ग" ("answer_key"). With no such evidence, correctAnswer is null and answerSource is
+   "none". NEVER work out the answer yourself.
+7. Maths goes in LaTeX inside $...$, e.g. $\\frac{1}{2}$, $x^{2}$, $\\sqrt{3}$. Chemical formulas
+   and reactions use mhchem inside $...$: $\\ce{H2SO4}$, $\\ce{2H2 + O2 -> 2H2O}$. These examples
+   are written exactly as they must appear in the raw JSON: two backslash characters before a
+   command (\\frac), which JSON decodes to one. Never write four (\\\\frac).
+8. Tables and match-the-column lists go inside the question text as
+   $$\\begin{array}{|c|c|} ... \\end{array}$$ with each cell's words in \\text{...}. Never use
+   markdown tables.
+9. A diagram, graph, figure, circuit or structure: set diagram_bbox to the box around the figure
+   only (not the text), as integers 0-1000 relative to the photo: [ymin, xmin, ymax, xmax].
+   Otherwise null.
+10. language is "hi" when the question is mainly Hindi (Devanagari), else "en". Keep the original
+    language.
+11. If a word is hard to read, write your best reading. Never return an empty question when any
+    text is visible.
+"""
+
+PHOTO_TYPES = ("single", "multiple", "numerical")
+# "Q5.", "Question 12:", "5)", "(5)", "प्रश्न 5." — only when followed by a space, so "2.5 kg" survives.
+QUESTION_NUMBER_PREFIX = re.compile(r'^\s*(?:Q(?:ue(?:stion)?)?\.?\s*\d{1,3}\s*[.):-]?|\(?\d{1,3}[.)]|प्रश्न\s*\d{1,3}\s*[.):-]?)\s+', re.IGNORECASE)
+
+
+def _normalize_photo_question(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Coerce Gemini's single-question JSON into the builder's question shape."""
+    from ai_preview_importer.pdf_vision_pipeline import sanitize_latex_and_mhchem
+    from ai_preview_importer.latex_json import normalize_latex
+
+    q_type = data.get("type") if data.get("type") in PHOTO_TYPES else "single"
+    question_text = QUESTION_NUMBER_PREFIX.sub('', str(data.get("question") or "").strip(), count=1)
+    question_text = sanitize_latex_and_mhchem(normalize_latex(question_text))
+
+    options: Dict[str, str] = {}
+    raw_options = data.get("options")
+    if isinstance(raw_options, dict):
+        for key in sorted(raw_options.keys()):
+            value = raw_options[key]
+            label = str(key).strip().upper()[:1]
+            if label.isalpha() and value is not None and str(value).strip():
+                options[label] = sanitize_latex_and_mhchem(normalize_latex(str(value).strip()))
+
+    if q_type != "numerical" and not options:
+        # No options were readable: a bare number question is the only thing that fits.
+        q_type = "numerical"
+
+    answer = data.get("correctAnswer")
+    correct: Any = None
+    if q_type == "numerical":
+        options = {}
+        if isinstance(answer, dict):
+            try:
+                low = float(answer.get("min"))
+                high = float(answer.get("max", low))
+                correct = {"min": min(low, high), "max": max(low, high)}
+            except (TypeError, ValueError):
+                correct = None
+        elif isinstance(answer, (int, float, str)):
+            try:
+                value = float(answer)
+                correct = {"min": value, "max": value}
+            except ValueError:
+                correct = None
+    elif q_type == "multiple":
+        picked = answer if isinstance(answer, list) else [answer]
+        correct = sorted({str(a).strip().upper() for a in picked if a and str(a).strip().upper() in options})
+        if len(correct) == 1:
+            q_type, correct = "single", correct[0]
+        elif not correct:
+            correct = None
+    else:
+        if isinstance(answer, list):
+            picked = [str(a).strip().upper() for a in answer if a and str(a).strip().upper() in options]
+            if len(picked) > 1:
+                q_type, correct = "multiple", sorted(set(picked))
+            elif picked:
+                correct = picked[0]
+        elif answer and str(answer).strip().upper() in options:
+            correct = str(answer).strip().upper()
+
+    source = data.get("answerSource") if data.get("answerSource") in ("marked", "answer_key") else "none"
+    if correct is None:
+        source = "none"
+
+    try:
+        others = max(0, int(data.get("otherQuestionsInPhoto") or 0))
+    except (TypeError, ValueError):
+        others = 0
+
+    return {
+        "question": question_text,
+        "type": q_type,
+        "options": options,
+        "correctAnswer": correct,
+        "answerSource": source,
+        "language": "hi" if data.get("language") == "hi" else "en",
+        "otherQuestionsInPhoto": others,
+    }
+
+
+@router.post("/read-question")
+async def read_question_from_photo(
+    file: UploadFile = File(..., description="Photo or screenshot of one question"),
+    expected_type: Optional[str] = Query(None, pattern="^(single|multiple|numerical)$"),
+    request: Request = None,
+):
+    """
+    Reads one question (printed or handwritten) from a photo and returns it in the
+    builder's question shape: text, type, options, and the answer when the photo marks it.
+    A diagram in the photo is cropped, uploaded, and returned as `image`.
+    """
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for reading questions from photos. Please try again later.")
+
+    if not file.filename or not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+        raise HTTPException(status_code=400, detail="Please upload a photo (PNG, JPG or WEBP).")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="The photo is empty.")
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="The photo is larger than 10 MB. Please use a smaller photo.")
+
+    from ai_preview_importer.pdf_vision_pipeline import (  # lazy import: heavy OCR deps
+        _call_gemini_with_retry, _sanitize_gemini_json, convert_image_to_bytes, process_diagram_bboxes,
+    )
+    from ai_preview_importer.latex_json import repair_json_escapes
+
+    jpeg = await asyncio.to_thread(convert_image_to_bytes, content)
+    prompt = PHOTO_QUESTION_PROMPT
+    if expected_type:
+        prompt += f"\nThe teacher expects a \"{expected_type}\" question; use that type unless the photo clearly shows otherwise.\n"
+
+    try:
+        raw = await _call_gemini_with_retry(
+            [prompt, types.Part.from_bytes(data=jpeg, mime_type="image/jpeg")],
+            batch_num=0,
+            max_retries=2,
+        )
+    except Exception as e:
+        logger.error(f"read-question Gemini call failed: {e}")
+        raise HTTPException(status_code=502, detail="Could not read the photo right now. Please try again.")
+
+    clean = raw.strip()
+    if clean.startswith("```"):
+        clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+    if clean.endswith("```"):
+        clean = clean[:-3]
+    clean = clean_json(clean.strip())
+
+    try:
+        data = json.loads(repair_json_escapes(clean))
+    except json.JSONDecodeError:
+        try:
+            data = json.loads(_sanitize_gemini_json(clean))
+        except json.JSONDecodeError:
+            logger.error(f"read-question returned invalid JSON: {clean[:300]}")
+            raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
+
+    if isinstance(data, list):
+        data = data[0] if data else {}
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
+
+    result = _normalize_photo_question(data)
+    if not result["question"] and not result["options"]:
+        raise HTTPException(status_code=422, detail="No question was found in this photo.")
+
+    bbox = data.get("diagram_bbox")
+    if isinstance(bbox, list) and len(bbox) == 4:
+        holder: Dict[str, Any] = {"id": 1, "diagram_bbox": {"page_number": 1, "box_2d": bbox}}
+        await process_diagram_bboxes([holder], [{"type": "image", "content": jpeg}])
+        if holder.get("image"):
+            result["image"] = holder["image"]
+
+    return result
+
+
 @router.post("/generate/topics")
-async def generate_topics(
+def generate_topics(
     payload: GenerateTopicsRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2: identity from the token, never from the body (it is logged as user_id).
+    requesting_user_id = verify_auth_token(request, db)
+    payload.user_id = requesting_user_id
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI topic tagging. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
@@ -739,12 +1077,12 @@ async def generate_topics(
                     ai_log["mode"] = "generate"
                     db.table("ai_generation_history").insert(ai_log).execute()
                 except Exception as e2:
-                    print(f"Failed to log Topic AI generation: {e2}")
+                    logger.error(f"Failed to log Topic AI generation: {e2}")
 
         return {"topics": topics_map}
 
     except Exception as e:
-        print(f"Error generating topics: {e}")
+        logger.error(f"Error generating topics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -756,7 +1094,14 @@ class PredictRankRequest(BaseModel):
     difficulty: Optional[str] = "Medium"
 
 @router.post("/predict-rank")
-async def predict_rank(payload: PredictRankRequest):
+async def predict_rank(payload: PredictRankRequest, request: Request):
+    # H2: deliberately NOT login-gated — anonymous candidates use this on their own
+    # results page. It is a single short completion, capped per IP so it cannot be
+    # looped into a cost-DoS. Authenticated callers are keyed by user id instead.
+    from app.core.auth import get_optional_user_id
+    rank_key = get_optional_user_id(request) or client_ip(request)
+    enforce_limit(ai_rank_per_ip, rank_key,
+                  "Too many rank predictions. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
@@ -791,7 +1136,10 @@ async def predict_rank(payload: PredictRankRequest):
         return {"rank_prediction": response.text}
     except Exception as e:
         logger.error(f"Rank Prediction Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # H2: this endpoint is reachable without a login, so the upstream error text
+        # (which carries the GCP project number and billing console URL) stays in the
+        # server log and never goes to the client.
+        raise HTTPException(status_code=500, detail="Could not generate a rank prediction right now.")
 
 
 class ChatMessage(BaseModel):
@@ -966,16 +1314,25 @@ Duration: {duration} minutes | Total Questions: {total_qs}
 @router.post("/chat")
 async def chat_with_ai(
     payload: AIChatRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2 (IDOR): this endpoint used to read `userId` from the request body and then
+    # fetch THAT user's last 10 attempts with the admin client — passing any uuid
+    # returned a stranger's exam history. Identity now comes from the verified token.
+    requesting_user_id = verify_auth_token(request, db)
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI mentor chat. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
     context = payload.test_context
+    if isinstance(context, dict):
+        context['userId'] = requesting_user_id
     
     # ── Fetch past exam history from database (if user ID provided) ──
     past_history = []
-    user_id = context.get('userId')
+    user_id = requesting_user_id
     if user_id:
         try:
             from app.core.database import supabase as admin_db

@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+/* A · Signature: the homepage look (near-black, exam-paper grid, sky + indigo light) with
+   OMR answer-sheet columns in the wings. */
+.stage{background:
+  radial-gradient(1000px 520px at 50% 50%,rgba(29,62,135,.55),transparent 72%),
+  radial-gradient(1100px 700px at 20% 52%,rgba(14,116,184,.20),transparent 70%),
+  radial-gradient(1100px 700px at 82% 48%,rgba(91,63,214,.22),transparent 70%),
+  #060b1a}
+.grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(125,211,252,.065) 1px,transparent 1px),linear-gradient(90deg,rgba(125,211,252,.065) 1px,transparent 1px);
+  background-size:56px 56px;background-position:center;
+  -webkit-mask-image:radial-gradient(1500px 620px at 50% 50%,#000 25%,transparent 75%)}
+
+.wing{position:absolute;top:0;height:1440px;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 8%,#000 32%,#000 68%,transparent 92%)}
+.col{position:absolute;top:-14px;display:flex;flex-direction:column;gap:22px}
+.row{display:flex;align-items:center;gap:14px}
+.row s{width:52px;text-decoration:none;font-weight:500;font-size:24px;color:rgba(148,163,184,.42);text-align:right;margin-right:6px}
+.row i{width:42px;height:42px;border-radius:50%;border:2px solid rgba(148,163,184,.26);
+  display:grid;place-items:center;font-style:normal;font-weight:600;font-size:19px;color:rgba(148,163,184,.42)}
+.row i.on{background:rgba(56,189,248,.62);border-color:transparent;color:#06213a}
+.row i.gold{background:rgba(244,184,56,.75);border-color:transparent;color:#3a2500}
+
+.stack{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.wm{height:160px}
+h1{margin-top:46px;font-weight:700;font-size:62px;line-height:1;letter-spacing:-.015em;color:#fff;white-space:nowrap}
+h1 span{color:#7dd3fc}
+.url{margin-top:36px;display:inline-flex;align-items:center;gap:16px;padding:12px 30px 13px;border-radius:999px;
+  border:2px solid rgba(148,163,184,.22);background:rgba(10,18,40,.55);
+  font-weight:600;font-size:38px;letter-spacing:.01em;color:#cbd5e1}
+.url b{width:14px;height:14px;border-radius:50%;background:#F4B838;box-shadow:0 0 18px rgba(244,184,56,.9)}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+  <div class="wing" id="wl" style="left:0;width:507px"></div>
+  <div class="wing" id="wr" style="left:2053px;width:507px"></div>
+  <div class="safe">
+    <div class="stack">
+      <img class="wm" src="wordmark.png" alt="TestoZa">
+      <h1>Free online test maker <span>for teachers &amp; institutes</span></h1>
+      <div class="url"><b></b>testoza.com</div>
+    </div>
+  </div>
+  <div class="grain"></div>
+</div>
+<script>
+// OMR columns: deterministic picks, a few left blank, one gold row per column.
+function column(host, left, firstQ) {
+  const col = document.createElement('div');
+  col.className = 'col';
+  col.style.left = left + 'px';
+  for (let r = 0; r < 23; r++) {
+    const q = firstQ + r, pick = (q * 7 + 3) % 5;  // 4 = left blank
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<s>' + String(q).padStart(2, '0') + '</s>' +
+      'ABCD'.split('').map((l, i) => '<i class="' + (i === pick ? (q % 9 === 4 ? 'gold' : 'on') : '') + '">' + l + '</i>').join('');
+    col.appendChild(row);
+  }
+  host.appendChild(col);
+}
+column(wl, -170, 1);  column(wl, 150, 24);
+column(wr, 70, 47);   column(wr, 390, 70);
+</script>
+<script src="guides.js"></script>
+</body></html>

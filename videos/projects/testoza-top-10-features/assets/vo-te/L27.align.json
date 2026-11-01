@@ -1,0 +1,51 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.1,
+  "end": 0.361,
+  "score": 0.382
+ },
+ {
+  "w": "nine:",
+  "r": "nine",
+  "start": 0.401,
+  "end": 1.183,
+  "score": 0.494
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 1.223,
+  "end": 1.463,
+  "score": 0.491
+ },
+ {
+  "w": "ని",
+  "r": "ni",
+  "start": 1.503,
+  "end": 1.564,
+  "score": 0.976
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 1.664,
+  "end": 1.884,
+  "score": 0.677
+ },
+ {
+  "w": "గా",
+  "r": "gaa",
+  "start": 1.924,
+  "end": 2.025,
+  "score": 0.975
+ },
+ {
+  "w": "చూడండి.",
+  "r": "cuuddamddi",
+  "start": 2.045,
+  "end": 2.446,
+  "score": 0.968
+ }
+]

@@ -1,0 +1,535 @@
+1
+00:00:00,500 --> 00:00:03,220
+Reactions, with heat on the arrow.
+
+2
+00:00:03,220 --> 00:00:05,700
+Complex ions and their charges.
+
+3
+00:00:05,700 --> 00:00:07,540
+Match-the-list tables.
+
+4
+00:00:07,540 --> 00:00:10,340
+Structures, right inside the question.
+
+5
+00:00:10,340 --> 00:00:12,420
+This is chemistry in TestoZa
+
+6
+00:00:12,420 --> 00:00:15,846
+and in the next few minutes, you'll type all of it yourself.
+
+7
+00:00:17,896 --> 00:00:20,936
+We'll use real questions from JEE Main and JEE Advanced
+
+8
+00:00:20,936 --> 00:00:22,056
+2026.
+
+9
+00:00:22,056 --> 00:00:25,736
+Open Create Test, give it a name, pick JEE marking…
+
+10
+00:00:25,736 --> 00:00:27,442
+and straight to the questions.
+
+11
+00:00:27,612 --> 00:00:31,612
+First, a JEE Main question on complex ions.
+
+12
+00:00:31,612 --> 00:00:33,372
+The words, you just type.
+
+13
+00:00:33,372 --> 00:00:36,332
+For the formulas, open Maths and symbols
+
+14
+00:00:36,332 --> 00:00:37,932
+this is Sy Pad
+
+15
+00:00:37,932 --> 00:00:39,646
+and go to the Chemistry tab.
+
+16
+00:00:39,816 --> 00:00:44,136
+Now, the most useful button for any chemistry teacher
+
+17
+00:00:44,136 --> 00:00:45,096
+Formula.
+
+18
+00:00:45,096 --> 00:00:47,576
+Just type the formula the way you'd write it.
+
+19
+00:00:47,576 --> 00:00:50,136
+Bracket, M n, B r, four…
+
+20
+00:00:50,136 --> 00:00:50,856
+see?
+
+21
+00:00:50,856 --> 00:00:53,496
+The four drops down on its own.
+
+22
+00:00:53,496 --> 00:00:57,276
+For the charge, type a caret, then two minus.
+
+23
+00:00:57,446 --> 00:00:59,046
+Then the copper complex
+
+24
+00:00:59,046 --> 00:01:01,046
+six waters, two plus.
+
+25
+00:01:01,046 --> 00:01:05,606
+Insert, and Formula again for the two nickel complexes.
+
+26
+00:01:05,606 --> 00:01:09,446
+Every number drops down and every charge goes up,
+
+27
+00:01:09,446 --> 00:01:10,806
+while you type.
+
+28
+00:01:10,806 --> 00:01:11,606
+Insert…
+
+29
+00:01:11,606 --> 00:01:14,486
+and the whole line sits right in the question.
+
+30
+00:01:14,486 --> 00:01:17,941
+The options are plain text, and D is the right answer.
+
+31
+00:01:18,111 --> 00:01:19,951
+Next, an equilibrium.
+
+32
+00:01:19,951 --> 00:01:22,911
+Type the first line, then Formula, A,
+
+33
+00:01:22,911 --> 00:01:25,951
+the gas key, the reversible arrow, B…
+
+34
+00:01:25,951 --> 00:01:27,231
+and gas again.
+
+35
+00:01:27,401 --> 00:01:30,361
+The other keys work the same way: gas given off,
+
+36
+00:01:30,361 --> 00:01:33,241
+a precipitate, heat, degree Celsius,
+
+37
+00:01:33,241 --> 00:01:38,201
+aqueous, solid, liquid, K a, K b, pH and mol.
+
+38
+00:01:38,201 --> 00:01:39,162
+One tap each.
+
+39
+00:01:39,659 --> 00:01:40,699
+Insert.
+
+40
+00:01:40,699 --> 00:01:42,459
+Now the rest of the question
+
+41
+00:01:42,459 --> 00:01:45,419
+the concentrations, and what happens when we add more
+
+42
+00:01:45,419 --> 00:01:46,219
+A.
+
+43
+00:01:46,219 --> 00:01:48,831
+Then the four options, and D again.
+
+44
+00:01:49,826 --> 00:01:53,186
+Now, three reactions with conditions on the arrows.
+
+45
+00:01:53,186 --> 00:01:56,146
+Formula, sodium tetraborate…
+
+46
+00:01:56,146 --> 00:01:59,666
+then the arrow with a box above and below.
+
+47
+00:01:59,666 --> 00:02:02,946
+Here you choose how many lines go above and below.
+
+48
+00:02:02,946 --> 00:02:06,706
+We only need one, on top, so remove the bottom one,
+
+49
+00:02:06,706 --> 00:02:07,858
+and Insert.
+
+50
+00:02:08,028 --> 00:02:10,988
+That question mark above the arrow is your blank.
+
+51
+00:02:10,988 --> 00:02:14,748
+Tap delta for heat, step past the arrow with this key,
+
+52
+00:02:14,748 --> 00:02:16,188
+and finish the reaction.
+
+53
+00:02:16,188 --> 00:02:16,973
+Insert.
+
+54
+00:02:17,663 --> 00:02:20,863
+Second reaction: copper sulphate plus Y.
+
+55
+00:02:20,863 --> 00:02:21,903
+Same arrow
+
+56
+00:02:21,903 --> 00:02:26,463
+but now tap Words, and type non-luminous flame.
+
+57
+00:02:26,463 --> 00:02:29,183
+Words keep their spaces, like normal text.
+
+58
+00:02:29,183 --> 00:02:29,930
+Insert.
+
+59
+00:02:30,110 --> 00:02:34,350
+And the third one: two Z, two X and carbon on the left,
+
+60
+00:02:34,350 --> 00:02:36,830
+the arrow with luminous flame on top,
+
+61
+00:02:36,830 --> 00:02:40,750
+and two Q, borax and carbon monoxide on the right
+
+62
+00:02:40,750 --> 00:02:42,590
+exactly the same way.
+
+63
+00:02:42,590 --> 00:02:43,710
+Insert.
+
+64
+00:02:43,710 --> 00:02:46,190
+Type the question, the four options
+
+65
+00:02:46,190 --> 00:02:48,190
+plus two and plus two, and so on
+
+66
+00:02:48,190 --> 00:02:49,531
+and B is correct.
+
+67
+00:02:51,677 --> 00:02:52,557
+Match the list
+
+68
+00:02:52,557 --> 00:02:53,997
+JEE Main loves these.
+
+69
+00:02:53,997 --> 00:02:57,517
+In Sy Pad, open Tables, and choose Match List.
+
+70
+00:02:57,517 --> 00:03:00,157
+List-I and List-II are already there.
+
+71
+00:03:00,157 --> 00:03:01,117
+Type the labels
+
+72
+00:03:01,117 --> 00:03:03,357
+A, B, C, D and one to four
+
+73
+00:03:03,357 --> 00:03:04,132
+and Insert.
+
+74
+00:03:04,302 --> 00:03:06,542
+Every empty cell is now a blue box.
+
+75
+00:03:06,542 --> 00:03:10,542
+Click one, tap Formula, and type XeO3.
+
+76
+00:03:10,542 --> 00:03:12,462
+Next box
+
+77
+00:03:12,462 --> 00:03:12,942
+XeF2…
+
+78
+00:03:12,942 --> 00:03:17,182
+and so on, down both lists: XeO2F2,
+
+79
+00:03:17,182 --> 00:03:21,582
+XeOF4, then BrF5, NH3, the I3 minus ion,
+
+80
+00:03:21,582 --> 00:03:22,576
+and SF4.
+
+81
+00:03:24,853 --> 00:03:25,653
+Insert
+
+82
+00:03:25,653 --> 00:03:28,773
+and there it is: a clean two-column table,
+
+83
+00:03:28,773 --> 00:03:31,573
+right inside the question, just like the paper.
+
+84
+00:03:31,573 --> 00:03:33,093
+Type the four options
+
+85
+00:03:33,093 --> 00:03:35,493
+A two, B one, and so on
+
+86
+00:03:35,493 --> 00:03:36,969
+and B is the answer.
+
+87
+00:03:37,959 --> 00:03:40,919
+Now JEE Advanced, Paper 1.
+
+88
+00:03:40,919 --> 00:03:44,039
+The answer here is a number, so change the question type
+
+89
+00:03:44,039 --> 00:03:45,479
+to Numerical answer.
+
+90
+00:03:45,479 --> 00:03:49,079
+And JEE Advanced takes nothing off for a wrong number,
+
+91
+00:03:49,079 --> 00:03:50,999
+so set Wrong to zero.
+
+92
+00:03:50,999 --> 00:03:53,239
+You can set the marks on any question,
+
+93
+00:03:53,239 --> 00:03:54,092
+like this.
+
+94
+00:03:54,262 --> 00:03:55,462
+Type the question.
+
+95
+00:03:55,462 --> 00:03:56,902
+Now the first structure
+
+96
+00:03:56,902 --> 00:03:59,782
+tap Picture, then this cloud button.
+
+97
+00:03:59,782 --> 00:04:02,742
+It puts a picture inside the text, exactly where your
+
+98
+00:04:02,742 --> 00:04:03,702
+cursor is.
+
+99
+00:04:03,702 --> 00:04:07,062
+Choose a picture, find your file, pick the structure…
+
+100
+00:04:07,062 --> 00:04:08,086
+and there it is.
+
+101
+00:04:08,256 --> 00:04:11,776
+Now open Sy Pad, and right next to the structure,
+
+102
+00:04:11,776 --> 00:04:13,776
+the arrow with conditions.
+
+103
+00:04:13,776 --> 00:04:18,176
+Tap Words, type heat on top, add X,
+
+104
+00:04:18,176 --> 00:04:19,696
+and Insert.
+
+105
+00:04:19,696 --> 00:04:23,216
+The second structure goes in exactly the same way:
+
+106
+00:04:23,216 --> 00:04:27,056
+Picture, the cloud button, choose the file.
+
+107
+00:04:27,056 --> 00:04:28,976
+Then Sy Pad again
+
+108
+00:04:28,976 --> 00:04:33,056
+the arrow, the word heat on top, and Y.
+
+109
+00:04:33,056 --> 00:04:33,927
+Insert.
+
+110
+00:04:35,028 --> 00:04:36,308
+Just like the paper.
+
+111
+00:04:36,308 --> 00:04:38,788
+For the answer, choose Exact value,
+
+112
+00:04:38,788 --> 00:04:39,953
+and type four.
+
+113
+00:04:40,896 --> 00:04:42,496
+And when a question is long
+
+114
+00:04:42,496 --> 00:04:44,256
+don't type it at all.
+
+115
+00:04:44,256 --> 00:04:46,336
+More than one answer can be right here,
+
+116
+00:04:46,336 --> 00:04:48,496
+so first choose Multiple correct.
+
+117
+00:04:48,496 --> 00:04:51,616
+Now Fill from photo, choose a photo of the question…
+
+118
+00:04:51,616 --> 00:04:53,480
+and TestoZa reads it for you.
+
+119
+00:04:53,650 --> 00:04:56,530
+All three reactions, the gas labels,
+
+120
+00:04:56,530 --> 00:05:00,450
+the 573 kelvin, even U-235
+
+121
+00:05:00,450 --> 00:05:03,570
+and the photo shows the answer, so A and C are already
+
+122
+00:05:03,570 --> 00:05:04,260
+ticked.
+
+123
+00:05:04,670 --> 00:05:06,510
+Always give it one quick read.
+
+124
+00:05:06,510 --> 00:05:07,470
+Last thing
+
+125
+00:05:07,470 --> 00:05:08,670
+partial marks.
+
+126
+00:05:08,670 --> 00:05:12,510
+Choose JEE Advanced: one mark for each correct option
+
+127
+00:05:12,510 --> 00:05:15,293
+picked, full marks only for all of them.
+
+128
+00:05:18,879 --> 00:05:20,159
+Save test…
+
+129
+00:05:20,159 --> 00:05:23,039
+and your chemistry paper is in My Tests
+
+130
+00:05:23,039 --> 00:05:25,198
+ready to conduct as a live exam.
+
+131
+00:05:26,442 --> 00:05:29,482
+Formulas, reactions, tables and structures
+
+132
+00:05:29,482 --> 00:05:30,762
+all in one place.
+
+133
+00:05:30,762 --> 00:05:33,642
+Make your chemistry test at testoza.com.
+
+134
+00:05:33,642 --> 00:05:36,304
+Subscribe for more, and I'll see you in the next one.

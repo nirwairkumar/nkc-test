@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/lib/getApiUrl';
+import { isCandidateVisit } from '@/lib/candidateExit';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -37,12 +38,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
-import { FeedbackForm } from '@/components/FeedbackForm';
-import Footer from '@/components/Footer';
+import { BehavioralTimeMatrix } from '@/components/results/BehavioralTimeMatrix';
+import { resolveResultView } from '@/lib/resultView';
+
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import ReactMarkdown from 'react-markdown';
 import { AIChatBot } from '@/components/AIChatBot';
 import {
@@ -90,6 +91,18 @@ const getDisplayMark = (value: string | number | undefined, defaultVal: number =
   return isNaN(num) ? defaultVal : num;
 };
 
+const formatQuestionTime = (seconds?: number | string): string => {
+  if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
+  const sec = typeof seconds === 'number' ? seconds : parseInt(String(seconds), 10);
+  if (isNaN(sec) || sec <= 0) return '< 1s';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m > 0) {
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  }
+  return `${s}s`;
+};
+
 // ─── COMBINED RESULTS VIEW ────────────────────────────────────────────────────
 const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any }) => {
   const { p1, p2, sessionTitle, paper1Label = 'Paper I', paper2Label = 'Paper II' } = state;
@@ -103,8 +116,8 @@ const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any })
   const combinedPct = combinedMaxMarks > 0 ? ((combinedTotal / combinedMaxMarks) * 100) : 0;
 
   useEffect(() => {
-    if (p1?.test) fetchAdvancedAnalysis(p1.test, p1.answers).then(r => setP1Analysis(r.data));
-    if (p2?.test) fetchAdvancedAnalysis(p2.test, p2.answers).then(r => setP2Analysis(r.data));
+    if (p1?.test) fetchAdvancedAnalysis(p1.test, p1.answers, p1.questionTimes || p1.question_times).then(r => setP1Analysis(r.data));
+    if (p2?.test) fetchAdvancedAnalysis(p2.test, p2.answers, p2.questionTimes || p2.question_times).then(r => setP2Analysis(r.data));
   }, []);
 
   const pctColor = combinedPct >= 75 ? 'text-emerald-400' : combinedPct >= 50 ? 'text-amber-400' : 'text-red-400';
@@ -364,6 +377,8 @@ const ResultsPage = () => {
 
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
   const selectedTest = stateData?.test || contextSelectedTest;
+  // Only what the creator lets candidates see; with everything off, just the marks row.
+  const view = resolveResultView(selectedTest?.settings);
 
   // Normalize answers with memoization
   const answers: Record<number, string> = useMemo(() => {
@@ -376,13 +391,21 @@ const ResultsPage = () => {
     return {};
   }, [stateData, contextAnswers]);
 
+  // Read per-question time tracking
+  const questionTimes: Record<string | number, number> = useMemo(() => {
+    return stateData?.questionTimes || stateData?.timeSpentPerQuestion || stateData?.metadata?.question_times || stateData?.test?.metadata?.question_times || {};
+  }, [stateData]);
+
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [showPopup, setShowPopup] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
-  const showAIChatFromParams = searchParams.get('ai_chat') === 'true';
+  const requestedTab = searchParams.get('tab') || 'overview';
+  // A hand-typed ?tab= can't open a part the creator turned off.
+  const activeTab = (requestedTab === 'topics' && view.time_matrix) || (requestedTab === 'solution-key' && view.solution_key)
+    ? requestedTab
+    : 'overview';
+  const showAIChatFromParams = view.ai_analysis && searchParams.get('ai_chat') === 'true';
   const [isAIChatOpen, setIsAIChatOpen] = useState(showAIChatFromParams);
 
   useEffect(() => {
@@ -396,6 +419,8 @@ const ResultsPage = () => {
   // We do this by replacing the current history entry (so the test page URL is gone)
   // and intercepting popstate to redirect to home.
   useEffect(() => {
+    // Candidates from a test link or join code get CandidateBackGuard's "Leave?" instead.
+    if (isCandidateVisit()) return;
     // Push a sentinel entry so back-button goes to THIS page first before home
     window.history.pushState(null, '', window.location.href);
     const handlePopState = () => {
@@ -406,9 +431,6 @@ const ResultsPage = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-
-  const [popupDismissed, setPopupDismissed] = useState(false);
-  const [isDismissing, setIsDismissing] = useState(false);
 
   const justSubmitted = stateData?.justSubmitted;
   const testId = selectedTest?.id;
@@ -489,31 +511,6 @@ const ResultsPage = () => {
     }
   }, [showPersonalResults, selectedTest, justSubmitted, testId]);
 
-  useEffect(() => {
-    // Check if popup was already shown for this test in this "session" or permanently
-    const popupShownKey = testId ? `feedback_popup_shown_${testId}` : null;
-    const isAlreadyShown = popupShownKey ? localStorage.getItem(popupShownKey) : null;
-
-    if (justSubmitted && !popupDismissed && !isAlreadyShown) {
-      const timer = setTimeout(() => {
-        // setShowPopup(true); // Temporarily disabled
-      }, 5000); // 5 seconds delay
-      return () => clearTimeout(timer);
-    }
-  }, [justSubmitted, popupDismissed, testId]);
-
-  const handleDismissPopup = () => {
-    setIsDismissing(true);
-    if (testId) {
-      localStorage.setItem(`feedback_popup_shown_${testId}`, 'true');
-    }
-    // After animation finishes, actually remove it from DOM
-    setTimeout(() => {
-      setShowPopup(false);
-      setPopupDismissed(true);
-    }, 600);
-  };
-
   const answersKey = useMemo(() => JSON.stringify(answers), [answers]);
 
   useEffect(() => {
@@ -521,7 +518,7 @@ const ResultsPage = () => {
       const loadAnalysis = async () => {
         setLoading(true);
         try {
-          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers);
+          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers, questionTimes);
           if (error) {
             setError(error);
           } else {
@@ -535,7 +532,7 @@ const ResultsPage = () => {
       };
       loadAnalysis();
     }
-  }, [showPersonalResults, selectedTest?.id, answersKey]);
+  }, [showPersonalResults, selectedTest?.id, answersKey, questionTimes]);
 
   const handleRetakeTest = () => {
     resetTest();
@@ -610,15 +607,20 @@ const ResultsPage = () => {
     negativeMarks: string | number;
   }>;
 
-  const allQuestions = selectedTest?.enable_section_mode && selectedTest?.sections
+  // The test copy from the exam carries no correctAnswer; the server sends the key with the analysis.
+  const answerKey: Record<string, any> = analysisData?.answerKey || {};
+  const allQuestions = (selectedTest?.enable_section_mode && selectedTest?.sections
     ? (selectedTest.sections as any[]).flatMap((s: any) => s.questions || [])
-    : selectedTest?.questions || [];
+    : selectedTest?.questions || []
+  ).map((q: any) => (q?.correctAnswer == null && answerKey[String(q?.id)] != null
+    ? { ...q, correctAnswer: answerKey[String(q.id)] }
+    : q));
 
   // Determine testId for feedback
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full">
-      <div className="flex-1 overflow-y-auto bg-slate-50/30 dark:bg-slate-950/30 min-h-screen">
+    <div className="flex flex-col md:flex-row w-full flex-1">
+      <div className="flex-1 bg-slate-50/30 dark:bg-slate-950/30">
         <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
 
           <AnimatePresence mode="wait">
@@ -663,11 +665,6 @@ const ResultsPage = () => {
                             </Badge>
                           </div>
                         </div>
-                        {testId && (
-                          <div className="absolute bottom-0 right-0 md:static bg-white/20 backdrop-blur-md rounded-tl-lg md:rounded-full p-0.5 shadow-sm border-t border-l md:border border-white/30 self-end scale-90 md:scale-100 origin-bottom-right z-10 transition-all">
-                            <TestVoteButtons testId={testId} className="!bg-transparent rounded-none md:rounded-full" />
-                          </div>
-                        )}
                       </div>
 
                       {/* Merged Subject Marks */}
@@ -711,7 +708,7 @@ const ResultsPage = () => {
                 </div>
 
                 {/* AI Rank Predictor (Shown only for supported competitive exam categories) */}
-                {isRankPredictorSupported(selectedTest) && (
+                {view.ai_analysis && isRankPredictorSupported(selectedTest) && (
                   <div className="mt-6 mb-8 relative">
                     <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
                       {isPredictingRank && (
@@ -785,7 +782,7 @@ const ResultsPage = () => {
                                 </div>
                                 <div className="flex flex-col items-center bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">
                                   <span className="text-base font-black text-slate-600 dark:text-slate-400 leading-none">{sec.skipped}</span>
-                                  <span className="text-[8px] font-black text-slate-500 uppercase mt-1">Split</span>
+                                  <span className="text-[8px] font-black text-slate-500 uppercase mt-1">Skipped</span>
                                 </div>
                               </div>
                             </div>
@@ -794,6 +791,26 @@ const ResultsPage = () => {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* Method 1: Behavioral Time & Cognitive Matrix (no questions or answers without the solution key) */}
+                {view.time_matrix && (
+                  <BehavioralTimeMatrix
+                    questions={allQuestions}
+                    answers={answers}
+                    questionTimes={questionTimes}
+                    testDurationMinutes={selectedTest?.duration || 60}
+                    questionStatus={questionStatus}
+                    compactOnly={!view.solution_key}
+                    onSelectQuestion={view.solution_key ? (idx) => {
+                      const qId = allQuestions[idx]?.id;
+                      setSearchParams({ tab: 'solution-key', q: String(idx + 1) });
+                      setTimeout(() => {
+                        const el = document.getElementById(`solution-item-${qId}`);
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 120);
+                    } : undefined}
+                  />
                 )}
               </motion.div>
             )}
@@ -978,26 +995,40 @@ const ResultsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <Accordion type="single" collapsible className="w-full">
+                    <Accordion 
+                      type="single" 
+                      collapsible 
+                      className="w-full"
+                      defaultValue={(() => {
+                        const qParam = searchParams.get('q');
+                        if (qParam) {
+                          const idx = parseInt(qParam, 10) - 1;
+                          if (!isNaN(idx) && allQuestions[idx]?.id !== undefined) {
+                            return `item-${allQuestions[idx].id}`;
+                          }
+                        }
+                        return undefined;
+                      })()}
+                    >
                       {allQuestions.map((q: any, index: number) => {
                         const ans = answers[q.id];
 
                         // Determine marks for this question (Section Aware)
                         let marks = selectedTest.marks_per_question ? parseMark(selectedTest.marks_per_question, 4) : 4;
-                        let neg = selectedTest.negative_marks !== undefined ? parseMark(selectedTest.negative_marks, 1) : 1;
+                        let neg = parseMark(selectedTest.negative_marks, 0);
 
                         // For Display
                         let marksDisplay: string | number = selectedTest.marks_per_question ? getDisplayMark(selectedTest.marks_per_question, 4) : 4;
-                        let negDisplay: string | number = selectedTest.negative_marks !== undefined ? getDisplayMark(selectedTest.negative_marks, 1) : 1;
+                        let negDisplay: string | number = getDisplayMark(selectedTest.negative_marks, 0);
 
                         if (selectedTest.enable_section_mode && selectedTest.sections) {
                           let rCount = 0;
                           for (const section of selectedTest.sections) {
                             if (index >= rCount && index < rCount + section.questions.length) {
                               marks = parseMark(section.marks_per_question, 4);
-                              neg = parseMark(section.negative_marks, 1);
+                              neg = parseMark(section.negative_marks, 0);
                               marksDisplay = getDisplayMark(section.marks_per_question, 4);
-                              negDisplay = getDisplayMark(section.negative_marks, 1);
+                              negDisplay = getDisplayMark(section.negative_marks, 0);
                               break;
                             }
                             rCount += section.questions.length;
@@ -1018,9 +1049,10 @@ const ResultsPage = () => {
                         const isWrong = qStats.status === 'wrong';
                         const isPartial = qStats.status === 'partial';
                         const isSkipped = qStats.status === 'skipped';
+                        const qTime = qStats.time_spent !== undefined ? qStats.time_spent : (questionTimes[q.id] || questionTimes[String(q.id)] || 0);
 
                         return (
-                          <AccordionItem key={q.id} value={`item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
+                          <AccordionItem key={q.id} value={`item-${q.id}`} id={`solution-item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
                             <AccordionTrigger className="hover:no-underline py-3 px-2">
                               <div className="flex items-center gap-4 text-left w-full">
                                 <div className={`
@@ -1040,6 +1072,12 @@ const ResultsPage = () => {
                                   <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent pointer-events-none z-10" />
                                 </div>
                                 <div className="mr-2 flex items-center gap-3">
+                                  {/* Time Spent Badge */}
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold shrink-0" title="Time spent on this question">
+                                    <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                                    <span>{formatQuestionTime(qTime)}</span>
+                                  </div>
+
                                   {/* Marks Display: Obtained / Total */}
                                   {(() => {
                                     const obtainedMark = qStats.score || 0;
@@ -1062,7 +1100,34 @@ const ResultsPage = () => {
                             </AccordionTrigger>
                             <AccordionContent className="px-4 pb-4">
                               <div className="space-y-4 pt-2">
-                                <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
+                                {/* Question Details Header Strip */}
+                                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+                                      <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                                      <span>Time Spent: <strong className="text-indigo-600 dark:text-indigo-400">{formatQuestionTime(qTime)}</strong></span>
+                                    </div>
+                                    <Separator orientation="vertical" className="h-3.5" />
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                      <span>Marks: </span>
+                                      <strong className={qStats.score > 0 ? 'text-green-600' : qStats.score < 0 ? 'text-red-500' : 'text-slate-500'}>
+                                        {parseFloat((qStats.score || 0).toFixed(2))}
+                                      </strong>
+                                      <span> / {marksDisplay}</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    {q.type === 'numerical' ? 'Numerical' : q.type === 'multiple' ? 'Multiple Choice' : 'Single Choice'}
+                                  </span>
+                                </div>
+
+                                {(q as any).passageContent && (
+                                  <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed break-words p-3 rounded-md border bg-slate-50 dark:bg-slate-800/40 overflow-x-auto max-w-full custom-scrollbar">
+                                    <LatexRenderer>{(q as any).passageContent}</LatexRenderer>
+                                  </div>
+                                )}
+
+                                <div className="text-base font-medium text-slate-900 dark:text-slate-100 leading-relaxed break-words tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal] border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
                                   <LatexRenderer>{q.question || ""}</LatexRenderer>
                                 </div>
 
@@ -1125,16 +1190,24 @@ const ResultsPage = () => {
                                     <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
                                     <div className="font-semibold text-blue-900 flex flex-col gap-1 min-w-max">
                                       <span>
-                                        {q.type === 'numerical' ? (
-                                          `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
+                                        {q.correctAnswer == null || q.correctAnswer === '' ? (
+                                          <span className="text-sm font-medium text-slate-500">Shown after the exam ends</span>
+                                        ) : q.type === 'numerical' ? (
+                                          (() => {
+                                            const ca = q.correctAnswer as any;
+                                            if (ca == null) return '—';
+                                            if (typeof ca !== 'object') return String(ca);
+                                            if (ca.exactMatch) return String(ca.exactAnswers ?? '—');
+                                            return `Between ${ca.min ?? '—'} and ${ca.max ?? '—'}`;
+                                          })()
                                         ) : Array.isArray(q.correctAnswer) ? (
                                           (q.correctAnswer as string[]).join(', ')
                                         ) : (
                                           `${q.correctAnswer}) `
                                         )}
-                                        {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options[q.correctAnswer as string]}</LatexRenderer>}
+                                        {q.correctAnswer != null && q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options?.[q.correctAnswer as string]}</LatexRenderer>}
                                       </span>
-                                      {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
+                                      {q.correctAnswer != null && q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                         <img
                                           src={q.optionImages[q.correctAnswer as string].trim()}
                                           alt="Correct Answer"
@@ -1156,118 +1229,15 @@ const ResultsPage = () => {
                 </Card>
               </motion.div>
             )}
-
-            {activeTab === 'solutions' && (
-              <motion.div
-                key="solutions"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
-              >
-                <CheckCircle className="w-12 h-12 opacity-20" />
-                <p className="font-bold">Solutions page content coming soon.</p>
-              </motion.div>
-            )}
-
-            {activeTab === 'advance-analysis' && (
-              <motion.div
-                key="advance-analysis"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
-              >
-                <Target className="w-12 h-12 opacity-20" />
-                <p className="font-bold">Advance Analysis content coming soon.</p>
-              </motion.div>
-            )}
-
-            {activeTab === 'feedback' && (
-              <motion.div
-                key="feedback"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="max-w-2xl mx-auto"
-              >
-                {testId && (
-                  <div id="feedback-section" className="scroll-mt-24">
-                    <div className="space-y-1 mb-8 text-center">
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-white">Share Your Feedback</h3>
-                      <p className="text-sm text-slate-500 font-medium">Your thoughts help us improve the test quality for everyone.</p>
-                    </div>
-                    <FeedbackForm
-                      testId={testId}
-                      studentName={contextStudentName}
-                      creatorId={selectedTest?.created_by}
-                      testTitle={selectedTest?.title}
-                      testCustomId={selectedTest?.custom_id}
-                    />
-                  </div>
-                )}
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
         <div className="hidden md:block">
-          <Footer />
+
         </div>
       </div>
 
-
-
-      {/* Ad-like Sliding Popup */}
-      <AnimatePresence>
-        {showPopup && testId && (
-          <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={isDismissing
-              ? { x: "-50vw", y: "-20vh", scale: 0, opacity: 0 }
-              : { y: 0, opacity: 1, x: 0, scale: 1 }
-            }
-            exit={{ opacity: 0, scale: 0 }}
-            transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="fixed bottom-20 md:bottom-6 right-6 lg:right-12 z-50 w-[350px] shadow-2xl rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900"
-          >
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 relative">
-              <button
-                onClick={handleDismissPopup}
-                className="absolute top-2 right-2 p-1 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-full">
-                  <Sparkles className="w-5 h-5 text-yellow-300" />
-                </div>
-                <h3 className="text-white font-bold text-lg leading-tight">We value your opinion!</h3>
-              </div>
-            </div>
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Help us improve your experience by sharing a quick feedback. It takes less than a minute!
-              </p>
-              <Button
-                onClick={() => {
-                  setShowPopup(false);
-                  if (testId) {
-                    localStorage.setItem(`feedback_popup_shown_${testId}`, 'true');
-                  }
-                  navigate(`/results/feedback/${testId}`, { state: stateData });
-                }}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 shadow-md h-11"
-              >
-                Give Feedback
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* TestoZa AI Chatbot */}
-      {showPersonalResults && analysisData && selectedTest && (
+      {view.ai_analysis && showPersonalResults && analysisData && selectedTest && (
         <AIChatBot
           isOpen={isAIChatOpen}
           onOpenChange={(open) => {
@@ -1292,7 +1262,7 @@ const ResultsPage = () => {
                 question: q.question?.substring(0, 200) || '',
                 type: q.type || 'single',
                 topic: q.topic || 'Uncategorized',
-                correctAnswer: q.correctAnswer,
+                correctAnswer: q.correctAnswer ?? analysisData.answerKey?.[qId],
                 userAnswer: answers[q.id as any] ?? null,
                 status: status?.status || 'skipped',
                 marks: q.marks,

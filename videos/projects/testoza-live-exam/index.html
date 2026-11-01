@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-700.woff2') format('woff2');}
+@font-face{font-family:'Kalam';font-weight:700;src:url('assets/fonts/Kalam-700.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Screen footage: 1536x864 source, GSAP scales it (1.25 = full frame) and pans for punch-ins. */
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.card{position:absolute;inset:0;overflow:hidden}
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 700px at 30% 60%,rgba(14,116,144,.30),rgba(2,6,23,0) 70%),radial-gradient(900px 600px at 82% 18%,rgba(79,70,229,.22),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);background-size:64px 64px}
+
+/* Title card */
+.titlecard .wm{position:absolute;left:0;right:0;margin:0 auto;top:250px;height:150px}
+.ttl{position:absolute;left:0;right:0;top:470px;text-align:center;font:800 88px/1.08 'Outfit';color:#f8fafc;letter-spacing:-.02em;padding:0 160px}
+.ttl span{color:#facc15}
+.sub{position:absolute;left:0;right:0;top:700px;display:flex;justify-content:center;align-items:center;gap:22px;font:600 34px 'Outfit';color:#94a3b8}
+.sub i{width:9px;height:9px;border-radius:50%;background:#38bdf8;display:block}
+
+/* Chapter chip */
+.chip{position:absolute;left:64px;top:56px;height:56px;display:flex;align-items:center;gap:14px;padding:0 24px 0 8px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 1.5px rgba(56,189,248,.55),0 12px 30px -12px rgba(0,0,0,.6);color:#f8fafc;font:600 25px 'Outfit';white-space:nowrap;z-index:9}
+.chip b{width:42px;height:42px;border-radius:50%;background:#38bdf8;color:#020617;font:800 22px/42px 'Outfit';text-align:center}
+
+/* Captions */
+.cap{position:absolute;left:0;right:0;bottom:44px;text-align:center;z-index:9}
+.cap span{display:inline-block;max-width:1480px;padding:10px 28px;border-radius:14px;background:rgba(2,6,23,.84);color:#fff;font:600 38px/1.3 'Outfit'}
+.cap.capside{left:930px;right:90px;bottom:120px;text-align:left}
+.cap.capside span{max-width:900px}
+
+/* Phone (scenes + the recorded phone take sit at the same place) */
+.phonescene{position:absolute;inset:0}
+.phone{position:absolute;left:330px;top:50px;width:470px;height:972px;padding:20px;border-radius:66px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 50px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;width:430px;height:932px;border-radius:46px;overflow:hidden;background:#efeae2}
+.phonewrap{position:absolute;left:350px;top:70px;width:430px;height:932px;border-radius:46px;overflow:hidden;z-index:5}
+.pvid{position:absolute;left:0;top:0;width:430px;height:932px}
+.chrome{position:absolute;left:350px;top:70px;width:430px;height:110px;border-radius:46px 46px 0 0;overflow:hidden;background:#fff;z-index:6;border-bottom:1px solid #e2e8f0}
+.chrome .url{position:absolute;left:14px;right:14px;top:56px;height:42px;border-radius:21px;background:#f1f5f9;display:flex;align-items:center;gap:8px;padding:0 16px;font:500 15px 'Outfit';color:#334155;white-space:nowrap;overflow:hidden}
+.lock{width:11px;height:13px;border-radius:2px;background:#475569;display:block;position:relative;flex:none}
+.lock::before{content:'';position:absolute;left:2px;top:-6px;width:7px;height:8px;border:2px solid #475569;border-bottom:0;border-radius:5px 5px 0 0}
+.sbar{position:absolute;left:0;right:0;top:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 34px 0 38px;font:700 16px 'Outfit';color:#0f172a;z-index:3}
+.sbar.dk{color:#fff}
+.isl{position:absolute;left:50%;top:11px;width:118px;height:32px;margin-left:-59px;border-radius:20px;background:#000}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:15px;height:6px;background:currentColor;border-radius:1px}
+.side{position:absolute;left:930px;top:250px;width:860px;color:#f8fafc}
+.kick{font:700 26px 'Outfit';letter-spacing:.2em;color:#38bdf8;margin-bottom:18px}
+.h2{font:800 68px/1.08 'Outfit';letter-spacing:-.02em}
+.side .p{margin-top:22px;font:500 34px/1.4 'Outfit';color:#94a3b8}
+
+/* WhatsApp-style chat (not WhatsApp's artwork: plain colours, our own icons) */
+.wah{position:absolute;left:0;right:0;top:0;height:118px;padding:52px 16px 0 10px;background:#0b6b5b;color:#fff;display:flex;align-items:center;gap:10px;z-index:2}
+.wah .back{font:400 40px/1 'Outfit';margin-top:-6px}
+.gav{width:42px;height:42px;border-radius:50%;background:#e2f5ee;color:#0b6b5b;font:800 20px/42px 'Outfit';text-align:center;flex:none}
+.wah b{display:block;font:700 18px 'Outfit'}
+.wah small{display:block;font:400 13px 'Outfit';opacity:.85;white-space:nowrap}
+.chat{position:absolute;left:0;right:0;top:118px;bottom:72px;padding:10px 12px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;background:radial-gradient(rgba(120,100,70,.08) 1.2px,transparent 1.3px) 0 0/22px 22px,#efeae2}
+.day{align-self:center;background:#fff;border-radius:8px;padding:4px 12px;font:600 12px 'Outfit';color:#64748b;margin-bottom:4px}
+.msg{position:relative;max-width:330px;padding:7px 10px 20px;border-radius:10px;font:400 15.5px/1.32 'Outfit';color:#111827;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.msg.in{align-self:flex-start;background:#fff;border-top-left-radius:2px}
+.msg.out{align-self:flex-end;background:#d9fdd3;border-top-right-radius:2px}
+.msg.big{max-width:348px}
+.msg em{display:block;font:700 13.5px 'Outfit';color:#0b6b5b;font-style:normal;margin-bottom:2px}
+.msg em.c2{color:#7c3aed}.msg em.c3{color:#c2410c}
+.msg time{position:absolute;right:9px;bottom:4px;font:400 11px 'Outfit';color:#64748b;display:flex;align-items:center;gap:3px}
+.tk{width:15px;height:9px;display:block;position:relative}
+.tk::before,.tk::after{content:'';position:absolute;top:0;width:5px;height:9px;border:solid #3b82f6;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.tk::before{left:2px}.tk::after{left:7px}
+.txt p{min-height:4px}
+.txt p.sp{height:8px}
+.txt u{color:#0e7490;text-decoration:underline;word-break:break-all;position:relative}
+.txt b{font-weight:700}
+.hl{border-radius:4px;margin:0 -3px;padding:0 3px}
+.clock{display:inline-block;width:13px;height:13px;border:2px solid #64748b;border-radius:50%;margin-right:5px;position:relative;top:1px}
+.pv{display:flex;gap:10px;background:rgba(0,0,0,.05);border-radius:8px;padding:8px;margin-bottom:6px}
+.pv img{width:64px;height:64px;border-radius:6px;flex:none;background:#fff}
+.pv b{display:block;font:700 13.5px/1.25 'Outfit'}
+.pv span{display:block;font:400 12px/1.3 'Outfit';color:#475569;margin-top:2px}
+.pv em{display:block;font:400 11.5px 'Outfit';color:#64748b;font-style:normal;margin-top:3px}
+.composer{position:absolute;left:0;right:0;bottom:0;min-height:72px;padding:10px 10px 14px;display:flex;align-items:flex-end;gap:8px;background:#efeae2;z-index:2}
+.box{flex:1;min-height:46px;background:#fff;border-radius:24px;padding:12px 16px;font:400 16px/1.3 'Outfit';color:#111827;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.box .ph{color:#94a3b8}
+.draft{display:none;max-height:520px;overflow:hidden}
+.draft .pv{background:#f1f5f9}
+.send{width:48px;height:48px;border-radius:50%;background:#0b8f6f;flex:none;position:relative}
+.send::before{content:'';position:absolute;left:17px;top:15px;border-style:solid;border-width:9px 0 9px 16px;border-color:transparent transparent transparent #fff}
+.send.mic::before{left:19px;top:13px;width:10px;height:16px;border:0;border-radius:6px;background:#fff}
+.notif{position:absolute;left:10px;right:10px;top:52px;padding:12px 16px;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 16px 40px -10px rgba(0,0,0,.45);font:400 14px/1.35 'Outfit';color:#111827;z-index:4}
+.notif b{display:block;font:700 15px 'Outfit'}
+.ripple{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(15,23,42,.25);border:2px solid #fff;display:block}
+
+/* Classroom board */
+.boardscene{background:#d9d0c1}
+.wall{position:absolute;inset:0;background:radial-gradient(1400px 800px at 50% 30%,#efe8dc,#d6ccbb 75%),#d9d0c1}
+.wb{position:absolute;left:170px;top:110px;width:1580px;height:800px;border-radius:14px;background:linear-gradient(160deg,#ffffff,#f3f6f9 60%,#e9eef3);box-shadow:0 0 0 14px #b9c2cb,0 0 0 16px #8e99a4,0 40px 80px -20px rgba(60,40,10,.45)}
+.wbin{position:absolute;inset:0;overflow:hidden;border-radius:14px}
+.wbin::before{content:'';position:absolute;left:-200px;top:-300px;width:900px;height:900px;background:radial-gradient(closest-side,rgba(255,255,255,.7),rgba(255,255,255,0));transform:rotate(20deg)}
+.pre{position:absolute;left:90px;top:60px;font:700 52px 'Kalam';color:#334155;opacity:.9}
+.ink{position:absolute;left:90px;font:700 150px/1.1 'Kalam';white-space:nowrap}
+.l1{top:210px;color:#1d4ed8}
+.l2{top:440px;color:#dc2626}
+.pen{position:absolute;left:0;top:0;width:220px;height:46px;transform-origin:0 50%}
+.pen i{position:absolute;left:0;top:0;width:220px;height:46px;border-radius:8px 22px 22px 8px;background:linear-gradient(180deg,#1e3a8a,#1e40af 50%,#172554);display:block;box-shadow:0 14px 26px -8px rgba(0,0,0,.45)}
+.pen i::before{content:'';position:absolute;left:-26px;top:9px;border-style:solid;border-width:14px 26px 14px 0;border-color:transparent #e5e7eb transparent transparent}
+.tray{position:absolute;left:520px;bottom:-40px;width:540px;height:26px;border-radius:6px;background:#9aa4ae;box-shadow:0 10px 18px -8px rgba(0,0,0,.4)}
+.tray b{position:absolute;top:-14px;left:60px;width:120px;height:16px;border-radius:8px;background:#1e40af;display:block}
+.tray b.r{left:210px;background:#dc2626}.tray b.k{left:360px;background:#111827}
+
+/* Later */
+.later{background:rgba(2,6,23,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.lk{font:700 30px 'Outfit';letter-spacing:.24em;color:#38bdf8}
+.lt{font:800 92px 'Outfit';color:#f8fafc;letter-spacing:-.02em}
+
+/* NEET card */
+.omr{position:absolute;left:230px;top:170px;width:420px;height:520px;border-radius:14px;background:#fffdf7;padding:34px 34px;box-shadow:0 40px 90px -30px #000;display:flex;flex-direction:column;justify-content:space-between}
+.omr p{display:flex;align-items:center;gap:16px;font:700 20px 'Outfit';color:#64748b}
+.omr p span{width:26px}
+.omr i{width:34px;height:34px;border-radius:50%;border:2px solid #f472b6;font:600 15px/30px 'Outfit';text-align:center;color:#db2777;font-style:normal}
+.omr i.f{background:#111827;border-color:#111827;color:#111827}
+.arrow{position:absolute;left:705px;top:410px;width:300px;height:8px;border-radius:4px;background:linear-gradient(90deg,#38bdf8,#facc15);transform-origin:0 50%}
+.arrow::after{content:'';position:absolute;right:-22px;top:-14px;border-style:solid;border-width:18px 0 18px 26px;border-color:transparent transparent transparent #facc15}
+.mon{position:absolute;left:1060px;top:150px;width:640px}
+.scr{position:relative;height:400px;border-radius:18px;background:#fff;border:14px solid #0f172a;padding:28px;box-shadow:0 40px 90px -30px #000}
+.scr .q{height:16px;width:330px;border-radius:8px;background:#cbd5e1;margin-bottom:12px}
+.scr .q.s{width:240px;margin-bottom:28px}
+.scr .o{height:42px;width:330px;border-radius:10px;border:2px solid #e2e8f0;margin-bottom:12px}
+.scr .o.on{border-color:#0ea5e9;background:#e0f2fe}
+.pal{position:absolute;right:28px;top:28px;width:170px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pal b{height:30px;border-radius:6px;background:#e2e8f0;display:block}
+.pal b.g{background:#22c55e}
+.stand{width:160px;height:70px;margin:0 auto;background:linear-gradient(#1e293b,#0f172a);clip-path:polygon(30% 0,70% 0,85% 100%,15% 100%)}
+.nh{position:absolute;left:0;right:0;top:700px;text-align:center;color:#f8fafc;padding:0 180px}
+.nh .kick{margin-bottom:12px}
+.nh .h{font:800 58px/1.15 'Outfit';letter-spacing:-.015em}
+.nh .h span{color:#facc15}
+.nh .src{margin-top:16px;font:500 24px 'Outfit';color:#94a3b8}
+
+/* End card */
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:270px;height:170px}
+.endcard .tag{position:absolute;left:0;right:0;top:500px;text-align:center;font:700 52px/1.25 'Outfit';color:#f8fafc;padding:0 200px}
+.pills{position:absolute;left:0;right:0;top:680px;display:flex;justify-content:center;gap:28px}
+.pill{height:84px;padding:0 44px;border-radius:999px;display:flex;align-items:center;gap:14px;font:700 38px 'Outfit'}
+.pill.url{color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 2px rgba(56,189,248,.6)}
+.pill.subs{color:#fff;background:#dc2626;box-shadow:0 20px 40px -14px rgba(220,38,38,.7)}
+.bell{width:26px;height:26px;border-radius:13px 13px 4px 4px;background:#fff;display:block;position:relative}
+.bell::after{content:'';position:absolute;left:9px;bottom:-6px;width:8px;height:6px;border-radius:0 0 4px 4px;background:#fff}
+
+</style></head><body>
+<div data-hf-id="hf-8qsd" id="root" data-composition-id="main" data-start="0" data-duration="347.09" data-width="1920" data-height="1080">
+<div data-hf-id="hf-917o" class="cam" id="cam0"><video data-hf-id="hf-au91" class="clip foot" id="v1" src="assets/cut/0-montage-c25f4ffac0.mp4" muted data-start="0" data-duration="8.17" data-track-index="0"></video></div>
+<div data-hf-id="hf-tq44" class="clip card titlecard" id="title" data-start="8.17" data-duration="5.6" data-track-index="1">
+      <div data-hf-id="hf-tan6" class="stage"><div data-hf-id="hf-kxq8" class="grid"></div></div>
+      <img data-hf-id="hf-tz6d" class="wm" src="assets/img/wordmark.png" alt="TestoZa"/>
+      <div data-hf-id="hf-7u4e" class="ttl">How to conduct a <span data-hf-id="hf-2pjj">cheat-proof</span> online exam</div>
+      <div data-hf-id="hf-f58h" class="sub">Go live <i data-hf-id="hf-wt6k"></i> Anti-cheating <i data-hf-id="hf-zeb8"></i> Join code <i data-hf-id="hf-y7e5"></i> Live results</div></div>
+<div data-hf-id="hf-c0h9" class="cam" id="cam1"><video data-hf-id="hf-bmsc" class="clip foot" id="v2" src="assets/cut/1-teacher-5742020a19.mp4" muted data-start="13.77" data-duration="192.47" data-track-index="0"></video></div>
+<div data-hf-id="hf-jwpb" class="cam" id="cam3"><video data-hf-id="hf-i5j3" class="clip foot" id="v3" src="assets/cut/3-teacher-28cb928c88.mp4" muted data-start="214.56" data-duration="10.8" data-track-index="0"></video></div>
+<div data-hf-id="hf-mtfx" class="phonewrap" id="pw6"><video data-hf-id="hf-h237" class="clip pvid" id="v4" src="assets/cut/6-phone-6d6dbc7f0d.mp4" muted data-start="237.02" data-duration="11.7" data-track-index="0"></video></div>
+<div data-hf-id="hf-wip7" class="cam" id="cam7"><video data-hf-id="hf-1t1t" class="clip foot" id="v5" src="assets/cut/7-candidate-73c2698026.mp4" muted data-start="248.72" data-duration="28.57" data-track-index="0"></video></div>
+<div data-hf-id="hf-2of0" class="cam" id="cam8"><video data-hf-id="hf-trxz" class="clip foot" id="v6" src="assets/cut/8-results-529204be9e.mp4" muted data-start="277.29" data-duration="30.23" data-track-index="0"></video></div>
+<div data-hf-id="hf-3g2t" class="cam" id="cam9"><video data-hf-id="hf-eat4" class="clip foot" id="v7" src="assets/cut/9-landing-1c10d3bf91.mp4" muted data-start="307.52" data-duration="12.8" data-track-index="0"></video></div>
+<div data-hf-id="hf-5hr8" class="clip phonescene" id="wa1" data-start="206.23" data-duration="8.33" data-track-index="2"><div data-hf-id="hf-xa86" class="stage"><div data-hf-id="hf-6qwo" class="grid"></div></div><div data-hf-id="hf-kda4" class="phone"><div data-hf-id="hf-cdmk" class="screen"><div data-hf-id="hf-dtfl" class="sbar dk"><span data-hf-id="hf-au2g">10:02</span><i data-hf-id="hf-1u8g" class="isl"></i><span data-hf-id="hf-zh8g" class="sig"><b data-hf-id="hf-xujp"></b><b data-hf-id="hf-ey49"></b><b data-hf-id="hf-g51c"></b><b data-hf-id="hf-fqqb"></b><em data-hf-id="hf-2lav"></em></span></div><div data-hf-id="hf-y45o" class="wah"><span data-hf-id="hf-n737" class="back">‹</span><span data-hf-id="hf-p7pp" class="gav">J</span><div data-hf-id="hf-yeow"><b data-hf-id="hf-8mvw">JEE 2027 — Morning Batch</b><small data-hf-id="hf-l3jb">Aarav, Priya, Rohan and 45 others</small></div></div>
+    <div data-hf-id="hf-vshe" class="chat"><div data-hf-id="hf-payn" class="day">TODAY</div>
+      <div data-hf-id="hf-uyhb" class="msg in"><em data-hf-id="hf-4ns5">Aarav Gupta</em>Sir, is tomorrow's mock online?<time data-hf-id="hf-iayo">9:41</time></div>
+      <div data-hf-id="hf-ym9j" class="msg out">Yes. Link coming in a minute.<time data-hf-id="hf-hicm">9:43 <s data-hf-id="hf-btrd" class="tk"></s></time></div>
+      <div data-hf-id="hf-t16u" class="msg out big" id="wa1sent"><div data-hf-id="hf-xu0e" class="pv"><img data-hf-id="hf-ydzk" src="assets/img/link-preview.png" alt=""/><div data-hf-id="hf-y7yw"><b data-hf-id="hf-zyke">JEE Main Mini Mock — TestoZa Demo</b><span data-hf-id="hf-u1qt">180 minutes · 8 questions. Open the link, enter your name and roll no, then tap Start.</span><em data-hf-id="hf-372v">app.testoza.com</em></div></div><div data-hf-id="hf-kvio" class="txt"><p data-hf-id="hf-u5uv" class="hl hl-name"><b data-hf-id="hf-po3s">JEE Main Mini Mock — TestoZa Demo — Prof. Rajesh Kumar</b></p><p data-hf-id="hf-ct6g" class="hl hl-time"><s data-hf-id="hf-33t0" class="clock"></s>180 min · 8 questions</p><p data-hf-id="hf-irte" class="sp"></p><p data-hf-id="hf-7ffu" class="">Exam link:</p><p data-hf-id="hf-vnu2" class="hl hl-link"><u data-hf-id="hf-nkt2">https://app.testoza.com/test/jee-main-mini-mock-t-gw9z9amv</u></p><p data-hf-id="hf-tms6" class="sp"></p><p data-hf-id="hf-oyv4" class="hl hl-instr">Open the link, enter your name and roll no, then tap Start.</p></div><time data-hf-id="hf-nje7">10:02 <s data-hf-id="hf-ud0d" class="tk"></s></time></div>
+    </div>
+    <div data-hf-id="hf-cydq" class="composer"><div data-hf-id="hf-9wnd" class="box" id="wa1box"><span data-hf-id="hf-f16c" class="ph">Message</span><div data-hf-id="hf-yw4p" class="draft" id="wa1draft"><div data-hf-id="hf-akhe" class="pv"><img data-hf-id="hf-017s" src="assets/img/link-preview.png" alt=""/><div data-hf-id="hf-x11t"><b data-hf-id="hf-1jfm">JEE Main Mini Mock — TestoZa Demo</b><span data-hf-id="hf-ka6h">180 minutes · 8 questions. Open the link, enter your name and roll no, then tap Start.</span><em data-hf-id="hf-kjvb">app.testoza.com</em></div></div><div data-hf-id="hf-gju0" class="txt"><p data-hf-id="hf-j747" class="hl hl-name"><b data-hf-id="hf-45hc">JEE Main Mini Mock — TestoZa Demo — Prof. Rajesh Kumar</b></p><p data-hf-id="hf-2emo" class="hl hl-time"><s data-hf-id="hf-e14s" class="clock"></s>180 min · 8 questions</p><p data-hf-id="hf-u137" class="sp"></p><p data-hf-id="hf-vdf2" class="">Exam link:</p><p data-hf-id="hf-desu" class="hl hl-link"><u data-hf-id="hf-4nwa">https://app.testoza.com/test/jee-main-mini-mock-t-gw9z9amv</u></p><p data-hf-id="hf-ufe8" class="sp"></p><p data-hf-id="hf-8z94" class="hl hl-instr">Open the link, enter your name and roll no, then tap Start.</p></div></div></div><div data-hf-id="hf-c0bn" class="send" id="wa1send"></div></div></div></div><div data-hf-id="hf-cww1" class="side"><div data-hf-id="hf-nkt5" class="kick">SHARE</div><div data-hf-id="hf-a4ge" class="h2">Your class WhatsApp group</div><div data-hf-id="hf-a1aa" class="p">TestoZa writes the invite. You just press Send.</div></div></div>
+<div data-hf-id="hf-938n" class="clip card boardscene" id="board" data-start="225.36" data-duration="6.16" data-track-index="2">
+    <div data-hf-id="hf-a9vw" class="wall"></div><div data-hf-id="hf-7rq7" class="wb"><div data-hf-id="hf-rgvm" class="wbin">
+      <div data-hf-id="hf-dtim" class="pre">JEE Mock · Today 10:00 AM</div>
+      <div data-hf-id="hf-jzie" class="ink l1" id="ink1">testoza.com/join</div>
+      <div data-hf-id="hf-yv42" class="ink l2" id="ink2">Code: 262 089</div>
+      <div data-hf-id="hf-4wl8" class="pen" id="pen"><i data-hf-id="hf-ylp6"></i></div>
+    </div><div data-hf-id="hf-xugg" class="tray"><b data-hf-id="hf-dr76"></b><b data-hf-id="hf-6ehl" class="r"></b><b data-hf-id="hf-fxmg" class="k"></b></div></div></div>
+<div data-hf-id="hf-o9dn" class="clip phonescene" id="wa2" data-start="231.52" data-duration="5.5" data-track-index="2"><div data-hf-id="hf-xoj7" class="stage"><div data-hf-id="hf-5jzl" class="grid"></div></div><div data-hf-id="hf-3kj8" class="phone"><div data-hf-id="hf-0hv8" class="screen"><div data-hf-id="hf-zn85" class="sbar dk"><span data-hf-id="hf-w4uo">10:02</span><i data-hf-id="hf-bwh4" class="isl"></i><span data-hf-id="hf-tqm0" class="sig"><b data-hf-id="hf-dcw5"></b><b data-hf-id="hf-ejt8"></b><b data-hf-id="hf-e5i7"></b><b data-hf-id="hf-c5z2"></b><em data-hf-id="hf-epg7"></em></span></div><div data-hf-id="hf-7dt0" class="wah"><span data-hf-id="hf-o0wz" class="back">‹</span><span data-hf-id="hf-hdvl" class="gav">J</span><div data-hf-id="hf-xfcu"><b data-hf-id="hf-aaqc">JEE 2027 — Morning Batch</b><small data-hf-id="hf-n9l3">tap here for group info</small></div></div>
+    <div data-hf-id="hf-cpti" class="chat"><div data-hf-id="hf-g7un" class="day">TODAY</div>
+      <div data-hf-id="hf-pkj3" class="msg in"><em data-hf-id="hf-bcig" class="c2">Aarav Gupta</em>Sir, is tomorrow's mock online?<time data-hf-id="hf-b4s8">9:41</time></div>
+      <div data-hf-id="hf-hthi" class="msg in"><em data-hf-id="hf-7b1z" class="c3">Prof. Rajesh Kumar</em>Yes. Link coming in a minute.<time data-hf-id="hf-lxnu">9:43</time></div>
+      <div data-hf-id="hf-hmv1" class="msg in big" id="wa2msg"><em data-hf-id="hf-bxdj" class="c3">Prof. Rajesh Kumar</em><div data-hf-id="hf-aysf" class="pv"><img data-hf-id="hf-yuap" src="assets/img/link-preview.png" alt=""/><div data-hf-id="hf-w8fr"><b data-hf-id="hf-1xqn">JEE Main Mini Mock — TestoZa Demo</b><span data-hf-id="hf-lh3k">180 minutes · 8 questions. Open the link, enter your name and roll no, then tap Start.</span><em data-hf-id="hf-k5ka">app.testoza.com</em></div></div><div data-hf-id="hf-fcwx" class="txt"><p data-hf-id="hf-ist6" class="hl hl-name"><b data-hf-id="hf-2yk9">JEE Main Mini Mock — TestoZa Demo — Prof. Rajesh Kumar</b></p><p data-hf-id="hf-17pl" class="hl hl-time"><s data-hf-id="hf-cu7p" class="clock"></s>180 min · 8 questions</p><p data-hf-id="hf-rn91" class="sp"></p><p data-hf-id="hf-vrq3" class="">Exam link:</p><p data-hf-id="hf-dt3v" class="hl hl-link"><u data-hf-id="hf-527b">https://app.testoza.com/test/jee-main-mini-mock-t-gw9z9amv</u></p><p data-hf-id="hf-s1k2" class="sp"></p><p data-hf-id="hf-7sc1" class="hl hl-instr">Open the link, enter your name and roll no, then tap Start.</p></div><time data-hf-id="hf-0o3z">10:02</time></div>
+      <div data-hf-id="hf-ycvc" class="tap" id="wa2tap"></div>
+    </div>
+    <div data-hf-id="hf-7v0w" class="notif" id="wa2notif"><b data-hf-id="hf-93t9">JEE 2027 — Morning Batch</b><span data-hf-id="hf-y0uo">Prof. Rajesh Kumar: JEE Main Mini Mock — TestoZa Demo…</span></div>
+    <div data-hf-id="hf-7sia" class="composer"><div data-hf-id="hf-d74r" class="box"><span data-hf-id="hf-ggy4" class="ph">Message</span></div><div data-hf-id="hf-jx3b" class="send mic"></div></div></div></div><div data-hf-id="hf-w7th" class="side"><div data-hf-id="hf-i2yb" class="kick">STUDENT'S PHONE</div><div data-hf-id="hf-e36s" class="h2">The link lands in the class group</div><div data-hf-id="hf-8ld0" class="p">One tap opens the exam.</div></div></div>
+<div data-hf-id="hf-j97s" class="clip phonescene" id="ph" data-start="237.02" data-duration="11.7" data-track-index="1"><div data-hf-id="hf-y2u8" class="stage"><div data-hf-id="hf-5yam" class="grid"></div></div><div data-hf-id="hf-2dm5" class="phone"><div data-hf-id="hf-zay5" class="screen"></div></div><div data-hf-id="hf-xeqk" class="side"><div data-hf-id="hf-8d5z" class="kick">NO APP · NO SIGN-UP</div><div data-hf-id="hf-xjuj" class="h2">The exam opens in the browser</div><div data-hf-id="hf-4qn3" class="p">Name, roll number, Start. Full screen and the rules switch on by themselves.</div></div></div>
+<div data-hf-id="hf-zpps" class="clip chrome" id="chrome" data-start="237.02" data-duration="9.04" data-track-index="3"><div data-hf-id="hf-7ma2" class="sbar "><span data-hf-id="hf-uxxl">10:02</span><i data-hf-id="hf-apk1" class="isl"></i><span data-hf-id="hf-sjox" class="sig"><b data-hf-id="hf-bro1"></b><b data-hf-id="hf-yhbf"></b><b data-hf-id="hf-yvmg"></b><b data-hf-id="hf-xopd"></b><em data-hf-id="hf-eb56"></em></span></div><div data-hf-id="hf-9k9o" class="url"><s data-hf-id="hf-m7rz" class="lock"></s>app.testoza.com/test/jee-main-mini-mock…</div></div>
+<div data-hf-id="hf-x4zy" class="clip card later" id="later" data-start="295.59" data-duration="1.9" data-track-index="2"><div data-hf-id="hf-hpt1" class="lk">180 MINUTES LATER</div><div data-hf-id="hf-ryh4" class="lt">The exam is over</div></div>
+<div data-hf-id="hf-6ol8" class="clip card neet" id="neet" data-start="320.32" data-duration="13.62" data-track-index="2"><div data-hf-id="hf-vap1" class="stage"><div data-hf-id="hf-4rdj" class="grid"></div></div>
+    <div data-hf-id="hf-k3qa" class="omr" id="omr"><p data-hf-id="hf-q1an"><span data-hf-id="hf-ikog">1</span><i data-hf-id="hf-dp2n" class="">A</i><i data-hf-id="hf-f6t4" class="f">B</i><i data-hf-id="hf-cwgl" class="">C</i><i data-hf-id="hf-fols" class="">D</i></p><p data-hf-id="hf-wo4v"><span data-hf-id="hf-hdrd">2</span><i data-hf-id="hf-dzw1" class="f">A</i><i data-hf-id="hf-darm" class="">B</i><i data-hf-id="hf-geix" class="">C</i><i data-hf-id="hf-t6i0" class="">D</i></p><p data-hf-id="hf-w9tu"><span data-hf-id="hf-hs2e">3</span><i data-hf-id="hf-d5xr" class="">A</i><i data-hf-id="hf-0f1i" class="">B</i><i data-hf-id="hf-hlg0" class="">C</i><i data-hf-id="hf-csyy" class="f">D</i></p><p data-hf-id="hf-vvit"><span data-hf-id="hf-gl5b">4</span><i data-hf-id="hf-crmq" class="">A</i><i data-hf-id="hf-0tcj" class="">B</i><i data-hf-id="hf-esi3" class="f">C</i><i data-hf-id="hf-rzkx" class="">D</i></p><p data-hf-id="hf-yno0"><span data-hf-id="hf-gzgc">5</span><i data-hf-id="hf-cdbp" class="">A</i><i data-hf-id="hf-ls0g" class="f">B</i><i data-hf-id="hf-h74z" class="">C</i><i data-hf-id="hf-sdvy" class="">D</i></p><p data-hf-id="hf-y9cz"><span data-hf-id="hf-fsj9">6</span><i data-hf-id="hf-e6sl" class="f">A</i><i data-hf-id="hf-17nk" class="">B</i><i data-hf-id="hf-f7lu" class="">C</i><i data-hf-id="hf-r6yv" class="">D</i></p><p data-hf-id="hf-xv1y"><span data-hf-id="hf-g6ua">7</span><i data-hf-id="hf-f5gw" class="">A</i><i data-hf-id="hf-yfid" class="">B</i><i data-hf-id="hf-etat" class="">C</i><i data-hf-id="hf-c8ry" class="f">D</i></p><p data-hf-id="hf-xgqx"><span data-hf-id="hf-ezx7">8</span><i data-hf-id="hf-er5v" class="">A</i><i data-hf-id="hf-ytte" class="">B</i><i data-hf-id="hf-oiln" class="f">C</i><i data-hf-id="hf-rl9w" class="">D</i></p><p data-hf-id="hf-tvzo"><span data-hf-id="hf-fe88">9</span><i data-hf-id="hf-ecuu" class="">A</i><i data-hf-id="hf-kl3d" class="f">B</i><i data-hf-id="hf-g07w" class="">C</i><i data-hf-id="hf-qect" class="">D</i></p></div>
+    <div data-hf-id="hf-45tm" class="arrow" id="arr"></div>
+    <div data-hf-id="hf-6kw2" class="mon" id="mon"><div data-hf-id="hf-zn7g" class="scr"><div data-hf-id="hf-xt7l" class="q"></div><div data-hf-id="hf-8gsa" class="q s"></div><div data-hf-id="hf-gl1b" class="o"></div><div data-hf-id="hf-yrun" class="o"></div><div data-hf-id="hf-obfi" class="o on"></div><div data-hf-id="hf-ydjm" class="o"></div><div data-hf-id="hf-243j" class="pal"><b data-hf-id="hf-9of8" class="g"></b><b data-hf-id="hf-dhgc" class="g"></b><b data-hf-id="hf-caj9" class="g"></b><b data-hf-id="hf-coua" class="g"></b><b data-hf-id="hf-eodf" class="g"></b><b data-hf-id="hf-f2og" class="g"></b><b data-hf-id="hf-dvrd" class="g"></b><b data-hf-id="hf-3kwh" class=""></b><b data-hf-id="hf-hf5x" class=""></b><b data-hf-id="hf-im30" class=""></b><b data-hf-id="hf-i7rz" class=""></b><b data-hf-id="hf-jep2" class=""></b></div></div><div data-hf-id="hf-h3gw" class="stand"></div></div>
+    <div data-hf-id="hf-6fhe" class="nh" id="nh"><div data-hf-id="hf-qjhy" class="kick">EXAMS ARE GOING DIGITAL</div><div data-hf-id="hf-t239" class="h">NEET-UG is set to move to <span data-hf-id="hf-wwme">computer-based testing</span> from 2027</div><div data-hf-id="hf-uu1g" class="src">Announced by the Union Education Minister · final format awaits an expert task-force report</div></div></div>
+<div data-hf-id="hf-b2yc" class="clip card endcard" id="end" data-start="333.94" data-duration="13.15" data-track-index="2"><div data-hf-id="hf-vp02" class="stage"><div data-hf-id="hf-55ok" class="grid"></div></div>
+    <img data-hf-id="hf-cps9" class="wm" src="assets/img/wordmark.png" alt="TestoZa"/>
+    <div data-hf-id="hf-o749" class="tag">Make your test. Conduct it free. See every result in minutes.</div>
+    <div data-hf-id="hf-c9cw" class="pills"><div data-hf-id="hf-heh9" class="pill url">testoza.com</div><div data-hf-id="hf-k6ex" class="pill subs" id="subpill"><s data-hf-id="hf-vip9" class="bell"></s>Subscribe</div></div></div>
+<div data-hf-id="hf-2ymu" class="clip chip" id="chip1" data-start="14.37" data-duration="6" data-track-index="4"><b data-hf-id="hf-t4n0">1</b>Go live</div>
+<div data-hf-id="hf-b8df" class="clip chip" id="chip2" data-start="40.11" data-duration="6" data-track-index="4"><b data-hf-id="hf-rxpx">2</b>Anti-cheating settings</div>
+<div data-hf-id="hf-zc8u" class="clip chip" id="chip3" data-start="192.1" data-duration="6" data-track-index="4"><b data-hf-id="hf-sc0y">3</b>Name, roll number &amp; share</div>
+<div data-hf-id="hf-qi7v" class="clip chip" id="chip4" data-start="215.16" data-duration="6" data-track-index="4"><b data-hf-id="hf-ubk3">4</b>Join code &amp; the board</div>
+<div data-hf-id="hf-id1a" class="clip chip" id="chip5" data-start="232.02" data-duration="6" data-track-index="4"><b data-hf-id="hf-upv4">5</b>The student's phone</div>
+<div data-hf-id="hf-v6xf" class="clip chip" id="chip6" data-start="249.32" data-duration="6" data-track-index="4"><b data-hf-id="hf-tiy1">6</b>Join with a code on a computer</div>
+<div data-hf-id="hf-vpum" class="clip chip" id="chip7" data-start="277.89" data-duration="6" data-track-index="4"><b data-hf-id="hf-tx92">7</b>Live results</div>
+<div data-hf-id="hf-go78" class="clip cap " id="cap0" data-start="0.53" data-duration="1.2" data-track-index="5"><span data-hf-id="hf-1za6">Twenty-seven students.</span></div>
+<div data-hf-id="hf-twdp" class="clip cap " id="cap1" data-start="1.73" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-cvhg">One exam link.</span></div>
+<div data-hf-id="hf-esui" class="clip cap " id="cap2" data-start="2.85" data-duration="1.76" data-track-index="5"><span data-hf-id="hf-h0nz">Anti-cheating switched on.</span></div>
+<div data-hf-id="hf-yczd" class="clip cap " id="cap3" data-start="4.61" data-duration="2.48" data-track-index="5"><span data-hf-id="hf-hz17">And every result back on your screen</span></div>
+<div data-hf-id="hf-th68" class="clip cap " id="cap4" data-start="7.09" data-duration="1.2" data-track-index="5"><span data-hf-id="hf-du74">automatically.</span></div>
+<div data-hf-id="hf-gi4z" class="clip cap " id="cap5" data-start="8.29" data-duration="2.8" data-track-index="5"><span data-hf-id="hf-074b">Let's run a real online exam on TestoZa,</span></div>
+<div data-hf-id="hf-cc3m" class="clip cap " id="cap6" data-start="11.09" data-duration="1.03" data-track-index="5"><span data-hf-id="hf-afx7">start to finish.</span></div>
+<div data-hf-id="hf-dzc9" class="clip cap " id="cap7" data-start="14.47" data-duration="0.96" data-track-index="5"><span data-hf-id="hf-uelj">Here's my test</span></div>
+<div data-hf-id="hf-xmut" class="clip cap " id="cap8" data-start="15.43" data-duration="3.68" data-track-index="5"><span data-hf-id="hf-ebk9">the JEE Main mini mock we built in the last video.</span></div>
+<div data-hf-id="hf-spmf" class="clip cap " id="cap9" data-start="19.11" data-duration="3.4" data-track-index="5"><span data-hf-id="hf-c4p1">To run it as a real exam, click Conduct exam.</span></div>
+<div data-hf-id="hf-abql" class="clip cap " id="cap10" data-start="22.67" data-duration="3.52" data-track-index="5"><span data-hf-id="hf-oamh">TestoZa creates a private, secure link just for this exam.</span></div>
+<div data-hf-id="hf-7tha" class="clip cap " id="cap11" data-start="26.19" data-duration="1.6" data-track-index="5"><span data-hf-id="hf-9uml">It never shows up publicly</span></div>
+<div data-hf-id="hf-rbfv" class="clip cap " id="cap12" data-start="27.79" data-duration="2.08" data-track-index="5"><span data-hf-id="hf-hjwl">only people with this link can open it.</span></div>
+<div data-hf-id="hf-s5ne" class="clip cap " id="cap13" data-start="29.87" data-duration="0.96" data-track-index="5"><span data-hf-id="hf-x515">Start Conducting…</span></div>
+<div data-hf-id="hf-snpg" class="clip cap " id="cap14" data-start="30.83" data-duration="1.43" data-track-index="5"><span data-hf-id="hf-n4jo">and your exam is live.</span></div>
+<div data-hf-id="hf-s4a3" class="clip cap " id="cap15" data-start="32.43" data-duration="1.36" data-track-index="5"><span data-hf-id="hf-rghl">See this little guide?</span></div>
+<div data-hf-id="hf-pvxi" class="clip cap " id="cap16" data-start="33.79" data-duration="2.08" data-track-index="5"><span data-hf-id="hf-0q86">TestoZa walks you through it.</span></div>
+<div data-hf-id="hf-hjqc" class="clip cap " id="cap17" data-start="35.87" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-0ycd">Step one: set up the exam room.</span></div>
+<div data-hf-id="hf-7ul0" class="clip cap " id="cap18" data-start="38.51" data-duration="1.53" data-track-index="5"><span data-hf-id="hf-pooh">Let's open Settings.</span></div>
+<div data-hf-id="hf-cs9n" class="clip cap " id="cap19" data-start="40.21" data-duration="1.6" data-track-index="5"><span data-hf-id="hf-ha6q">This is your exam room.</span></div>
+<div data-hf-id="hf-abqo" class="clip cap " id="cap20" data-start="41.81" data-duration="3.04" data-track-index="5"><span data-hf-id="hf-59r1">Three tabs: Proctoring, Access, and Results.</span></div>
+<div data-hf-id="hf-dqvx" class="clip cap " id="cap21" data-start="44.85" data-duration="3.12" data-track-index="5"><span data-hf-id="hf-rq22">I'll go through every switch, the way I'd set it up for</span></div>
+<div data-hf-id="hf-1hbi" class="clip cap " id="cap22" data-start="47.97" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-efrv">a real exam.</span></div>
+<div data-hf-id="hf-deez" class="clip cap " id="cap23" data-start="49.02" data-duration="0.8" data-track-index="5"><span data-hf-id="hf-gtcl">First</span></div>
+<div data-hf-id="hf-7zmq" class="clip cap " id="cap24" data-start="49.82" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-ihmv">Force Full Screen.</span></div>
+<div data-hf-id="hf-gqrl" class="clip cap " id="cap25" data-start="51.34" data-duration="3.36" data-track-index="5"><span data-hf-id="hf-3rv4">The exam opens full screen, and if a student leaves it,</span></div>
+<div data-hf-id="hf-knt9" class="clip cap " id="cap26" data-start="54.7" data-duration="2.08" data-track-index="5"><span data-hf-id="hf-ued6">that's counted as a violation.</span></div>
+<div data-hf-id="hf-3d5l" class="clip cap " id="cap27" data-start="56.78" data-duration="2.56" data-track-index="5"><span data-hf-id="hf-k6d1">For any serious test, switch this on.</span></div>
+<div data-hf-id="hf-16tq" class="clip cap " id="cap28" data-start="59.51" data-duration="3.04" data-track-index="5"><span data-hf-id="hf-gl9e">Next, Tab and App Switch Detection.</span></div>
+<div data-hf-id="hf-n3yu" class="clip cap " id="cap29" data-start="62.55" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-kn24">Opening another tab, jumping to WhatsApp,</span></div>
+<div data-hf-id="hf-aodl" class="clip cap " id="cap30" data-start="65.19" data-duration="1.36" data-track-index="5"><span data-hf-id="hf-mays">minimising the browser</span></div>
+<div data-hf-id="hf-ejfd" class="clip cap " id="cap31" data-start="66.55" data-duration="1.94" data-track-index="5"><span data-hf-id="hf-87rt">TestoZa catches all of it.</span></div>
+<div data-hf-id="hf-4ko1" class="clip cap " id="cap32" data-start="68.89" data-duration="2.8" data-track-index="5"><span data-hf-id="hf-l24n">Now decide what happens when they do.</span></div>
+<div data-hf-id="hf-eby4" class="clip cap " id="cap33" data-start="71.69" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-o12x">Warn only</span></div>
+<div data-hf-id="hf-pv1o" class="clip cap " id="cap34" data-start="72.81" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-my00">fine for a practice test.</span></div>
+<div data-hf-id="hf-f9te" class="clip cap " id="cap35" data-start="74.73" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-zspc">Strict</span></div>
+<div data-hf-id="hf-eqa8" class="clip cap " id="cap36" data-start="75.61" data-duration="2.72" data-track-index="5"><span data-hf-id="hf-xy8z">the test submits on the very first switch.</span></div>
+<div data-hf-id="hf-kwhx" class="clip cap " id="cap37" data-start="78.33" data-duration="2.96" data-track-index="5"><span data-hf-id="hf-qlok">Or my favourite: give a few warnings,</span></div>
+<div data-hf-id="hf-q5ww" class="clip cap " id="cap38" data-start="81.29" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-jkxs">then submit.</span></div>
+<div data-hf-id="hf-jm09" class="clip cap " id="cap39" data-start="82.41" data-duration="1.2" data-track-index="5"><span data-hf-id="hf-cek9">Three is fair.</span></div>
+<div data-hf-id="hf-axf5" class="clip cap " id="cap40" data-start="83.61" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-h9lq">One notification can pop up by accident</span></div>
+<div data-hf-id="hf-uza5" class="clip cap " id="cap41" data-start="86.25" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-wq48">three times is a habit.</span></div>
+<div data-hf-id="hf-by6y" class="clip cap " id="cap42" data-start="87.77" data-duration="2.99" data-track-index="5"><span data-hf-id="hf-odd9">And full-screen exits count toward the same limit.</span></div>
+<div data-hf-id="hf-uowo" class="clip cap " id="cap43" data-start="90.94" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-2vxa">Disable Copy-Paste</span></div>
+<div data-hf-id="hf-ee37" class="clip cap " id="cap44" data-start="92.46" data-duration="3.68" data-track-index="5"><span data-hf-id="hf-7jlm">so nobody pastes your question into Google or ChatGPT.</span></div>
+<div data-hf-id="hf-hawg" class="clip cap " id="cap45" data-start="96.14" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-pojt">Disable Right Click</span></div>
+<div data-hf-id="hf-xnbt" class="clip cap " id="cap46" data-start="97.66" data-duration="2.91" data-track-index="5"><span data-hf-id="hf-jxmg">no menu, no quick search, no translate.</span></div>
+<div data-hf-id="hf-xvl4" class="clip cap " id="cap47" data-start="100.81" data-duration="2.88" data-track-index="5"><span data-hf-id="hf-r965">Block Back Button stops a student leaving the exam by</span></div>
+<div data-hf-id="hf-bz17" class="clip cap " id="cap48" data-start="103.69" data-duration="0.56" data-track-index="5"><span data-hf-id="hf-h596">accident.</span></div>
+<div data-hf-id="hf-a0f8" class="clip cap " id="cap49" data-start="104.25" data-duration="2.4" data-track-index="5"><span data-hf-id="hf-dao4">And Disable Exit Button hides the exit,</span></div>
+<div data-hf-id="hf-5bpp" class="clip cap " id="cap50" data-start="106.65" data-duration="1.88" data-track-index="5"><span data-hf-id="hf-9spm">so nobody walks out halfway.</span></div>
+<div data-hf-id="hf-tcjv" class="clip cap " id="cap51" data-start="108.7" data-duration="2.46" data-track-index="5"><span data-hf-id="hf-onj4">Second tab: Access and Control.</span></div>
+<div data-hf-id="hf-41ls" class="clip cap " id="cap52" data-start="111.41" data-duration="2.88" data-track-index="5"><span data-hf-id="hf-qsjt">Scheduled Access opens and closes the exam at times you</span></div>
+<div data-hf-id="hf-4t1r" class="clip cap " id="cap53" data-start="114.29" data-duration="0.56" data-track-index="5"><span data-hf-id="hf-nyfo">choose</span></div>
+<div data-hf-id="hf-wick" class="clip cap " id="cap54" data-start="114.85" data-duration="2.56" data-track-index="5"><span data-hf-id="hf-t55f">perfect when the whole batch must start together.</span></div>
+<div data-hf-id="hf-gl4a" class="clip cap " id="cap55" data-start="117.41" data-duration="2.21" data-track-index="5"><span data-hf-id="hf-m8gi">We're starting right now, so I'll leave it off.</span></div>
+<div data-hf-id="hf-uh2h" class="clip cap " id="cap56" data-start="119.87" data-duration="2.72" data-track-index="5"><span data-hf-id="hf-p17x">Assign to Class keeps this exam's results with the right</span></div>
+<div data-hf-id="hf-nhol" class="clip cap " id="cap57" data-start="122.59" data-duration="0.72" data-track-index="5"><span data-hf-id="hf-cy97">batch.</span></div>
+<div data-hf-id="hf-oerh" class="clip cap " id="cap58" data-start="123.31" data-duration="0.96" data-track-index="5"><span data-hf-id="hf-sayl">Attempt Limit</span></div>
+<div data-hf-id="hf-0c56" class="clip cap " id="cap59" data-start="124.27" data-duration="1.84" data-track-index="5"><span data-hf-id="hf-jgn3">one exam, one attempt.</span></div>
+<div data-hf-id="hf-roxa" class="clip cap " id="cap60" data-start="126.11" data-duration="2.4" data-track-index="5"><span data-hf-id="hf-al7l">No retakes after seeing the paper.</span></div>
+<div data-hf-id="hf-od08" class="clip cap " id="cap61" data-start="128.51" data-duration="3.28" data-track-index="5"><span data-hf-id="hf-635k">And Require Candidate Login stays off for a class test.</span></div>
+<div data-hf-id="hf-6gj0" class="clip cap " id="cap62" data-start="131.79" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-tp4p">Students just open the link, type their name,</span></div>
+<div data-hf-id="hf-j0v5" class="clip cap " id="cap63" data-start="134.43" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-jzwg">and start.</span></div>
+<div data-hf-id="hf-opht" class="clip cap " id="cap64" data-start="135.31" data-duration="0.72" data-track-index="5"><span data-hf-id="hf-oqsc">No accounts.</span></div>
+<div data-hf-id="hf-nyt8" class="clip cap " id="cap65" data-start="136.03" data-duration="0.81" data-track-index="5"><span data-hf-id="hf-xuot">No app.</span></div>
+<div data-hf-id="hf-ny9w" class="clip cap " id="cap66" data-start="137.01" data-duration="2.12" data-track-index="5"><span data-hf-id="hf-ssc3">Last tab: Results and Timing.</span></div>
+<div data-hf-id="hf-5tzx" class="clip cap " id="cap67" data-start="139.38" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-sn58">Result Visibility</span></div>
+<div data-hf-id="hf-a2wz" class="clip cap " id="cap68" data-start="140.66" data-duration="3.44" data-track-index="5"><span data-hf-id="hf-u7ho">on, and students see their score and analysis the moment</span></div>
+<div data-hf-id="hf-pzc8" class="clip cap " id="cap69" data-start="144.1" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-gogl">they submit.</span></div>
+<div data-hf-id="hf-9r2y" class="clip cap " id="cap70" data-start="144.98" data-duration="2.59" data-track-index="5"><span data-hf-id="hf-t7cu">Turn it off if you'd rather announce results later.</span></div>
+<div data-hf-id="hf-atna" class="clip cap " id="cap71" data-start="147.74" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-103j">Strict Timer runs on our server.</span></div>
+<div data-hf-id="hf-aljq" class="clip cap " id="cap72" data-start="149.66" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-ystx">Refresh the page, close the browser</span></div>
+<div data-hf-id="hf-cc2o" class="clip cap " id="cap73" data-start="151.58" data-duration="1.6" data-track-index="5"><span data-hf-id="hf-1oc7">the clock keeps running.</span></div>
+<div data-hf-id="hf-3oh6" class="clip cap " id="cap74" data-start="153.18" data-duration="1.72" data-track-index="5"><span data-hf-id="hf-5126">Always on, for real exams.</span></div>
+<div data-hf-id="hf-iqo7" class="clip cap " id="cap75" data-start="155.07" data-duration="3.36" data-track-index="5"><span data-hf-id="hf-9clx">Allow Flexible Timer lets students switch the timer off.</span></div>
+<div data-hf-id="hf-x4y7" class="clip cap " id="cap76" data-start="158.43" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-o552">Great for practice</span></div>
+<div data-hf-id="hf-1ofq" class="clip cap " id="cap77" data-start="159.55" data-duration="2" data-track-index="5"><span data-hf-id="hf-ik6o">and TestoZa even warns you</span></div>
+<div data-hf-id="hf-17j6" class="clip cap " id="cap78" data-start="161.55" data-duration="2.02" data-track-index="5"><span data-hf-id="hf-p67e">but for an exam, keep it off.</span></div>
+<div data-hf-id="hf-kp5z" class="clip cap " id="cap79" data-start="163.73" data-duration="3.76" data-track-index="5"><span data-hf-id="hf-amr5">Randomize Questions gives every student a different order</span></div>
+<div data-hf-id="hf-v6hf" class="clip cap " id="cap80" data-start="167.49" data-duration="2.47" data-track-index="5"><span data-hf-id="hf-gdcp">so the person sitting next to them can't help.</span></div>
+<div data-hf-id="hf-dvfg" class="clip cap " id="cap81" data-start="170.14" data-duration="2.72" data-track-index="5"><span data-hf-id="hf-cw4i">And finally, the exam screen itself.</span></div>
+<div data-hf-id="hf-nwhm" class="clip cap " id="cap82" data-start="172.86" data-duration="3.68" data-track-index="5"><span data-hf-id="hf-4abn">Standard Mode looks just like the JEE and NEET computer-based</span></div>
+<div data-hf-id="hf-pl4h" class="clip cap " id="cap83" data-start="176.54" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-xmbv">test, with a question palette on the right.</span></div>
+<div data-hf-id="hf-accg" class="clip cap " id="cap84" data-start="179.18" data-duration="3.28" data-track-index="5"><span data-hf-id="hf-33dm">Modern Mode is a clean, one-card-at-a-time layout.</span></div>
+<div data-hf-id="hf-yqcv" class="clip cap " id="cap85" data-start="182.46" data-duration="2.44" data-track-index="5"><span data-hf-id="hf-sn89">For exam practice, I keep Standard.</span></div>
+<div data-hf-id="hf-hakt" class="clip cap " id="cap86" data-start="185.23" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-ccrp">Save Settings…</span></div>
+<div data-hf-id="hf-4a5r" class="clip cap " id="cap87" data-start="186.51" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-2g0l">and look</span></div>
+<div data-hf-id="hf-oos1" class="clip cap " id="cap88" data-start="187.39" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-c5po">the "Anti-cheating is off" warning is gone.</span></div>
+<div data-hf-id="hf-kj5k" class="clip cap " id="cap89" data-start="190.03" data-duration="2.01" data-track-index="5"><span data-hf-id="hf-p6gg">Your exam room is locked.</span></div>
+<div data-hf-id="hf-c5dq" class="clip cap " id="cap90" data-start="192.2" data-duration="0.4" data-track-index="5"><span data-hf-id="hf-z31v">Now</span></div>
+<div data-hf-id="hf-a5j4" class="clip cap " id="cap91" data-start="192.6" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-upuu">who's writing?</span></div>
+<div data-hf-id="hf-foan" class="clip cap " id="cap92" data-start="193.88" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-u7up">These are your candidate inputs.</span></div>
+<div data-hf-id="hf-8v0c" class="clip cap " id="cap93" data-start="195.8" data-duration="1.36" data-track-index="5"><span data-hf-id="hf-foqa">Name is already there.</span></div>
+<div data-hf-id="hf-em5w" class="clip cap " id="cap94" data-start="197.16" data-duration="2.88" data-track-index="5"><span data-hf-id="hf-ci2i">Tap Roll No, and every result comes with a name and a</span></div>
+<div data-hf-id="hf-21tq" class="clip cap " id="cap95" data-start="200.04" data-duration="0.74" data-track-index="5"><span data-hf-id="hf-m8lj">roll number.</span></div>
+<div data-hf-id="hf-jy2x" class="clip cap " id="cap96" data-start="200.95" data-duration="1.6" data-track-index="5"><span data-hf-id="hf-7apc">Step two: send it.</span></div>
+<div data-hf-id="hf-83mt" class="clip cap " id="cap97" data-start="202.55" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-i5i9">Copy the link…</span></div>
+<div data-hf-id="hf-1flk" class="clip cap " id="cap98" data-start="203.43" data-duration="2.51" data-track-index="5"><span data-hf-id="hf-lvyb">or share it straight to your class WhatsApp group.</span></div>
+<div data-hf-id="hf-46fa" class="clip cap capside" id="cap99" data-start="207.25" data-duration="1.76" data-track-index="5"><span data-hf-id="hf-8vxx">TestoZa writes the message for you</span></div>
+<div data-hf-id="hf-og5x" class="clip cap capside" id="cap100" data-start="209.01" data-duration="4.31" data-track-index="5"><span data-hf-id="hf-zjp5">exam name, time, the link, and simple instructions.</span></div>
+<div data-hf-id="hf-pox5" class="clip cap capside" id="cap101" data-start="213.32" data-duration="0.59" data-track-index="5"><span data-hf-id="hf-jr8n">Send.</span></div>
+<div data-hf-id="hf-qucg" class="clip cap " id="cap102" data-start="215.26" data-duration="2.4" data-track-index="5"><span data-hf-id="hf-zaho">Not everyone's on WhatsApp</span></div>
+<div data-hf-id="hf-ruxo" class="clip cap " id="cap103" data-start="217.66" data-duration="2.56" data-track-index="5"><span data-hf-id="hf-vnr4">and sometimes you're standing in a classroom.</span></div>
+<div data-hf-id="hf-7q11" class="clip cap " id="cap104" data-start="220.22" data-duration="2.56" data-track-index="5"><span data-hf-id="hf-ajnp">Open the menu, get a join code…</span></div>
+<div data-hf-id="hf-9bie" class="clip cap " id="cap105" data-start="222.78" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-m7pr">and there it is.</span></div>
+<div data-hf-id="hf-c7ev" class="clip cap " id="cap106" data-start="223.9" data-duration="1.17" data-track-index="5"><span data-hf-id="hf-084b">Six digits.</span></div>
+<div data-hf-id="hf-ibz2" class="clip cap " id="cap107" data-start="226.26" data-duration="3.2" data-track-index="5"><span data-hf-id="hf-nak5">Write it on the board: testoza.com slash join…</span></div>
+<div data-hf-id="hf-8ckw" class="clip cap " id="cap108" data-start="229.46" data-duration="0.81" data-track-index="5"><span data-hf-id="hf-3qo0">and the code.</span></div>
+<div data-hf-id="hf-dxa8" class="clip cap capside" id="cap109" data-start="232.28" data-duration="1.6" data-track-index="5"><span data-hf-id="hf-rz28">Now, the student's side.</span></div>
+<div data-hf-id="hf-prfw" class="clip cap capside" id="cap110" data-start="233.88" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-jfji">The message lands in the class group.</span></div>
+<div data-hf-id="hf-voea" class="clip cap capside" id="cap111" data-start="235.8" data-duration="0.92" data-track-index="5"><span data-hf-id="hf-fm94">One tap…</span></div>
+<div data-hf-id="hf-tg3e" class="clip cap capside" id="cap112" data-start="237.72" data-duration="2.32" data-track-index="5"><span data-hf-id="hf-dby1">and the exam opens right in the browser.</span></div>
+<div data-hf-id="hf-vhob" class="clip cap capside" id="cap113" data-start="240.04" data-duration="1.76" data-track-index="5"><span data-hf-id="hf-nkyb">No app, no sign-up.</span></div>
+<div data-hf-id="hf-vu2d" class="clip cap capside" id="cap114" data-start="241.8" data-duration="2.64" data-track-index="5"><span data-hf-id="hf-90q9">They see the paper, the time and the marks…</span></div>
+<div data-hf-id="hf-buj6" class="clip cap capside" id="cap115" data-start="244.44" data-duration="1.68" data-track-index="5"><span data-hf-id="hf-hn91">type their name and roll number…</span></div>
+<div data-hf-id="hf-29rd" class="clip cap capside" id="cap116" data-start="246.12" data-duration="1.09" data-track-index="5"><span data-hf-id="hf-8ygz">and tap Start.</span></div>
+<div data-hf-id="hf-5mtl" class="clip cap " id="cap117" data-start="249.42" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-npnr">No phone?</span></div>
+<div data-hf-id="hf-q62h" class="clip cap " id="cap118" data-start="250.3" data-duration="0.8" data-track-index="5"><span data-hf-id="hf-pf6l">No problem.</span></div>
+<div data-hf-id="hf-qy64" class="clip cap " id="cap119" data-start="251.1" data-duration="0.96" data-track-index="5"><span data-hf-id="hf-t12p">Any browser</span></div>
+<div data-hf-id="hf-xfka" class="clip cap " id="cap120" data-start="252.06" data-duration="2.16" data-track-index="5"><span data-hf-id="hf-8q0f">testoza.com slash join</span></div>
+<div data-hf-id="hf-4ddq" class="clip cap " id="cap121" data-start="254.22" data-duration="1.76" data-track-index="5"><span data-hf-id="hf-hbsz">type the six digits from the board…</span></div>
+<div data-hf-id="hf-habv" class="clip cap " id="cap122" data-start="255.98" data-duration="0.99" data-track-index="5"><span data-hf-id="hf-8f0v">and they're in.</span></div>
+<div data-hf-id="hf-fjum" class="clip cap " id="cap123" data-start="257.14" data-duration="1.76" data-track-index="5"><span data-hf-id="hf-hm43">Same exam, same rules.</span></div>
+<div data-hf-id="hf-zk6p" class="clip cap " id="cap124" data-start="258.9" data-duration="1.44" data-track-index="5"><span data-hf-id="hf-ox7o">Name, roll number…</span></div>
+<div data-hf-id="hf-2vn0" class="clip cap " id="cap125" data-start="260.34" data-duration="0.88" data-track-index="5"><span data-hf-id="hf-c27b">Start.</span></div>
+<div data-hf-id="hf-r20v" class="clip cap " id="cap126" data-start="261.22" data-duration="2.4" data-track-index="5"><span data-hf-id="hf-mupj">Full screen kicks in, the timer starts,</span></div>
+<div data-hf-id="hf-th0w" class="clip cap " id="cap127" data-start="263.62" data-duration="2.22" data-track-index="5"><span data-hf-id="hf-gzac">and they answer like any computer-based test.</span></div>
+<div data-hf-id="hf-oc5q" class="clip cap " id="cap128" data-start="266.01" data-duration="2.16" data-track-index="5"><span data-hf-id="hf-9nai">And if they try to sneak into another tab?</span></div>
+<div data-hf-id="hf-oxbu" class="clip cap " id="cap129" data-start="268.17" data-duration="1.2" data-track-index="5"><span data-hf-id="hf-voly">Warning one of three.</span></div>
+<div data-hf-id="hf-6exd" class="clip cap " id="cap130" data-start="269.37" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-aba7">TestoZa saw it</span></div>
+<div data-hf-id="hf-novx" class="clip cap " id="cap131" data-start="270.65" data-duration="1.06" data-track-index="5"><span data-hf-id="hf-l2kt">and counted it.</span></div>
+<div data-hf-id="hf-ueie" class="clip cap " id="cap132" data-start="271.88" data-duration="0.96" data-track-index="5"><span data-hf-id="hf-knrt">When they're done</span></div>
+<div data-hf-id="hf-r0am" class="clip cap " id="cap133" data-start="272.84" data-duration="0.72" data-track-index="5"><span data-hf-id="hf-dzf9">Submit.</span></div>
+<div data-hf-id="hf-dqyf" class="clip cap " id="cap134" data-start="273.56" data-duration="3.42" data-track-index="5"><span data-hf-id="hf-o6i2">Result Visibility is on, so they see their score instantly.</span></div>
+<div data-hf-id="hf-l5ig" class="clip cap " id="cap135" data-start="277.99" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-z3nf">Meanwhile, on your dashboard</span></div>
+<div data-hf-id="hf-fz4t" class="clip cap " id="cap136" data-start="279.91" data-duration="2.08" data-track-index="5"><span data-hf-id="hf-7q5p">twenty-five students writing right now,</span></div>
+<div data-hf-id="hf-znnx" class="clip cap " id="cap137" data-start="281.99" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-s5z2">two already submitted.</span></div>
+<div data-hf-id="hf-n2rk" class="clip cap " id="cap138" data-start="283.51" data-duration="2.44" data-track-index="5"><span data-hf-id="hf-i6zo">You're watching the whole exam, live.</span></div>
+<div data-hf-id="hf-smxj" class="clip cap " id="cap139" data-start="286.11" data-duration="2.56" data-track-index="5"><span data-hf-id="hf-nsxf">Open Results: twenty-seven started,</span></div>
+<div data-hf-id="hf-2e8h" class="clip cap " id="cap140" data-start="288.67" data-duration="2.24" data-track-index="5"><span data-hf-id="hf-7mci">twenty-five writing, two submitted,</span></div>
+<div data-hf-id="hf-ygmh" class="clip cap " id="cap141" data-start="290.91" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-aozt">zero dropped.</span></div>
+<div data-hf-id="hf-mmi7" class="clip cap " id="cap142" data-start="292.19" data-duration="2.24" data-track-index="5"><span data-hf-id="hf-nn9k">Every student, by name and roll number,</span></div>
+<div data-hf-id="hf-15j1" class="clip cap " id="cap143" data-start="294.43" data-duration="1.09" data-track-index="5"><span data-hf-id="hf-n4vz">as it happens.</span></div>
+<div data-hf-id="hf-xn2w" class="clip cap " id="cap144" data-start="295.69" data-duration="1.44" data-track-index="5"><span data-hf-id="hf-vl55">When the exam ends</span></div>
+<div data-hf-id="hf-8av1" class="clip cap " id="cap145" data-start="297.13" data-duration="2.4" data-track-index="5"><span data-hf-id="hf-y7au">all twenty-seven submitted, scored,</span></div>
+<div data-hf-id="hf-6acr" class="clip cap " id="cap146" data-start="299.53" data-duration="1.04" data-track-index="5"><span data-hf-id="hf-uxrp">and ranked.</span></div>
+<div data-hf-id="hf-us3v" class="clip cap " id="cap147" data-start="300.57" data-duration="1.28" data-track-index="5"><span data-hf-id="hf-87sw">Automatically.</span></div>
+<div data-hf-id="hf-9hy3" class="clip cap " id="cap148" data-start="301.85" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-za9v">No checking copies.</span></div>
+<div data-hf-id="hf-nz5v" class="clip cap " id="cap149" data-start="303.37" data-duration="1.36" data-track-index="5"><span data-hf-id="hf-dhbk">No totalling marks.</span></div>
+<div data-hf-id="hf-4qpv" class="clip cap " id="cap150" data-start="304.73" data-duration="2.49" data-track-index="5"><span data-hf-id="hf-fjwu">And one click exports everything to Excel.</span></div>
+<div data-hf-id="hf-bqsb" class="clip cap " id="cap151" data-start="308.22" data-duration="1.52" data-track-index="5"><span data-hf-id="hf-j8wo">That's TestoZa.</span></div>
+<div data-hf-id="hf-yn1i" class="clip cap " id="cap152" data-start="309.74" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-4g7h">A paper that used to mean printing,</span></div>
+<div data-hf-id="hf-bxnn" class="clip cap " id="cap153" data-start="311.66" data-duration="2.48" data-track-index="5"><span data-hf-id="hf-mkls">invigilating, and a weekend of checking</span></div>
+<div data-hf-id="hf-2z3o" class="clip cap " id="cap154" data-start="314.14" data-duration="3.07" data-track-index="5"><span data-hf-id="hf-0kuw">now runs on the phones your students already carry.</span></div>
+<div data-hf-id="hf-j27p" class="clip cap " id="cap155" data-start="321" data-duration="2.32" data-track-index="5"><span data-hf-id="hf-0hj8">And exams are going digital.</span></div>
+<div data-hf-id="hf-qe30" class="clip cap " id="cap156" data-start="323.32" data-duration="3.76" data-track-index="5"><span data-hf-id="hf-lhvc">The Education Ministry has announced that NEET-UG is set</span></div>
+<div data-hf-id="hf-as9h" class="clip cap " id="cap157" data-start="327.08" data-duration="3.2" data-track-index="5"><span data-hf-id="hf-ceo2">to move to computer-based testing from 2027.</span></div>
+<div data-hf-id="hf-umxa" class="clip cap " id="cap158" data-start="330.28" data-duration="2.81" data-track-index="5"><span data-hf-id="hf-qlbx">Let your students practise the way they'll be tested.</span></div>
+<div data-hf-id="hf-stpo" class="clip cap " id="cap159" data-start="334.74" data-duration="3.44" data-track-index="5"><span data-hf-id="hf-dpgd">Make your test, conduct it free, and see every result</span></div>
+<div data-hf-id="hf-dzz3" class="clip cap " id="cap160" data-start="338.18" data-duration="0.64" data-track-index="5"><span data-hf-id="hf-vxbn">in minutes</span></div>
+<div data-hf-id="hf-wu71" class="clip cap " id="cap161" data-start="338.82" data-duration="1.92" data-track-index="5"><span data-hf-id="hf-4ahn">at testoza.com.</span></div>
+<div data-hf-id="hf-ng3m" class="clip cap " id="cap162" data-start="340.74" data-duration="1.12" data-track-index="5"><span data-hf-id="hf-qasc">Thanks for watching</span></div>
+<div data-hf-id="hf-f1s4" class="clip cap " id="cap163" data-start="341.86" data-duration="2.38" data-track-index="5"><span data-hf-id="hf-juld">subscribe, and I'll see you in the next one.</span></div>
+<audio data-hf-id="hf-07mb" id="sting1" src="assets/sfx/sting.mp3" data-start="8.12" data-duration="4" data-track-index="13" data-volume="0.55"></audio>
+<audio data-hf-id="hf-2new" id="sting2" src="assets/sfx/sting.mp3" data-start="334.14" data-duration="4" data-track-index="14" data-volume="0.5"></audio>
+<audio data-hf-id="hf-w8ok" id="voL01" data-audio-group="voiceover" src="assets/vo-en/L01.wav" data-start="0.45" data-duration="11.52" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-b8pm" id="voL02" data-audio-group="voiceover" src="assets/vo-en/L02.wav" data-start="14.47" data-duration="7.89" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-37o2" id="voL03" data-audio-group="voiceover" src="assets/vo-en/L03.wav" data-start="22.67" data-duration="9.44" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-m34n" id="voL04" data-audio-group="voiceover" src="assets/vo-en/L04.wav" data-start="32.43" data-duration="7.46" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-eh5m" id="voL05" data-audio-group="voiceover" src="assets/vo-en/L05.wav" data-start="40.21" data-duration="8.49" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-exeq" id="voL06" data-audio-group="voiceover" src="assets/vo-en/L06.wav" data-start="49.02" data-duration="10.17" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-wcqz" id="voL07" data-audio-group="voiceover" src="assets/vo-en/L07.wav" data-start="59.51" data-duration="8.83" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-n8ex" id="voL08" data-audio-group="voiceover" src="assets/vo-en/L08.wav" data-start="68.65" data-duration="21.96" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-etxl" id="voL09" data-audio-group="voiceover" src="assets/vo-en/L09.wav" data-start="90.94" data-duration="9.48" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-pybd" id="voL10" data-audio-group="voiceover" src="assets/vo-en/L10.wav" data-start="100.73" data-duration="7.65" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-hm9g" id="voL11" data-audio-group="voiceover" src="assets/vo-en/L11.wav" data-start="108.7" data-duration="2.31" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-mpam" id="voL12" data-audio-group="voiceover" src="assets/vo-en/L12.wav" data-start="111.33" data-duration="8.14" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-qj6p" id="voL13" data-audio-group="voiceover" src="assets/vo-en/L13.wav" data-start="119.79" data-duration="16.9" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-x1pl" id="voL14" data-audio-group="voiceover" src="assets/vo-en/L14.wav" data-start="137.01" data-duration="1.97" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-i8fp" id="voL15" data-audio-group="voiceover" src="assets/vo-en/L15.wav" data-start="139.3" data-duration="8.12" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-0zpt" id="voL16" data-audio-group="voiceover" src="assets/vo-en/L16.wav" data-start="147.74" data-duration="7.01" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-gtk6" id="voL17" data-audio-group="voiceover" src="assets/vo-en/L17.wav" data-start="155.07" data-duration="8.35" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-iqzu" id="voL18" data-audio-group="voiceover" src="assets/vo-en/L18.wav" data-start="163.73" data-duration="6.08" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-3nr5" id="voL19" data-audio-group="voiceover" src="assets/vo-en/L19.wav" data-start="170.14" data-duration="14.61" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-4cmn" id="voL20" data-audio-group="voiceover" src="assets/vo-en/L20.wav" data-start="185.07" data-duration="6.82" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-4t3d" id="voL21" data-audio-group="voiceover" src="assets/vo-en/L21.wav" data-start="192.2" data-duration="8.43" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-pqls" id="voL22" data-audio-group="voiceover" src="assets/vo-en/L22.wav" data-start="200.95" data-duration="4.84" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-ybpr" id="voL23" data-audio-group="voiceover" src="assets/vo-en/L23.wav" data-start="206.93" data-duration="6.83" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-ne0z" id="voL24" data-audio-group="voiceover" src="assets/vo-en/L24.wav" data-start="215.26" data-duration="9.66" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-sopf" id="voL25" data-audio-group="voiceover" src="assets/vo-en/L25.wav" data-start="226.26" data-duration="3.86" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-ikir" id="voL26" data-audio-group="voiceover" src="assets/vo-en/L26.wav" data-start="232.12" data-duration="4.45" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-sgd7" id="voL27" data-audio-group="voiceover" src="assets/vo-en/L27.wav" data-start="237.72" data-duration="9.34" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-9lso" id="voL28" data-audio-group="voiceover" src="assets/vo-en/L28.wav" data-start="249.42" data-duration="7.4" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-chvh" id="voL29" data-audio-group="voiceover" src="assets/vo-en/L29.wav" data-start="257.14" data-duration="8.55" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-6xmk" id="voL30" data-audio-group="voiceover" src="assets/vo-en/L30.wav" data-start="266.01" data-duration="5.55" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-amc4" id="voL31" data-audio-group="voiceover" src="assets/vo-en/L31.wav" data-start="271.88" data-duration="4.95" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-fytk" id="voL32" data-audio-group="voiceover" src="assets/vo-en/L32.wav" data-start="277.99" data-duration="7.81" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-elph" id="voL33" data-audio-group="voiceover" src="assets/vo-en/L33.wav" data-start="286.11" data-duration="9.26" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-op6e" id="voL34" data-audio-group="voiceover" src="assets/vo-en/L34.wav" data-start="295.69" data-duration="11.38" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-w8y1" id="voL35" data-audio-group="voiceover" src="assets/vo-en/L35.wav" data-start="308.22" data-duration="8.84" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-sk5p" id="voL36" data-audio-group="voiceover" src="assets/vo-en/L36.wav" data-start="320.92" data-duration="12.02" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-zo70" id="voL37" data-audio-group="voiceover" src="assets/vo-en/L37.wav" data-start="334.74" data-duration="9.35" data-track-index="10" data-volume="1"></audio>
+<audio data-hf-id="hf-8d3q" id="bed1" src="assets/music/bed-1.mp3" data-start="0" data-duration="233.02" data-track-index="11" data-volume="0.17" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.8}"></audio>
+<audio data-hf-id="hf-dvsh" id="bed2" src="assets/music/bed-2.mp3" data-start="231.52" data-duration="115.57" data-track-index="12" data-volume="0.17" data-fx-carve="{&quot;enabled&quot;:true,&quot;sources&quot;:[&quot;voiceover&quot;],&quot;strength&quot;:0.8}"></audio>
+</div>
+<script>
+const PLAN = [{"type":"montage","sel":"#cam0","cuts":[0,1.6099999999999999,2.73,4.49]},{"type":"cam","sel":"#cam1","keys":[{"at":13.77,"scale":1.525,"x":0,"y":-238},{"at":21.48,"scale":1.525,"x":-422,"y":-238},{"at":31.32,"scale":1.525,"x":0,"y":-238},{"at":39.04,"scale":1.525,"x":-51,"y":0},{"at":45.13,"scale":1.525,"x":-422,"y":0},{"at":55.54,"scale":1.525,"x":-211,"y":-22},{"at":66.91,"scale":1.525,"x":0,"y":-200},{"at":86.48,"scale":1.525,"x":-422,"y":-238},{"at":96.33,"scale":1.525,"x":-422,"y":-238},{"at":104.97,"scale":1.525,"x":-51,"y":0},{"at":109.66,"scale":1.525,"x":-237,"y":0},{"at":117.6,"scale":1.525,"x":-211,"y":-127},{"at":133.06,"scale":1.525,"x":-371,"y":0},{"at":137.6,"scale":1.525,"x":-422,"y":0},{"at":142.66,"scale":1.525,"x":-422,"y":0},{"at":149.29,"scale":1.525,"x":-238,"y":-99},{"at":161.74,"scale":1.525,"x":-422,"y":-220},{"at":169.07,"scale":1.525,"x":-49,"y":-238},{"at":182.65,"scale":1.525,"x":-393,"y":-238},{"at":191.11,"scale":1.525,"x":0,"y":-238},{"at":198.58,"scale":1.525,"x":-422,"y":-232}],"start":13.76575},{"type":"cam","sel":"#cam3","keys":[{"at":217.36,"scale":1.525,"x":-422,"y":-169}],"start":214.56408366666668},{"type":"cam","sel":"#cam7","keys":[{"at":250.08,"scale":1.525,"x":-170,"y":-225},{"at":256.3,"scale":1.255,"x":0,"y":-4},{"at":267.15,"scale":1.525,"x":-211,"y":-100},{"at":270.61,"scale":1.4813,"x":-355,"y":0}],"start":248.71929266666666},{"type":"cam","sel":"#cam8","keys":[{"at":277.69,"scale":1.525,"x":-422,"y":0},{"at":282.27,"scale":1.41,"x":-246,"y":-3},{"at":296.11,"scale":1.525,"x":-422,"y":0}],"start":277.2859593333333},{"type":"cam","sel":"#cam9","keys":[{"at":307.5192926666667,"scale":1.25,"x":0,"y":0}],"start":307.5192926666667},{"type":"wa1","start":206.23241666666667,"wa":207.25241666666665,"send":213.32033341666664,"hl":[["name",209.41241666666664],["time",210.05241666666666],["link",211.01241666666667],["instr",212.29241666666667]]},{"type":"board","start":225.3640836666667,"url":227.3840836666667,"digits":229.46408366666668},{"type":"wa2","start":231.5193756666667,"msg":233.87937566666668,"tap":235.7993756666667},{"type":"later","at":295.5918343333333},{"type":"neet","start":320.3192926666667,"neet":323.3192926666667},{"type":"end","start":333.9435426666667,"endurl":338.8235426666667,"thanks":340.7435426666667}];
+// Builds the one paused timeline from PLAN (written by build.mjs). Runs after fonts load so the
+// board's marker pen can measure the real text widths.
+const q = (s, r = document) => r.querySelector(s);
+const qa = (s, r = document) => [...r.querySelectorAll(s)];
+const centred = (s) => ({ scale: s, x: (1920 - 1536 * s) / 2, y: (1080 - 864 * s) / 2 });
+
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  const pop = (el, at, from = { y: 24, opacity: 0 }) => el && tl.fromTo(el, from, { y: 0, x: 0, scale: 1, opacity: 1, duration: 0.45, ease: 'power3.out', immediateRender: false }, at);
+  const show = (el, at) => el && tl.set(el, { display: 'block' }, at);
+  const hide = (el, at) => el && tl.set(el, { display: 'none' }, at);
+
+  for (const p of PLAN) {
+    if (p.type === 'cam') {
+      const el = q(p.sel);
+      tl.set(el, { transformOrigin: '0 0', ...p.keys[0] }, 0);
+      p.keys.slice(1).forEach((k, i) => {
+        const a = p.keys[i];
+        tl.fromTo(el, { scale: a.scale, x: a.x, y: a.y }, { scale: k.scale, x: k.x, y: k.y, duration: 0.9, ease: 'power2.inOut', immediateRender: false }, k.at);
+      });
+    }
+    if (p.type === 'montage') {
+      const el = q(p.sel);
+      tl.set(el, { transformOrigin: '0 0', ...centred(1.25) }, 0);
+      p.cuts.forEach((c) => tl.fromTo(el, centred(1.34), { ...centred(1.25), duration: 0.7, ease: 'expo.out', immediateRender: false }, c));
+    }
+    if (p.type === 'wa1') {
+      const sc = q('#wa1');
+      pop(q('.phone', sc), p.start, { y: 80, opacity: 0 });
+      pop(q('.side', sc), p.start + 0.25, { x: 40, opacity: 0 });
+      const box = q('#wa1box'), draft = q('#wa1draft'), sent = q('#wa1sent');
+      hide(sent, 0);
+      // The invite drops into the message box…
+      hide(q('.ph', box), p.wa); show(draft, p.wa);
+      tl.fromTo(draft, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out', immediateRender: false }, p.wa);
+      // …each part lights up as it is named…
+      for (const [key, at] of p.hl) {
+        if (at == null) continue;
+        const el = q('.hl-' + key, draft);
+        tl.fromTo(el, { backgroundColor: 'rgba(250,204,21,0)' }, { backgroundColor: 'rgba(250,204,21,.55)', duration: 0.2, immediateRender: false }, at - 0.05);
+        tl.to(el, { backgroundColor: 'rgba(250,204,21,0)', duration: 0.5, immediateRender: false }, at + 1.0);
+      }
+      // …and Send.
+      tl.fromTo('#wa1send', { scale: 1 }, { scale: 0.82, duration: 0.12, yoyo: true, repeat: 1, immediateRender: false }, p.send - 0.15);
+      hide(draft, p.send); show(q('.ph', box), p.send); show(sent, p.send);
+      tl.fromTo(sent, { opacity: 0, y: 60, scale: 0.9, transformOrigin: '100% 100%' }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: 'back.out(1.4)', immediateRender: false }, p.send);
+    }
+    if (p.type === 'board') {
+      const sc = q('#board');
+      tl.fromTo(q('.wb', sc), { scale: 1.04, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: 'power2.out', immediateRender: false }, p.start);
+      const pen = q('#pen');
+      const write = (el, at, dur) => {
+        const w = el.offsetWidth, top = el.offsetTop, left = el.offsetLeft, h = el.offsetHeight;
+        tl.fromTo(el, { clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: dur, ease: 'none', immediateRender: false }, at);
+        tl.fromTo(pen, { x: left, y: top + h * 0.62, rotation: -32, opacity: 1 }, { x: left + w, y: top + h * 0.55, rotation: -28, duration: dur, ease: 'none', immediateRender: false }, at);
+      };
+      tl.set(pen, { opacity: 0 }, 0);
+      tl.set(['#ink1', '#ink2'], { clipPath: 'inset(0% 100% 0% 0%)' }, 0);
+      write(q('#ink1'), p.url - 0.1, 1.5);
+      write(q('#ink2'), p.digits - 0.1, 1.4);
+      tl.to(pen, { x: '+=120', y: '+=160', opacity: 0, duration: 0.5, ease: 'power2.in', immediateRender: false }, p.digits + 1.5);
+    }
+    if (p.type === 'wa2') {
+      const sc = q('#wa2');
+      pop(q('.phone', sc), p.start, { y: 80, opacity: 0 });
+      pop(q('.side', sc), p.start + 0.25, { x: 40, opacity: 0 });
+      const msg = q('#wa2msg'), notif = q('#wa2notif');
+      hide(msg, 0);
+      tl.fromTo(notif, { y: -140, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'back.out(1.3)', immediateRender: false }, p.msg - 0.1);
+      tl.to(notif, { y: -140, opacity: 0, duration: 0.35, ease: 'power2.in', immediateRender: false }, p.msg + 1.9);
+      show(msg, p.msg + 0.15);
+      tl.fromTo(msg, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, p.msg + 0.15);
+      // Touch on the link.
+      const u = q('u', msg), r = document.createElement('span');
+      r.className = 'ripple'; u.appendChild(r);
+      tl.set(r, { scale: 0.4, opacity: 0 }, 0);
+      tl.fromTo(r, { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.18, immediateRender: false }, p.tap - 0.05);
+      tl.to(r, { scale: 1.8, opacity: 0, duration: 0.4, immediateRender: false }, p.tap + 0.15);
+      tl.fromTo(u, { backgroundColor: 'rgba(14,116,144,0)' }, { backgroundColor: 'rgba(14,116,144,.18)', duration: 0.15, immediateRender: false }, p.tap);
+    }
+    if (p.type === 'later') {
+      const el = q('#later');
+      tl.fromTo(qa('.lk, .lt', el), { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out', immediateRender: false }, p.at + 0.05);
+    }
+    if (p.type === 'neet') {
+      const sc = q('#neet');
+      pop(q('#omr'), p.start + 0.1, { x: -80, opacity: 0, rotation: -4 });
+      tl.fromTo('#arr', { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: 'power2.inOut', immediateRender: false }, p.start + 0.7);
+      pop(q('#mon'), p.start + 1.1, { y: 60, opacity: 0 });
+      tl.fromTo(qa('#nh > div', sc), { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, stagger: 0.18, ease: 'power3.out', immediateRender: false }, p.neet - 0.1);
+    }
+    if (p.type === 'end') {
+      const sc = q('#end');
+      tl.fromTo(q('.wm', sc), { y: 50, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', immediateRender: false }, p.start + 0.2);
+      pop(q('.tag', sc), p.start + 0.7);
+      pop(q('.pills', sc), p.endurl - 0.1, { y: 30, opacity: 0 });
+      tl.fromTo('#subpill', { scale: 1 }, { scale: 1.08, duration: 0.35, yoyo: true, repeat: 3, ease: 'sine.inOut', immediateRender: false }, p.thanks + 0.6);
+    }
+  }
+  // Title card
+  const tc = q('#title');
+  if (tc) {
+    const s = +tc.dataset.start;
+    tl.fromTo(q('.wm', tc), { y: 40, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out', immediateRender: false }, s + 0.05);
+    tl.fromTo(q('.ttl', tc), { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out', immediateRender: false }, s + 0.35);
+    tl.fromTo(q('.sub', tc), { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', immediateRender: false }, s + 0.7);
+  }
+  qa('.chip').forEach((el) => tl.fromTo(el, { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, +el.dataset.start));
+  qa('.cap span').forEach((el) => tl.fromTo(el, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, ease: 'power2.out', immediateRender: false }, +el.parentElement.dataset.start));
+  window.__timelines['main'] = tl;
+});
+
+</script>
+</body></html>

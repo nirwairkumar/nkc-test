@@ -1,0 +1,2 @@
+Here's my test — the JEE Main mini mock we built in the last video.
+To run it as a real exam, click Conduct exam.

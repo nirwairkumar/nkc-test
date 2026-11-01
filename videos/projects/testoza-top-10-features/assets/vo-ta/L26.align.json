@@ -1,0 +1,44 @@
+[
+ {
+  "w": "கடைசி",
+  "r": "kadaici",
+  "start": 0.0,
+  "end": 0.361,
+  "score": 0.988
+ },
+ {
+  "w": "வரை",
+  "r": "varai",
+  "start": 0.421,
+  "end": 0.641,
+  "score": 0.794
+ },
+ {
+  "w": "fast-forward",
+  "r": "fastforward",
+  "start": 0.641,
+  "end": 1.262,
+  "score": 0.405
+ },
+ {
+  "w": "பண்ணலாம்.",
+  "r": "pannalaam",
+  "start": 1.302,
+  "end": 1.683,
+  "score": 0.926
+ },
+ {
+  "w": "Submit,",
+  "r": "submit",
+  "start": 2.123,
+  "end": 2.444,
+  "score": 0.344
+ },
+ {
+  "w": "confirm.",
+  "r": "confirm",
+  "start": 2.504,
+  "end": 3.846,
+  "score": 0.339
+ }
+]

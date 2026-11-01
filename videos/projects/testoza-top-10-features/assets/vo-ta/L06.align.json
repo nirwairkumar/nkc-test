@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.321,
+  "score": 0.31
+ },
+ {
+  "w": "two:",
+  "r": "two",
+  "start": 0.441,
+  "end": 0.581,
+  "score": 0.05
+ },
+ {
+  "w": "maths,",
+  "r": "maths",
+  "start": 0.962,
+  "end": 1.323,
+  "score": 0.665
+ },
+ {
+  "w": "science",
+  "r": "science",
+  "start": 1.623,
+  "end": 2.024,
+  "score": 0.17
+ },
+ {
+  "w": "சரியான",
+  "r": "cariyaana",
+  "start": 2.164,
+  "end": 2.565,
+  "score": 0.825
+ },
+ {
+  "w": "முறையில",
+  "r": "muraiyila",
+  "start": 2.605,
+  "end": 2.866,
+  "score": 0.498
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.946,
+  "end": 3.106,
+  "score": 0.26
+ },
+ {
+  "w": "பண்ணலாம்.",
+  "r": "pannalaam",
+  "start": 3.106,
+  "end": 3.427,
+  "score": 0.742
+ }
+]

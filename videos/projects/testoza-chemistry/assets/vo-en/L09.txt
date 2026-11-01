@@ -1,0 +1,2 @@
+Now, three reactions with conditions on the arrows. Formula, sodium tetraborate… then the arrow with a box above and below.
+Here you choose how many lines go above and below. We only need one, on top, so remove the bottom one, and Insert.

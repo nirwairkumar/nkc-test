@@ -144,11 +144,20 @@ serve(async (req) => {
                     console.error("Free Plan Redemption Error:", redemptionError);
                 }
 
-                // c. Increment Usage
-                // Optimistic update, or verify response.
-                const { data: currentPromo } = await supabaseAdmin.from('promo_codes').select('used_count').eq('id', appliedPromoId).single();
-                if (currentPromo) {
-                    await supabaseAdmin.from('promo_codes').update({ used_count: currentPromo.used_count + 1 }).eq('id', appliedPromoId);
+                // c. Increment Usage — L4: atomic, limit-checked consume.
+                // The previous read-then-update could both lose counts and let a
+                // limited code go past max_uses under concurrent redemptions.
+                const { data: promoUsage, error: promoUsageError } = await supabaseAdmin
+                    .rpc('increment_promo_usage', { p_promo_id: appliedPromoId });
+
+                const consumed = Array.isArray(promoUsage) ? promoUsage[0] : promoUsage;
+                if (promoUsageError || !consumed?.success) {
+                    console.error('Promo usage could not be consumed (exhausted or expired)', {
+                        appliedPromoId,
+                        error: promoUsageError?.message,
+                        used_count: consumed?.used_count,
+                        max_uses: consumed?.max_uses,
+                    });
                 }
             }
 

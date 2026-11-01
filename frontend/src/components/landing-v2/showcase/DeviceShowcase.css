@@ -1,0 +1,287 @@
+/* ════════════════════════════════════════════════════════════════
+   DeviceShowcase — the real exam UI as a fixed product composition.
+
+   Both devices are shown together in one three-quarter shot: the laptop
+   set back and to the right, the phone standing in front on the left and
+   overlapping it. Nothing rotates or cycles.
+
+   COMPOSITION DOCTRINE — the three things that make this read as one
+   photograph rather than two pasted cut-outs:
+
+     • ONE CAMERA. A single perspective origin for the whole stage, and
+       light from the same direction on both bezels.
+
+     • OPPOSED TILT. The laptop turns +16deg (left edge forward, body
+       receding right); the phone turns -13deg the other way. The pair
+       therefore opens toward the viewer in a shallow V, which is how
+       Apple and Google stage a laptop-plus-phone set. Parallel angles
+       read as two separate objects that happen to be adjacent.
+
+     • CONTACT, NOT PROXIMITY. The phone overlaps the laptop's left edge
+       by ~38% of its own width. A gap between two devices always reads
+       as a collage; an overlap reads as a single arrangement in depth.
+
+   Proportion is held deliberately: the phone renders at ~69% of the
+   laptop's open height, which is the real-world ratio of a handset to a
+   14" notebook. Anything larger and the phone visually outranks the
+   laptop, which is what a previous pass got wrong.
+
+   Two further problems this file solves:
+
+   (1) The exam interface is a LIGHT UI and the hero is near-black. Dropped
+       in unmodified it reads as a screenshot pasted onto a dark page. What
+       makes a bright screen sit convincingly on a dark background is not
+       changing the UI, it is lighting the object:
+         • a dark graphite bezel instead of the pale silver default
+         • screen bloom — the display spilling light onto the background
+         • a glass sheen across the panel
+         • a reflected pool of light beneath, grounding it
+
+   (2) The phone must sit believably in FRONT of the laptop — it is pushed
+       forward in Z and carries a contact shadow so it occludes rather than
+       merely overlapping.
+
+   Overrides LiveTestShowcase.css, which is always imported before this file.
+════════════════════════════════════════════════════════════════ */
+
+.dsw-root {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* One camera for the whole composition. */
+.dsw-stage {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    height: 400px;
+    perspective: 2600px;
+    perspective-origin: 48% 50%;
+}
+
+.dsw-composition {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+}
+
+/* ══ MOUNTS ══════════════════════════════════════════════════════
+   Opposed rotateY, shared camera. See the doctrine note above.      */
+
+.dsw-mount {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform-style: preserve-3d;
+}
+
+/* Laptop: anchor of the composition, set back and slightly right. */
+.dsw-mount-laptop {
+    /* rotateX reclines the screen back (was reading as a flat 90° slab) */
+    transform: translateX(-50%) translateX(80px) translateZ(0) rotateY(16deg) rotateX(9deg);
+}
+
+/* Phone: forward in Z, overlapping the laptop's left edge, and turned the
+   OPPOSITE way so the two open toward the viewer. */
+.dsw-mount-phone {
+    transform: translateX(-50%) translateX(-154px) translateZ(120px) rotateY(-13deg);
+}
+
+.dsw-fit { position: relative; transform-origin: 50% 100%; }
+.dsw-fit-laptop { transform: scale(0.62); }
+/* ~0.52 keeps the phone close to the real handset-to-laptop height ratio
+   while staying legible; translateY drops it just below the laptop's base
+   so it reads as standing in front of the machine, not floating beside it. */
+.dsw-fit-phone { transform: scale(0.52) translateY(52px); }
+
+/* Neutralise the live page's show/hide behaviour — this file owns layout. */
+.dsw-device.lt-laptop,
+.dsw-device.lt-phone {
+    position: static;
+    opacity: 1;
+    transform: none;
+    transition: none;
+    pointer-events: none;
+}
+
+/* ══ QUESTION CONTENT ════════════════════════════════════════════
+   The maths is drawn by KaTeX, which loads after the page: until then the
+   question and options stay invisible rather than showing raw TeX.          */
+
+.dsw-tex { opacity: 0; transition: opacity 0.3s ease; }
+.dsw-tex.is-ready { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .dsw-tex { transition: none; } }
+/* An expression never splits across lines (x²/4 − | y²/b² = 1 reads badly). */
+.dsw-tex .katex { white-space: nowrap; }
+
+/* The question's figure, framed as the exam screen frames a question image
+   (centred, white, hairline border, small radius, faint shadow). */
+.dsw-figure-row { display: flex; justify-content: center; margin: -6px 0 6px; }
+.dsw-figure {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 3px 8px 2px;
+    line-height: 0;
+}
+
+/* ══ 1. BEZEL RE-GRADE ═══════════════════════════════════════════
+   Pale silver (#e2e8f0 → #cbd5e1) is what made this look pasted on.
+   Graphite with a warm-white rim reads as machined metal lit from
+   the upper left — the same direction for both devices.             */
+
+.dsw-root .lt-laptop-body {
+    background: linear-gradient(168deg, #4a5568 0%, #2a3342 42%, #1a212c 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.dsw-root .lt-laptop-base {
+    background: linear-gradient(180deg, #2c3442 0%, #1a212c 60%, #131922 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.dsw-root .lt-laptop-base::before {
+    background: #0f141c;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.dsw-root .lt-laptop-base::after {
+    background: rgba(0, 0, 0, 0.55);
+    filter: blur(2px);
+}
+
+.dsw-root .lt-phone-body {
+    background: linear-gradient(165deg, #3d4655 0%, #202833 50%, #151b24 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.20),
+        0 0 0 1.5px rgba(0, 0, 0, 0.7),
+        0 0 0 3px rgba(90, 102, 122, 0.55),
+        /* Contact shadow falling down-right, onto the laptop behind it —
+           this is what proves the phone is in front rather than beside. */
+        26px 30px 54px rgba(0, 0, 0, 0.78),
+        10px 10px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* Thin dark inset so the bright panel does not bleed into the bezel. */
+.dsw-root .lt-laptop-screen,
+.dsw-root .lt-phone-screen {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+/* ══ 2. GLASS SHEEN ══════════════════════════════════════════════
+   One raking highlight per panel, from the same light direction.    */
+
+.dsw-root .lt-laptop-screen::after,
+.dsw-root .lt-phone-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            104deg,
+            rgba(255, 255, 255, 0.15) 0%,
+            rgba(255, 255, 255, 0.05) 18%,
+            transparent 42%,
+            transparent 100%
+        ),
+        radial-gradient(
+            ellipse 70% 50% at 82% 100%,
+            rgba(56, 189, 248, 0.11),
+            transparent 65%
+        );
+}
+
+.dsw-root .lt-phone-screen::after { border-radius: 28px; }
+
+/* ══ 3. SCREEN BLOOM ═════════════════════════════════════════════
+   The bright displays spilling onto the dark background — the cue
+   that these are lit screens rather than images.                    */
+
+.dsw-fit::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: 132%;
+    height: 122%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse 50% 44% at 50% 45%,
+        rgba(186, 230, 253, 0.30) 0%,
+        rgba(56, 189, 248, 0.16) 38%,
+        rgba(37, 99, 235, 0.07) 62%,
+        transparent 78%
+    );
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ══ 4. GROUND REFLECTION ════════════════════════════════════════ */
+
+.dsw-fit::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -30px;
+    width: 78%;
+    height: 44px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse 50% 50% at 50% 50%,
+        rgba(125, 211, 252, 0.26) 0%,
+        rgba(56, 189, 248, 0.10) 42%,
+        transparent 72%
+    );
+    filter: blur(20px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* A phone throws less light than a laptop. */
+.dsw-fit-phone::before {
+    width: 260%;
+    height: 106%;
+    filter: blur(52px);
+}
+.dsw-fit-phone::after { width: 165%; }
+
+/* ══ 5. RESPONSIVE ═══════════════════════════════════════════════
+   Angles and overlap are held at every size; only scale and spacing
+   change, so the composition never breaks apart into two objects.   */
+
+@media (max-width: 1279px) {
+    .dsw-stage { height: 360px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(66px) rotateY(16deg) rotateX(9deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-134px) translateZ(105px) rotateY(-13deg); }
+    .dsw-fit-laptop { transform: scale(0.54); }
+    .dsw-fit-phone { transform: scale(0.45) translateY(52px); }
+}
+
+@media (max-width: 767px) {
+    .dsw-stage { height: 290px; perspective: 1900px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(48px) rotateY(14deg) rotateX(9deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-104px) translateZ(85px) rotateY(-12deg); }
+    .dsw-fit-laptop { transform: scale(0.42); }
+    .dsw-fit-phone { transform: scale(0.35) translateY(52px); }
+    .dsw-fit::before { filter: blur(42px); }
+}
+
+@media (max-width: 479px) {
+    .dsw-stage { height: 240px; perspective: 1500px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(38px) rotateY(13deg) rotateX(9deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-82px) translateZ(70px) rotateY(-11deg); }
+    .dsw-fit-laptop { transform: scale(0.33); }
+    .dsw-fit-phone { transform: scale(0.28) translateY(52px); }
+}

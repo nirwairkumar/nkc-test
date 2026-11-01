@@ -1,0 +1,1 @@
+നിങ്ങളുടെ dashboard-ൽ: ഇപ്പോൾ മുപ്പത് students എഴുതുന്നു, രണ്ട് പേർ submit ചെയ്തു. Results open ചെയ്യൂ — started, writing, submitted, dropped. ഏത് tile tap ചെയ്താലും, ആര്, എത്രത്തോളം ചെയ്തു എന്ന് അറിയാം.

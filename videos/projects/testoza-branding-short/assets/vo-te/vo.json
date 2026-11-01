@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-te/L01.wav",
+    "duration": 4.865708,
+    "text": "మీ institute logo, పేరు — ప్రతి online test మీద. ఎలాగో step by step చూద్దాం.",
+    "raw": "{hook}మీ institute logo, పేరు — ప్రతి online test మీద. {how}ఎలాగో step by step చూద్దాం."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-te/L02.wav",
+    "duration": 3.135292,
+    "text": "Test కి పేరు పెట్టి, Institution branding open చేయండి.",
+    "raw": "{title}Test కి పేరు పెట్టి, {branding}Institution branding open చేయండి."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-te/L03.wav",
+    "duration": 6.245625,
+    "text": "Logo వేయండి, institute పేరు type చేయండి, colour, font ఎంచుకోండి. అంతే — brand ready.",
+    "raw": "{logo}Logo వేయండి, {name}institute పేరు type చేయండి, {color}colour, {font}font ఎంచుకోండి. {branded}అంతే — brand ready."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-te/L04.wav",
+    "duration": 6.308708,
+    "text": "ఇప్పుడు questions — సరైన answer tap చేయండి, తర్వాతది, ఇంకొకటి. తర్వాత Save.",
+    "raw": "{q1}ఇప్పుడు questions — {right1}సరైన answer tap చేయండి, తర్వాతది, {add3}ఇంకొకటి. {save}తర్వాత Save."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-te/L05.wav",
+    "duration": 4.374542,
+    "text": "Conduct exam, start, link copy చేయండి — లేదా ఆరు అంకెల join code ఇవ్వండి.",
+    "raw": "{conduct}Conduct exam, {start}start, {copy}link copy చేయండి — {code}లేదా ఆరు అంకెల join code ఇవ్వండి."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-te/L06.wav",
+    "duration": 5.47025,
+    "text": "Students link open చేస్తారు, పేరు type చేస్తారు, start చేస్తారు… చూడండి — మీ logo, పేరు, పైనే.",
+    "raw": "{dopen}Students link open చేస్తారు, {cname}పేరు type చేస్తారు, {dgo}start చేస్తారు… {dbrand}చూడండి — మీ logo, పేరు, పైనే."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-te/L07.wav",
+    "duration": 5.508125,
+    "text": "Phone లోనా? Code type చేసి, Start tap చేస్తే, అక్కడ కూడా మీ brand. ప్రతి question, మీ పేరుతోనే.",
+    "raw": "{typecode}Phone లోనా? Code type చేసి, {pgo}Start tap చేస్తే, {pbrand}అక్కడ కూడా మీ brand. {ans1}ప్రతి question, మీ పేరుతోనే."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-te/L08.wav",
+    "duration": 4.4845,
+    "text": "మీ institute. మీ test. ఈరోజే తయారు చేయండి — testoza.com లో.",
+    "raw": "{endcard}మీ institute. మీ test. {endurl}ఈరోజే తయారు చేయండి — testoza.com లో."
+  }
+]

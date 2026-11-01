@@ -1,0 +1,219 @@
+[
+ {
+  "w": "h",
+  "r": "h",
+  "start": 0.02,
+  "end": 0.04,
+  "score": 0.993
+ },
+ {
+  "w": "equals",
+  "r": "equals",
+  "start": 0.06,
+  "end": 0.681,
+  "score": 0.594
+ },
+ {
+  "w": "u",
+  "r": "u",
+  "start": 1.482,
+  "end": 1.502,
+  "score": 0.971
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 1.642,
+  "end": 1.662,
+  "score": 0.435
+ },
+ {
+  "w": "minus",
+  "r": "minus",
+  "start": 2.022,
+  "end": 2.463,
+  "score": 0.813
+ },
+ {
+  "w": "అని",
+  "r": "ani",
+  "start": 2.563,
+  "end": 2.703,
+  "score": 0.939
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.783,
+  "end": 3.023,
+  "score": 0.468
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 3.023,
+  "end": 3.404,
+  "score": 0.952
+ },
+ {
+  "w": "fraction",
+  "r": "fraction",
+  "start": 3.864,
+  "end": 4.345,
+  "score": 0.373
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 4.405,
+  "end": 4.806,
+  "score": 0.332
+ },
+ {
+  "w": "one",
+  "r": "one",
+  "start": 4.826,
+  "end": 4.986,
+  "score": 0.332
+ },
+ {
+  "w": "over",
+  "r": "over",
+  "start": 5.006,
+  "end": 5.226,
+  "score": 0.612
+ },
+ {
+  "w": "two,",
+  "r": "two",
+  "start": 5.286,
+  "end": 5.426,
+  "score": 0.468
+ },
+ {
+  "w": "తర్వాత",
+  "r": "tarvaata",
+  "start": 5.827,
+  "end": 6.307,
+  "score": 0.958
+ },
+ {
+  "w": "power",
+  "r": "power",
+  "start": 6.668,
+  "end": 6.968,
+  "score": 0.399
+ },
+ {
+  "w": "key,",
+  "r": "key",
+  "start": 7.048,
+  "end": 7.489,
+  "score": 0.332
+ },
+ {
+  "w": "t",
+  "r": "t",
+  "start": 7.509,
+  "end": 7.529,
+  "score": 0.978
+ },
+ {
+  "w": "square",
+  "r": "square",
+  "start": 7.669,
+  "end": 7.989,
+  "score": 0.335
+ },
+ {
+  "w": "కోసం.",
+  "r": "koosam",
+  "start": 7.989,
+  "end": 8.31,
+  "score": 0.997
+ },
+ {
+  "w": "ఒక",
+  "r": "oka",
+  "start": 8.87,
+  "end": 9.01,
+  "score": 0.992
+ },
+ {
+  "w": "proper",
+  "r": "proper",
+  "start": 9.111,
+  "end": 9.511,
+  "score": 0.791
+ },
+ {
+  "w": "formula",
+  "r": "formula",
+  "start": 9.571,
+  "end": 9.992,
+  "score": 0.842
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 10.352,
+  "end": 10.592,
+  "score": 0.498
+ },
+ {
+  "w": "ఏమీ",
+  "r": "eemii",
+  "start": 10.632,
+  "end": 10.833,
+  "score": 0.782
+ },
+ {
+  "w": "నేర్చుకోవక్కర్లేదు.",
+  "r": "neercukoovakkarleedu",
+  "start": 10.833,
+  "end": 11.734,
+  "score": 0.835
+ },
+ {
+  "w": "Insert,",
+  "r": "insert",
+  "start": 12.194,
+  "end": 12.635,
+  "score": 0.501
+ },
+ {
+  "w": "అది",
+  "r": "adi",
+  "start": 12.895,
+  "end": 13.035,
+  "score": 0.998
+ },
+ {
+  "w": "నేరుగా",
+  "r": "neerugaa",
+  "start": 13.135,
+  "end": 13.556,
+  "score": 0.994
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 13.596,
+  "end": 13.876,
+  "score": 0.177
+ },
+ {
+  "w": "లోకి",
+  "r": "looki",
+  "start": 13.916,
+  "end": 14.116,
+  "score": 0.996
+ },
+ {
+  "w": "వెళ్తుంది.",
+  "r": "velltumdi",
+  "start": 14.156,
+  "end": 14.557,
+  "score": 0.982
+ }
+]

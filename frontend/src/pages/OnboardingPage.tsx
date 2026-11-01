@@ -29,7 +29,7 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: 'Name must be at least 2 characters.',
     }),
-    designation: z.enum(["Teacher", "Institution", "Other"], {
+    designation: z.enum(["Student", "Teacher", "Institution", "Other"], {
         required_error: "Please select a designation.",
     }),
 });
@@ -65,7 +65,8 @@ export default function OnboardingPage() {
                 return;
             }
 
-            const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution' || values.designation === 'Other';
+            // Students take tests; everyone else starts with creator tools switched on.
+            const isCreatorDefault = values.designation !== 'Student';
 
             // 1. Try to update Auth User Metadata (non-critical — may fail for Google OAuth users
             //    if the backend doesn't have a service role key)
@@ -94,14 +95,27 @@ export default function OnboardingPage() {
 
             localStorage.setItem('user_designation', values.designation);
 
+            // GA4 "sign_up" — imported into Google Ads as the sign-up conversion. The page
+            // navigates away below, so wait (at most 1 s) for the hit to be sent.
+            await new Promise<void>((resolve) => {
+                const gtag = (window as any).gtag;
+                if (typeof gtag !== 'function') return resolve();
+                setTimeout(resolve, 1000);
+                gtag('event', 'sign_up', {
+                    method: user.app_metadata?.provider || 'email',
+                    user_role: values.designation,
+                    event_callback: () => resolve(),
+                });
+            });
+
             toast.success('Profile updated successfully!');
             const redirectIntent = localStorage.getItem('auth_redirect_intent');
             if (redirectIntent) {
                 localStorage.removeItem('auth_redirect_intent');
             }
-            navigate(redirectIntent || '/', { replace: true });
-            // Reload to refresh the auth context with updated metadata
-            window.location.reload();
+            const fallback = values.designation === 'Student' ? '/history' : '/';
+            const destination = redirectIntent && redirectIntent !== '/onboarding' && redirectIntent !== '/login' ? redirectIntent : fallback;
+            window.location.href = destination;
         } catch (error: any) {
             toast.error(error.message || 'Failed to update profile');
         } finally {
@@ -191,7 +205,8 @@ export default function OnboardingPage() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="Teacher">Teacher</SelectItem>
+                                                    <SelectItem value="Student">Student</SelectItem>
+                                                    <SelectItem value="Teacher">Educator</SelectItem>
                                                     <SelectItem value="Institution">Institution</SelectItem>
                                                     <SelectItem value="Other">Other</SelectItem>
                                                 </SelectContent>

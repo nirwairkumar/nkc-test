@@ -1,0 +1,32 @@
+[
+  {
+    "id": "w0",
+    "text": "Number",
+    "start": 0,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "four",
+    "start": 0.56,
+    "end": 0.96
+  },
+  {
+    "id": "w2",
+    "text": "Real",
+    "start": 1.2,
+    "end": 1.6
+  },
+  {
+    "id": "w3",
+    "text": "exam",
+    "start": 1.76,
+    "end": 2.32
+  },
+  {
+    "id": "w4",
+    "text": "patterns.",
+    "start": 2.32,
+    "end": 3.04
+  }
+]

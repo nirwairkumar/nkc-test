@@ -1,0 +1,3 @@
+First — Force Full Screen.
+The exam opens full screen, and if a student leaves it, that's counted as a violation.
+For any serious test, switch this on.

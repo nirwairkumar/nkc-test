@@ -1,0 +1,4 @@
+And finally, the exam screen itself.
+Standard Mode looks just like the JEE and NEET computer-based test, with a question palette on the right.
+Modern Mode is a clean, one-card-at-a-time layout.
+For exam practice, I keep Standard.

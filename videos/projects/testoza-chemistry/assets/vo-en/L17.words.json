@@ -1,0 +1,230 @@
+[
+  {
+    "id": "w0",
+    "text": "Type",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "the",
+    "start": 0.4,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "question.",
+    "start": 0.56,
+    "end": 1.2
+  },
+  {
+    "id": "w3",
+    "text": "Now",
+    "start": 1.2,
+    "end": 1.36
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 1.52,
+    "end": 1.68
+  },
+  {
+    "id": "w5",
+    "text": "first",
+    "start": 1.68,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "structure,",
+    "start": 1.92,
+    "end": 2.64
+  },
+  {
+    "id": "w7",
+    "text": "tab",
+    "start": 2.64,
+    "end": 2.8
+  },
+  {
+    "id": "w8",
+    "text": "picture,",
+    "start": 3.12,
+    "end": 3.76
+  },
+  {
+    "id": "w9",
+    "text": "then",
+    "start": 3.76,
+    "end": 4.08
+  },
+  {
+    "id": "w10",
+    "text": "this",
+    "start": 4.08,
+    "end": 4.32
+  },
+  {
+    "id": "w11",
+    "text": "cloud",
+    "start": 4.32,
+    "end": 4.8
+  },
+  {
+    "id": "w12",
+    "text": "button.",
+    "start": 4.8,
+    "end": 5.52
+  },
+  {
+    "id": "w13",
+    "text": "It",
+    "start": 5.52,
+    "end": 5.76
+  },
+  {
+    "id": "w14",
+    "text": "puts",
+    "start": 5.76,
+    "end": 6.08
+  },
+  {
+    "id": "w15",
+    "text": "a",
+    "start": 6.08,
+    "end": 6.24
+  },
+  {
+    "id": "w16",
+    "text": "picture",
+    "start": 6.24,
+    "end": 6.64
+  },
+  {
+    "id": "w17",
+    "text": "inside",
+    "start": 6.64,
+    "end": 7.04
+  },
+  {
+    "id": "w18",
+    "text": "the",
+    "start": 7.04,
+    "end": 7.2
+  },
+  {
+    "id": "w19",
+    "text": "text",
+    "start": 7.2,
+    "end": 7.68
+  },
+  {
+    "id": "w20",
+    "text": "exactly",
+    "start": 7.68,
+    "end": 8.16
+  },
+  {
+    "id": "w21",
+    "text": "where",
+    "start": 8.16,
+    "end": 8.32
+  },
+  {
+    "id": "w22",
+    "text": "your",
+    "start": 8.32,
+    "end": 8.48
+  },
+  {
+    "id": "w23",
+    "text": "cursor",
+    "start": 8.48,
+    "end": 8.96
+  },
+  {
+    "id": "w24",
+    "text": "is.",
+    "start": 8.96,
+    "end": 9.44
+  },
+  {
+    "id": "w25",
+    "text": "Choose",
+    "start": 9.44,
+    "end": 9.84
+  },
+  {
+    "id": "w26",
+    "text": "a",
+    "start": 9.84,
+    "end": 10
+  },
+  {
+    "id": "w27",
+    "text": "picture,",
+    "start": 10,
+    "end": 10.56
+  },
+  {
+    "id": "w28",
+    "text": "find",
+    "start": 10.56,
+    "end": 10.88
+  },
+  {
+    "id": "w29",
+    "text": "your",
+    "start": 10.88,
+    "end": 11.12
+  },
+  {
+    "id": "w30",
+    "text": "file,",
+    "start": 11.12,
+    "end": 11.76
+  },
+  {
+    "id": "w31",
+    "text": "pick",
+    "start": 11.76,
+    "end": 12.08
+  },
+  {
+    "id": "w32",
+    "text": "the",
+    "start": 12.08,
+    "end": 12.24
+  },
+  {
+    "id": "w33",
+    "text": "structure,",
+    "start": 12.24,
+    "end": 12.8
+  },
+  {
+    "id": "w34",
+    "text": "and",
+    "start": 12.8,
+    "end": 13.04
+  },
+  {
+    "id": "w35",
+    "text": "there",
+    "start": 13.04,
+    "end": 13.28
+  },
+  {
+    "id": "w36",
+    "text": "it",
+    "start": 13.28,
+    "end": 13.36
+  },
+  {
+    "id": "w37",
+    "text": "is.",
+    "start": 13.36,
+    "end": 13.6
+  }
+]

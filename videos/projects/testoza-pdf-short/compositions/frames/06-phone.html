@@ -1,0 +1,48 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f6-phone { top: 560px; }
+</style>
+<div data-hf-id="hf-j4hk" id="root" data-composition-id="f06-phone" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-jlw9" id="f6-stage" class="clip sf-stage" data-start="0" data-duration="4.8" data-track-index="0"></div>
+    <div data-hf-id="hf-g25h" class="sf-phone" id="f6-phone">
+      <div data-hf-id="hf-k85w" class="sf-screen">
+        <div data-hf-id="hf-1u6u" class="sf-notch"></div>
+        <img data-hf-id="hf-gdxx" class="f6-s" src="assets/ui/phone-join-0.png" alt="" />
+        <img data-hf-id="hf-vnrg" class="f6-s" src="assets/ui/phone-join-1.png" alt="" />
+        <img data-hf-id="hf-xlhz" class="f6-s" src="assets/ui/phone-join-2.png" alt="" />
+        <img data-hf-id="hf-4806" class="f6-s" src="assets/ui/phone-join-3.png" alt="" />
+        <img data-hf-id="hf-03yp" class="f6-s" src="assets/ui/phone-join-4.png" alt="" />
+        <img data-hf-id="hf-xvgo" class="f6-s" src="assets/ui/phone-join-5.png" alt="" />
+        <img data-hf-id="hf-9u4z" class="f6-s" src="assets/ui/phone-join-6.png" alt="" />
+        <img data-hf-id="hf-6dko" class="f6-s" src="assets/ui/phone-exam-0.png" alt="" />
+        <img data-hf-id="hf-epfl" class="f6-s" src="assets/ui/phone-exam-1.png" alt="" />
+      </div>
+    </div>
+    <div data-hf-id="hf-vxlw" class="sf-sup" id="f6-s">No app. <em data-hf-id="hf-kyip">No sign-up.</em></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f06-phone';
+  const { q, qa, tl, superIn, only, tap } = SF(ID);
+  const S = qa('.f6-s');
+  only(0, S[0], S);
+  tl.fromTo('#f6-phone', { y: 520, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.75, ease: 'expo.out' }, 0);
+  // "ना ऐप, ना अकाउंट।"
+  superIn(0.25, q('#f6-s'));
+  // "फ़ोन पर कोड डाला…": 4 8 2 · 9 1 3
+  [1.9, 2.07, 2.24, 2.41, 2.58, 2.75].forEach((t, i) => only(t, S[i + 1], S));
+  tap(3.1, 540, 1194);            // Continue
+  only(3.3, S[7], S);             // "…और टेस्ट शुरू।" the exam opens
+  tap(4.15, 538, 1101);           // option A
+  only(4.22, S[8], S);
+  tl.to('#f6-phone', { y: -18, duration: 4.0, ease: 'sine.inOut' }, 0.8);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

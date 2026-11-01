@@ -1,0 +1,146 @@
+[
+  {
+    "id": "w0",
+    "text": "That's",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "testosa,",
+    "start": 0.4,
+    "end": 1.52
+  },
+  {
+    "id": "w2",
+    "text": "a",
+    "start": 1.52,
+    "end": 1.68
+  },
+  {
+    "id": "w3",
+    "text": "paper",
+    "start": 1.68,
+    "end": 2
+  },
+  {
+    "id": "w4",
+    "text": "that",
+    "start": 2,
+    "end": 2.16
+  },
+  {
+    "id": "w5",
+    "text": "used",
+    "start": 2.16,
+    "end": 2.4
+  },
+  {
+    "id": "w6",
+    "text": "to",
+    "start": 2.4,
+    "end": 2.56
+  },
+  {
+    "id": "w7",
+    "text": "mean",
+    "start": 2.56,
+    "end": 2.88
+  },
+  {
+    "id": "w8",
+    "text": "printing,",
+    "start": 2.88,
+    "end": 3.44
+  },
+  {
+    "id": "w9",
+    "text": "invigilating,",
+    "start": 3.44,
+    "end": 4.32
+  },
+  {
+    "id": "w10",
+    "text": "and",
+    "start": 4.32,
+    "end": 4.48
+  },
+  {
+    "id": "w11",
+    "text": "a",
+    "start": 4.48,
+    "end": 4.64
+  },
+  {
+    "id": "w12",
+    "text": "weekend",
+    "start": 4.64,
+    "end": 5.04
+  },
+  {
+    "id": "w13",
+    "text": "of",
+    "start": 5.04,
+    "end": 5.2
+  },
+  {
+    "id": "w14",
+    "text": "checking",
+    "start": 5.2,
+    "end": 5.76
+  },
+  {
+    "id": "w15",
+    "text": "now",
+    "start": 5.92,
+    "end": 6.16
+  },
+  {
+    "id": "w16",
+    "text": "runs",
+    "start": 6.16,
+    "end": 6.48
+  },
+  {
+    "id": "w17",
+    "text": "on",
+    "start": 6.48,
+    "end": 6.64
+  },
+  {
+    "id": "w18",
+    "text": "the",
+    "start": 6.64,
+    "end": 6.8
+  },
+  {
+    "id": "w19",
+    "text": "phones",
+    "start": 6.8,
+    "end": 7.28
+  },
+  {
+    "id": "w20",
+    "text": "your",
+    "start": 7.28,
+    "end": 7.52
+  },
+  {
+    "id": "w21",
+    "text": "students",
+    "start": 7.52,
+    "end": 8
+  },
+  {
+    "id": "w22",
+    "text": "already",
+    "start": 8,
+    "end": 8.32
+  },
+  {
+    "id": "w23",
+    "text": "carry.",
+    "start": 8.32,
+    "end": 8.72
+  }
+]

@@ -1,8 +1,43 @@
-from fastapi import APIRouter
-from . import track, stats, advanced
+from fastapi import APIRouter, Depends, Request
+from . import track, stats, advanced, collect, insights, exam_ops
+from app.core.auth import verify_is_admin
 
 router = APIRouter()
 
+
+def _require_admin(request: Request) -> None:
+    """
+    C5 / H3: every /api/analytics/stats/* endpoint is an admin dashboard — funnels,
+    attempt logs with per-candidate timelines, visitor geolocation and session tokens,
+    and the user matrix (profile PII). They had no auth at all, and because the backend
+    talks to Supabase with the service-role key, RLS did not cover them either.
+
+    Applied as a router-level dependency so a newly added dashboard route is guarded by
+    default instead of being forgotten.
+    """
+    verify_is_admin(request)
+
+
+# Tracking stays public: the browser beacons post to these (rate-limited).
+# /track is the legacy v1 beacon, kept for pages cached before v2 shipped.
 router.include_router(track.router, tags=["Analytics Tracking"])
-router.include_router(stats.router, prefix="/stats", tags=["Analytics Dashboard"])
-router.include_router(advanced.router, prefix="/stats", tags=["Advanced Analytics"])
+router.include_router(collect.router, tags=["Analytics Tracking"])
+
+router.include_router(
+    stats.router, prefix="/stats", tags=["Analytics Dashboard"],
+    dependencies=[Depends(_require_admin)],
+)
+router.include_router(
+    advanced.router, prefix="/stats", tags=["Advanced Analytics"],
+    dependencies=[Depends(_require_admin)],
+)
+# Analytics v2 reports (documentation/2026-09-26-analytics-v2.md).
+router.include_router(
+    insights.router, prefix="/v2", tags=["Analytics v2"],
+    dependencies=[Depends(_require_admin)],
+)
+# Live Activity / exam operations (documentation/2026-10-10-exam-activity.md).
+router.include_router(
+    exam_ops.router, prefix="/v2", tags=["Analytics v2"],
+    dependencies=[Depends(_require_admin)],
+)

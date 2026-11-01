@@ -1,0 +1,58 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-ta/L01.wav",
+    "duration": 5.67975,
+    "text": "உங்க institute-ஓட logo-வும் பேரும் — ஒவ்வொரு online test-லயும். எப்படின்னு step by step பார்க்கலாம்.",
+    "raw": "{hook}உங்க institute-ஓட logo-வும் பேரும் — ஒவ்வொரு online test-லயும். {how}எப்படின்னு step by step பார்க்கலாம்."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-ta/L02.wav",
+    "duration": 2.614292,
+    "text": "Test பேர் வைங்க, Institution branding open பண்ணுங்க.",
+    "raw": "{title}Test பேர் வைங்க, {branding}Institution branding open பண்ணுங்க."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-ta/L03.wav",
+    "duration": 5.541792,
+    "text": "Logo போடுங்க, institute பேரை type பண்ணுங்க, colour, font தேர்ந்தெடுங்க. அவ்ளோதான் — brand ready.",
+    "raw": "{logo}Logo போடுங்க, {name}institute பேரை type பண்ணுங்க, {color}colour, {font}font தேர்ந்தெடுங்க. {branded}அவ்ளோதான் — brand ready."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-ta/L04.wav",
+    "duration": 6.0815,
+    "text": "இப்போ questions — சரியான answer-ஐ tap பண்ணுங்க, அடுத்தது, இன்னொண்ணு. அப்புறம் Save.",
+    "raw": "{q1}இப்போ questions — {right1}சரியான answer-ஐ tap பண்ணுங்க, அடுத்தது, {add3}இன்னொண்ணு. {save}அப்புறம் Save."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-ta/L05.wav",
+    "duration": 5.239917,
+    "text": "அப்புறம் Conduct exam, start பண்ணுங்க, link-ஐ copy பண்ணுங்க — இல்லனா ஆறு இலக்க join code அனுப்புங்க.",
+    "raw": "{conduct}அப்புறம் Conduct exam, {start}start பண்ணுங்க, {copy}link-ஐ copy பண்ணுங்க — {code}இல்லனா ஆறு இலக்க join code அனுப்புங்க."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-ta/L06.wav",
+    "duration": 6.004875,
+    "text": "Students link-ஐ open பண்றாங்க, பேரை type பண்றாங்க, start பண்றாங்க… பாருங்க — உங்க logo-வும் பேரும், மேலயே.",
+    "raw": "{dopen}Students link-ஐ open பண்றாங்க, {cname}பேரை type பண்றாங்க, {dgo}start பண்றாங்க… {dbrand}பாருங்க — உங்க logo-வும் பேரும், மேலயே."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-ta/L07.wav",
+    "duration": 6.140833,
+    "text": "Phone-லயா? Code-ஐ type பண்ணி, Start tap பண்ணா, அங்கயும் உங்க brand தான். ஒவ்வொரு question-உம், உங்க பேர்ல.",
+    "raw": "{typecode}Phone-லயா? Code-ஐ type பண்ணி, {pgo}Start tap பண்ணா, {pbrand}அங்கயும் உங்க brand தான். {ans1}ஒவ்வொரு question-உம், உங்க பேர்ல."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-ta/L08.wav",
+    "duration": 4.23975,
+    "text": "உங்க institute. உங்க test. இன்னைக்கே உருவாக்குங்க — testoza.com-ல.",
+    "raw": "{endcard}உங்க institute. உங்க test. {endurl}இன்னைக்கே உருவாக்குங்க — testoza.com-ல."
+  }
+]

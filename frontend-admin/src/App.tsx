@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import SplashLoader from '@/components/ui/SplashLoader';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import AdminRoute from './components/ui/AdminRoute';
 
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
   lazy(async () => {
@@ -31,10 +32,13 @@ const AdminLoginPanel = lazyWithRetry(() => import('./pages/AdminLoginPanel'));
 const SolutionEditorPage = lazyWithRetry(() => import('./pages/SolutionEditorPage'));
 const CreateTestPage = lazyWithRetry(() => import('./pages/CreateTestPage'));
 const NewsPostEditor = lazyWithRetry(() => import('./pages/NewsPostEditor'));
+// Admin → Testing Tools. Preview only: not in the public bundle, not indexed.
+const LandingPageV2 = lazyWithRetry(() => import('./pages/LandingPageV2'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 30000,
       refetchOnWindowFocus: false,
       retry: 1,
     },
@@ -55,6 +59,10 @@ const App: React.FC = () => {
                   <Route path="/" element={<AdminDashboard />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/login" element={<AdminLoginPanel />} />
+                  <Route
+                    path="/landing-v2"
+                    element={<AdminRoute><LandingPageV2 /></AdminRoute>}
+                  />
                   <Route path="/solutions-editor/:testId" element={<SolutionEditorPage />} />
                   <Route path="/edit-test/:id" element={<CreateTestPage />} />
                   <Route path="/news/create" element={<NewsPostEditor />} />
@@ -66,7 +74,6 @@ const App: React.FC = () => {
                   <Route path="/manage-tests" element={<Navigate to="/admin?tab=tests" replace />} />
                   <Route path="/create-test" element={<Navigate to="/admin?tab=builder" replace />} />
                   <Route path="/ai-importer" element={<Navigate to="/admin?tab=importer" replace />} />
-                  <Route path="/materials" element={<Navigate to="/admin?tab=materials" replace />} />
                   <Route path="/news" element={<Navigate to="/admin?tab=posts" replace />} />
                   <Route path="/posts" element={<Navigate to="/admin?tab=posts" replace />} />
                   <Route path="/blog" element={<Navigate to="/admin?tab=posts" replace />} />

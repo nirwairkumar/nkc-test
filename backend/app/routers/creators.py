@@ -1,20 +1,27 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import get_db
 from supabase import Client
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @router.get("/{creator_id}")
-async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
+def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
     try:
-        # 1. Fetch Profile
-        profile_res = db.table("profiles").select("*").eq("id", creator_id).single().execute()
+        # 1. Fetch Profile: public fields only (the public_profiles columns). This was
+        # select("*"), which gave anyone a creator's email and plan.
+        profile_res = db.table("profiles")\
+            .select("id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator, verified_role, following_visibility, created_at")\
+            .eq("id", creator_id).single().execute()
         if not profile_res.data:
             raise HTTPException(status_code=404, detail="Creator not found")
         
         # 2. Fetch Public Tests (exclude clones — they must never appear on public profiles)
+        # Pruned to test card display columns, omitting questions/solutions to prevent high egress
         tests_res = db.table("tests")\
-            .select("*, classes(name), test_categories(category_id)")\
+            .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name), test_categories(category_id)")\
             .eq("created_by", creator_id)\
             .eq("visibility", "public")\
             .eq("is_cloned", False)\
@@ -24,23 +31,18 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
         # Frontend: fetchClasses(creatorId) -> db.from('classes').select('*').eq('user_id', creatorId)
         classes_res = db.table("classes").select("*").eq("user_id", creator_id).execute()
 
-        # 4. Fetch Materials
-        # Frontend: fetchMaterials(creatorId) -> db.from('materials').select('*, classes(name)').eq('user_id', creatorId)
-        materials_res = db.table("materials").select("*, classes(name)").eq("user_id", creator_id).execute()
-        
         return {
             "profile": profile_res.data,
             "tests": tests_res.data,
             "classes": classes_res.data,
-            "materials": materials_res.data
         }
 
     except Exception as e:
-        print(f"Error fetching creator profile: {e}")
+        logger.error(f"Error fetching creator profile: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{creator_id}/rewards")
-async def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
+def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
     try:
         # 1. Fetch Creator's Tests (all created tests, including private/unlisted to count creator's efforts)
         tests_res = db.table("tests").select("id, title, created_at, custom_id, visibility, is_public, settings").eq("created_by", creator_id).execute()
@@ -91,6 +93,6 @@ async def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
         }
 
     except Exception as e:
-        print(f"Error fetching creator rewards: {e}")
+        logger.error(f"Error fetching creator rewards: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

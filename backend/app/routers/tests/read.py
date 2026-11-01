@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Response, Request
+from app.core.auth import verify_auth_claims, is_admin_email
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
-from app.routers.tests.utils import enrich_tests
+from app.routers.tests.utils import enrich_tests, compute_test_status, strip_answer_key, exam_window_still_open, candidate_may_see_key
 from app.utils.cache_headers import set_public_cache, set_no_cache, set_private_cache
 import uuid
 from cachetools import TTLCache
@@ -14,6 +15,9 @@ import threading
 router = APIRouter()
 
 from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, cache_set, cache_bust
+import logging
+
+logger = logging.getLogger(__name__)
 
 def ensure_user_has_example_test(user_id: str, db: Client):
     try:
@@ -25,7 +29,7 @@ def ensure_user_has_example_test(user_id: str, db: Client):
         # Check if a template test exists dynamically in the DB (admin can edit this like a normal test)
         template_res = db.table("tests").select("*").eq("settings->>is_example_template", "true").limit(1).execute()
         if not template_res.data:
-            print("No example template test (settings.is_example_template == True) found in database.")
+            logger.debug("No example template test (settings.is_example_template == True) found in database.")
             return
 
         template = template_res.data[0]
@@ -58,14 +62,14 @@ def ensure_user_has_example_test(user_id: str, db: Client):
             }
         }
         db.table("tests").insert(clone_data).execute()
-        print(f"Automatically cloned example test from template {template['id']} for user {user_id}")
+        logger.debug(f"Automatically cloned example test from template {template['id']} for user {user_id}")
     except Exception as e:
-        print(f"Error ensuring user has example test: {e}")
+        logger.error(f"Error ensuring user has example test: {e}")
 
 
 
 @router.get("/batch")
-async def get_tests_batch(
+def get_tests_batch(
     ids: str = Query(..., description="Comma-separated list of test IDs"),
     response: Response = None,
     db: Client = Depends(get_db)
@@ -85,11 +89,11 @@ async def get_tests_batch(
         enriched = enrich_tests(tests, db)
         return enriched
     except Exception as e:
-        print(f"Error fetching batch tests: {e}")
+        logger.error(f"Error fetching batch tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/feed")
-async def get_tests_feed(
+def get_tests_feed(
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
     search_query: Optional[str] = None,
@@ -234,8 +238,38 @@ async def get_tests_feed(
         return result
 
     except Exception as e:
-        print(f"Error fetching test feed: {e}")
+        logger.error(f"Error fetching test feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _may_see_answers(test: Optional[Dict[str, Any]], user_id: Optional[str], is_admin: bool, db: Client) -> bool:
+    """
+    C4: who may receive `correctAnswer` / `solutions` for this test.
+
+    The owner and admins always may. A candidate may only once they have submitted —
+    that is what powers the post-test review (ResultsPage / SolutionsViewPage) while
+    keeping the answer key out of the payload during the exam itself.
+    """
+    if not test:
+        return False
+    if is_admin:
+        return True
+    if not user_id:
+        return False
+    if test.get("created_by") == user_id:
+        return True
+    # A scheduled exam keeps its key until the window closes, so a student who submits
+    # early can't pass answers to classmates who are still writing.
+    if exam_window_still_open(test.get("settings")):
+        return False
+    # The creator turned off both the solution key and solutions for candidates.
+    if not candidate_may_see_key(test.get("settings")):
+        return False
+    try:
+        attempt = db.table("user_tests").select("id")            .eq("user_id", user_id).eq("test_id", test.get("id")).limit(1).execute()
+        return bool(attempt.data)
+    except Exception:
+        return False
 
 
 def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[str], bool]:
@@ -243,25 +277,83 @@ def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[
     if not auth_header.startswith("Bearer "):
         return None, False
     try:
-        token = auth_header[7:]
-        user_res = db.auth.get_user(token)
-        if not user_res or not user_res.user:
-            return None, False
-        user_id = user_res.user.id
-        profile_res = db.table("profiles").select("email").eq("id", user_id).execute()
-        if profile_res.data:
-            email = profile_res.data[0].get("email")
-            if email:
-                admin_res = db.table("admins").select("email").eq("email", email).execute()
-                if admin_res.data:
-                    return user_id, True
-        return user_id, False
+        # The token's verified email decides admin status (cached), so opening a test
+        # costs one auth round trip instead of three.
+        claims = verify_auth_claims(request, db)
+        return claims["sub"], is_admin_email(claims.get("email"), db)
     except Exception:
         return None, False
 
 
+# Columns the creator dashboard needs — never `questions`, which is the heavy column.
+DASHBOARD_TEST_COLUMNS = "id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, creator_name, institution_name"
+
+# Safety cap for the conducted-exams list. Live exams sort first, so the cap only ever trims old ended ones.
+CONDUCTED_TESTS_LIMIT = 50
+
+
+def _submission_counts(db: Client, test_ids: List[str]) -> Dict[str, int]:
+    """Attempts per test as numbers only. `count=exact` + `limit(0)` returns no rows, so the
+    cost stays flat no matter how many students submitted (the old way downloaded one row
+    per attempt). There is no user_tests → tests FK, so PostgREST cannot embed the count."""
+    if not test_ids:
+        return {}
+
+    def _count(test_id: str):
+        res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).limit(0).execute()
+        return test_id, res.count or 0
+
+    counts: Dict[str, int] = {}
+    with ThreadPoolExecutor(max_workers=min(len(test_ids), 9)) as pool:
+        futures = [pool.submit(_count, tid) for tid in test_ids]
+        for f in as_completed(futures):
+            try:
+                tid, n = f.result()
+                counts[tid] = n
+            except Exception as e:
+                logger.warning(f"Warning fetching submission count: {e}")
+    return counts
+
+
+@router.get("/user/{user_id}/conducted")
+def get_user_conducted_tests(
+    user_id: str,
+    request: Request,
+    response: Response = None,
+    db: Client = Depends(get_db)
+):
+    """Every test the creator has run as an online exam (live or ended), whichever page of the
+    dashboard grid it sits on. Filtered in Postgres, so only these rows leave Supabase."""
+    try:
+        requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
+        if requesting_user_id != user_id and not is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized dashboard access")
+        if response:
+            set_no_cache(response)
+
+        tests_res = db.table("tests")\
+            .select(DASHBOARD_TEST_COLUMNS)\
+            .eq("created_by", user_id)\
+            .not_.is_("settings->conduct_exam", "null")\
+            .order("settings->conduct_exam->>enabled", desc=True, nullsfirst=False)\
+            .order("created_at", desc=True)\
+            .limit(CONDUCTED_TESTS_LIMIT)\
+            .execute()
+        tests = tests_res.data or []
+
+        counts = _submission_counts(db, [t["id"] for t in tests])
+        for t in tests:
+            t["submission_count"] = counts.get(t["id"], 0)
+        return tests
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching conducted tests: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/user/{user_id}")
-async def get_user_tests(
+def get_user_tests(
     user_id: str,
     request: Request,
     search_query: str = None,
@@ -274,14 +366,15 @@ async def get_user_tests(
     db: Client = Depends(get_db)
 ):
     try:
-        if response:
-            set_public_cache(response, 60, 60)
-            
         # 1. Authenticate / Identify the requester
         requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
-
-        # 2. Authorization Enforcement
         is_owner = (requesting_user_id == user_id)
+
+        if response:
+            if profile_view and not is_owner and not is_admin:
+                set_public_cache(response, 60, 60)
+            else:
+                set_no_cache(response)
         
         if not is_owner and not is_admin:
             # If they are trying to load the full dashboard tests (profile_view=False)
@@ -293,7 +386,10 @@ async def get_user_tests(
             ensure_user_has_example_test(user_id, db)
                 
         tests = []
-        
+        is_paginated = (page is not None and limit is not None)
+        # Set when Postgres already did the paging, so the Python slicing below is skipped.
+        db_total: Optional[int] = None
+
         if search_query:
             import re
             tokens = [t.strip().lower() for t in re.split(r'\W+', search_query) if len(t.strip()) > 1]
@@ -307,7 +403,7 @@ async def get_user_tests(
                 giant_or.append(f"custom_id.ilike.%{tok}%")
                 
             query_search = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name)")\
                 .eq("created_by", user_id)\
                 .or_(",".join(giant_or))\
                 .limit(800)
@@ -336,10 +432,23 @@ async def get_user_tests(
             
             scored_tests.sort(key=lambda x: (x["_match_score"], x.get("created_at", "")), reverse=True)
             tests = scored_tests
+        elif is_paginated and not profile_view:
+            # Creator dashboard: page inside Postgres so only `limit` rows leave Supabase per
+            # scroll, instead of every test the creator owns on every request.
+            start = (page - 1) * limit
+            paged_res = db.table("tests")\
+                .select(f"{DASHBOARD_TEST_COLUMNS}, classes(name)", count="exact")\
+                .eq("created_by", user_id)\
+                .order("created_at", desc=True)\
+                .order("id", desc=True)\
+                .range(start, start + limit - 1)\
+                .execute()
+            tests = paged_res.data or []
+            db_total = paged_res.count or 0
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
             query_default = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, classes(name)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)
             if profile_view:
@@ -348,9 +457,7 @@ async def get_user_tests(
                 query_default = query_default.eq("visibility", "public")
             tests_res = query_default.execute()
             tests = tests_res.data
-        
-        is_paginated = (page is not None and limit is not None)
-        
+
         if not tests:
             if is_paginated:
                 return {
@@ -381,13 +488,18 @@ async def get_user_tests(
                 }
             return []
 
-        total_tests_count = len(tests)
-        if is_paginated:
+        if db_total is not None:
+            total_tests_count = db_total
+            paginated_subset = tests
+            has_more = total_tests_count > page * limit
+        elif is_paginated:
+            total_tests_count = len(tests)
             start = (page - 1) * limit
             end = start + limit
             paginated_subset = tests[start:end]
             has_more = total_tests_count > end
         else:
+            total_tests_count = len(tests)
             paginated_subset = tests
             has_more = False
 
@@ -433,6 +545,9 @@ async def get_user_tests(
         # Optimization: We know the user_id, just fetch once
         profile_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", user_id).single().execute()
         creator_info = profile_res.data if profile_res.data else {}
+
+        # Submission counts as numbers, not one downloaded row per attempt
+        submission_counts_map = _submission_counts(db, test_ids)
         
         enriched_tests = []
         for t in paginated_subset:
@@ -441,11 +556,8 @@ async def get_user_tests(
                 t["creator_name"] = creator_info.get("full_name")
                 t["creator_avatar"] = creator_info.get("avatar_url")
                 t["creator_verified"] = creator_info.get("is_verified_creator")
-            
-            # Ensure likes count is present if not in RPC result
-            if 'test_votes' not in t and 'id' in t:
-                 pass
 
+            t["submission_count"] = submission_counts_map.get(t["id"], 0)
             enriched_tests.append(t)
             
         if is_paginated:
@@ -461,12 +573,12 @@ async def get_user_tests(
         return enriched_tests
 
     except Exception as e:
-        print(f"Error fetching user tests: {e}")
+        logger.error(f"Error fetching user tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{test_id}")
-async def get_test_by_id(
+def get_test_by_id(
     test_id: str,
     request: Request,
     exclude_questions: bool = Query(False),
@@ -501,11 +613,12 @@ async def get_test_by_id(
                 if vis == "unlisted" and not is_slug_lookup:
                     raise HTTPException(status_code=404, detail="Test not found")
             if response:
-                if vis == "public":
+                if vis == "public" and not is_owner and not is_admin:
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
-            return cached
+            # C4: answers only for the owner/admin, or a candidate who already submitted.
+            return strip_answer_key(cached, _may_see_answers(cached, requesting_user_id, is_admin, db))
 
         # Check if UUID
         is_uuid = False
@@ -613,26 +726,28 @@ async def get_test_by_id(
         else:
             test["categories"] = []
 
+        test["computed_status"] = compute_test_status(test.get("settings"))
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
-            if visibility == "public":
+            if visibility == "public" and not is_owner and not is_admin:
                 set_public_cache(response)
             else:
                 set_no_cache(response)
 
+        # Cache the full object; strip per-requester on the way out.
         cache_set(test_cache, cache_key, test)
-        return test
+        return strip_answer_key(test, _may_see_answers(test, requesting_user_id, is_admin, db))
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching test details: {e}")
+        logger.error(f"Error fetching test details: {e}")
         raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")
 
 
 @router.get("/slug/{slug}")
-async def get_test_by_slug(
+def get_test_by_slug(
     slug: str,
     request: Request,
     exclude_questions: bool = Query(False),
@@ -658,7 +773,8 @@ async def get_test_by_slug(
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
-            return cached
+            # C4: answers only for the owner/admin, or a candidate who already submitted.
+            return strip_answer_key(cached, _may_see_answers(cached, requesting_user_id, is_admin, db))
 
         # Define fields to select when excluding heavy questions/solutions JSON
         select_cols = (
@@ -742,6 +858,8 @@ async def get_test_by_slug(
         else:
             test["categories"] = []
 
+        test["computed_status"] = compute_test_status(test.get("settings"))
+
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
             if visibility == "public":
@@ -749,11 +867,12 @@ async def get_test_by_slug(
             else:
                 set_no_cache(response)
 
+        # Cache the full object; strip per-requester on the way out.
         cache_set(test_cache, slug_cache_key, test)
-        return test
+        return strip_answer_key(test, _may_see_answers(test, requesting_user_id, is_admin, db))
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching test by slug: {e}")
+        logger.error(f"Error fetching test by slug: {e}")
         raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")

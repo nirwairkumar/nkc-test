@@ -13,6 +13,7 @@ import re
 import json
 import base64
 import asyncio
+import threading
 import fitz
 from google import genai
 from google.genai import types
@@ -48,6 +49,16 @@ from ai_preview_importer.pdf_vision_pipeline import (
     group_passage_questions,
 )
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
+from ai_preview_importer.latex_json import repair_json_escapes, normalize_question_latex
+from ai_preview_importer.figure_crops import normalize_bbox_pages
+from ai_preview_importer.legacy_fonts import looks_like_legacy_hindi
+
+
+def _bbox_page(q: Dict) -> Optional[int]:
+    bbox = q.get("diagram_bbox")
+    if isinstance(bbox, list):
+        bbox = next((b for b in bbox if isinstance(b, dict)), None)
+    return bbox.get("page_number") if isinstance(bbox, dict) else None
 
 
 def are_questions_identical(q1: Dict, q2: Dict) -> bool:
@@ -62,8 +73,8 @@ def are_questions_identical(q1: Dict, q2: Dict) -> bool:
     placeholders = {"refertodiagram", "refertothediagram", "diagramextracted", "imageextracted", ""}
     if c1 in placeholders or c2 in placeholders:
         # If generic placeholder, they must share the same page number to be considered duplicates
-        page1 = q1.get("diagram_bbox", {}).get("page_number") if q1.get("diagram_bbox") else None
-        page2 = q2.get("diagram_bbox", {}).get("page_number") if q2.get("diagram_bbox") else None
+        page1 = _bbox_page(q1)
+        page2 = _bbox_page(q2)
         return page1 == page2 and page1 is not None
         
     # Standard text similarity
@@ -137,22 +148,27 @@ def extract_text_and_classify_pages(pdf_bytes: bytes) -> List[Dict]:
         image_list = page.get_images(full=True)
         has_images = len(image_list) > 0
 
-        classification = "text_rich" if len(text) >= TEXT_RICH_THRESHOLD else "image_only"
+        # Text typed in Kruti Dev and similar fonts is Latin key codes, not Hindi:
+        # send the page as a picture, so the model reads what is printed.
+        legacy_font = len(text) >= TEXT_RICH_THRESHOLD and looks_like_legacy_hindi(text)
+        classification = "text_rich" if len(text) >= TEXT_RICH_THRESHOLD and not legacy_font else "image_only"
 
         pages.append({
             "page_num": page_num + 1,
             "text": text,
             "has_images": has_images,
             "classification": classification,
+            "legacy_font": legacy_font,
         })
 
     doc.close()
 
     text_count = sum(1 for p in pages if p["classification"] == "text_rich")
     img_count = sum(1 for p in pages if p["classification"] == "image_only")
+    legacy_count = sum(1 for p in pages if p["legacy_font"])
     logger.info(
         f"Page classification: {text_count} text-rich, {img_count} image-only "
-        f"out of {len(pages)} total pages"
+        f"({legacy_count} in a legacy Hindi font) out of {len(pages)} total pages"
     )
     return pages
 
@@ -233,19 +249,21 @@ async def stream_gemini_and_parse(
     model = "gemini-3.5-flash"
     token_buffer = ""
     questions_found = []
-    brace_depth = 0
+    # Incremental scan state: open brackets as (bracket, start offset) and string flags.
+    open_containers: List[Tuple[str, int]] = []
     in_string = False
     escape_next = False
-    current_object_start = -1
+    # Set when the upload is abandoned: the reader thread stops and closes Gemini's stream.
+    stop_reading = threading.Event()
 
     def _try_parse_question(json_str: str) -> Optional[Dict]:
-        """Try parsing a JSON string as a question object."""
+        """Parse one finished array element; keep it when it is a question object."""
         try:
-            obj = json.loads(json_str)
-            if isinstance(obj, dict) and ("question" in obj or "questionText" in obj):
-                return obj
+            obj = json.loads(repair_json_escapes(json_str))
         except json.JSONDecodeError:
-            pass
+            return None
+        if isinstance(obj, dict) and ("question" in obj or "questionText" in obj) and "questions" not in obj:
+            return normalize_question_latex(obj)
         return None
 
     try:
@@ -272,12 +290,21 @@ async def stream_gemini_and_parse(
         def _consume_stream():
             try:
                 for chunk in stream:
+                    if stop_reading.is_set():
+                        break
                     if chunk.text:
                         loop.call_soon_threadsafe(queue.put_nowait, chunk.text)
             except Exception as e:
                 logger.error(f"Error consuming Gemini stream in thread: {e}")
                 loop.call_soon_threadsafe(queue.put_nowait, e)
             finally:
+                if stop_reading.is_set():
+                    # Closing the SDK's generator closes the HTTP stream, so Gemini stops
+                    # generating (and billing) the rest of this answer.
+                    try:
+                        stream.close()
+                    except Exception as e:
+                        logger.warning(f"Could not close abandoned Gemini stream: {e}")
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
         asyncio.create_task(asyncio.to_thread(_consume_stream))
@@ -294,36 +321,32 @@ async def stream_gemini_and_parse(
             buffer_start = len(token_buffer)
             token_buffer += text_piece
 
-            # Scan new characters for complete JSON objects
+            # Scan the new characters. A question is any object that is an element of an array,
+            # at any depth, so {"questions": [...]} and {"sections": [{"questions": [...]}]}
+            # both stream. (Only the flat shape used to, so sectioned papers such as JEE
+            # showed a fraction of their questions live.)
             for i, ch in enumerate(text_piece):
-                abs_pos = buffer_start + i
-
-                if escape_next:
-                    escape_next = False
-                    continue
-                if ch == '\\' and in_string:
-                    escape_next = True
-                    continue
-                if ch == '"' and not escape_next:
-                    in_string = not in_string
-                    continue
                 if in_string:
+                    if escape_next:
+                        escape_next = False
+                    elif ch == '\\':
+                        escape_next = True
+                    elif ch == '"':
+                        in_string = False
                     continue
-
-                if ch == '{':
-                    if brace_depth == 1:
-                        current_object_start = abs_pos
-                    brace_depth += 1
-                elif ch == '}':
-                    brace_depth -= 1
-                    if brace_depth == 1 and current_object_start >= 0:
-                        obj_str = token_buffer[current_object_start:abs_pos + 1]
-                        q = _try_parse_question(obj_str)
+                if ch == '"':
+                    in_string = True
+                elif ch in '{[':
+                    open_containers.append((ch, buffer_start + i))
+                elif ch in '}]' and open_containers:
+                    opener, start = open_containers.pop()
+                    if ch == '}' and opener == '{' and open_containers and open_containers[-1][0] == '[':
+                        q = _try_parse_question(token_buffer[start:buffer_start + i + 1])
                         if q:
                             questions_found.append(q)
                             logger.info(
                                 f"Streamed question #{len(questions_found)}: "
-                                f"{q.get('question', '')[:60]}..."
+                                f"{str(q.get('question') or q.get('questionText') or '')[:60]}..."
                             )
                             if question_callback:
                                 await question_callback({"type": "question", "question": q, "batch": 1})
@@ -334,13 +357,16 @@ async def stream_gemini_and_parse(
                                     "message": f"Extracting... {len(questions_found)} questions found",
                                     "data": {"questions_found": len(questions_found)},
                                 })
-                        current_object_start = -1
 
         logger.info(
             f"Streaming complete. {chunk_count} chunks, "
             f"{len(questions_found)} questions extracted incrementally."
         )
 
+    except asyncio.CancelledError:
+        # The upload was abandoned (see /ai/parse-stream): stop reading Gemini's answer.
+        stop_reading.set()
+        raise
     except Exception as e:
         logger.error(f"Streaming Gemini call failed: {e}")
         if not questions_found:
@@ -391,6 +417,8 @@ async def process_files_hybrid_stream(
     languages: Optional[str] = None,
     difficulty: Optional[str] = "Tough",
     user_instructions: Optional[str] = None,
+    marks_per_question: Optional[float] = None,
+    negative_marks: Optional[float] = None,
 ) -> Dict:
     """
     HYBRID OCR + Vision streaming pipeline.
@@ -432,12 +460,14 @@ async def process_files_hybrid_stream(
 
     text_rich_count = sum(1 for p in all_page_infos if p["classification"] == "text_rich")
     image_only_count = sum(1 for p in all_page_infos if p["classification"] == "image_only")
+    legacy_font_count = sum(1 for p in all_page_infos if p.get("legacy_font"))
     total_pdf_pages = len(all_page_infos)
     has_pdfs = total_pdf_pages > 0
 
     if progress_callback:
         msg = (
             f'Found {text_rich_count} text pages, {image_only_count} scanned pages'
+            + (f' ({legacy_font_count} typed in an old Hindi font, read as pictures)' if legacy_font_count else '')
             if has_pdfs
             else f'Processing {len(image_files)} image file(s)...'
         )
@@ -490,7 +520,10 @@ async def process_files_hybrid_stream(
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
     # Step 3: Build content and call Gemini
-    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
+    prompt = build_prompt(
+        mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions,
+        marks_per_question=marks_per_question, negative_marks=negative_marks,
+    )
     result_data = None
 
     if not has_pdfs and image_files:
@@ -621,46 +654,27 @@ async def process_files_hybrid_stream(
                 async def local_question_callback(q_event):
                     if q_event.get("type") == "question" and q_event.get("question"):
                         q = q_event["question"]
-                        # Adjust relative page numbers to global ones
-                        bbox = q.get("diagram_bbox")
-                        if bbox and isinstance(bbox, dict):
-                            p_num = bbox.get("page_number")
-                            if p_num is not None:
-                                try:
-                                    p_num = int(p_num)
-                                    if p_num <= batch_size and c_start > 0:
-                                        bbox["page_number"] = c_start + p_num
-                                except (ValueError, TypeError):
-                                    pass
+                        normalize_bbox_pages([q], c_start, batch_size)
                         chunk_questions_found.append(q)
                         if question_callback:
                             await question_callback({"type": "question", "question": q, "batch": step_num})
-                            
+
                 result = await stream_gemini_and_parse(
                     request_contents, chunk_embedded,
                     progress_callback=None,
                     question_callback=local_question_callback
                 )
-                
+
                 batch_questions = result.get("questions") or chunk_questions_found
-                
+                normalize_bbox_pages(batch_questions, c_start, batch_size)
                 for idx, q in enumerate(batch_questions):
                     q["batch_num"] = step_num
                     q["original_idx"] = idx
-                    # Adjust relative page numbers to global ones (failsafe)
-                    bbox = q.get("diagram_bbox")
-                    if bbox and isinstance(bbox, dict):
-                        p_num = bbox.get("page_number")
-                        if p_num is not None:
-                            try:
-                                p_num = int(p_num)
-                                if p_num <= batch_size and c_start > 0:
-                                    bbox["page_number"] = c_start + p_num
-                            except (ValueError, TypeError):
-                                pass
+                # The paper's title comes from its first pages, not the last step's subject.
+                if not first_title and result.get("title"):
                     first_title = result.get("title")
                     first_desc = result.get("description")
-                    
+
                 all_questions.extend(batch_questions)
                 
                 serialized_response = json.dumps(result)
@@ -772,29 +786,20 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
-                                # Adjust relative page numbers to global ones
-                                bbox = q.get("diagram_bbox")
-                                if bbox and isinstance(bbox, dict):
-                                    p_num = bbox.get("page_number")
-                                    if p_num is not None:
-                                        try:
-                                            p_num = int(p_num)
-                                            if p_num <= len(b_infos) and b_start > 0:
-                                                bbox["page_number"] = b_start + p_num
-                                        except (ValueError, TypeError):
-                                            pass
+                                normalize_bbox_pages([q], b_start, len(b_infos))
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
-                                    
+
                         result = await stream_gemini_and_parse(
                             content_parts, batch_embedded,
                             progress_callback=None,
                             question_callback=local_question_callback
                         )
-                        
+
                         batch_questions = result.get("questions") or batch_questions_found
-                        
+                        normalize_bbox_pages(batch_questions, b_start, len(b_infos))
+
                         if b_num == 1:
                             first_batch_title = result.get("title")
                             first_batch_desc = result.get("description")
@@ -814,21 +819,9 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
-                        batch_size = len(b_infos)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
-                            # Adjust relative page numbers to global ones (failsafe)
-                            bbox = q.get("diagram_bbox")
-                            if bbox and isinstance(bbox, dict):
-                                p_num = bbox.get("page_number")
-                                if p_num is not None:
-                                    try:
-                                        p_num = int(p_num)
-                                        if p_num <= batch_size and b_start > 0:
-                                            bbox["page_number"] = b_start + p_num
-                                    except (ValueError, TypeError):
-                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Hybrid batch {b_num} failed: {e}")
@@ -982,17 +975,7 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
-                                # Adjust relative page numbers to global ones
-                                bbox = q.get("diagram_bbox")
-                                if bbox and isinstance(bbox, dict):
-                                    p_num = bbox.get("page_number")
-                                    if p_num is not None:
-                                        try:
-                                            p_num = int(p_num)
-                                            if p_num <= len(b_imgs) and b_start > 0:
-                                                bbox["page_number"] = b_start + p_num
-                                        except (ValueError, TypeError):
-                                            pass
+                                normalize_bbox_pages([q], b_start, len(b_imgs))
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
@@ -1017,14 +1000,15 @@ async def process_files_hybrid_stream(
                             result = {"questions": batch_questions_found, "title": None, "description": None}
                         
                         batch_questions = result.get("questions") or batch_questions_found
-                        
+                        normalize_bbox_pages(batch_questions, b_start, len(b_imgs))
+
                         if b_num == 1:
                             first_batch_title = result.get("title")
                             first_batch_desc = result.get("description")
-                            
+
                         completed_batches += 1
                         total_questions_found += len(batch_questions)
-                        
+
                         if progress_callback:
                             await progress_callback({
                                 'stage': 'processing',
@@ -1037,21 +1021,9 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
-                        batch_size = len(b_imgs)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
-                            # Adjust relative page numbers to global ones (failsafe)
-                            bbox = q.get("diagram_bbox")
-                            if bbox and isinstance(bbox, dict):
-                                p_num = bbox.get("page_number")
-                                if p_num is not None:
-                                    try:
-                                        p_num = int(p_num)
-                                        if p_num <= batch_size and b_start > 0:
-                                            bbox["page_number"] = b_start + p_num
-                                    except (ValueError, TypeError):
-                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Vision batch {b_num} failed: {e}")
@@ -1147,8 +1119,14 @@ async def process_files_hybrid_stream(
             if ph and ph in placeholder_map:
                 vq["image"] = placeholder_map[ph]
 
+    if progress_callback and any(q.get("diagram_bbox") for q in unique_questions):
+        await progress_callback({
+            'stage': 'finalizing',
+            'percent': 93,
+            'message': 'Cropping diagrams...'
+        })
     page_sources = build_page_sources(file_data)
-    await process_diagram_bboxes(unique_questions, page_sources)
+    await process_diagram_bboxes(unique_questions, page_sources, locate=True)
 
     # Group consecutive passage questions sharing identical passageContent
     unique_questions = group_passage_questions(unique_questions)

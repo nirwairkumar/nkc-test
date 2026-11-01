@@ -1,0 +1,87 @@
+{
+  "frames": [
+    {
+      "id": "f01-open",
+      "duration": 4
+    },
+    {
+      "id": "f02-landing",
+      "duration": 4.4
+    },
+    {
+      "id": "f03-upload",
+      "duration": 5.6
+    },
+    {
+      "id": "f04b-extract",
+      "duration": 10.2
+    },
+    {
+      "id": "f05-review",
+      "duration": 3.4
+    },
+    {
+      "id": "f06-builder",
+      "duration": 6.4
+    },
+    {
+      "id": "f07-conduct",
+      "duration": 4.4
+    },
+    {
+      "id": "f08-proctor",
+      "duration": 8.4
+    },
+    {
+      "id": "f09-share",
+      "duration": 3.2
+    },
+    {
+      "id": "f10-classroom",
+      "duration": 5.4
+    },
+    {
+      "id": "f11-whatsapp",
+      "duration": 4.8
+    },
+    {
+      "id": "f12-exam",
+      "duration": 5.4
+    },
+    {
+      "id": "f13-result",
+      "duration": 5.2
+    },
+    {
+      "id": "f15-joincode",
+      "duration": 5.4
+    },
+    {
+      "id": "f16b-classroom2",
+      "duration": 4.6
+    },
+    {
+      "id": "f17b-join",
+      "duration": 5.8
+    },
+    {
+      "id": "f18-exam2",
+      "duration": 5.4
+    },
+    {
+      "id": "f19-result2",
+      "duration": 5.2
+    },
+    {
+      "id": "f14-logo",
+      "duration": 5
+    }
+  ],
+  "music": {
+    "src": "assets/bgm/track-v3.mp3",
+    "start": 0,
+    "duration": 102.2,
+    "volume": 0.9,
+    "note": "HeyGen catalog d673eafa (upbeat motivational tech-startup launch, 120s), from 3.5s so its 8.0s drop lands on the window rise at 4.5s; 1s fade-in, 2.5s fade-out baked in"
+  }
+}

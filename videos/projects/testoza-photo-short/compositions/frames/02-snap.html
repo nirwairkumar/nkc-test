@@ -1,0 +1,94 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  /* the same desk, out of focus behind the phone (one world with frame 1) */
+  .f2-bg { position: absolute; inset: 0; background: #0b0703; overflow: hidden; }
+  .f2-bg i { position: absolute; background: url(assets/ui/photo.jpg) center / cover; left: -180px; top: 340px; width: 1440px; height: 1920px; filter: blur(22px) brightness(0.5); transform: scale(1.12); }
+  .f2-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 3, 1, 0.9) 0%, rgba(5, 3, 1, 0.35) 40%, rgba(5, 3, 1, 0.6) 100%); }
+  #f2-phone { top: 560px; }
+  /* a plain phone camera: black bars, the page in the viewfinder, a white shutter */
+  .cam { position: absolute; inset: 0; background: #000; }
+  .cam-view { position: absolute; left: 0; top: 150px; width: 540px; height: 760px; overflow: hidden; }
+  .cam-view img { position: absolute; left: -110px; top: -150px; width: 760px; height: 1013px; }
+  .cam-br { position: absolute; width: 70px; height: 70px; border: 0 solid #facc15; opacity: 0; }
+  .cam-br.a { left: 110px; top: 250px; border-width: 5px 0 0 5px; }
+  .cam-br.b { left: 360px; top: 250px; border-width: 5px 5px 0 0; }
+  .cam-br.c { left: 110px; top: 560px; border-width: 0 0 5px 5px; }
+  .cam-br.d { left: 360px; top: 560px; border-width: 0 5px 5px 0; }
+  .cam-mode { position: absolute; left: 0; right: 0; top: 942px; text-align: center; font: 700 22px/1 'Outfit', sans-serif; letter-spacing: 0.2em; color: #facc15; }
+  .cam-shut { position: absolute; left: 270px; top: 1060px; width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; border: 6px solid #fff; }
+  .cam-shut i { position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
+  .cam-thumb { position: absolute; left: 62px; top: 1032px; width: 58px; height: 58px; border-radius: 10px; overflow: hidden; border: 2px solid #fff; opacity: 0; }
+  .cam-thumb i, #f2-fly i { display: block; width: 100%; height: 100%; background: url(assets/ui/photo.jpg) center / cover; }
+  .cam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  #f2-flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 30; pointer-events: none; }
+  /* the real "Selected files" card from the app */
+  #f2-sel { top: 980px; height: 270px; visibility: hidden; }
+  /* shown at 1.5x so "IMG_2219.jpg · Image" reads on a phone; the right edge runs off the panel */
+  #f2-sel img { position: absolute; left: 0; top: 0; width: 960px; transform-origin: 0 0; transform: scale(1.5); }
+  .f2-ring { position: absolute; left: 0; top: 0; width: 960px; height: 270px; border-radius: 26px; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.9); }
+  /* the captured photo flying into the card */
+  #f2-fly { position: absolute; z-index: 20; left: 410px; top: 820px; width: 260px; height: 347px; border-radius: 10px; overflow: hidden; border: 6px solid #fff;
+    box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.8); opacity: 0; }
+  
+  #f2-s { top: 330px; }
+</style>
+<div id="root" data-composition-id="f02-snap" data-width="1080" data-height="1920">
+  <div class="sf">
+    <div id="f2-stage" class="clip f2-bg" data-start="0" data-duration="6" data-track-index="0"><i></i></div>
+    <div class="sf-phone" id="f2-phone">
+      <div class="sf-screen">
+        <div class="sf-notch"></div>
+        <div class="cam">
+          <div class="cam-view" id="f2-view"><img id="f2-vimg" src="assets/ui/photo.jpg" alt="" /></div>
+          <div class="cam-br a"></div><div class="cam-br b"></div><div class="cam-br c"></div><div class="cam-br d"></div>
+          <div class="cam-mode">PHOTO</div>
+          <div class="cam-thumb" id="f2-thumb"><i></i></div>
+          <div class="cam-shut" id="f2-shut"><i></i></div>
+          <div class="cam-flash" id="f2-cflash"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sf-panel" id="f2-sel"><img id="f2-seli" src="assets/ui/selected.png" alt="" /><div class="f2-ring" id="f2-ring"></div></div>
+    <div id="f2-fly"><i></i></div>
+    <div class="sf-sup" id="f2-s">Just <em>one photo.</em></div>
+    <div id="f2-flash"></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f02-snap';
+  const { q, qa, tl, superIn } = SF(ID);
+  // "कोई बात नहीं..." the phone comes up over the desk
+  tl.fromTo('#f2-phone', { y: 620, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.8, ease: 'expo.out' }, 0.05);
+  // the viewfinder drifts a little, then settles as it focuses
+  tl.fromTo('#f2-vimg', { x: 26, y: 18, scale: 1.06 }, { x: 0, y: 0, scale: 1, duration: 2.4, ease: 'power2.out' }, 0.3);
+  tl.fromTo(qa('.cam-br'), { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2)', stagger: 0.03 }, 2.2);
+  tl.to(qa('.cam-br'), { opacity: 0.55, duration: 0.3 }, 2.8);
+  // "...और page की बस एक photo लीजिए।"
+  superIn(2.45, q('#f2-s'));
+  // snap on "photo" (shutter sound at 9.75 in the film = 3.35 here)
+  tl.to('#f2-shut', { scale: 0.86, duration: 0.08, ease: 'power2.out' }, 3.35);
+  tl.to('#f2-shut', { scale: 1, duration: 0.3, ease: 'back.out(3)' }, 3.43);
+  tl.fromTo('#f2-cflash', { opacity: 0.95 }, { opacity: 0, duration: 0.35, ease: 'power2.out', immediateRender: false }, 3.36);
+  tl.fromTo('#f2-flash', { opacity: 0.35 }, { opacity: 0, duration: 0.4, ease: 'power2.out', immediateRender: false }, 3.36);
+  tl.set(qa('.cam-br'), { opacity: 0 }, 3.36);
+  tl.fromTo('#f2-thumb', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, 3.5);
+  // the photo leaves the phone and lands in the app's file card
+  tl.set('#f2-fly', { opacity: 1 }, 3.75);
+  tl.to('#f2-phone', { y: 760, scale: 0.85, opacity: 0, duration: 0.7, ease: 'power3.in' }, 3.75);
+  tl.set('#f2-sel', { autoAlpha: 1 }, 3.85);
+  tl.fromTo('#f2-sel', { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: 'expo.out' }, 3.85);
+  // card thumbnail centre on the canvas ≈ (154, 1071), 87 px (58 px in the shot, at 1.5x)
+  tl.fromTo('#f2-fly', { x: 0, y: 0, scale: 1, rotation: 0 }, { x: 154 - 540, y: 1071 - 993, scale: 87 / 260, rotation: -6, duration: 0.6, ease: 'power3.inOut', immediateRender: false }, 3.8);
+  tl.to('#f2-fly', { opacity: 0, duration: 0.15 }, 4.38);
+  tl.fromTo('#f2-ring', { boxShadow: '0 0 0 0px rgba(56,189,248,0.9)' }, { boxShadow: '0 0 0 22px rgba(56,189,248,0)', duration: 0.7, ease: 'power2.out', immediateRender: false }, 4.4);
+  // a slow push into "IMG_2219.jpg · Image"
+  tl.fromTo('#f2-seli', { scale: 1.5 }, { scale: 1.68, duration: 1.5, ease: 'power2.inOut' }, 4.5);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

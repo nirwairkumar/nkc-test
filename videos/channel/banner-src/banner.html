@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Outfit;font-weight:600;src:url(Outfit-600.woff2)}
+@font-face{font-family:Outfit;font-weight:800;src:url(Outfit-800.woff2)}
+@font-face{font-family:Outfit;font-weight:900;src:url(Outfit-900.woff2)}
+*{margin:0;box-sizing:border-box}
+body{width:2560px;height:1440px;overflow:hidden;background:#0a1430;font-family:Outfit,sans-serif}
+.stage{position:relative;width:2560px;height:1440px;
+  background:radial-gradient(1100px 700px at 34% 50%,#183470 0%,transparent 70%),
+             radial-gradient(900px 600px at 78% 50%,#2a1f6b 0%,transparent 70%),#0a1430}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(56,189,248,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.06) 1px,transparent 1px);background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(closest-side,#000 40%,transparent);mask-image:radial-gradient(closest-side,#000 40%,transparent)}
+/* safe area for all devices: 1546 x 423, centred */
+.safe{position:absolute;left:507px;top:508px;width:1546px;height:423px}
+.brand{position:absolute;left:0;top:30px}
+.logo{font-weight:800;font-size:150px;letter-spacing:-3px;line-height:1;color:#38bdf8}
+.logo b{font-weight:900;font-size:189px;background:linear-gradient(#FFE885,#F4B838 50%,#9E6400);-webkit-background-clip:text;background-clip:text;color:transparent;margin:0 -4px 0 -6px}
+.tag{color:#fff;font-weight:800;font-size:58px;margin-top:22px;letter-spacing:-.5px}
+.sub{color:#a5b4fc;font-weight:600;font-size:36px;margin-top:16px}
+.sub span{color:#facc15}
+.card{position:absolute;background:#fff;border-radius:22px;box-shadow:0 30px 70px rgba(0,0,0,.6);overflow:hidden;border:6px solid #fff}
+.card img{display:block}
+.c1{left:965px;top:34px;width:530px;transform:rotate(-3deg)}
+.c1 img{width:518px}
+.c2{left:1080px;top:196px;width:400px;transform:rotate(4deg)}
+.c2 img{width:388px}
+.pill{position:absolute;color:#fff;font-weight:800;font-size:30px;padding:6px 18px;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.p1{left:955px;top:12px;background:#ef4444;transform:rotate(-3deg)}
+.p2{left:1330px;top:176px;background:#8b5cf6;transform:rotate(4deg)}
+.url{position:absolute;right:530px;bottom:440px;color:#7dd3fc;font-weight:600;font-size:34px;opacity:.85}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+  <div class="safe">
+    <div class="brand">
+      <div class="logo">Testo<b>Z</b>a</div>
+      <div class="tag">Online tests for teachers &amp; institutes</div>
+      <div class="sub">Hindi + English <span>·</span> JEE / NEET maths &amp; chemistry <span>·</span> Live exams</div>
+    </div>
+    <div class="card c1"><img src="maths.png"></div>
+    <div class="card c2"><img src="react.png"></div>
+    <div class="pill p1">JEE MATHS</div>
+    <div class="pill p2">CHEMISTRY</div>
+  </div>
+  <div class="url">testoza.com</div>
+</div></body></html>

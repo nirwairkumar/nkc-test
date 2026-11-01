@@ -1,0 +1,44 @@
+[
+ {
+  "w": "അവസാനം",
+  "r": "avasaanam",
+  "start": 0.02,
+  "end": 0.461,
+  "score": 0.822
+ },
+ {
+  "w": "വരെ",
+  "r": "vare",
+  "start": 0.481,
+  "end": 0.662,
+  "score": 0.994
+ },
+ {
+  "w": "fast-forward",
+  "r": "fastforward",
+  "start": 0.963,
+  "end": 1.605,
+  "score": 0.37
+ },
+ {
+  "w": "ചെയ്യാം.",
+  "r": "ceyyaam",
+  "start": 1.665,
+  "end": 1.986,
+  "score": 0.757
+ },
+ {
+  "w": "Submit,",
+  "r": "submit",
+  "start": 2.568,
+  "end": 2.989,
+  "score": 0.791
+ },
+ {
+  "w": "confirm.",
+  "r": "confirm",
+  "start": 3.33,
+  "end": 3.711,
+  "score": 0.094
+ }
+]

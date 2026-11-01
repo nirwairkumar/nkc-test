@@ -1,0 +1,248 @@
+[
+  {
+    "id": "w0",
+    "text": "A",
+    "start": 0,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "question",
+    "start": 0.24,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "paper",
+    "start": 0.64,
+    "end": 1.04
+  },
+  {
+    "id": "w3",
+    "text": "becomes",
+    "start": 1.04,
+    "end": 1.44
+  },
+  {
+    "id": "w4",
+    "text": "an",
+    "start": 1.44,
+    "end": 1.6
+  },
+  {
+    "id": "w5",
+    "text": "online",
+    "start": 1.6,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "test,",
+    "start": 2.08,
+    "end": 2.72
+  },
+  {
+    "id": "w7",
+    "text": "equations",
+    "start": 2.72,
+    "end": 3.52
+  },
+  {
+    "id": "w8",
+    "text": "typed",
+    "start": 3.52,
+    "end": 4
+  },
+  {
+    "id": "w9",
+    "text": "in",
+    "start": 4,
+    "end": 4.16
+  },
+  {
+    "id": "w10",
+    "text": "seconds,",
+    "start": 4.16,
+    "end": 4.96
+  },
+  {
+    "id": "w11",
+    "text": "students",
+    "start": 4.96,
+    "end": 5.52
+  },
+  {
+    "id": "w12",
+    "text": "join",
+    "start": 5.52,
+    "end": 6.08
+  },
+  {
+    "id": "w13",
+    "text": "from",
+    "start": 6.08,
+    "end": 6.32
+  },
+  {
+    "id": "w14",
+    "text": "any",
+    "start": 6.32,
+    "end": 6.64
+  },
+  {
+    "id": "w15",
+    "text": "phone,",
+    "start": 6.64,
+    "end": 7.28
+  },
+  {
+    "id": "w16",
+    "text": "cheating",
+    "start": 7.28,
+    "end": 8
+  },
+  {
+    "id": "w17",
+    "text": "gets",
+    "start": 8,
+    "end": 8.48
+  },
+  {
+    "id": "w18",
+    "text": "caught,",
+    "start": 8.48,
+    "end": 9.12
+  },
+  {
+    "id": "w19",
+    "text": "and",
+    "start": 9.12,
+    "end": 9.36
+  },
+  {
+    "id": "w20",
+    "text": "every",
+    "start": 9.36,
+    "end": 9.84
+  },
+  {
+    "id": "w21",
+    "text": "result",
+    "start": 9.84,
+    "end": 10.16
+  },
+  {
+    "id": "w22",
+    "text": "lands",
+    "start": 10.48,
+    "end": 11.12
+  },
+  {
+    "id": "w23",
+    "text": "ranked.",
+    "start": 11.12,
+    "end": 12.08
+  },
+  {
+    "id": "w24",
+    "text": "This",
+    "start": 12.08,
+    "end": 12.32
+  },
+  {
+    "id": "w25",
+    "text": "is",
+    "start": 12.32,
+    "end": 12.56
+  },
+  {
+    "id": "w26",
+    "text": "Testosa,",
+    "start": 12.56,
+    "end": 13.68
+  },
+  {
+    "id": "w27",
+    "text": "and",
+    "start": 13.68,
+    "end": 13.84
+  },
+  {
+    "id": "w28",
+    "text": "these",
+    "start": 13.84,
+    "end": 14.08
+  },
+  {
+    "id": "w29",
+    "text": "are",
+    "start": 14.08,
+    "end": 14.24
+  },
+  {
+    "id": "w30",
+    "text": "its",
+    "start": 14.24,
+    "end": 14.56
+  },
+  {
+    "id": "w31",
+    "text": "top",
+    "start": 14.56,
+    "end": 14.88
+  },
+  {
+    "id": "w32",
+    "text": "ten",
+    "start": 14.88,
+    "end": 15.12
+  },
+  {
+    "id": "w33",
+    "text": "features",
+    "start": 15.28,
+    "end": 15.84
+  },
+  {
+    "id": "w34",
+    "text": "with",
+    "start": 15.84,
+    "end": 16.08
+  },
+  {
+    "id": "w35",
+    "text": "exactly",
+    "start": 16.08,
+    "end": 16.64
+  },
+  {
+    "id": "w36",
+    "text": "how",
+    "start": 16.64,
+    "end": 16.88
+  },
+  {
+    "id": "w37",
+    "text": "to",
+    "start": 16.88,
+    "end": 17.12
+  },
+  {
+    "id": "w38",
+    "text": "use",
+    "start": 17.12,
+    "end": 17.36
+  },
+  {
+    "id": "w39",
+    "text": "each",
+    "start": 17.36,
+    "end": 17.68
+  },
+  {
+    "id": "w40",
+    "text": "one.",
+    "start": 17.68,
+    "end": 18
+  }
+]

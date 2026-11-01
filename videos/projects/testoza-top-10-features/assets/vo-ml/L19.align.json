@@ -1,0 +1,233 @@
+[
+ {
+  "w": "അടുത്ത",
+  "r": "attutta",
+  "start": 0.02,
+  "end": 0.3,
+  "score": 0.681
+ },
+ {
+  "w": "tip:",
+  "r": "tip",
+  "start": 0.34,
+  "end": 0.521,
+  "score": 0.722
+ },
+ {
+  "w": "candidates-ന്",
+  "r": "candidatesn",
+  "start": 0.841,
+  "end": 1.422,
+  "score": 0.551
+ },
+ {
+  "w": "അയക്കൂ.",
+  "r": "ayakkuu",
+  "start": 1.442,
+  "end": 1.782,
+  "score": 0.611
+ },
+ {
+  "w": "Link",
+  "r": "link",
+  "start": 2.243,
+  "end": 2.483,
+  "score": 0.516
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 2.604,
+  "end": 2.884,
+  "score": 0.491
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 2.924,
+  "end": 3.204,
+  "score": 0.833
+ },
+ {
+  "w": "അല്ലെങ്കിൽ",
+  "r": "allengkila",
+  "start": 3.605,
+  "end": 3.945,
+  "score": 0.852
+ },
+ {
+  "w": "നേരെ",
+  "r": "neere",
+  "start": 3.985,
+  "end": 4.266,
+  "score": 0.989
+ },
+ {
+  "w": "class",
+  "r": "class",
+  "start": 4.526,
+  "end": 4.847,
+  "score": 0.706
+ },
+ {
+  "w": "WhatsApp",
+  "r": "whatsapp",
+  "start": 5.027,
+  "end": 5.487,
+  "score": 0.502
+ },
+ {
+  "w": "group-ൽ",
+  "r": "groupla",
+  "start": 5.528,
+  "end": 5.848,
+  "score": 0.824
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 5.868,
+  "end": 6.108,
+  "score": 0.489
+ },
+ {
+  "w": "ചെയ്യൂ.",
+  "r": "ceyyuu",
+  "start": 6.128,
+  "end": 6.409,
+  "score": 0.852
+ },
+ {
+  "w": "Class-ൽ",
+  "r": "classla",
+  "start": 7.03,
+  "end": 7.41,
+  "score": 0.698
+ },
+ {
+  "w": "phones",
+  "r": "phones",
+  "start": 7.41,
+  "end": 7.69,
+  "score": 0.823
+ },
+ {
+  "w": "ഇല്ലേ?",
+  "r": "illee",
+  "start": 7.731,
+  "end": 7.951,
+  "score": 0.884
+ },
+ {
+  "w": "Join",
+  "r": "join",
+  "start": 8.492,
+  "end": 8.772,
+  "score": 0.761
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 8.812,
+  "end": 9.012,
+  "score": 0.477
+ },
+ {
+  "w": "എടുക്കൂ.",
+  "r": "ettukkuu",
+  "start": 9.032,
+  "end": 9.313,
+  "score": 0.551
+ },
+ {
+  "w": "ആറ്",
+  "r": "aarr",
+  "start": 9.833,
+  "end": 10.034,
+  "score": 0.709
+ },
+ {
+  "w": "digits.",
+  "r": "digits",
+  "start": 10.134,
+  "end": 10.474,
+  "score": 0.601
+ },
+ {
+  "w": "Board-ൽ",
+  "r": "boardla",
+  "start": 10.935,
+  "end": 11.275,
+  "score": 0.603
+ },
+ {
+  "w": "എഴുതൂ,",
+  "r": "elllutuu",
+  "start": 11.295,
+  "end": 11.576,
+  "score": 0.431
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 11.936,
+  "end": 12.337,
+  "score": 0.855
+ },
+ {
+  "w": "അത്",
+  "r": "at",
+  "start": 12.377,
+  "end": 12.797,
+  "score": 0.945
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 12.817,
+  "end": 13.358,
+  "score": 0.817
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 13.619,
+  "end": 13.799,
+  "score": 0.815
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 13.899,
+  "end": 14.079,
+  "score": 0.536
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 14.36,
+  "end": 14.7,
+  "score": 0.787
+ },
+ {
+  "w": "join-ൽ",
+  "r": "joinla",
+  "start": 14.84,
+  "end": 15.281,
+  "score": 0.826
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 15.441,
+  "end": 15.681,
+  "score": 0.495
+ },
+ {
+  "w": "ചെയ്യും.",
+  "r": "ceyyum",
+  "start": 15.701,
+  "end": 15.902,
+  "score": 0.884
+ }
+]

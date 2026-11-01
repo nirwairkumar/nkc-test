@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1200px; height: 1600px; overflow: hidden; }
+  body { background: radial-gradient(120% 90% at 40% 30%, #6b4a2f 0%, #4a3020 55%, #2a1a10 100%); }
+  .stage { position: absolute; inset: 0; perspective: 1800px; }
+  .page {
+    position: absolute; left: 110px; top: 120px; width: 960px; height: 1330px; box-sizing: border-box;
+    padding: 70px 78px; background: #fbf8f0; color: #1c1a17;
+    font: 22px/1.4 Georgia, "Times New Roman", serif;
+    transform: rotateX(9deg) rotateZ(-2.2deg) translateZ(-20px);
+    box-shadow: 0 40px 70px rgba(0,0,0,.55), 0 6px 14px rgba(0,0,0,.35);
+  }
+  .top { display: flex; justify-content: space-between; font-size: 19px; color: #6b655b; border-bottom: 1.5px solid #cfc7b6; padding-bottom: 10px; }
+  h1 { font-size: 32px; margin: 22px 0 4px; letter-spacing: .3px; }
+  .sub { font-size: 20px; color: #5d574d; margin-bottom: 16px; font-style: italic; }
+  ol { margin: 0; padding-left: 34px; }
+  li { margin: 0 0 11px; padding-left: 6px; }
+  .o { display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; font-size: 20px; color: #2b2823; margin-top: 1px; }
+  .foot { position: absolute; bottom: 34px; left: 0; right: 0; text-align: center; font-size: 18px; color: #8a8377; }
+  /* lamp light from the upper left, falling off to the right */
+  .lamp { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(75% 65% at 30% 26%, rgba(255,214,150,.18) 0%, rgba(255,190,120,.06) 45%, rgba(0,0,0,.32) 100%); mix-blend-mode: multiply; }
+  .warm { position: absolute; inset: 0; pointer-events: none; background: rgba(255,170,80,.10); mix-blend-mode: soft-light; }
+  .grain { position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27><filter id=%27n%27><feTurbulence type=%27fractalNoise%27 baseFrequency=%271.6%27 numOctaves=%272%27/></filter><rect width=%27300%27 height=%27300%27 filter=%27url(%23n)%27/></svg>"); }
+</style></head>
+<body><div class="stage"><div class="page">
+  <div class="top"><span>Science · Class 10</span><span>Chapter 5 · Practice</span></div>
+  <h1>Exercise 5.3</h1>
+  <div class="sub">Choose the correct option.</div>
+  <ol>
+    <li>The SI unit of force is
+      <div class="o"><span>(a) joule</span><span>(b) newton</span><span>(c) watt</span><span>(d) pascal</span></div></li>
+    <li>A body moving with uniform velocity has an acceleration of
+      <div class="o"><span>(a) zero</span><span>(b) 9.8 m/s²</span><span>(c) 1 m/s²</span><span>(d) it keeps increasing</span></div></li>
+    <li>The chemical formula of common salt is
+      <div class="o"><span>(a) KCl</span><span>(b) NaCl</span><span>(c) NaOH</span><span>(d) CaCO₃</span></div></li>
+    <li>Which of these is a scalar quantity?
+      <div class="o"><span>(a) velocity</span><span>(b) force</span><span>(c) speed</span><span>(d) displacement</span></div></li>
+    <li>The pH of pure water at 25 °C is
+      <div class="o"><span>(a) 0</span><span>(b) 1</span><span>(c) 7</span><span>(d) 14</span></div></li>
+    <li>Using v = u + at, a body starts from rest with a = 2 m/s². Its velocity after 5 s is
+      <div class="o"><span>(a) 5 m/s</span><span>(b) 7 m/s</span><span>(c) 10 m/s</span><span>(d) 12 m/s</span></div></li>
+    <li>Which gas do plants release during photosynthesis?
+      <div class="o"><span>(a) oxygen</span><span>(b) nitrogen</span><span>(c) carbon dioxide</span><span>(d) hydrogen</span></div></li>
+    <li>Which part of the cell is called its powerhouse?
+      <div class="o"><span>(a) nucleus</span><span>(b) ribosome</span><span>(c) mitochondria</span><span>(d) cell wall</span></div></li>
+    <li>The speed of light in vacuum is about
+      <div class="o"><span>(a) 3 × 10⁵ m/s</span><span>(b) 3 × 10⁸ m/s</span><span>(c) 3 × 10¹⁰ m/s</span><span>(d) 340 m/s</span></div></li>
+    <li>A 12 V battery drives a current of 3 A through a resistor. Its resistance is
+      <div class="o"><span>(a) 2 Ω</span><span>(b) 4 Ω</span><span>(c) 9 Ω</span><span>(d) 36 Ω</span></div></li>
+  </ol>
+  <div class="foot">72</div>
+</div></div>
+<div class="lamp"></div><div class="warm"></div><div class="grain"></div>
+</body></html>

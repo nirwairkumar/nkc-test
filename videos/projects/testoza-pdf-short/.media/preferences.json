@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube-shorts",
+      "confirmed_in": [
+        "testoza-pdf-short"
+      ],
+      "updated_at": "2026-10-15T13:44:17.505Z"
+    },
+    "aspect": {
+      "value": "1080x1920",
+      "confirmed_in": [
+        "testoza-pdf-short"
+      ],
+      "updated_at": "2026-10-15T13:44:17.594Z"
+    },
+    "language": {
+      "value": "hi",
+      "confirmed_in": [
+        "testoza-pdf-short"
+      ],
+      "updated_at": "2026-10-15T13:44:17.719Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "testoza-pdf-short"
+      ],
+      "updated_at": "2026-10-15T13:44:17.839Z"
+    },
+    "storyboard": {
+      "value": "yes",
+      "confirmed_in": [
+        "testoza-pdf-short"
+      ],
+      "updated_at": "2026-10-15T13:44:17.957Z"
+    }
+  },
+  "sightings": {}
+}

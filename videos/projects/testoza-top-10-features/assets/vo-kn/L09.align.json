@@ -1,0 +1,65 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.06,
+  "end": 0.322,
+  "score": 0.466
+ },
+ {
+  "w": "three:",
+  "r": "three",
+  "start": 0.402,
+  "end": 0.603,
+  "score": 0.185
+ },
+ {
+  "w": "ಕನ್ನಡ,",
+  "r": "kannadda",
+  "start": 0.945,
+  "end": 1.327,
+  "score": 0.982
+ },
+ {
+  "w": "ಹಿಂದಿ",
+  "r": "himdi",
+  "start": 1.488,
+  "end": 1.789,
+  "score": 0.957
+ },
+ {
+  "w": "ನೂರ",
+  "r": "nuura",
+  "start": 2.271,
+  "end": 2.493,
+  "score": 0.458
+ },
+ {
+  "w": "ಹತ್ತೊಂಬತ್ತು",
+  "r": "hattombattu",
+  "start": 2.553,
+  "end": 3.096,
+  "score": 0.677
+ },
+ {
+  "w": "ಭಾಷೆಗಳಲ್ಲಿ",
+  "r": "bhaassegallalli",
+  "start": 3.156,
+  "end": 3.739,
+  "score": 0.82
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 3.86,
+  "end": 4.101,
+  "score": 0.49
+ },
+ {
+  "w": "ಮಾಡಬಹುದು.",
+  "r": "maaddabahudu",
+  "start": 4.101,
+  "end": 4.623,
+  "score": 0.989
+ }
+]

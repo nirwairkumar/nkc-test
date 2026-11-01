@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube",
+      "confirmed_in": [
+        "testoza-builder-tutorial"
+      ],
+      "updated_at": "2026-10-14T21:27:16.057Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "testoza-builder-tutorial"
+      ],
+      "updated_at": "2026-10-14T21:27:16.131Z"
+    },
+    "language": {
+      "value": "hi",
+      "confirmed_in": [
+        "testoza-builder-tutorial"
+      ],
+      "updated_at": "2026-10-14T21:27:16.198Z"
+    },
+    "storyboard": {
+      "value": "yes",
+      "confirmed_in": [
+        "testoza-builder-tutorial"
+      ],
+      "updated_at": "2026-10-14T21:27:16.272Z"
+    }
+  },
+  "sightings": {}
+}

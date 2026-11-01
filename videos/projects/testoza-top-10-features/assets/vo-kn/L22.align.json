@@ -1,0 +1,79 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.321,
+  "score": 0.495
+ },
+ {
+  "w": "eight:",
+  "r": "eight",
+  "start": 0.361,
+  "end": 0.522,
+  "score": 0.38
+ },
+ {
+  "w": "ಯಾವ",
+  "r": "yaava",
+  "start": 0.863,
+  "end": 1.163,
+  "score": 0.974
+ },
+ {
+  "w": "phone",
+  "r": "phone",
+  "start": 1.244,
+  "end": 1.444,
+  "score": 0.638
+ },
+ {
+  "w": "ನಲ್ಲಾದರೂ",
+  "r": "nallaadaruu",
+  "start": 1.444,
+  "end": 1.966,
+  "score": 0.951
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 2.106,
+  "end": 2.427,
+  "score": 0.745
+ },
+ {
+  "w": "room.",
+  "r": "room",
+  "start": 2.507,
+  "end": 2.668,
+  "score": 0.299
+ },
+ {
+  "w": "App",
+  "r": "app",
+  "start": 3.089,
+  "end": 3.27,
+  "score": 0.389
+ },
+ {
+  "w": "ಬೇಡ,",
+  "r": "beedda",
+  "start": 3.33,
+  "end": 3.591,
+  "score": 0.996
+ },
+ {
+  "w": "sign-up",
+  "r": "signup",
+  "start": 3.831,
+  "end": 4.152,
+  "score": 0.639
+ },
+ {
+  "w": "ಬೇಡ.",
+  "r": "beedda",
+  "start": 4.212,
+  "end": 4.413,
+  "score": 0.997
+ }
+]

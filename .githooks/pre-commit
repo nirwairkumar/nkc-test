@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+# H1 (SECURITY_THREAT_MODEL_AND_PLAN.md) — block secrets before they reach a commit.
+#
+# Four Google/Gemini API keys reached this repository's history through committed
+# .env files (b045ef8, 3c22b85 and others), and the repo is public. Rotation fixes
+# the leaked keys; this hook stops the next one.
+#
+# Install with:  git config core.hooksPath .githooks
+#
+# It runs gitleaks when available (full engine), and ALWAYS runs the regex checks
+# below so protection does not depend on a tool being installed.
+#
+# Emergency escape hatch (use only for a reviewed false positive):
+#   ALLOW_SECRETS=1 git commit ...
+
+set -e
+
+RED=''
+YEL=''
+NC=''
+if [ -t 2 ]; then RED="$(printf '\033[31m')"; YEL="$(printf '\033[33m')"; NC="$(printf '\033[0m')"; fi
+
+if [ "$ALLOW_SECRETS" = "1" ]; then
+    printf '%spre-commit: ALLOW_SECRETS=1 — secret scan skipped.%s\n' "$YEL" "$NC" >&2
+    exit 0
+fi
+
+fail() {
+    printf '\n%sBLOCKED: possible secret in staged changes%s\n' "$RED" "$NC" >&2
+    printf '  %s\n' "$1" >&2
+    printf '\nRotate the key if it is real, remove it from the staged content, and keep it in .env (gitignored).\n' >&2
+    printf 'If this is a reviewed false positive: ALLOW_SECRETS=1 git commit ...\n\n' >&2
+    exit 1
+}
+
+# Staged, added/copied/modified files only.
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+# ── 1. Never commit an env file, whatever .gitignore says (git add -f bypasses it) ──
+for f in $STAGED; do
+    case "$(basename "$f")" in
+        .env|.env.*)
+            case "$(basename "$f")" in
+                .env.example|.env.sample|.env.template) ;;
+                *) fail "$f is an environment file. Environment files must never be committed." ;;
+            esac
+            ;;
+    esac
+    case "$(basename "$f")" in
+        google-indexing-key.json|client_secret*.json|*-service-account*.json)
+            fail "$f looks like a service-account credential file."
+            ;;
+    esac
+done
+
+# ── 2. Content patterns, checked against the staged diff only ──────────────────
+DIFF=$(git diff --cached --diff-filter=ACM -U0)
+[ -z "$DIFF" ] && exit 0
+ADDED=$(printf '%s\n' "$DIFF" | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+[ -z "$ADDED" ] && exit 0
+
+check() {
+    # $1 = ERE pattern, $2 = human description
+    # `--` is required: a pattern starting with "-" (e.g. -----BEGIN) would otherwise
+    # be parsed as grep options.
+    if printf '%s\n' "$ADDED" | grep -qE -- "$1"; then
+        fail "$2"
+    fi
+}
+
+check 'AIza[0-9A-Za-z_-]{35}'                      'Google / Gemini API key (AIza...)'
+check 'sk-[A-Za-z0-9]{20,}'                        'OpenAI-style secret key (sk-...)'
+check 'ghp_[A-Za-z0-9]{36}'                        'GitHub personal access token (ghp_...)'
+check 'xox[baprs]-[A-Za-z0-9-]{10,}'               'Slack token (xox...)'
+check '-----BEGIN [A-Z ]*PRIVATE KEY-----'         'Private key block'
+check '0x[0-9A-Fa-f]{8,}[A-Za-z0-9_-]{10,}'        'Cloudflare Turnstile secret (0x...)'
+check '"private_key"[[:space:]]*:'                 'Google service-account JSON (private_key field)'
+check '(SERVICE_ROLE|SERVICE_KEY)[A-Z_]*[[:space:]]*[:=][[:space:]]*.?eyJ'  'Supabase SERVICE-ROLE key (this one bypasses RLS)'
+check '(rzp_live|sk_live|pk_live)_[A-Za-z0-9]{10,}' 'Live payment provider key'
+
+# ── 3. gitleaks, when installed, for everything the patterns above miss ────────
+if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks protect --staged --redact --no-banner >/dev/null 2>&1; then
+        printf '\n%sBLOCKED: gitleaks found a secret in staged changes%s\n' "$RED" "$NC" >&2
+        gitleaks protect --staged --redact --no-banner >&2 || true
+        printf '\nIf this is a reviewed false positive: ALLOW_SECRETS=1 git commit ...\n\n' >&2
+        exit 1
+    fi
+fi
+
+exit 0

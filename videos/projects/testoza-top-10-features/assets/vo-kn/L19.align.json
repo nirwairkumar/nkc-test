@@ -1,0 +1,268 @@
+[
+ {
+  "w": "ಮುಂದಿನ",
+  "r": "mumdina",
+  "start": 0.06,
+  "end": 0.38,
+  "score": 0.887
+ },
+ {
+  "w": "tip:",
+  "r": "tip",
+  "start": 0.46,
+  "end": 0.661,
+  "score": 0.651
+ },
+ {
+  "w": "candidates",
+  "r": "candidates",
+  "start": 1.221,
+  "end": 1.782,
+  "score": 0.558
+ },
+ {
+  "w": "ಗೆ",
+  "r": "ge",
+  "start": 1.802,
+  "end": 1.862,
+  "score": 0.498
+ },
+ {
+  "w": "ಕಳಿಸಿ.",
+  "r": "kallisi",
+  "start": 1.902,
+  "end": 2.222,
+  "score": 0.984
+ },
+ {
+  "w": "Link",
+  "r": "link",
+  "start": 2.722,
+  "end": 2.923,
+  "score": 0.74
+ },
+ {
+  "w": "copy",
+  "r": "copy",
+  "start": 3.023,
+  "end": 3.263,
+  "score": 0.325
+ },
+ {
+  "w": "ಮಾಡಿ,",
+  "r": "maaddi",
+  "start": 3.343,
+  "end": 3.583,
+  "score": 0.999
+ },
+ {
+  "w": "ಅಥವಾ",
+  "r": "athavaa",
+  "start": 3.903,
+  "end": 4.204,
+  "score": 0.955
+ },
+ {
+  "w": "ನೇರವಾಗಿ",
+  "r": "neeravaagi",
+  "start": 4.244,
+  "end": 4.744,
+  "score": 0.978
+ },
+ {
+  "w": "class",
+  "r": "class",
+  "start": 4.844,
+  "end": 5.144,
+  "score": 0.589
+ },
+ {
+  "w": "WhatsApp",
+  "r": "whatsapp",
+  "start": 5.204,
+  "end": 5.545,
+  "score": 0.45
+ },
+ {
+  "w": "group",
+  "r": "group",
+  "start": 5.585,
+  "end": 5.765,
+  "score": 0.787
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 5.805,
+  "end": 5.985,
+  "score": 0.949
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 6.065,
+  "end": 6.285,
+  "score": 0.749
+ },
+ {
+  "w": "ಮಾಡಿ.",
+  "r": "maaddi",
+  "start": 6.285,
+  "end": 6.506,
+  "score": 0.999
+ },
+ {
+  "w": "Class",
+  "r": "class",
+  "start": 7.006,
+  "end": 7.266,
+  "score": 0.59
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 7.326,
+  "end": 7.486,
+  "score": 0.997
+ },
+ {
+  "w": "phones",
+  "r": "phones",
+  "start": 7.547,
+  "end": 7.807,
+  "score": 0.829
+ },
+ {
+  "w": "ಇಲ್ವಾ?",
+  "r": "ilvaa",
+  "start": 7.847,
+  "end": 8.107,
+  "score": 0.809
+ },
+ {
+  "w": "Join",
+  "r": "join",
+  "start": 8.567,
+  "end": 8.848,
+  "score": 0.637
+ },
+ {
+  "w": "code",
+  "r": "code",
+  "start": 8.888,
+  "end": 9.108,
+  "score": 0.479
+ },
+ {
+  "w": "ತಗೊಳ್ಳಿ.",
+  "r": "tagolllli",
+  "start": 9.128,
+  "end": 9.448,
+  "score": 0.891
+ },
+ {
+  "w": "ಆರು",
+  "r": "aaru",
+  "start": 9.949,
+  "end": 10.169,
+  "score": 0.83
+ },
+ {
+  "w": "digits.",
+  "r": "digits",
+  "start": 10.249,
+  "end": 10.589,
+  "score": 0.709
+ },
+ {
+  "w": "Board",
+  "r": "board",
+  "start": 11.07,
+  "end": 11.27,
+  "score": 0.798
+ },
+ {
+  "w": "ಮೇಲೆ",
+  "r": "meele",
+  "start": 11.35,
+  "end": 11.53,
+  "score": 0.87
+ },
+ {
+  "w": "ಬರೆಯಿರಿ,",
+  "r": "bareyiri",
+  "start": 11.57,
+  "end": 11.91,
+  "score": 0.723
+ },
+ {
+  "w": "students",
+  "r": "students",
+  "start": 12.311,
+  "end": 12.751,
+  "score": 0.871
+ },
+ {
+  "w": "ಅದನ್ನ",
+  "r": "adanna",
+  "start": 12.811,
+  "end": 13.091,
+  "score": 0.994
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 13.231,
+  "end": 13.672,
+  "score": 0.833
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 13.812,
+  "end": 13.952,
+  "score": 0.695
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 14.052,
+  "end": 14.212,
+  "score": 0.416
+ },
+ {
+  "w": "slash",
+  "r": "slash",
+  "start": 14.272,
+  "end": 14.533,
+  "score": 0.774
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 14.573,
+  "end": 14.833,
+  "score": 0.558
+ },
+ {
+  "w": "ನಲ್ಲಿ",
+  "r": "nalli",
+  "start": 14.873,
+  "end": 15.053,
+  "score": 0.989
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 15.133,
+  "end": 15.393,
+  "score": 0.589
+ },
+ {
+  "w": "ಮಾಡ್ತಾರೆ.",
+  "r": "maaddtaare",
+  "start": 15.393,
+  "end": 15.774,
+  "score": 0.965
+ }
+]

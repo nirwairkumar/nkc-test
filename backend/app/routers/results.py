@@ -1,17 +1,30 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.core.database import get_db
+from fastapi import APIRouter, HTTPException, Depends, Request
+from app.core.database import get_db, supabase
 from supabase import Client
 from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
+from app.core.auth import verify_auth_token, get_optional_user_id, is_admin_user
+from app.routers.tests.utils import exam_window_still_open, strip_answer_key, candidate_may_see_key, result_view_allows
+from app.services.scoring import multi_partial_score
+
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 @router.get("/{attempt_id}")
-async def get_test_result(
+def get_test_result(
     attempt_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # C4/C5: this returns tests(*) — the full question bank INCLUDING correctAnswer
+        # and solutions. Unguarded, a candidate could submit a blank attempt, read the
+        # answer key from their own result, and retake the exam. Restrict it to the
+        # person who sat the test, the creator of the test, and admins.
+        requesting_user_id = verify_auth_token(request, db)
+
         # Fetch attempt with test details
         response = db.table("user_tests")\
             .select("*, tests(*, profiles(full_name, avatar_url))")\
@@ -23,6 +36,21 @@ async def get_test_result(
             
         result = response.data[0]
         test = result.get("tests")
+
+        is_attempt_owner = result.get("user_id") == requesting_user_id
+        is_test_creator = bool(test) and test.get("created_by") == requesting_user_id
+        is_admin = is_admin_user(requesting_user_id, db)
+        if not (is_attempt_owner or is_test_creator or is_admin):
+            raise HTTPException(status_code=404, detail="Result not found")
+
+        # While a scheduled exam is still running, a candidate who already submitted
+        # sees their score but not the answer key. Same when the creator hid the key.
+        settings = (test or {}).get("settings")
+        if test and not (is_test_creator or is_admin) and (
+            exam_window_still_open(settings) or not candidate_may_see_key(settings)
+        ):
+            test = strip_answer_key(test, False)
+            result = {**result, "tests": test}
         
         # We can perform additional server-side calculations here if needed
         # e.g., Rank calculation (mocked or real)
@@ -40,14 +68,19 @@ async def get_test_result(
             }
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error fetching result: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching result: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch result")
 
 from pydantic import BaseModel
+
 class AnalyzeRequest(BaseModel):
     test: dict
     answers: dict
+    question_times: Optional[dict] = None
+    test_id: Optional[str] = None
 
 def parse_mark(value: Any, default_val: float = 0.0) -> float:
     if isinstance(value, (int, float)):
@@ -64,10 +97,39 @@ def parse_mark(value: Any, default_val: float = 0.0) -> float:
     except:
         return default_val
 
+def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Fetch the stored test (with its answer key) by UUID, slug or custom_id."""
+    if not test_id:
+        return None
+    import uuid as _uuid
+
+    cols = "id, title, created_by, questions, sections, enable_section_mode, section_marking_model, settings, total_max_marks"
+    try:
+        try:
+            _uuid.UUID(str(test_id))
+            res = supabase.table("tests").select(cols).eq("id", test_id).limit(1).execute()
+        except ValueError:
+            res = supabase.table("tests").select(cols).or_(
+                f"slug.eq.{test_id},custom_id.eq.{test_id}"
+            ).limit(1).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.error(f"analyze: could not load test {test_id}: {e}")
+        return None
+
+
 @router.post("/analyze")
-async def analyze_test_results(payload: AnalyzeRequest):
-    test = payload.test
+def analyze_test_results(payload: AnalyzeRequest, request: Request):
+    # C4: the questions the browser holds no longer carry correctAnswer, so the answer
+    # key is reloaded server-side. The client copy stays as a fallback for callers that
+    # still pass a full test object (e.g. the creator analysis view, which is allowed it).
+    stored_test = _load_authoritative_test(payload.test_id or (payload.test or {}).get("id"))
+    if stored_test and (stored_test.get("questions") or stored_test.get("sections")):
+        test = {**(payload.test or {}), **{k: v for k, v in stored_test.items() if v is not None}}
+    else:
+        test = payload.test
     answers = payload.answers
+    question_times = payload.question_times or {}
     
     enable_section = test.get("enable_section_mode", False)
     sections = test.get("sections", [])
@@ -158,7 +220,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
         sec_neg = q.get("_section_neg")
         if sec_neg is None or sec_neg == "":
             sec_neg = test.get("negative_marks")
-        neg = parse_mark(sec_neg, 1.0)
+        neg = parse_mark(sec_neg, 0.0)
                 
         if q.get("marks") is not None:
             marks = parse_mark(q.get("marks"), marks)
@@ -267,8 +329,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
                         q_score = marks
                     elif len(user_arr) > 0:
                         is_partial = True
-                        fraction = len(user_arr) / len(correct_arr)
-                        q_score = fraction * marks
+                        q_score = multi_partial_score(q, len(user_arr), len(correct_arr), marks)
                         
             else: # single
                 if str(ans) == str(q.get("correctAnswer")):
@@ -297,9 +358,14 @@ async def analyze_test_results(payload: AnalyzeRequest):
         elif is_partial: status_label = "partial"
         elif is_wrong: status_label = "wrong"
 
+        q_time = 0
+        if question_times:
+            q_time = question_times.get(q_id, question_times.get(int(q_id) if q_id.isdigit() else q_id, 0)) or 0
+
         question_status[q_id] = {
             "status": status_label,
-            "score": q_score
+            "score": q_score,
+            "time_spent": q_time
         }
         
         if current_section_id in section_data:
@@ -380,18 +446,32 @@ async def analyze_test_results(payload: AnalyzeRequest):
                 "maxScore": round(merged_max, 2)
             })
             
+    # The browser's copy of the test has no correctAnswer (C4), so the solution key reads
+    # it from here. Held back while a scheduled exam is still running, like GET /{attempt_id}.
+    # A creator who turned the solution key off still sees it in their own student reports.
+    answer_key = {}
+    key_allowed = not exam_window_still_open(test.get("settings"))
+    if key_allowed and not result_view_allows(test.get("settings"), "solution_key"):
+        requester = get_optional_user_id(request)
+        key_allowed = bool(requester) and (requester == test.get("created_by") or is_admin_user(requester))
+    if key_allowed:
+        for q in questions:
+            if isinstance(q, dict) and q.get("correctAnswer") is not None:
+                answer_key[str(q.get("id"))] = q.get("correctAnswer")
+
     # Post-process topicData for performance labels
     formatted_topics = []
     for t in topic_data.values():
-        percentage = 0
+        # Its own name: reusing `percentage` here replaced the candidate's overall score.
+        topic_pct = 0
         if t["maxScore"] > 0:
-            percentage = (t["score"] / t["maxScore"]) * 100
-        
+            topic_pct = (t["score"] / t["maxScore"]) * 100
+
         performance = "Weak"
-        if percentage >= 75: performance = "Strong"
-        elif percentage >= 40: performance = "Moderate"
-        
-        t["percentage"] = round(percentage, 2)
+        if topic_pct >= 75: performance = "Strong"
+        elif topic_pct >= 40: performance = "Moderate"
+
+        t["percentage"] = round(topic_pct, 2)
         t["performance"] = performance
         formatted_topics.append(t)
             
@@ -408,6 +488,8 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "sectionData": section_data,
         "typeData": type_data,
         "questionStatus": question_status,
+        "answerKey": answer_key,
+        "questionTimes": question_times,
         "pieData": pie_data,
         "radarData": radar_data,
         "barData": bar_data,

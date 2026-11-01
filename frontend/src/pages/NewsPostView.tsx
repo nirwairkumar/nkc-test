@@ -15,6 +15,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
+import { BLOG_NAME, BLOG_URL, blogHomePath, blogPostPath, blogPostUrl, isBlogHost } from '@/lib/blog';
+import NotFound from '@/pages/NotFound';
 
 // Tiptap Read-Only Renderer
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -55,12 +57,55 @@ export default function NewsPostView() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Fetch Post Data
+    // Fetch Post Data (Pure read-only)
     const { data: post, isLoading, error } = useQuery({
         queryKey: ['post', slug],
         queryFn: () => postsApi.getPostBySlug(slug!),
         enabled: !!slug,
     });
+
+    // Industry-Grade View Counter (3.5s dwell-time intent gate & 24h client deduplication)
+    useEffect(() => {
+        if (!post?.id || post.status !== 'published') return;
+
+        const VIEW_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const storageKey = 'testoza_post_views';
+
+        // 1. Check local storage for recent view
+        try {
+            const raw = localStorage.getItem(storageKey);
+            const history = raw ? JSON.parse(raw) : {};
+            const lastViewedAt = history[post.id];
+
+            if (lastViewedAt && (Date.now() - lastViewedAt < VIEW_COOLDOWN_MS)) {
+                return; // Already counted within 24h window
+            }
+        } catch {
+            // LocalStorage fallback
+        }
+
+        // 2. Gate with 3.5s dwell time to verify reader engagement (filters bounces/crawlers)
+        const timer = setTimeout(() => {
+            postsApi.recordView(post.id).then((res) => {
+                if (res?.recorded) {
+                    try {
+                        const raw = localStorage.getItem(storageKey);
+                        const history = raw ? JSON.parse(raw) : {};
+                        history[post.id] = Date.now();
+                        localStorage.setItem(storageKey, JSON.stringify(history));
+                    } catch {}
+
+                    // Update UI view count optimistically
+                    queryClient.setQueryData(['post', slug], (old: any) => {
+                        if (!old) return old;
+                        return { ...old, view_count: (old.view_count || 0) + 1 };
+                    });
+                }
+            });
+        }, 3500);
+
+        return () => clearTimeout(timer);
+    }, [post?.id, post?.status, slug, queryClient]);
 
     // Fetch Related Posts
     const { data: relatedPosts = [] } = useQuery({
@@ -153,7 +198,7 @@ export default function NewsPostView() {
     }, [post?.content]);
 
     const handleCopyLink = () => {
-        const url = `https://blog.testoza.com/${post?.slug || slug}`;
+        const url = blogPostUrl(post?.slug || slug || '');
         navigator.clipboard.writeText(url);
         setCopied(true);
         toast.success("Blog link copied to clipboard!");
@@ -161,18 +206,18 @@ export default function NewsPostView() {
     };
 
     const handleShareTwitter = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         const text = encodeURIComponent(`Read "${post?.title}" on TestoZa Blog:`);
         window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
     };
 
     const handleShareLinkedIn = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
     };
 
     const handleShareWhatsApp = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         const text = encodeURIComponent(`Check out this article: "${post?.title}"\n${decodeURIComponent(url)}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     };
@@ -202,6 +247,12 @@ export default function NewsPostView() {
         );
     }
 
+    // Off the blog, /<slug> is the catch-all for any one-word address ("/inputs"), so a
+    // missing post is a missing page, not a missing article.
+    if (!isBlogHost && (error || !post)) {
+        return <NotFound />;
+    }
+
     if (!user?.user_metadata?.roles?.includes('admin') && !isNewsEnabled) {
         return (
             <div className="container max-w-2xl mx-auto py-20 px-4 text-center">
@@ -223,14 +274,16 @@ export default function NewsPostView() {
                 <div className="text-5xl">🔍</div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Article Not Found</h2>
                 <p className="text-slate-500 text-sm">The article you are looking for might have been moved or removed.</p>
-                <Button onClick={() => navigate('/news')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">
+                <Button onClick={() => navigate(blogHomePath)} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">
                     Explore All Blog Articles
                 </Button>
             </div>
         );
     }
 
-    const canonicalUrl = `https://blog.testoza.com/${post.slug}`;
+    // The Cloudflare worker writes the same canonical, description and BlogPosting for crawlers.
+    const canonicalUrl = blogPostUrl(post.slug);
+    const description = post.summary || `Read ${post.title} on TestoZa Blog for top exam preparation and insights.`;
     const formattedDate = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
@@ -241,7 +294,7 @@ export default function NewsPostView() {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": post.title,
-        "description": post.summary || post.title,
+        "description": description,
         "image": post.cover_image ? [post.cover_image] : ["https://testoza.com/default-og.png"],
         "datePublished": post.published_at || post.created_at,
         "dateModified": post.updated_at || post.published_at || post.created_at,
@@ -261,6 +314,12 @@ export default function NewsPostView() {
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": canonicalUrl
+        },
+        "isPartOf": {
+            "@type": "Blog",
+            "@id": `${BLOG_URL}/#blog`,
+            "name": BLOG_NAME,
+            "url": `${BLOG_URL}/`
         }
     };
 
@@ -268,7 +327,7 @@ export default function NewsPostView() {
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans pb-28">
             
             {/* Scroll Reading Progress Bar */}
-            <div className="fixed top-0 left-0 w-full h-1 bg-slate-200 dark:bg-slate-800 z-50">
+            <div className="fixed top-0 left-0 w-full h-1 bg-slate-200/80 dark:bg-slate-800/80 z-50">
                 <div 
                     className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 transition-all duration-150"
                     style={{ width: `${scrollProgress}%` }}
@@ -277,22 +336,24 @@ export default function NewsPostView() {
 
             {/* SEO Meta & Schema.org Structured Data */}
             <SEO
-                title={`${post.title} - TestoZa Blog`}
-                description={post.summary || `Read ${post.title} on TestoZa Blog for top exam preparation and insights.`}
+                title={post.title}
+                siteName={BLOG_NAME}
+                description={description}
                 image={post.cover_image || undefined}
                 type="article"
+                url={canonicalUrl}
                 canonicalUrl={canonicalUrl}
                 schemas={[jsonLdArticleSchema]}
             />
 
             {/* Top Navigation & Breadcrumbs */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 pb-4">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 pb-3">
                 <Link
-                    to="/news"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white transition-colors"
+                    to={blogHomePath}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors group"
                 >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to All Articles</span>
+                    <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
+                    <span>Back to Articles</span>
                 </Link>
             </div>
 
@@ -300,52 +361,52 @@ export default function NewsPostView() {
             <article className="max-w-4xl mx-auto px-4 sm:px-6">
                 
                 {/* Article Header Box */}
-                <div className="space-y-4 pb-8">
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <span className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold uppercase tracking-wider text-[11px] border border-indigo-200/60 dark:border-indigo-800/60">
+                <div className="space-y-4 pb-6 border-b border-slate-200/80 dark:border-slate-800">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold uppercase tracking-wider text-[11px] border border-indigo-200/60 dark:border-indigo-800/60">
                             {post.category}
                         </span>
-                        <span>•</span>
+                        <span className="text-slate-300 dark:text-slate-700">•</span>
                         <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             {formattedDate}
                         </span>
-                        <span>•</span>
+                        <span className="text-slate-300 dark:text-slate-700">•</span>
                         <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-indigo-500" />
                             {readTimeMinutes} min read
                         </span>
-                        <span>•</span>
+                        <span className="text-slate-300 dark:text-slate-700">•</span>
                         <span className="flex items-center gap-1">
                             <Eye className="w-3.5 h-3.5 text-blue-500" />
                             {post.view_count || 0} views
                         </span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50 leading-[1.28] sm:leading-[1.24]">
                         {post.title}
                     </h1>
 
                     {post.summary && (
-                        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
                             {post.summary}
                         </p>
                     )}
 
                     {/* Author & Share Bar */}
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                    <div className="pt-3 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <Avatar className="w-11 h-11 rounded-full border border-slate-200 dark:border-slate-700 shadow-xs">
+                            <Avatar className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
                                 <AvatarImage src={post.profiles?.avatar_url} />
-                                <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-sm">
+                                <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-xs">
                                     {post.profiles?.full_name?.charAt(0) || 'T'}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <div className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                                     <span>{post.profiles?.full_name || 'TestoZa Team'}</span>
                                     {post.profiles?.is_verified_creator && (
-                                        <span className="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.2 rounded-full">
+                                        <span className="text-[10px] bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold px-1.5 py-0.2 rounded-full border border-indigo-200 dark:border-indigo-800">
                                             ✓ Verified
                                         </span>
                                     )}
@@ -357,31 +418,31 @@ export default function NewsPostView() {
                         </div>
 
                         {/* Social Share Pills */}
-                        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl shadow-xs">
+                        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 rounded-xl shadow-2xs">
                             <button
                                 onClick={handleShareTwitter}
-                                className="p-2 text-slate-500 hover:text-[#1DA1F2] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-[#1DA1F2] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                 title="Share on X / Twitter"
                             >
                                 <Twitter className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={handleShareLinkedIn}
-                                className="p-2 text-slate-500 hover:text-[#0A66C2] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-[#0A66C2] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                 title="Share on LinkedIn"
                             >
                                 <Linkedin className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={handleShareWhatsApp}
-                                className="p-2 text-slate-500 hover:text-[#25D366] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-[#25D366] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                 title="Share on WhatsApp"
                             >
                                 <MessageCircle className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={handleCopyLink}
-                                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                 title="Copy Link"
                             >
                                 {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -392,7 +453,7 @@ export default function NewsPostView() {
 
                 {/* Featured Cover Image */}
                 {post.cover_image && (
-                    <div className="mb-10 rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 aspect-video max-h-[480px]">
+                    <div className="my-8 rounded-2xl overflow-hidden shadow-sm border border-slate-200/80 dark:border-slate-800 aspect-video max-h-[440px]">
                         <img
                             src={post.cover_image}
                             alt={post.title}
@@ -401,20 +462,20 @@ export default function NewsPostView() {
                     </div>
                 )}
 
-                {/* Main Article Body (Prose Styling) */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-12 shadow-sm">
-                    <div className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 prose-headings:font-extrabold prose-headings:tracking-tight prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-img:rounded-2xl prose-blockquote:border-l-indigo-600 prose-blockquote:bg-indigo-50/50 dark:prose-blockquote:bg-indigo-950/20 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-xl">
+                {/* Main Article Body (Editorial Canvas) */}
+                <div className="mt-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-12 shadow-xs">
+                    <div className="article-content tiptap-editorial-canvas max-w-none text-slate-700 dark:text-slate-300">
                         <EditorContent editor={editor} />
                     </div>
 
                     {/* Article Tags */}
                     {post.tags && post.tags.length > 0 && (
-                        <div className="mt-12 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-bold text-slate-400">TAGS:</span>
+                        <div className="mt-10 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-400">TAGS:</span>
                             {post.tags.map((tag: string) => (
                                 <span
                                     key={tag}
-                                    className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold"
+                                    className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium"
                                 >
                                     #{tag}
                                 </span>
@@ -422,15 +483,15 @@ export default function NewsPostView() {
                         </div>
                     )}
 
-                    {/* Interactive Like & Clap Box */}
-                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    {/* Interactive Like & Share Bar */}
+                    <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Button
                                 onClick={handleLike}
                                 variant={likeData?.liked ? "default" : "outline"}
-                                className={`rounded-2xl gap-2 font-bold text-xs ${
+                                className={`rounded-xl gap-2 font-semibold text-xs transition-all ${
                                     likeData?.liked 
-                                        ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                                        ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs' 
                                         : 'text-slate-700 dark:text-slate-300 hover:text-rose-600 border-slate-200 dark:border-slate-700'
                                 }`}
                             >
@@ -443,7 +504,7 @@ export default function NewsPostView() {
                             <Button
                                 onClick={handleCopyLink}
                                 variant="outline"
-                                className="rounded-2xl gap-1.5 text-xs font-semibold border-slate-200 dark:border-slate-700"
+                                className="rounded-xl gap-1.5 text-xs font-medium border-slate-200 dark:border-slate-700"
                             >
                                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                                 <span>{copied ? 'Link Copied' : 'Share Link'}</span>
@@ -453,23 +514,23 @@ export default function NewsPostView() {
                 </div>
 
                 {/* Author Bio Card */}
-                <div className="mt-10 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-md border border-slate-800 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                    <Avatar className="w-16 h-16 rounded-2xl border-2 border-indigo-400 shrink-0">
+                <div className="mt-10 bg-slate-900 text-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-800 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    <Avatar className="w-14 h-14 rounded-2xl border-2 border-indigo-400 shrink-0">
                         <AvatarImage src={post.profiles?.avatar_url} />
-                        <AvatarFallback className="bg-indigo-600 text-white font-bold text-xl">
+                        <AvatarFallback className="bg-indigo-600 text-white font-bold text-lg">
                             {post.profiles?.full_name?.charAt(0) || 'T'}
                         </AvatarFallback>
                     </Avatar>
-                    <div className="space-y-2 text-center sm:text-left flex-1">
+                    <div className="space-y-1.5 text-center sm:text-left flex-1">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                            <h3 className="text-lg font-bold text-white">
+                            <h3 className="text-base font-bold text-white">
                                 {post.profiles?.full_name || 'TestoZa Editorial'}
                             </h3>
-                            <span className="text-[10px] bg-indigo-500/30 text-indigo-300 font-bold px-2 py-0.5 rounded-full border border-indigo-400/30">
+                            <span className="text-[10px] bg-indigo-500/30 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-400/30">
                                 Verified Creator
                             </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
                             {post.profiles?.bio || "Creating high-yield mock tests and educational guides to empower learners across India on TestoZa."}
                         </p>
                     </div>
@@ -477,26 +538,26 @@ export default function NewsPostView() {
 
                 {/* Related Articles Section */}
                 {relatedPosts.length > 1 && (
-                    <div className="mt-16 space-y-6">
-                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                            <BookOpen className="w-5 h-5 text-indigo-600" />
+                    <div className="mt-14 space-y-5">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-indigo-600" />
                             <span>Related Articles</span>
                         </h3>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                             {relatedPosts.filter(p => p.id !== post.id).slice(0, 3).map((r) => (
                                 <Link
                                     key={r.id}
-                                    to={`/news/${r.slug}`}
-                                    className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all p-4 space-y-2"
+                                    to={blogPostPath(r.slug)}
+                                    className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all p-4 space-y-2"
                                 >
-                                    <div className="text-[10px] font-bold text-indigo-600 uppercase">
+                                    <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                                         {r.category}
                                     </div>
-                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 line-clamp-2">
+                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 line-clamp-2 leading-snug">
                                         {r.title}
                                     </h4>
-                                    <p className="text-xs text-slate-500 line-clamp-2">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                                         {r.summary || "Read more on TestoZa Blog..."}
                                     </p>
                                 </Link>

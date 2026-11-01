@@ -1,0 +1,79 @@
+[
+ {
+  "w": "ഇനി",
+  "r": "ini",
+  "start": 0.02,
+  "end": 0.16,
+  "score": 0.928
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 0.22,
+  "end": 0.802,
+  "score": 0.334
+ },
+ {
+  "w": "ശരിയായ",
+  "r": "shariyaaya",
+  "start": 1.403,
+  "end": 1.844,
+  "score": 0.746
+ },
+ {
+  "w": "answer",
+  "r": "answer",
+  "start": 1.924,
+  "end": 2.265,
+  "score": 0.606
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 2.365,
+  "end": 2.526,
+  "score": 0.646
+ },
+ {
+  "w": "ചെയ്യൂ,",
+  "r": "ceyyuu",
+  "start": 2.606,
+  "end": 2.906,
+  "score": 0.845
+ },
+ {
+  "w": "അടുത്തത്,",
+  "r": "attuttat",
+  "start": 3.267,
+  "end": 3.708,
+  "score": 0.967
+ },
+ {
+  "w": "ഒന്നു",
+  "r": "onnu",
+  "start": 4.39,
+  "end": 4.61,
+  "score": 0.963
+ },
+ {
+  "w": "കൂടി.",
+  "r": "kuutti",
+  "start": 4.63,
+  "end": 4.891,
+  "score": 0.987
+ },
+ {
+  "w": "പിന്നെ",
+  "r": "pinne",
+  "start": 5.312,
+  "end": 5.633,
+  "score": 0.988
+ },
+ {
+  "w": "Save.",
+  "r": "save",
+  "start": 5.913,
+  "end": 6.314,
+  "score": 0.493
+ }
+]

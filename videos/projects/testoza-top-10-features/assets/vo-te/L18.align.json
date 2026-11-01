@@ -1,0 +1,37 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.101,
+  "end": 0.383,
+  "score": 0.596
+ },
+ {
+  "w": "six:",
+  "r": "six",
+  "start": 0.444,
+  "end": 0.585,
+  "score": 0.533
+ },
+ {
+  "w": "ఎక్కడైనా",
+  "r": "ekkaddainaa",
+  "start": 1.21,
+  "end": 1.653,
+  "score": 0.893
+ },
+ {
+  "w": "share",
+  "r": "share",
+  "start": 1.694,
+  "end": 1.936,
+  "score": 0.78
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 1.936,
+  "end": 2.299,
+  "score": 0.959
+ }
+]

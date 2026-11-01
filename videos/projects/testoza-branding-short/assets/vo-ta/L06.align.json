@@ -1,0 +1,100 @@
+[
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 0.06,
+  "end": 0.542,
+  "score": 0.793
+ },
+ {
+  "w": "link-ஐ",
+  "r": "linkai",
+  "start": 0.643,
+  "end": 1.064,
+  "score": 0.824
+ },
+ {
+  "w": "open",
+  "r": "open",
+  "start": 1.084,
+  "end": 1.265,
+  "score": 0.773
+ },
+ {
+  "w": "பண்றாங்க,",
+  "r": "panraangka",
+  "start": 1.325,
+  "end": 1.727,
+  "score": 0.998
+ },
+ {
+  "w": "பேரை",
+  "r": "peerai",
+  "start": 1.828,
+  "end": 2.089,
+  "score": 0.831
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 2.169,
+  "end": 2.37,
+  "score": 0.247
+ },
+ {
+  "w": "பண்றாங்க,",
+  "r": "panraangka",
+  "start": 2.37,
+  "end": 2.771,
+  "score": 0.998
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 2.932,
+  "end": 3.213,
+  "score": 0.262
+ },
+ {
+  "w": "பண்றாங்க…",
+  "r": "panraangka",
+  "start": 3.253,
+  "end": 3.655,
+  "score": 0.987
+ },
+ {
+  "w": "பாருங்க",
+  "r": "paarungka",
+  "start": 3.956,
+  "end": 4.258,
+  "score": 0.883
+ },
+ {
+  "w": "உங்க",
+  "r": "ungka",
+  "start": 4.499,
+  "end": 4.679,
+  "score": 0.988
+ },
+ {
+  "w": "logo-வும்",
+  "r": "logovum",
+  "start": 4.74,
+  "end": 5.181,
+  "score": 0.841
+ },
+ {
+  "w": "பேரும்,",
+  "r": "peerum",
+  "start": 5.222,
+  "end": 5.523,
+  "score": 0.994
+ },
+ {
+  "w": "மேலயே.",
+  "r": "meelayee",
+  "start": 5.583,
+  "end": 5.985,
+  "score": 0.961
+ }
+]

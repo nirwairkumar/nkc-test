@@ -1,0 +1,1 @@
+Test ಅನ್ನು builder ನಲ್ಲಿ open ಮಾಡಿ — ಹನ್ನೆರಡು questions ಇಲ್ಲೇ ಇವೆ. ಒಂದು question add ಮಾಡಿ, words ಎಂದಿನಂತೆ type ಮಾಡಿ. Formula ಗೆ, Maths and symbols open ಮಾಡಿ — ಇದೇ Sy Pad.

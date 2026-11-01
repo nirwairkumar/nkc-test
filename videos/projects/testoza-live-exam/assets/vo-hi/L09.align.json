@@ -1,0 +1,170 @@
+[
+ {
+  "w": "Disable",
+  "r": "disable",
+  "start": 0.1,
+  "end": 0.521,
+  "score": 0.714
+ },
+ {
+  "w": "Copy-Paste",
+  "r": "copypaste",
+  "start": 0.561,
+  "end": 1.243,
+  "score": 0.552
+ },
+ {
+  "w": "ताकि",
+  "r": "taaki",
+  "start": 1.503,
+  "end": 1.724,
+  "score": 0.998
+ },
+ {
+  "w": "कोई",
+  "r": "koii",
+  "start": 1.804,
+  "end": 2.005,
+  "score": 0.969
+ },
+ {
+  "w": "आपका",
+  "r": "aapakaa",
+  "start": 2.045,
+  "end": 2.305,
+  "score": 0.927
+ },
+ {
+  "w": "सवाल",
+  "r": "savaal",
+  "start": 2.325,
+  "end": 2.606,
+  "score": 0.996
+ },
+ {
+  "w": "Google",
+  "r": "google",
+  "start": 2.666,
+  "end": 2.947,
+  "score": 0.504
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 2.987,
+  "end": 3.087,
+  "score": 0.894
+ },
+ {
+  "w": "ChatGPT",
+  "r": "chatgpt",
+  "start": 3.107,
+  "end": 3.689,
+  "score": 0.636
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 3.809,
+  "end": 3.909,
+  "score": 0.99
+ },
+ {
+  "w": "पेस्ट",
+  "r": "pestta",
+  "start": 3.949,
+  "end": 4.21,
+  "score": 0.858
+ },
+ {
+  "w": "न",
+  "r": "na",
+  "start": 4.23,
+  "end": 4.27,
+  "score": 0.99
+ },
+ {
+  "w": "कर",
+  "r": "kar",
+  "start": 4.35,
+  "end": 4.47,
+  "score": 0.998
+ },
+ {
+  "w": "सके।",
+  "r": "sake",
+  "start": 4.531,
+  "end": 4.751,
+  "score": 0.998
+ },
+ {
+  "w": "Disable",
+  "r": "disable",
+  "start": 5.713,
+  "end": 6.114,
+  "score": 0.714
+ },
+ {
+  "w": "Right",
+  "r": "right",
+  "start": 6.154,
+  "end": 6.395,
+  "score": 0.611
+ },
+ {
+  "w": "Click",
+  "r": "click",
+  "start": 6.435,
+  "end": 6.655,
+  "score": 0.59
+ },
+ {
+  "w": "ना",
+  "r": "naa",
+  "start": 7.056,
+  "end": 7.177,
+  "score": 0.833
+ },
+ {
+  "w": "मेनू,",
+  "r": "menuu",
+  "start": 7.217,
+  "end": 7.558,
+  "score": 0.763
+ },
+ {
+  "w": "ना",
+  "r": "naa",
+  "start": 7.578,
+  "end": 7.698,
+  "score": 0.708
+ },
+ {
+  "w": "क्विक",
+  "r": "kvik",
+  "start": 7.698,
+  "end": 7.898,
+  "score": 0.933
+ },
+ {
+  "w": "सर्च,",
+  "r": "sarca",
+  "start": 7.979,
+  "end": 8.299,
+  "score": 0.935
+ },
+ {
+  "w": "ना",
+  "r": "naa",
+  "start": 8.339,
+  "end": 8.46,
+  "score": 0.785
+ },
+ {
+  "w": "ट्रांसलेट।",
+  "r": "ttraamsalett",
+  "start": 8.46,
+  "end": 8.961,
+  "score": 0.914
+ }
+]

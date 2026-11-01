@@ -1,0 +1,73 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f3-card { top: 560px; height: 518px; }
+  #f3-qs { top: 1100px; height: 420px; }
+  #f3-card img, #f3-qs img { position: absolute; left: 0; top: 0; width: 960px; }
+  .f3-glow { position: absolute; inset: 0; border-radius: 26px; box-shadow: inset 0 0 0 4px rgba(56, 189, 248, 0.9); opacity: 0; }
+  #f3-s2 { top: 410px; font-size: 54px; font-weight: 700; color: #94a3b8; }
+  #f3-s2 span { margin: 0 10px; }
+</style>
+<div id="root" data-composition-id="f03-read" data-width="1080" data-height="1920">
+  <div class="sf">
+    <div id="f3-stage" class="clip sf-stage" data-start="0" data-duration="8" data-track-index="0"></div>
+    <div class="sf-panel" id="f3-card">
+        <img class="f3-c" src="assets/ui/card-000.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-001.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-002.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-003.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-004.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-005.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-006.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-007.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-008.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-009.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-010.png" alt="" />
+        <img class="f3-c" src="assets/ui/card-011.png" alt="" />
+    </div>
+    <div class="sf-panel" id="f3-qs">
+        <img class="f3-q" src="assets/ui/qs-000.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-001.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-002.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-003.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-004.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-005.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-006.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-007.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-008.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-009.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-010.png" alt="" />
+        <img class="f3-q" src="assets/ui/qs-011.png" alt="" />
+      <div class="f3-glow" id="f3-glow"></div>
+    </div>
+    <div class="sf-sup" id="f3-s1">AI reads every <em>question.</em></div>
+    <div class="sf-sup" id="f3-s2"><span id="f3-w1">Options.</span><span id="f3-w2">Answer key.</span></div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f03-read';
+  const { q, qa, tl, superIn, wordIn, only } = SF(ID);
+  const C = qa('.f3-c'), Q = qa('.f3-q');
+  tl.fromTo('#f3-card', { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out' }, 0);
+  tl.fromTo('#f3-qs', { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out' }, 0.1);
+  // the real run 3 screens, each at its own moment on the stopwatch (17.3 s of reading in 7.8 s)
+  const T = [0,1,1.61,2.26,2.86,3.5,4.11,4.69,5.37,5.98,6.56,7.68];
+  T.forEach((t, i) => {
+    only(t, C[i], C); only(t, Q[i], Q);
+    if (i >= 7) tl.fromTo('#f3-glow', { opacity: 1 }, { opacity: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, t);
+  });
+  // "AI photo से हर सवाल खुद पढ़ लेता है... options और answer key के साथ।"
+  superIn(0.35, q('#f3-s1'));
+  tl.set('#f3-s2', { autoAlpha: 1 }, 0);
+  tl.set(['#f3-w1', '#f3-w2'], { opacity: 0 }, 0);
+  wordIn(3.4, q('#f3-w1'));
+  wordIn(4.05, q('#f3-w2'));
+  tl.to('#f3-qs', { y: -10, duration: 7.5, ease: 'sine.inOut' }, 0.5);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

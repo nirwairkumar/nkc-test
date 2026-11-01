@@ -1,0 +1,65 @@
+[
+ {
+  "w": "Number",
+  "r": "number",
+  "start": 0.04,
+  "end": 0.321,
+  "score": 0.064
+ },
+ {
+  "w": "five:",
+  "r": "five",
+  "start": 0.422,
+  "end": 0.683,
+  "score": 0.005
+ },
+ {
+  "w": "ഒറ്റ",
+  "r": "orrrra",
+  "start": 1.004,
+  "end": 1.326,
+  "score": 0.9
+ },
+ {
+  "w": "click-ൽ",
+  "r": "clickla",
+  "start": 1.386,
+  "end": 1.788,
+  "score": 0.678
+ },
+ {
+  "w": "live",
+  "r": "live",
+  "start": 2.029,
+  "end": 2.431,
+  "score": 0.509
+ },
+ {
+  "w": "anti-cheating",
+  "r": "anticheating",
+  "start": 2.471,
+  "end": 3.093,
+  "score": 0.582
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 3.214,
+  "end": 3.596,
+  "score": 0.732
+ },
+ {
+  "w": "room-ന്റെ",
+  "r": "roomnrre",
+  "start": 3.656,
+  "end": 3.957,
+  "score": 0.769
+ },
+ {
+  "w": "ഉള്ളിൽ.",
+  "r": "ullllila",
+  "start": 3.977,
+  "end": 4.279,
+  "score": 0.982
+ }
+]

@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Same construction as frontend/public/logo-testoza.svg, with local fonts so it renders
+     exactly. build.mjs screenshots this and trims it to ink as wordmark.png. -->
+<style>
+@font-face{font-family:Outfit;font-weight:700;src:url(Outfit-700.woff2)}
+@font-face{font-family:Outfit;font-weight:900;src:url(Outfit-900.woff2)}
+html,body{margin:0;background:transparent}
+svg{display:block}
+</style></head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="4800" height="960">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE885"/>
+      <stop offset="50%" stop-color="#F4B838"/>
+      <stop offset="100%" stop-color="#9E6400"/>
+    </linearGradient>
+  </defs>
+  <text x="300" y="90" text-anchor="middle" style="font-family:Outfit;font-weight:700;font-size:54px;letter-spacing:-0.02em"><tspan fill="#38bdf8">Testo</tspan><tspan dx="-3" fill="url(#gold)" style="font-weight:900;font-size:68.04px">Z</tspan><tspan dx="-2" fill="#38bdf8">a</tspan></text>
+</svg>
+</body></html>

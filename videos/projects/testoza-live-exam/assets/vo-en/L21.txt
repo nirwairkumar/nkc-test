@@ -1,0 +1,2 @@
+Now — who's writing? These are your candidate inputs.
+Name is already there. Tap Roll No, and every result comes with a name and a roll number.

@@ -1,0 +1,791 @@
+{
+  "total": 339.35,
+  "lines": [
+    {
+      "id": "L01",
+      "start": 0.5,
+      "end": 15.7,
+      "next": 17.9,
+      "enDur": 15.2,
+      "events": [
+        {
+          "cue": "m1",
+          "at": 0.38,
+          "kind": "scene"
+        },
+        {
+          "cue": "m2",
+          "at": 3.1,
+          "kind": "scene"
+        },
+        {
+          "cue": "m3",
+          "at": 5.58,
+          "kind": "scene"
+        },
+        {
+          "cue": "m4",
+          "at": 7.42,
+          "kind": "scene"
+        },
+        {
+          "cue": "title",
+          "at": 10.22,
+          "kind": "scene"
+        }
+      ]
+    },
+    {
+      "id": "L02",
+      "start": 17.9,
+      "end": 27.29,
+      "next": 27.61,
+      "enDur": 9.4,
+      "events": [
+        {
+          "cue": "create",
+          "at": 21.12,
+          "kind": "click"
+        },
+        {
+          "cue": "name",
+          "at": 22.58,
+          "kind": "click"
+        },
+        {
+          "cue": "marking",
+          "at": 24.1,
+          "kind": "click"
+        },
+        {
+          "cue": "questions",
+          "at": 25.62,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L03",
+      "start": 27.61,
+      "end": 39.5,
+      "next": 39.82,
+      "enDur": 11.88,
+      "events": [
+        {
+          "cue": "q1text",
+          "at": 31.24,
+          "kind": "click"
+        },
+        {
+          "cue": "sypad",
+          "at": 34.45,
+          "kind": "click"
+        },
+        {
+          "cue": "chem",
+          "at": 37.81,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L04",
+      "start": 39.82,
+      "end": 57.13,
+      "next": 57.45,
+      "enDur": 17.31,
+      "events": [
+        {
+          "cue": "formula",
+          "at": 44.02,
+          "kind": "click"
+        },
+        {
+          "cue": "mn",
+          "at": 46.32,
+          "kind": "click"
+        },
+        {
+          "cue": "sub",
+          "at": 49.16,
+          "kind": "click"
+        },
+        {
+          "cue": "charge",
+          "at": 50.95,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L05",
+      "start": 57.45,
+      "end": 77.79,
+      "next": 78.11,
+      "enDur": 20.35,
+      "events": [
+        {
+          "cue": "rest",
+          "at": 54.91,
+          "kind": "click"
+        },
+        {
+          "cue": "ins1a",
+          "at": 60.46,
+          "kind": "click"
+        },
+        {
+          "cue": "f1b",
+          "at": 61.73,
+          "kind": "click"
+        },
+        {
+          "cue": "ins1",
+          "at": 70.65,
+          "kind": "click"
+        },
+        {
+          "cue": "lands1",
+          "at": 71.49,
+          "kind": "click"
+        },
+        {
+          "cue": "opts1",
+          "at": 73.03,
+          "kind": "click"
+        },
+        {
+          "cue": "correct1",
+          "at": 76.13,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L06",
+      "start": 78.11,
+      "end": 87.08,
+      "next": 87.4,
+      "enDur": 8.97,
+      "events": [
+        {
+          "cue": "q2add",
+          "at": 76.98,
+          "kind": "click"
+        },
+        {
+          "cue": "q2text",
+          "at": 78.53,
+          "kind": "click"
+        },
+        {
+          "cue": "formula2",
+          "at": 81.03,
+          "kind": "click"
+        },
+        {
+          "cue": "a",
+          "at": 81.7,
+          "kind": "click"
+        },
+        {
+          "cue": "gas",
+          "at": 82.79,
+          "kind": "click"
+        },
+        {
+          "cue": "rev",
+          "at": 83.91,
+          "kind": "click"
+        },
+        {
+          "cue": "b",
+          "at": 84.51,
+          "kind": "click"
+        },
+        {
+          "cue": "gas2",
+          "at": 85.83,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L07",
+      "start": 87.4,
+      "end": 99.01,
+      "next": 99.66,
+      "enDur": 11.61,
+      "events": [
+        {
+          "cue": "up",
+          "at": 89.04,
+          "kind": "click"
+        },
+        {
+          "cue": "down",
+          "at": 90.24,
+          "kind": "click"
+        },
+        {
+          "cue": "heat",
+          "at": 91.28,
+          "kind": "click"
+        },
+        {
+          "cue": "deg",
+          "at": 91.84,
+          "kind": "click"
+        },
+        {
+          "cue": "aq",
+          "at": 93.12,
+          "kind": "click"
+        },
+        {
+          "cue": "consts",
+          "at": 95.36,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L08",
+      "start": 99.66,
+      "end": 108.68,
+      "next": 109.83,
+      "enDur": 9.02,
+      "events": [
+        {
+          "cue": "ins2",
+          "at": 97.52,
+          "kind": "click"
+        },
+        {
+          "cue": "rest2",
+          "at": 98.77,
+          "kind": "click"
+        },
+        {
+          "cue": "opts2",
+          "at": 104.45,
+          "kind": "click"
+        },
+        {
+          "cue": "correct2",
+          "at": 107.46,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L09",
+      "start": 109.83,
+      "end": 127.71,
+      "next": 128.03,
+      "enDur": 17.88,
+      "events": [
+        {
+          "cue": "q3add",
+          "at": 109.71,
+          "kind": "click"
+        },
+        {
+          "cue": "formula3",
+          "at": 113.07,
+          "kind": "click"
+        },
+        {
+          "cue": "arrowkey",
+          "at": 116.03,
+          "kind": "click"
+        },
+        {
+          "cue": "rows",
+          "at": 119.55,
+          "kind": "click"
+        },
+        {
+          "cue": "rowminus",
+          "at": 124.99,
+          "kind": "click"
+        },
+        {
+          "cue": "rowins",
+          "at": 126.59,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L10",
+      "start": 128.03,
+      "end": 136.82,
+      "next": 137.66,
+      "enDur": 8.79,
+      "events": [
+        {
+          "cue": "qmark",
+          "at": 127.91,
+          "kind": "click"
+        },
+        {
+          "cue": "delta",
+          "at": 130.87,
+          "kind": "click"
+        },
+        {
+          "cue": "step",
+          "at": 132.55,
+          "kind": "click"
+        },
+        {
+          "cue": "prod",
+          "at": 132.82,
+          "kind": "click"
+        },
+        {
+          "cue": "ins3a",
+          "at": 136.07,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L11",
+      "start": 137.66,
+      "end": 149.78,
+      "next": 150.11,
+      "enDur": 12.12,
+      "events": [
+        {
+          "cue": "line2",
+          "at": 136.67,
+          "kind": "click"
+        },
+        {
+          "cue": "arrow2",
+          "at": 139.79,
+          "kind": "click"
+        },
+        {
+          "cue": "words",
+          "at": 141.78,
+          "kind": "click"
+        },
+        {
+          "cue": "flame",
+          "at": 142.12,
+          "kind": "click"
+        },
+        {
+          "cue": "ins3b",
+          "at": 149.06,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L12",
+      "start": 150.11,
+      "end": 169.38,
+      "next": 171.68,
+      "enDur": 19.27,
+      "events": [
+        {
+          "cue": "line3",
+          "at": 149.99,
+          "kind": "click"
+        },
+        {
+          "cue": "ins3c",
+          "at": 161.85,
+          "kind": "click"
+        },
+        {
+          "cue": "q3rest",
+          "at": 163,
+          "kind": "click"
+        },
+        {
+          "cue": "opts3",
+          "at": 164.87,
+          "kind": "click"
+        },
+        {
+          "cue": "correct3",
+          "at": 168.07,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L13",
+      "start": 171.68,
+      "end": 183.98,
+      "next": 184.3,
+      "enDur": 12.3,
+      "events": [
+        {
+          "cue": "q4add",
+          "at": 170.41,
+          "kind": "click"
+        },
+        {
+          "cue": "tables",
+          "at": 173.88,
+          "kind": "click"
+        },
+        {
+          "cue": "match",
+          "at": 175.96,
+          "kind": "click"
+        },
+        {
+          "cue": "editor",
+          "at": 177.4,
+          "kind": "click"
+        },
+        {
+          "cue": "labels",
+          "at": 178.97,
+          "kind": "click"
+        },
+        {
+          "cue": "tins",
+          "at": 183.24,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L14",
+      "start": 184.3,
+      "end": 202.43,
+      "next": 204.85,
+      "enDur": 18.12,
+      "events": [
+        {
+          "cue": "blue",
+          "at": 184.18,
+          "kind": "click"
+        },
+        {
+          "cue": "box1",
+          "at": 186.42,
+          "kind": "click"
+        },
+        {
+          "cue": "f1",
+          "at": 187.3,
+          "kind": "click"
+        },
+        {
+          "cue": "xe",
+          "at": 187.87,
+          "kind": "click"
+        },
+        {
+          "cue": "box2",
+          "at": 190.32,
+          "kind": "click"
+        },
+        {
+          "cue": "fill",
+          "at": 192.82,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L15",
+      "start": 204.85,
+      "end": 216.82,
+      "next": 217.96,
+      "enDur": 11.97,
+      "events": [
+        {
+          "cue": "tins2",
+          "at": 203.88,
+          "kind": "click"
+        },
+        {
+          "cue": "table",
+          "at": 205.53,
+          "kind": "click"
+        },
+        {
+          "cue": "opts4",
+          "at": 211.26,
+          "kind": "click"
+        },
+        {
+          "cue": "correct4",
+          "at": 215.37,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L16",
+      "start": 217.96,
+      "end": 233.94,
+      "next": 234.26,
+      "enDur": 15.98,
+      "events": [
+        {
+          "cue": "q5add",
+          "at": 217.84,
+          "kind": "click"
+        },
+        {
+          "cue": "qtype",
+          "at": 222.48,
+          "kind": "click"
+        },
+        {
+          "cue": "numerical",
+          "at": 223.92,
+          "kind": "click"
+        },
+        {
+          "cue": "wrong",
+          "at": 228.96,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L17",
+      "start": 234.26,
+      "end": 247.94,
+      "next": 248.26,
+      "enDur": 13.67,
+      "events": [
+        {
+          "cue": "q5text",
+          "at": 234.14,
+          "kind": "click"
+        },
+        {
+          "cue": "pic",
+          "at": 236.78,
+          "kind": "click"
+        },
+        {
+          "cue": "cloud",
+          "at": 237.9,
+          "kind": "click"
+        },
+        {
+          "cue": "cloudwhy",
+          "at": 239.66,
+          "kind": "click"
+        },
+        {
+          "cue": "choose",
+          "at": 242.58,
+          "kind": "click"
+        },
+        {
+          "cue": "pick",
+          "at": 245.78,
+          "kind": "click"
+        },
+        {
+          "cue": "placed",
+          "at": 246.94,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L18",
+      "start": 248.26,
+      "end": 273.78,
+      "next": 275.03,
+      "enDur": 25.52,
+      "events": [
+        {
+          "cue": "arrow5",
+          "at": 251.66,
+          "kind": "click"
+        },
+        {
+          "cue": "heat5",
+          "at": 253.66,
+          "kind": "click"
+        },
+        {
+          "cue": "x",
+          "at": 256.42,
+          "kind": "click"
+        },
+        {
+          "cue": "second",
+          "at": 259.58,
+          "kind": "click"
+        },
+        {
+          "cue": "y",
+          "at": 271.75,
+          "kind": "click"
+        },
+        {
+          "cue": "ins5",
+          "at": 272.94,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L19",
+      "start": 275.03,
+      "end": 279.8,
+      "next": 280.9,
+      "enDur": 4.78,
+      "events": [
+        {
+          "cue": "seen",
+          "at": 274.91,
+          "kind": "click"
+        },
+        {
+          "cue": "exact",
+          "at": 277.23,
+          "kind": "click"
+        },
+        {
+          "cue": "four",
+          "at": 278.67,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L20",
+      "start": 280.9,
+      "end": 293.33,
+      "next": 293.65,
+      "enDur": 12.43,
+      "events": [
+        {
+          "cue": "q6add",
+          "at": 282.38,
+          "kind": "click"
+        },
+        {
+          "cue": "qtype6",
+          "at": 284.11,
+          "kind": "click"
+        },
+        {
+          "cue": "multi",
+          "at": 285.05,
+          "kind": "click"
+        },
+        {
+          "cue": "photo",
+          "at": 286.06,
+          "kind": "click"
+        },
+        {
+          "cue": "choose6",
+          "at": 287.36,
+          "kind": "click"
+        },
+        {
+          "cue": "reading",
+          "at": 291.5,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L21",
+      "start": 293.65,
+      "end": 304.11,
+      "next": 304.43,
+      "enDur": 10.46,
+      "events": [
+        {
+          "cue": "filled",
+          "at": 293.53,
+          "kind": "click"
+        },
+        {
+          "cue": "ticked",
+          "at": 300.33,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L22",
+      "start": 304.43,
+      "end": 315.14,
+      "next": 318.72,
+      "enDur": 10.71,
+      "events": [
+        {
+          "cue": "check",
+          "at": 304.55,
+          "kind": "click"
+        },
+        {
+          "cue": "partial",
+          "at": 306.39,
+          "kind": "click"
+        },
+        {
+          "cue": "jeeadv",
+          "at": 308.55,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L23",
+      "start": 318.72,
+      "end": 325.05,
+      "next": 326.36,
+      "enDur": 6.33,
+      "events": [
+        {
+          "cue": "save",
+          "at": 316.14,
+          "kind": "click"
+        },
+        {
+          "cue": "saved",
+          "at": 320.04,
+          "kind": "click"
+        },
+        {
+          "cue": "ready",
+          "at": 322.92,
+          "kind": "click"
+        }
+      ]
+    },
+    {
+      "id": "L24",
+      "start": 326.36,
+      "end": 336.15,
+      "next": 339.35,
+      "enDur": 9.79,
+      "events": [
+        {
+          "cue": "endurl",
+          "at": 330.64,
+          "kind": "scene"
+        },
+        {
+          "cue": "thanks",
+          "at": 333.52,
+          "kind": "scene"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f7-phone { top: 560px; }
+  #f7-flare { position: absolute; left: 540px; top: 1100px; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(244, 184, 56, 0.28), rgba(56, 189, 248, 0.10) 50%, transparent); opacity: 0; }
+  #f7-logo { position: absolute; left: 0; right: 0; top: 1020px; text-align: center; white-space: nowrap;
+    font: 700 168px/1 'Outfit', sans-serif; letter-spacing: -0.02em; }
+  #f7-logo .c { display: inline-block; color: #38bdf8; opacity: 0; }
+  #f7-logo .z { display: inline-block; font-size: 1.26em; font-weight: 900; margin: 0 0.02em; opacity: 0;
+    background: linear-gradient(180deg, #ffe885, #f4b838 55%, #9e6400); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(244, 184, 56, 0.55)); }
+  .f7-row { position: absolute; left: 0; right: 0; top: 1262px; display: flex; justify-content: center; gap: 22px; }
+  #f7-url { height: 84px; padding: 0 38px; border-radius: 999px; display: flex; align-items: center; gap: 14px; opacity: 0;
+    font: 700 42px/1 'Outfit', sans-serif; color: #f8fafc; background: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6), 0 20px 50px -20px rgba(56, 189, 248, 0.6); }
+  #f7-free { height: 84px; padding: 0 34px; border-radius: 999px; display: flex; align-items: center; opacity: 0;
+    font: 900 40px/1 'Outfit', sans-serif; letter-spacing: 0.12em; color: #1a1205; background: linear-gradient(180deg, #ffe885, #f4b838); box-shadow: 0 20px 50px -18px rgba(244, 184, 56, 0.8); }
+</style>
+<div id="root" data-composition-id="f07-close" data-width="1080" data-height="1920">
+  <div class="sf">
+    <div id="f7-stage" class="clip sf-stage" data-start="0" data-duration="6.4" data-track-index="0"></div>
+    <div class="sf-phone" id="f7-phone"><div class="sf-screen"><div class="sf-notch"></div><img src="assets/ui/phone-exam-1.png" alt="" /></div></div>
+    <div id="f7-flare"></div>
+    <div class="sf-sup" id="f7-s1">One photo → <em>live test.</em></div>
+    <div id="f7-logo"><span class="c">T</span><span class="c">e</span><span class="c">s</span><span class="c">t</span><span class="c">o</span><span class="z">Z</span><span class="c">a</span></div>
+    <div class="f7-row">
+      <div id="f7-url"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" /></svg>testoza.com</div>
+      <div id="f7-free">FREE</div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f07-close';
+  const { q, qa, tl, superIn } = SF(ID);
+  // handoff from frame 6 (phone at y −18), then it falls away so the close reads clean
+  tl.set('#f7-phone', { y: -18 }, 0);
+  tl.to('#f7-phone', { y: 300, scale: 0.78, opacity: 0.22, filter: 'blur(10px)', duration: 1.3, ease: 'power3.inOut' }, 0.15);
+  tl.to('#f7-phone', { opacity: 0, duration: 0.6, ease: 'power1.in' }, 1.9);
+  // "रात का tension, एक photo में खत्म।"
+  superIn(1.5, q('#f7-s1'));
+  // the beat stops on "खत्म" (2.65): the logo lands into the calm piano
+  tl.fromTo('#f7-flare', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 1.4, ease: 'expo.out' }, 2.5);
+  tl.fromTo(qa('#f7-logo .c'), { y: 80, opacity: 0, filter: 'blur(14px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out', stagger: 0.05 }, 2.6);
+  tl.fromTo('#f7-logo .z', { y: -240, rotation: -18, scale: 1.6, opacity: 0 }, { y: 0, rotation: 0, scale: 1, opacity: 1, duration: 0.85, ease: 'back.out(1.6)' }, 2.9);
+  // "Testoza.com पर, बिल्कुल free।"
+  tl.fromTo('#f7-url', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out' }, 3.25);
+  tl.fromTo('#f7-free', { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(2.2)' }, 4.6);
+  tl.to('#f7-logo', { scale: 1.03, duration: 2.6, ease: 'sine.inOut' }, 3.6);
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

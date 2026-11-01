@@ -1,0 +1,140 @@
+[
+  {
+    "id": "w0",
+    "text": "Same",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "exam,",
+    "start": 0.4,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "same",
+    "start": 0.88,
+    "end": 1.2
+  },
+  {
+    "id": "w3",
+    "text": "rules.",
+    "start": 1.2,
+    "end": 1.76
+  },
+  {
+    "id": "w4",
+    "text": "Name,",
+    "start": 1.76,
+    "end": 2.32
+  },
+  {
+    "id": "w5",
+    "text": "roll",
+    "start": 2.32,
+    "end": 2.64
+  },
+  {
+    "id": "w6",
+    "text": "number.",
+    "start": 2.64,
+    "end": 3.2
+  },
+  {
+    "id": "w7",
+    "text": "Start.",
+    "start": 3.2,
+    "end": 4.08
+  },
+  {
+    "id": "w8",
+    "text": "Full",
+    "start": 4.08,
+    "end": 4.4
+  },
+  {
+    "id": "w9",
+    "text": "screen",
+    "start": 4.48,
+    "end": 4.88
+  },
+  {
+    "id": "w10",
+    "text": "kicks",
+    "start": 4.88,
+    "end": 5.2
+  },
+  {
+    "id": "w11",
+    "text": "in.",
+    "start": 5.2,
+    "end": 5.52
+  },
+  {
+    "id": "w12",
+    "text": "The",
+    "start": 5.52,
+    "end": 5.68
+  },
+  {
+    "id": "w13",
+    "text": "timer",
+    "start": 5.68,
+    "end": 6.08
+  },
+  {
+    "id": "w14",
+    "text": "starts",
+    "start": 6.08,
+    "end": 6.4
+  },
+  {
+    "id": "w15",
+    "text": "and",
+    "start": 6.48,
+    "end": 6.64
+  },
+  {
+    "id": "w16",
+    "text": "the",
+    "start": 6.64,
+    "end": 6.8
+  },
+  {
+    "id": "w17",
+    "text": "answer",
+    "start": 6.8,
+    "end": 7.2
+  },
+  {
+    "id": "w18",
+    "text": "like",
+    "start": 7.2,
+    "end": 7.36
+  },
+  {
+    "id": "w19",
+    "text": "any",
+    "start": 7.36,
+    "end": 7.6
+  },
+  {
+    "id": "w20",
+    "text": "computer",
+    "start": 7.6,
+    "end": 7.92
+  },
+  {
+    "id": "w21",
+    "text": "based",
+    "start": 8,
+    "end": 8.24
+  },
+  {
+    "id": "w22",
+    "text": "test.",
+    "start": 8.24,
+    "end": 8.48
+  }
+]

@@ -1,0 +1,68 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+/* C · Paper: graph-paper light version. Wings tell the story — a student's OMR answers on
+   the left, the teacher's red-pen tick and score on the right. */
+.stage{background:
+  radial-gradient(1000px 600px at 26% 50%,rgba(56,189,248,.10),transparent 70%),
+  radial-gradient(1000px 600px at 76% 50%,rgba(244,184,56,.10),transparent 70%),
+  #fbfaf6}
+.grid{position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(14,165,233,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.13) 1px,transparent 1px),
+    linear-gradient(rgba(14,165,233,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.06) 1px,transparent 1px);
+  background-size:280px 280px,280px 280px,56px 56px,56px 56px;background-position:center}
+.grain{mix-blend-mode:multiply;opacity:.05}
+
+.stack{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.wm{height:160px}
+h1{margin-top:46px;font-weight:700;font-size:62px;line-height:1;letter-spacing:-.015em;color:#0f172a;white-space:nowrap}
+h1 u{position:relative;text-decoration:none}
+h1 u svg{position:absolute;left:0;bottom:-16px;width:100%;height:18px;color:#38bdf8}
+.url{margin-top:40px;font-weight:600;font-size:38px;color:#475569;letter-spacing:.01em}
+.url span{color:#d99a1e;margin:0 14px}
+
+.omr{position:absolute;left:150px;top:600px;transform:rotate(-5deg);background:#fff;border-radius:18px;padding:26px 30px;
+  box-shadow:0 18px 40px rgba(15,23,42,.10),0 0 0 1px rgba(15,23,42,.05);display:flex;flex-direction:column;gap:16px}
+.omr .row{display:flex;align-items:center;gap:12px}
+.omr s{width:44px;text-decoration:none;font-weight:600;font-size:22px;color:#94a3b8}
+.omr i{width:38px;height:38px;border-radius:50%;border:2px solid #cbd5e1;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:17px;color:#94a3b8}
+.omr i.on{background:#1e3a8a;border-color:#1e3a8a;color:#fff}
+
+.pen{position:absolute;color:#e0313f}
+.score{position:absolute;left:2190px;top:590px;width:280px;height:170px;transform:rotate(-7deg)}
+.score b{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:74px;letter-spacing:-.02em;color:#e0313f}
+.score svg{position:absolute;inset:0}
+</style></head>
+<body><div class="stage">
+  <div class="grid"></div>
+
+  <div class="omr">
+    <div class="row"><s>01</s><i>A</i><i class="on">B</i><i>C</i><i>D</i></div>
+    <div class="row"><s>02</s><i class="on">A</i><i>B</i><i>C</i><i>D</i></div>
+    <div class="row"><s>03</s><i>A</i><i>B</i><i>C</i><i class="on">D</i></div>
+    <div class="row"><s>04</s><i>A</i><i>B</i><i class="on">C</i><i>D</i></div>
+  </div>
+
+  <svg class="pen" style="left:2110px;top:770px" width="190" height="150" viewBox="0 0 190 150" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 82 C 30 92, 48 112, 62 134 C 92 70, 128 34, 178 12"/>
+  </svg>
+  <div class="score">
+    <svg viewBox="0 0 280 170" fill="none" stroke="#e0313f" stroke-width="6" stroke-linecap="round">
+      <path d="M150 18 C 70 14, 14 44, 18 92 C 22 140, 120 160, 196 146 C 262 134, 276 84, 246 52 C 222 26, 170 14, 112 20"/>
+    </svg>
+    <b>10/10</b>
+  </div>
+
+  <div class="safe">
+    <div class="stack">
+      <img class="wm" src="wordmark.png" alt="TestoZa">
+      <h1>Free online <u>test maker<svg viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8c60-5 120-6 180-3s80 4 116 1" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></u> for teachers &amp; institutes</h1>
+      <div class="url">testoza.com<span>·</span>Hindi &amp; English tutorials</div>
+    </div>
+  </div>
+  <div class="grain"></div>
+</div>
+<script src="guides.js"></script>
+</body></html>

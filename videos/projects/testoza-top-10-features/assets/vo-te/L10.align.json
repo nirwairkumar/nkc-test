@@ -1,0 +1,226 @@
+[
+ {
+  "w": "Language",
+  "r": "language",
+  "start": 0.04,
+  "end": 0.5,
+  "score": 0.415
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 0.52,
+  "end": 0.781,
+  "score": 0.285
+ },
+ {
+  "w": "tap",
+  "r": "tap",
+  "start": 0.801,
+  "end": 0.981,
+  "score": 0.974
+ },
+ {
+  "w": "చేయండి,",
+  "r": "ceeyamddi",
+  "start": 1.021,
+  "end": 1.361,
+  "score": 0.973
+ },
+ {
+  "w": "ఇక్కడ",
+  "r": "ikkadda",
+  "start": 1.721,
+  "end": 1.962,
+  "score": 0.968
+ },
+ {
+  "w": "Hindi",
+  "r": "hindi",
+  "start": 2.002,
+  "end": 2.202,
+  "score": 0.797
+ },
+ {
+  "w": "ఎంచుకుంటున్నాం",
+  "r": "emcukumttunnaam",
+  "start": 2.282,
+  "end": 2.882,
+  "score": 0.864
+ },
+ {
+  "w": "తెలుగు",
+  "r": "telugu",
+  "start": 3.223,
+  "end": 3.463,
+  "score": 0.989
+ },
+ {
+  "w": "కూడా",
+  "r": "kuuddaa",
+  "start": 3.503,
+  "end": 3.743,
+  "score": 0.992
+ },
+ {
+  "w": "ఉంది",
+  "r": "umdi",
+  "start": 3.783,
+  "end": 3.943,
+  "score": 0.999
+ },
+ {
+  "w": "English",
+  "r": "english",
+  "start": 4.444,
+  "end": 4.764,
+  "score": 0.593
+ },
+ {
+  "w": "letters",
+  "r": "letters",
+  "start": 4.784,
+  "end": 5.084,
+  "score": 0.811
+ },
+ {
+  "w": "లో",
+  "r": "loo",
+  "start": 5.124,
+  "end": 5.224,
+  "score": 0.933
+ },
+ {
+  "w": "type",
+  "r": "type",
+  "start": 5.285,
+  "end": 5.485,
+  "score": 0.508
+ },
+ {
+  "w": "చేయండి.",
+  "r": "ceeyamddi",
+  "start": 5.485,
+  "end": 5.825,
+  "score": 0.976
+ },
+ {
+  "w": "Space",
+  "r": "space",
+  "start": 6.265,
+  "end": 6.666,
+  "score": 0.401
+ },
+ {
+  "w": "నొక్కగానే",
+  "r": "nokkagaanee",
+  "start": 6.666,
+  "end": 7.186,
+  "score": 0.946
+ },
+ {
+  "w": "ప్రతి",
+  "r": "prati",
+  "start": 7.446,
+  "end": 7.707,
+  "score": 0.998
+ },
+ {
+  "w": "word",
+  "r": "word",
+  "start": 7.747,
+  "end": 7.927,
+  "score": 0.579
+ },
+ {
+  "w": "మారిపోతుంది",
+  "r": "maaripootumdi",
+  "start": 7.987,
+  "end": 8.547,
+  "score": 0.996
+ },
+ {
+  "w": "వేరే",
+  "r": "veeree",
+  "start": 8.968,
+  "end": 9.248,
+  "score": 0.988
+ },
+ {
+  "w": "keyboard",
+  "r": "keyboard",
+  "start": 9.268,
+  "end": 9.588,
+  "score": 0.499
+ },
+ {
+  "w": "అవసరం",
+  "r": "avasaram",
+  "start": 9.628,
+  "end": 9.888,
+  "score": 0.99
+ },
+ {
+  "w": "లేదు.",
+  "r": "leedu",
+  "start": 9.928,
+  "end": 10.129,
+  "score": 0.808
+ },
+ {
+  "w": "ఇప్పుడు",
+  "r": "ippuddu",
+  "start": 10.969,
+  "end": 11.21,
+  "score": 0.989
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 11.23,
+  "end": 11.65,
+  "score": 0.28
+ },
+ {
+  "w": "రెండు",
+  "r": "remddu",
+  "start": 11.99,
+  "end": 12.23,
+  "score": 0.957
+ },
+ {
+  "w": "భాషల్లో",
+  "r": "bhaassalloo",
+  "start": 12.25,
+  "end": 12.651,
+  "score": 0.918
+ },
+ {
+  "w": "ఉంది,",
+  "r": "umdi",
+  "start": 12.691,
+  "end": 12.851,
+  "score": 0.999
+ },
+ {
+  "w": "options",
+  "r": "options",
+  "start": 13.291,
+  "end": 13.652,
+  "score": 0.416
+ },
+ {
+  "w": "కూడా",
+  "r": "kuuddaa",
+  "start": 13.692,
+  "end": 13.932,
+  "score": 0.989
+ },
+ {
+  "w": "అలాగే.",
+  "r": "alaagee",
+  "start": 13.952,
+  "end": 14.272,
+  "score": 0.941
+ }
+]

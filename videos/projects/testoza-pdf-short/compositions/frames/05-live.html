@@ -1,0 +1,82 @@
+<template>
+<link rel="stylesheet" href="assets/short.css" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="assets/short.js"></script>
+<style>
+  #root { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+  #f5-pv { top: 640px; height: 592px; }
+  #f5-pv img, #f5-mt img, #f5-toast img { position: absolute; left: 0; top: 0; width: 960px; transform-origin: 0 0; }
+  #f5-mt { top: 700px; height: 421px; visibility: hidden; }
+  #f5-toast { top: 1150px; height: 203px; visibility: hidden; border-radius: 20px; }
+  .f5-chip { position: absolute; top: 1270px; z-index: 8; height: 150px; padding: 0 44px; border-radius: 34px; display: flex; align-items: center;
+    font: 900 112px/1 'Outfit', sans-serif; letter-spacing: -0.03em; color: #fff; opacity: 0; }
+  #f5-plus { left: 196px; background: linear-gradient(180deg, #22c55e, #15803d); box-shadow: 0 30px 70px -20px rgba(34, 197, 94, 0.8); }
+  #f5-minus { left: 576px; background: linear-gradient(180deg, #f87171, #dc2626); box-shadow: 0 30px 70px -20px rgba(239, 68, 68, 0.8); }
+  .f5-code { position: absolute; left: 120px; top: 1170px; width: 840px; height: 300px; z-index: 9; border-radius: 36px; visibility: hidden;
+    background: rgba(15, 23, 42, 0.9); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6), 0 40px 100px -30px rgba(0, 0, 0, 0.9), 0 0 80px -10px rgba(56, 189, 248, 0.45);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .f5-code p { margin: 0; font: 700 28px/1 'Outfit', sans-serif; letter-spacing: 0.3em; color: #38bdf8; }
+  .f5-digits { display: flex; gap: 14px; font: 900 140px/1 'Outfit', sans-serif; color: #f8fafc; font-variant-numeric: tabular-nums; }
+  .f5-digits span { display: inline-block; }
+  .f5-digits .gap { width: 30px; }
+  .f5-code small { font: 600 30px/1 'Outfit', sans-serif; color: #94a3b8; }
+  .f5-code small b { color: #e2e8f0; font-weight: 700; }
+  #f5-s1 span, #f5-s2 span { display: inline-block; }
+</style>
+<div data-hf-id="hf-ckxt" id="root" data-composition-id="f05-live" data-width="1080" data-height="1920">
+  <div data-hf-id="hf-4t93" class="sf">
+    <div data-hf-id="hf-lmyj" id="f5-stage" class="clip sf-stage" data-start="0" data-duration="8.1" data-track-index="0"></div>
+    <div data-hf-id="hf-1vdq" class="sf-panel" id="f5-pv"><img data-hf-id="hf-ljzx" id="f5-pvi" src="assets/ui/preview.png" alt="" /></div>
+    <div data-hf-id="hf-zkej" class="f5-chip" id="f5-plus">+4</div>
+    <div data-hf-id="hf-sm6p" class="f5-chip" id="f5-minus">−1</div>
+    <div data-hf-id="hf-kde3" class="sf-panel" id="f5-mt"><img data-hf-id="hf-dnuz" id="f5-mti" src="assets/ui/mytests.png" alt="" /></div>
+    <div data-hf-id="hf-97g5" class="sf-panel" id="f5-toast"><img data-hf-id="hf-8k21" src="assets/ui/toast.png" alt="" /></div>
+    <div data-hf-id="hf-1mpc" class="f5-code" id="f5-code">
+      <p data-hf-id="hf-ljfg">JOIN CODE</p>
+      <div data-hf-id="hf-05fa" class="f5-digits"><span data-hf-id="hf-gl5b">4</span><span data-hf-id="hf-ezx7">8</span><span data-hf-id="hf-hdrd">2</span><span data-hf-id="hf-p0yb" class="gap"></span><span data-hf-id="hf-fe88">9</span><span data-hf-id="hf-ikog">1</span><span data-hf-id="hf-hs2e">3</span></div>
+      <small data-hf-id="hf-tgy4">Students open <b data-hf-id="hf-t1ux">testoza.com/join</b></small>
+    </div>
+    <div data-hf-id="hf-khx2" class="sf-sup" id="f5-s1"><span data-hf-id="hf-sw84" id="f5-a">+4</span> <span data-hf-id="hf-ta4k" id="f5-b">/ −1.</span> <em data-hf-id="hf-m4yt" id="f5-c">Live.</em></div>
+    <div data-hf-id="hf-xdvc" class="sf-sup" id="f5-s2">One <em data-hf-id="hf-9ujb">6-digit</em> code.</div>
+    <svg data-hf-id="hf-myis" class="sf-cursor" viewBox="0 0 24 24"><path data-hf-id="hf-v13s" d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.8L4 19z" fill="#fff" stroke="#0f172a" stroke-width="1.3" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+<script>
+(function () {
+  const ID = 'f05-live';
+  const { q, qa, tl, superIn, wordIn, superOut, cursorAt, move, click } = SF(ID);
+  // A — marks: push into "+4 per question, −1 for a wrong answer" (banner centre ≈ 480,231 in the shot)
+  tl.fromTo('#f5-pv', { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out' }, 0);
+  // the line's text runs x 25–474 in the shot: centre it (≈250) at 480
+  tl.to('#f5-pvi', { scale: 1.75, x: 480 - 1.75 * 250, y: 230 - 1.75 * 231, duration: 1.2, ease: 'power3.inOut' }, 0.5);
+  tl.set('#f5-s1', { autoAlpha: 1 }, 0);
+  tl.set(['#f5-a', '#f5-b', '#f5-c'], { opacity: 0 }, 0);
+  // "प्लस फ़ोर, माइनस वन, और टेस्ट लाइव।"
+  tl.fromTo('#f5-plus', { opacity: 0, scale: 0.5, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(2)' }, 1.85);
+  wordIn(1.85, q('#f5-a'));
+  tl.fromTo('#f5-minus', { opacity: 0, scale: 0.5, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(2)' }, 2.75);
+  wordIn(2.75, q('#f5-b'));
+  // B — go live: My Tests, push into the new test's card, click "Conduct exam"
+  tl.set(['#f5-pv', '#f5-plus', '#f5-minus'], { autoAlpha: 0 }, 3.75);
+  tl.set('#f5-mt', { autoAlpha: 1 }, 3.75);
+  tl.fromTo('#f5-mti', { scale: 1.6, x: 480 - 1.6 * 168, y: 210 - 1.6 * 295 }, { scale: 2.2, x: 480 - 2.2 * 168, y: 210 - 2.2 * 295, duration: 1.0, ease: 'power3.out' }, 3.75);
+  cursorAt(3.8, 860, 1180);
+  move(3.85, 738, 1031, 0.5);
+  click(4.4, 738, 1031);
+  wordIn(4.4, q('#f5-c'));
+  // the real toast, then the code itself, big
+  tl.set('#f5-toast', { autoAlpha: 1 }, 4.75);
+  tl.fromTo('#f5-toast', { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'expo.out' }, 4.75);
+  tl.set('.sf-cursor', { autoAlpha: 0 }, 4.8);
+  tl.to('#f5-toast', { opacity: 0, scale: 0.94, duration: 0.25, ease: 'power2.in' }, 5.45);
+  tl.set('#f5-code', { autoAlpha: 1 }, 5.5);
+  tl.fromTo('#f5-code', { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(1.6)' }, 5.5);
+  tl.fromTo(qa('.f5-digits span'), { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out', stagger: 0.07 }, 5.6);
+  tl.to('#f5-code', { scale: 1.05, duration: 2.0, ease: 'sine.inOut' }, 6.1);
+  // "बच्चों को बस छह अंकों का कोड दीजिए।"
+  superOut(5.25, q('#f5-s1'));
+  superIn(5.55, q('#f5-s2'));
+  window.__timelines[ID] = tl;
+})();
+</script>
+</template>

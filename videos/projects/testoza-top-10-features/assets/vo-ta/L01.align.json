@@ -1,0 +1,226 @@
+[
+ {
+  "w": "ஒரு",
+  "r": "oru",
+  "start": 0.04,
+  "end": 0.18,
+  "score": 0.999
+ },
+ {
+  "w": "question",
+  "r": "question",
+  "start": 0.26,
+  "end": 0.64,
+  "score": 0.511
+ },
+ {
+  "w": "paper,",
+  "r": "paper",
+  "start": 0.7,
+  "end": 1.04,
+  "score": 0.599
+ },
+ {
+  "w": "online",
+  "r": "online",
+  "start": 1.2,
+  "end": 1.641,
+  "score": 0.623
+ },
+ {
+  "w": "test-ஆ",
+  "r": "testaa",
+  "start": 1.641,
+  "end": 1.961,
+  "score": 0.66
+ },
+ {
+  "w": "மாறுது.",
+  "r": "maarutu",
+  "start": 2.021,
+  "end": 2.381,
+  "score": 0.838
+ },
+ {
+  "w": "Equations",
+  "r": "equations",
+  "start": 2.901,
+  "end": 3.561,
+  "score": 0.308
+ },
+ {
+  "w": "சில",
+  "r": "cila",
+  "start": 3.821,
+  "end": 4.041,
+  "score": 0.988
+ },
+ {
+  "w": "நொடிகளில்.",
+  "r": "nodikalil",
+  "start": 4.081,
+  "end": 4.582,
+  "score": 0.921
+ },
+ {
+  "w": "Students",
+  "r": "students",
+  "start": 5.142,
+  "end": 5.682,
+  "score": 0.647
+ },
+ {
+  "w": "எந்த",
+  "r": "enta",
+  "start": 5.902,
+  "end": 6.142,
+  "score": 0.998
+ },
+ {
+  "w": "phone-லயும்",
+  "r": "phonelayum",
+  "start": 6.182,
+  "end": 6.622,
+  "score": 0.782
+ },
+ {
+  "w": "join",
+  "r": "join",
+  "start": 6.662,
+  "end": 6.902,
+  "score": 0.685
+ },
+ {
+  "w": "பண்ணலாம்.",
+  "r": "pannalaam",
+  "start": 6.942,
+  "end": 7.362,
+  "score": 0.858
+ },
+ {
+  "w": "Cheating",
+  "r": "cheating",
+  "start": 7.843,
+  "end": 8.303,
+  "score": 0.491
+ },
+ {
+  "w": "உடனே",
+  "r": "udanee",
+  "start": 8.523,
+  "end": 8.883,
+  "score": 0.667
+ },
+ {
+  "w": "பிடிபடும்.",
+  "r": "pidipadum",
+  "start": 8.963,
+  "end": 9.423,
+  "score": 0.995
+ },
+ {
+  "w": "ஒவ்வொரு",
+  "r": "ovvoru",
+  "start": 10.023,
+  "end": 10.363,
+  "score": 0.998
+ },
+ {
+  "w": "result-உம்",
+  "r": "resultum",
+  "start": 10.423,
+  "end": 10.904,
+  "score": 0.547
+ },
+ {
+  "w": "rank-ஓட",
+  "r": "rankooda",
+  "start": 11.144,
+  "end": 11.724,
+  "score": 0.828
+ },
+ {
+  "w": "வரும்.",
+  "r": "varum",
+  "start": 11.724,
+  "end": 11.964,
+  "score": 0.998
+ },
+ {
+  "w": "இதுதான்",
+  "r": "itutaan",
+  "start": 12.524,
+  "end": 12.884,
+  "score": 0.998
+ },
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 12.984,
+  "end": 13.444,
+  "score": 0.508
+ },
+ {
+  "w": "இதோட",
+  "r": "itooda",
+  "start": 13.865,
+  "end": 14.105,
+  "score": 0.797
+ },
+ {
+  "w": "top",
+  "r": "top",
+  "start": 14.225,
+  "end": 14.425,
+  "score": 0.35
+ },
+ {
+  "w": "ten",
+  "r": "ten",
+  "start": 14.545,
+  "end": 14.685,
+  "score": 0.681
+ },
+ {
+  "w": "features,",
+  "r": "features",
+  "start": 14.805,
+  "end": 15.225,
+  "score": 0.154
+ },
+ {
+  "w": "ஒவ்வொண்ணையும்",
+  "r": "ovvonnaiyum",
+  "start": 15.405,
+  "end": 15.925,
+  "score": 0.753
+ },
+ {
+  "w": "எப்படி",
+  "r": "eppadi",
+  "start": 16.005,
+  "end": 16.245,
+  "score": 0.997
+ },
+ {
+  "w": "use",
+  "r": "use",
+  "start": 16.305,
+  "end": 16.485,
+  "score": 0.514
+ },
+ {
+  "w": "பண்றதுன்னு",
+  "r": "panratunnu",
+  "start": 16.485,
+  "end": 16.906,
+  "score": 0.775
+ },
+ {
+  "w": "பார்க்கலாம்.",
+  "r": "paarkkalaam",
+  "start": 16.986,
+  "end": 17.446,
+  "score": 0.871
+ }
+]

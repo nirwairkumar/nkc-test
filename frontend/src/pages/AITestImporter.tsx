@@ -1,12 +1,56 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from "@/components/SEO";
+import { announceAiImportStep } from '@/lib/aiImportStep';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { getApiUrl } from '@/lib/getApiUrl';
+import { tokenStorage } from '@/utils/tokenStorage';
+
+// /api/ai/* requires a login (these calls burn Gemini budget). Thrown when there is no
+// token or the server rejects it, so the page asks the teacher to log in instead of
+// showing "Missing Authorization header".
+class SignInRequired extends Error {
+    expired: boolean;
+    constructor(expired: boolean) {
+        super(expired
+            ? 'Please log in again to use AI import — your session has expired.'
+            : 'Please log in to use AI import.');
+        this.name = 'SignInRequired';
+        this.expired = expired;
+    }
+}
+
+// Read the token the same way the rest of the app does (localStorage, then the shared
+// .testoza.com cookie) so a valid session isn't sent bare.
+const aiAuthHeaders = (): Record<string, string> => {
+    const { token } = tokenStorage.getTokens();
+    if (!token) throw new SignInRequired(true);
+    return { Authorization: `Bearer ${token}` };
+};
+
+// The reading-mode picker at the bottom-right of the file composer (backend `algorithm`).
+const READING_MODES = [
+    {
+        id: 'stateful',
+        name: 'High accuracy',
+        note: 'Recommended',
+        description: 'Reads one page at a time, in order. Best when a question or diagram runs onto the next page. Takes a little longer.',
+    },
+    {
+        id: 'parallel',
+        name: 'Fast',
+        note: null,
+        description: 'Reads all pages at once and is ready much sooner. A question split across two pages may come out incomplete.',
+    },
+] as const;
+
+const formatFileSize = (bytes: number) =>
+    bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight } from "lucide-react";
+import { OutputLanguagePicker } from "@/components/OutputLanguagePicker";
+import { AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, Plus, Camera, X, Key, Zap, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight, ChevronDown, LogIn } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,15 +62,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
+import { markTestAsNew } from '@/utils/newTest';
+import { cleanMarkInput, markingQuery, readMark } from '@/components/ai-import/marking';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,53 +78,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-// Type definitions matching backend response
-interface Question {
-    id: number;
-    type: 'single' | 'multiple' | 'numerical' | string;
-    question: string;
-    image?: string | null;
-    options?: { [key: string]: string | { text: string; image?: string | null } } | null;
-    optionImages?: { [key: string]: string | null };
-    correctAnswer?: string | string[] | { min: number; max: number } | null;
-    needsAnswer?: boolean;
-    marks?: number;
-    negativeMarks?: number;
-    diagramPage?: number | null;
-    passageContent?: string;
-    groupId?: string;
-    page?: number;
-}
+import type { ExtractionMeta, ParseResponse, ProcessMode, Question, Section, StageTimes, StreamProgress, StreamedQuestion } from '@/components/ai-import/types';
+import {
+    advanceStage,
+    emptyPipelineInfo,
+    questionFingerprint,
+    reducePipelineInfo,
+    stageKeyOf,
+    stageSeconds,
+    PipelineInfo,
+} from '@/components/ai-import/progressModel';
+import ProcessingView from '@/components/ai-import/ProcessingView';
+import PreviewView from '@/components/ai-import/PreviewView';
+import WhatToUpload from '@/components/ai-import/WhatToUpload';
 
-interface Section {
-    id?: string;
-    name?: string;
-    attempt_control?: {
-        enabled: boolean;
-        mode?: string;
-        max_attempts?: number;
-    };
-    questions?: Question[];
-    marks_per_question?: number;
-    negative_marks?: number;
-    question_type?: string;
-}
-
-interface ParseResponse {
-    title?: string;
-    description?: string;
-    revision_notes?: string;
-    questions: Question[];
-    canConfirm?: boolean;
-    unansweredCount?: number;
-    totalPages?: number;
-    processedPages?: number;
-    enable_section_mode?: boolean;
-    sections?: Section[];
-    duration?: number;
-}
-
-type ProcessMode = 'extract' | 'generate';
 type FileType = 'pdf' | 'image';
 type UploadType = 'document' | 'image' | null;
 
@@ -92,13 +102,6 @@ interface SelectedFile {
     preview?: string;
 }
 
-
-import LatexRenderer from '@/components/ui/LatexRenderer';
-
-// Helper component for markdown preview
-const MarkdownPreview = ({ content }: { content: string }) => (
-    <LatexRenderer className="text-sm">{content}</LatexRenderer>
-);
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
@@ -149,7 +152,7 @@ const ensureParsedObject = (val: any): any => {
 
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { openAuthModal } = useAuthModal();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
@@ -158,56 +161,56 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [loading, setLoading] = useState(false);
     const [generatingMore, setGeneratingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Set while we're waiting for the teacher to log in; the run they asked for starts after.
+    const [signInPrompt, setSignInPrompt] = useState<{ mode: ProcessMode; isContinue: boolean; expired: boolean } | null>(null);
+    const signInCardRef = useRef<HTMLDivElement>(null);
+    // The run is started from the mode cards at the bottom; bring the card into view so it's
+    // there if the teacher closes the login modal.
+    useEffect(() => {
+        if (signInPrompt) signInCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [signInPrompt]);
     const [parsedData, setParsedData] = useState<ParseResponse | null>(null);
     const [progress, setProgress] = useState('');
     const [showCamera, setShowCamera] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [uploadType, setUploadType] = useState<UploadType>(null);
-    const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
+    const [extractionMeta, setExtractionMeta] = useState<ExtractionMeta | null>(null);
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
     const [savingTest, setSavingTest] = useState(false);
     const [pendingParsedData, setPendingParsedData] = useState<ParseResponse | null>(null);
-    const [timers, setTimers] = useState<{
-        uploading: number;
-        analyzing: number;
-        extracting: number;
-        finalizing: number;
-    }>({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
+    // Stage clock: wall-clock timestamps, not a counting interval, so a hidden
+    // (timer-throttled) tab keeps correct time.
+    const [runStartedAt, setRunStartedAt] = useState(0);
+    const [stageTimes, setStageTimes] = useState<StageTimes>({});
+    const stageTimesRef = useRef<StageTimes>({});
+    stageTimesRef.current = stageTimes;
+    const [pipelineInfo, setPipelineInfo] = useState<PipelineInfo>(emptyPipelineInfo);
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
-    const [streamProgress, setStreamProgress] = useState<{
-        stage: 'uploading' | 'analyzing' | 'processing' | 'extracting' | 'finalizing' | 'complete' | 'error';
-        percent: number;
-        message: string;
-        data?: any;
-    } | null>(null);
-    const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
+    const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null);
+    const [streamingQuestions, setStreamingQuestions] = useState<StreamedQuestion[]>([]);
+    const seenQuestionsRef = useRef<Set<string>>(new Set());
+    const streamSeqRef = useRef(0);
     const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    abortControllerRef.current = abortController;
+    // Leaving the page mid-upload closes the stream, which makes the server stop the AI run
+    // (an open stream kept it reading, and billing, a result nobody would see).
+    useEffect(() => () => abortControllerRef.current?.abort(), []);
 
     // AI Generation Custom Parameters State
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['default']);
     const [difficulty, setDifficulty] = useState<'Easy' | 'Moderate' | 'Tough'>('Tough');
     const [customInstructions, setCustomInstructions] = useState<string>('');
-
-    const handleLanguageToggle = (lang: string) => {
-        if (lang === 'default') {
-            setSelectedLanguages(['default']);
-            return;
-        }
-
-        setSelectedLanguages(prev => {
-            const withoutDefault = prev.filter(l => l !== 'default');
-            if (withoutDefault.includes(lang)) {
-                const next = withoutDefault.filter(l => l !== lang);
-                return next.length === 0 ? ['default'] : next;
-            } else {
-                return [...withoutDefault, lang];
-            }
-        });
-    };
+    // Marking. Blank = the AI reads it from the paper; if the paper doesn't say, +1 and no
+    // negative (backend ai_preview_importer/marking.py). Kept as text so "2.5" can be typed.
+    const [marksInput, setMarksInput] = useState<string>('');
+    const [negativeInput, setNegativeInput] = useState<string>('');
+    const marksField = readMark(marksInput, false);
+    const negativeField = readMark(negativeInput, true);
 
     // AI Generation History State
     const [historyItems, setHistoryItems] = useState<any[]>([]);
@@ -219,6 +222,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     // Apple HIG UI & Drag State
     const [isDragging, setIsDragging] = useState(false);
     const [showHelpDialog, setShowHelpDialog] = useState(false);
+
+    // Tell Layout when we leave the upload step (same test as the Step 1 render below) so the menu collapses
+    const isPastUpload = !!parsedData || files.length > 0 || !!uploadType;
+    useEffect(() => {
+        announceAiImportStep(isPastUpload);
+    }, [isPastUpload]);
+    useEffect(() => () => announceAiImportStep(false), []);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -237,7 +247,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         e.stopPropagation();
         setIsDragging(false);
 
-        const droppedFiles = Array.from(e.dataTransfer.files || []);
+        const droppedFiles = keepReadableFiles(Array.from(e.dataTransfer.files || []));
         if (!droppedFiles.length) return;
 
         const newFiles: SelectedFile[] = [];
@@ -352,37 +362,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         syncAndLoadHistory();
     }, [user]);
 
-    // Track active stage timers
-    useEffect(() => {
-        if (!isStreaming) return;
-
-        const interval = setInterval(() => {
-            const currentStage = streamProgress?.stage || 'uploading';
-            let stageKey: 'uploading' | 'analyzing' | 'extracting' | 'finalizing' = 'uploading';
-
-            if (currentStage === 'analyzing') {
-                stageKey = 'analyzing';
-            } else if (currentStage === 'processing' || currentStage === 'extracting') {
-                stageKey = 'extracting';
-            } else if (currentStage === 'finalizing' || currentStage === 'complete') {
-                stageKey = 'finalizing';
-            }
-
-            setTimers(prev => ({
-                ...prev,
-                [stageKey]: Math.round((prev[stageKey] + 0.1) * 10) / 10
-            }));
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [isStreaming, streamProgress?.stage]);
-
     // Handle smooth transition from stream completion to preview stage
     useEffect(() => {
         if (pendingParsedData && streamProgress?.stage === 'complete') {
             const timer = setTimeout(() => {
-                setParsedData(pendingParsedData);
-                saveToHistory(pendingParsedData);
+                const t = stageSeconds(stageTimesRef.current, Date.now());
+                const total = Math.round((t.uploading + t.analyzing + t.extracting + t.finalizing) * 10) / 10;
+                const finished = total > 0 ? { ...pendingParsedData, execution_time_seconds: total } : pendingParsedData;
+                setParsedData(finished);
+                saveToHistory(finished);
                 setPendingParsedData(null);
                 setIsStreaming(false);
                 setLoading(false);
@@ -424,6 +412,25 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const ext = filename.toLowerCase();
         if (ext.endsWith('.pdf')) return 'pdf';
         return 'image';
+    };
+
+    /**
+     * What the AI can read: PDFs and pictures (the server takes .pdf, .png, .jpg, .jpeg
+     * and .webp; pictures are re-saved as JPG here). Anything else is left out with a
+     * message now, rather than failing once processing starts.
+     */
+    const keepReadableFiles = (raw: File[]): File[] => {
+        const readable = (f: File) => /\.(pdf|png|jpe?g|webp)$/i.test(f.name) || f.type === 'application/pdf' || f.type.startsWith('image/');
+        const skipped = raw.filter(f => !readable(f));
+        if (skipped.length) {
+            const names = skipped.map(f => f.name).join(', ');
+            toast.error(
+                skipped.some(f => /\.(docx?|pptx?|odt|odp|rtf)$/i.test(f.name))
+                    ? `${names}: Word and PowerPoint files can't be read yet. Open the file, choose File → Save As → PDF, and upload the PDF.`
+                    : `${names}: only PDFs and photos (PNG, JPG, WEBP) can be read.`,
+            );
+        }
+        return raw.filter(readable);
     };
 
     const createPreview = (file: File): Promise<string> => {
@@ -489,7 +496,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(e.target.files || []);
+        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
         if (selectedFiles.length === 0) return;
 
         const newFiles: SelectedFile[] = [];
@@ -512,7 +519,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(e.target.files || []);
+        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
         if (selectedFiles.length === 0) return;
 
         const newFiles: SelectedFile[] = [];
@@ -553,11 +560,26 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setMode(null);
     };
 
+    // Step 2 adds to the selection (Step 1's picker and drop replace it).
+    const appendFiles = async (raw: File[]) => {
+        const picked = keepReadableFiles(raw);
+        if (!picked.length) return;
+        const added: SelectedFile[] = [];
+        for (const rawFile of picked) {
+            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
+            const preview = await createPreview(file);
+            added.push({ file, id: generateId(), type: getFileType(file.name), preview });
+        }
+        setFiles(prev => [...prev, ...added]);
+        setError(null);
+    };
+
     const clearAllFiles = () => {
         setFiles([]);
         setAnswerKeyFile(null);
         setUploadType(null);
         setError(null);
+        setSignInPrompt(null);
         setParsedData(null);
         setMode(null);
         // Reset streaming state
@@ -649,42 +671,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         closeCamera();
     };
 
-    // Helper to check if an option is correct based on question type
-    const isCorrectAnswer = (q: Question, optionKey: string): boolean => {
-        if (!q.correctAnswer) return false;
-
-        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
-            return q.correctAnswer.includes(optionKey);
-        }
-
-        return q.correctAnswer === optionKey;
-    };
-
-    // Helper to format correct answer display
-    const formatCorrectAnswer = (q: Question): string => {
-        if (!q.correctAnswer) return 'Not detected';
-
-        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
-            return q.correctAnswer.join(', ');
-        }
-
-        if (q.type === 'numerical' && typeof q.correctAnswer === 'object') {
-            const range = q.correctAnswer as { min: number; max: number };
-            if (range.min === range.max) {
-                return range.min.toString();
-            }
-            return `${range.min} - ${range.max}`;
-        }
-
-        return String(q.correctAnswer);
-    };
-
     const saveToHistory = async (data: ParseResponse) => {
         if (!data) return;
         const qCount = data.questions?.length || 0;
         if (qCount === 0) return;
 
-        const totalExecTime = Math.round((timers.uploading + timers.analyzing + timers.extracting + timers.finalizing) * 10) / 10;
+        const timers = stageSeconds(stageTimesRef.current, Date.now());
+        const totalExecTime = data.execution_time_seconds ?? Math.round((timers.uploading + timers.analyzing + timers.extracting + timers.finalizing) * 10) / 10;
         const filesList = files.map(f => ({
             name: f.file.name,
             size_bytes: f.file.size,
@@ -843,6 +836,20 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             return;
         }
 
+        if (marksField.error || negativeField.error) {
+            setError("Check the marks in AI Settings: " + (marksField.error ? `marks per question — ${marksField.error}` : `negative marks — ${negativeField.error}`) + '.');
+            document.getElementById('ai-marks-row')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // Ask for a login before uploading anything. A teacher who was signed in (user set)
+        // but has no token left has an expired session.
+        if (!tokenStorage.getTokens().token) {
+            askToSignIn(selectedMode, isContinue, !!user);
+            return;
+        }
+
+        setSignInPrompt(null);
         setMode(selectedMode);
         if (isContinue) {
             setGeneratingMore(true);
@@ -861,17 +868,44 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     };
 
+    // The login modal's callback outlives this render, so it calls whatever handleProcess
+    // is current when the teacher finishes logging in.
+    const processRef = useRef(handleProcess);
+    processRef.current = handleProcess;
+
+    // AI import runs on the teacher's account. Open the login modal in place (the files
+    // and settings on screen stay put) and start the run they asked for once they're in.
+    const askToSignIn = (selectedMode: ProcessMode, isContinue: boolean, expired: boolean) => {
+        setError(null);
+        setSignInPrompt({ mode: selectedMode, isContinue, expired });
+        openAuthModal({
+            view: 'login',
+            onSuccess: () => {
+                setSignInPrompt(null);
+                toast.success("You're logged in — starting now.");
+                processRef.current(selectedMode, isContinue);
+            },
+        });
+    };
+
     // ULTRA-FAST SSE Streaming Process
     const handleStreamProcess = async (selectedMode: ProcessMode) => {
+        const startedAt = Date.now();
         setIsStreaming(true);
         setStreamingQuestions([]);
-        setTimers({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
-        
+        setPendingParsedData(null);
+        seenQuestionsRef.current = new Set();
+        streamSeqRef.current = 0;
+        setRunStartedAt(startedAt);
+        setStageTimes(advanceStage({}, 'upload', startedAt));
+        setPipelineInfo(emptyPipelineInfo());
+
         // Initialize streamProgress with placeholder so we immediately enter the streaming UI
         setStreamProgress({
             stage: 'uploading',
             percent: 5,
-            message: 'Uploading document to server...'
+            message: 'Uploading document to server...',
+            at: startedAt
         });
 
         const formData = new FormData();
@@ -883,8 +917,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (files.length > 2) {
                 setStreamProgress({
                     stage: 'uploading',
-                    percent: Math.min(5 + Math.round((processedCount / files.length) * 15), 20),
-                    message: `Optimizing image ${processedCount} of ${files.length} for fast AI extraction...`
+                    percent: Math.min(5 + Math.round((processedCount / files.length) * 5), 9),
+                    message: `Optimizing image ${processedCount} of ${files.length} for fast AI extraction...`,
+                    at: Date.now()
                 });
             }
             const fileToSend = fileObj.file.type.startsWith('image/')
@@ -901,6 +936,73 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const abortCtrl = new AbortController();
         setAbortController(abortCtrl);
 
+        // Applies one server-sent event. Throws on `error` so it reaches the user
+        // (it used to be swallowed by the JSON-parse catch and the UI hung).
+        const handleEvent = (event: string, parsed: any): boolean => {
+            const at = Date.now();
+            switch (event) {
+                case 'progress': {
+                    const sp: StreamProgress = {
+                        stage: parsed.stage,
+                        percent: parsed.percent,
+                        message: parsed.message,
+                        data: parsed.data,
+                        at
+                    };
+                    setStreamProgress(sp);
+                    setPipelineInfo(prev => reducePipelineInfo(prev, sp));
+                    const key = stageKeyOf(sp.stage);
+                    if (key) setStageTimes(prev => advanceStage(prev, key, at));
+                    if (parsed.data && parsed.data.quality_tier) {
+                        setExtractionMeta({
+                            quality_tier: parsed.data.quality_tier,
+                            dpi: parsed.data.dpi,
+                            warning: parsed.data.warning
+                        });
+                    }
+                    return false;
+                }
+
+                case 'question': {
+                    const q = parsed.question;
+                    if (!q) return false;
+                    // Batches (and stateful steps) each number from 1, so ids collide;
+                    // only drop a question whose content we've already shown.
+                    const fp = questionFingerprint(q);
+                    if (fp) {
+                        if (seenQuestionsRef.current.has(fp)) return false;
+                        seenQuestionsRef.current.add(fp);
+                    }
+                    const key = `sq-${streamSeqRef.current++}`;
+                    setStreamingQuestions(prev => [...prev, { key, question: q, at }]);
+                    return false;
+                }
+
+                case 'complete': {
+                    const hasQuestions = parsed.questions && parsed.questions.length > 0;
+                    const hasSections = parsed.sections && parsed.sections.length > 0;
+                    if (!hasQuestions && !hasSections) {
+                        throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                    }
+                    setStageTimes(prev => advanceStage(prev, 'done', at));
+                    setPendingParsedData(parsed);
+                    setStreamProgress({
+                        stage: 'complete',
+                        percent: 100,
+                        message: 'All questions processed successfully!',
+                        at
+                    });
+                    return true;
+                }
+
+                case 'error':
+                    throw new Error(parsed.message || 'Processing failed. Please try again.');
+
+                default:
+                    return false;
+            }
+        };
+
         try {
             const API_BASE_URL = getApiUrl();
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
@@ -913,14 +1015,18 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (customInstParam) {
                 queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
             }
+            queryParams += markingQuery(marksField.value, negativeField.value);
 
             // Use ULTRA-FAST streaming endpoint
             const response = await fetch(`${baseUrl}/ai/parse-stream?${queryParams}`, {
                 method: 'POST',
+                // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
+                headers: aiAuthHeaders(),
                 body: formData,
                 signal: abortCtrl.signal,
             });
 
+            if (response.status === 401) throw new SignInRequired(true);
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
                 throw new Error(errData?.detail || `Server error (${response.status})`);
@@ -937,11 +1043,28 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             let currentEvent = '';
             let currentData = '';
 
+            const dispatch = (): boolean => {
+                const event = currentEvent || 'message';
+                const payload = currentData;
+                currentEvent = '';
+                currentData = '';
+                if (!payload) return false;
+                let parsed: any;
+                try {
+                    parsed = JSON.parse(payload);
+                } catch (e) {
+                    console.error('Failed to parse SSE data:', e, payload);
+                    return false;
+                }
+                return handleEvent(event, parsed);
+            };
+
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (value) buffer += decoder.decode(value, { stream: true });
+                // Flush a final event the server didn't terminate with a blank line.
+                if (done) buffer += decoder.decode() + '\n\n';
 
-                buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
 
@@ -949,76 +1072,28 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     const trimmedLine = line.trim();
                     if (!trimmedLine) {
                         // Empty line means event completion: dispatch the collected payload
-                        if (currentEvent && currentData) {
-                            try {
-                                const parsed = JSON.parse(currentData);
-
-                                switch (currentEvent) {
-                                    case 'progress':
-                                        setStreamProgress({
-                                            stage: parsed.stage,
-                                            percent: parsed.percent,
-                                            message: parsed.message,
-                                            data: parsed.data
-                                        });
-                                        if (parsed.data && parsed.data.quality_tier) {
-                                            setExtractionMeta({
-                                                quality_tier: parsed.data.quality_tier,
-                                                dpi: parsed.data.dpi,
-                                                warning: parsed.data.warning
-                                            });
-                                        }
-                                        break;
-
-                                    case 'question':
-                                        if (parsed.question) {
-                                            setStreamingQuestions(prev => {
-                                                // Avoid duplicate entries if any
-                                                const exists = prev.some(q => q.id === parsed.question.id);
-                                                if (exists) return prev;
-                                                return [...prev, parsed.question];
-                                            });
-                                        }
-                                        break;
-
-                                    case 'complete': {
-                                        const hasQuestions = parsed.questions && parsed.questions.length > 0;
-                                        const hasSections = parsed.sections && parsed.sections.length > 0;
-                                        if (!hasQuestions && !hasSections) {
-                                            throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
-                                        }
-                                        setPendingParsedData(parsed);
-                                        setStreamProgress({
-                                            stage: 'complete',
-                                            percent: 100,
-                                            message: 'All questions processed successfully!'
-                                        });
-                                        return;
-                                    }
-
-                                    case 'error':
-                                        throw new Error(parsed.message);
-                                }
-                            } catch (e) {
-                                console.error('Failed to parse SSE data:', e, currentData);
-                            }
-                            currentEvent = '';
-                            currentData = '';
-                        }
+                        if (dispatch()) return;
                         continue;
                     }
 
                     if (trimmedLine.startsWith('event:')) {
                         currentEvent = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
                     } else if (trimmedLine.startsWith('data:')) {
-                        currentData = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
+                        const chunk = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
+                        currentData = currentData ? `${currentData}\n${chunk}` : chunk;
                     }
                 }
+
+                if (done) break;
             }
+
+            throw new Error('The connection closed before processing finished. Please try again.');
 
         } catch (err: any) {
             if (err.name === 'AbortError') {
                 console.log('Processing cancelled by user');
+            } else if (err instanceof SignInRequired) {
+                askToSignIn(selectedMode, false, err.expired);
             } else {
                 console.error('Stream Error:', err);
                 setError(err.message || 'An error occurred during processing');
@@ -1067,12 +1142,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (customInstParam) {
                 queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
             }
+            // "Generate more" reads pages that rarely repeat the cover page's marking rules, so
+            // new questions match the teacher's values, or else the marking already on screen.
+            const shown = isContinue ? parsedData?.marking : undefined;
+            const asNumber = (v: number | string | null | undefined) => (v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v));
+            queryParams += markingQuery(
+                marksField.value ?? (shown && !shown.varies ? asNumber(shown.marks) : null),
+                negativeField.value ?? (shown && !shown.varies ? asNumber(shown.negativeMarks) : null),
+            );
 
             const response = await fetch(`${baseUrl}/ai/parse?${queryParams}`, {
                 method: 'POST',
+                // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
+                headers: aiAuthHeaders(),
                 body: formData,
             });
 
+            if (response.status === 401) throw new SignInRequired(true);
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
                 throw new Error(errData?.detail || `Server error (${response.status})`);
@@ -1100,7 +1186,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                 const combinedData = {
                     ...data,
-                    questions: [...parsedData.questions, ...adjustedQuestions]
+                    questions: [...parsedData.questions, ...adjustedQuestions],
+                    marking: parsedData.marking ?? data.marking,
                 };
                 setParsedData(combinedData);
                 saveToHistory(combinedData);
@@ -1109,8 +1196,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 saveToHistory(data);
             }
         } catch (err: any) {
-            console.error('Process Error:', err);
-            setError(err.message || 'An unknown error occurred');
+            if (err instanceof SignInRequired) {
+                askToSignIn(selectedMode, isContinue, err.expired);
+            } else {
+                console.error('Process Error:', err);
+                setError(err.message || 'An unknown error occurred');
+            }
             setProgress('');
         } finally {
             setLoading(false);
@@ -1141,6 +1232,27 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         link.click();
         document.body.removeChild(link);
     };
+
+    // A maths fix taken on the review screen. A sectioned paper is saved from
+    // sections[].questions, which hold their own copy of each question, and a passage is
+    // repeated on every question under it, so the fix goes to all of those.
+    const handleFixQuestion = useCallback((index: number, next: Question) => {
+        setParsedData(prev => {
+            const old = prev?.questions[index];
+            if (!prev || !old) return prev;
+            const passage = old.passageContent;
+            const samePassage = (q: Question) =>
+                passage && next.passageContent !== passage && q.passageContent === passage ? { ...q, passageContent: next.passageContent } : q;
+            return {
+                ...prev,
+                questions: prev.questions.map((q, i) => (i === index ? next : samePassage(q))),
+                sections: prev.sections?.map(sec => ({
+                    ...sec,
+                    questions: sec.questions?.map(q => (q.id === old.id && q.question === old.question ? next : samePassage(q))),
+                })),
+            };
+        });
+    }, []);
 
     const handleImport = useCallback(() => {
         if (!parsedData || !onImport) return;
@@ -1183,8 +1295,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         options: mapOptions(q.options, q.optionImages, q.type || 'single'),
                         correctAnswer: q.correctAnswer,
                         image: q.image,
-                        marks: String(q.marks || 4),
-                        negativeMarks: String(q.negativeMarks || 1),
+                        marks: String(q.marks ?? 1),
+                        // Only what the source paper actually asks for. `|| 1` turned every
+                        // imported paper into a JEE paper (and turned an explicit 0 into 1).
+                        negativeMarks: String(q.negativeMarks ?? 0),
                         explanation: "",
                         passageContent: q.passageContent || "",
                         groupId: q.groupId || "",
@@ -1196,8 +1310,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     name: sec.name || 'Untitled Section',
                     attempt_control: sec.attempt_control || { enabled: false },
                     questions: mappedQuestions,
-                    marks_per_question: sec.marks_per_question || 4,
-                    negative_marks: sec.negative_marks || 1,
+                    marks_per_question: sec.marks_per_question ?? 1,
+                    negative_marks: sec.negative_marks ?? 0,
                     question_type: sec.question_type || 'single'
                 };
             });
@@ -1225,7 +1339,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 options: mapOptions(q.options, q.optionImages, q.type || 'single'),
                 correctAnswer: q.correctAnswer,
                 image: q.image,
-                marks: String(q.marks || 1),
+                marks: String(q.marks ?? 1),
                 negativeMarks: String(q.negativeMarks || 0),
                 explanation: "",
                 passageContent: q.passageContent || "",
@@ -1264,6 +1378,24 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 view: 'login',
                 redirectPath: '/generate-with-ai'
             });
+            return;
+        }
+
+        const localDesignation = typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null;
+        const hasDesignation = user?.user_metadata?.designation || profile?.designation || localDesignation;
+
+        if (!hasDesignation) {
+            try {
+                localStorage.setItem('pending_ai_import_test', JSON.stringify({
+                    parsedData,
+                    mode,
+                }));
+                localStorage.setItem('auth_redirect_intent', '/generate-with-ai');
+            } catch (e) {
+                console.warn("Could not save pending test to localStorage", e);
+            }
+            toast.info("Please set your designation to save your test.");
+            navigate('/onboarding');
             return;
         }
 
@@ -1312,8 +1444,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
                             correctAnswer: q.correctAnswer || 'A',
                             image: q.image || undefined,
-                            marks: String(q.marks || sec.marks_per_question || 4),
-                            negativeMarks: String(q.negativeMarks || sec.negative_marks || 1),
+                            marks: String(q.marks ?? sec.marks_per_question ?? 1),
+                            negativeMarks: String(q.negativeMarks ?? sec.negative_marks ?? 0),
                             passageContent: q.passageContent || "",
                             groupId: q.groupId || ""
                         };
@@ -1324,8 +1456,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         name: sec.name || 'Untitled Section',
                         attempt_control: sec.attempt_control || { enabled: false },
                         questions: mappedQuestions,
-                        marks_per_question: sec.marks_per_question || 4,
-                        negative_marks: sec.negative_marks || 1,
+                        marks_per_question: sec.marks_per_question ?? 1,
+                        negative_marks: sec.negative_marks ?? 0,
                         question_type: sec.question_type || 'single'
                     };
                 });
@@ -1341,7 +1473,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
                         correctAnswer: q.correctAnswer || 'A',
                         image: q.image || undefined,
-                        marks: String(q.marks || 1),
+                        marks: String(q.marks ?? 1),
                         negativeMarks: String(q.negativeMarks || 0),
                         passageContent: q.passageContent || "",
                         groupId: q.groupId || ""
@@ -1369,6 +1501,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (error) throw error;
 
             toast.success("Test saved successfully!");
+            // Point /my-tests at the card the teacher has never seen before.
+            if (data?.id) markTestAsNew(data.id);
             navigate('/my-tests'); // Redirect to creator dashboard
         } catch (err: any) {
             console.error("Error direct saving test:", err);
@@ -1378,18 +1512,19 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     };
 
-    // Scroll to bottom of streaming questions
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    // Listen for AI history selection from sidebar
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            const viewport = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        const handleLoadHistoryItem = (e: Event) => {
+            const customEv = e as CustomEvent;
+            const item = customEv.detail;
+            if (item) {
+                handleSelectHistoryItem(item);
             }
-        }
-    }, [streamingQuestions.length]);
+        };
 
-
+        window.addEventListener('load_ai_history_item', handleLoadHistoryItem);
+        return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
+    }, [handleSelectHistoryItem]);
 
     if (featureFlags && featureFlags.enable_ai_test_generation === false) {
         return (
@@ -1418,20 +1553,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Listen for AI history selection from sidebar
-    useEffect(() => {
-        const handleLoadHistoryItem = (e: Event) => {
-            const customEv = e as CustomEvent;
-            const item = customEv.detail;
-            if (item) {
-                handleSelectHistoryItem(item);
-            }
-        };
-
-        window.addEventListener('load_ai_history_item', handleLoadHistoryItem);
-        return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
-    }, [handleSelectHistoryItem]);
-
     // Step 1: File Upload — iOS-inspired card layout matching Profile/Support pages
     if (!parsedData && files.length === 0 && !uploadType) {
         return (
@@ -1446,10 +1567,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 <input
                     ref={documentInputRef}
                     type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,image/*"
                     multiple
                     onChange={async (e) => {
-                        const selectedFiles = Array.from(e.target.files || []);
+                        const selectedFiles = keepReadableFiles(Array.from(e.target.files || []));
                         if (!selectedFiles.length) return;
                         const newFiles: SelectedFile[] = [];
                         for (const rawFile of selectedFiles) {
@@ -1472,7 +1593,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     <div className="max-w-2xl mx-auto">
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">AI-Powered</p>
                         <p className="text-xl sm:text-2xl font-bold text-white">Create Your Online Test</p>
-                        <p className="text-sm text-slate-400 mt-1">Turn your exam paper into an interactive online test in seconds.</p>
+                        <p className="text-sm text-slate-400 mt-1">Turn your question paper or notes into an online test in minutes.</p>
                     </div>
                 </div>
 
@@ -1492,23 +1613,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         }`}
                     >
                         {/* Card header row */}
-                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
+                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center shrink-0">
                                     <FileUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                                 </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper</p>
-                                    <p className="text-[11px] text-slate-400">PDF, Word, or Photos</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper, Notes or Chapter</p>
+                                    <p className="text-[11px] text-slate-400">PDF or photos</p>
                                 </div>
                             </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
+                            <span className="shrink-0 whitespace-nowrap text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
                         </div>
 
                         {/* Card body */}
                         <div className="p-4 space-y-3.5">
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Select a PDF, Word document, or photo of your exam paper. We'll automatically extract questions and convert it into an online test.
+                                Select a PDF or photos of a question paper, class notes or study material. We'll turn it into an online test. Word or PowerPoint? Save it as PDF first.
                             </p>
 
                             {/* Primary CTA */}
@@ -1557,6 +1678,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     </div>
                 </div>
 
+                {/* What to upload — animated explainer, plays once scrolled into view */}
+                <WhatToUpload />
+
                     {/* HELP TUTORIAL DIALOG */}
                     <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
                         <DialogContent className="max-w-md rounded-[28px] p-6">
@@ -1574,7 +1698,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center shrink-0">1</div>
                                     <div>
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Select Question Paper</p>
-                                        <p className="text-xs text-slate-500">Click "Choose File" and upload your exam paper in PDF, Word, or photo format.</p>
+                                        <p className="text-xs text-slate-500">Click "Choose File" and upload your exam paper as a PDF or photos (save Word or PowerPoint files as PDF first).</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -1621,186 +1745,198 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 <Input
                     ref={documentInputRef}
                     type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,image/*"
                     multiple
                     onChange={async (e) => {
-                        const selectedFiles = Array.from(e.target.files || []);
-                        if (!selectedFiles.length) return;
-                        const newFiles: SelectedFile[] = [];
-                        for (const rawFile of selectedFiles) {
-                            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
-                            const preview = await createPreview(file);
-                            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                        }
-                        setFiles(prev => [...prev, ...newFiles]);
-                        setError(null);
+                        const picked = Array.from(e.target.files || []);
+                        e.target.value = '';
+                        await appendFiles(picked);
                     }}
                     className="hidden"
                 />
 
                 <div className="space-y-4">
-                    {/* Files Preview - Clean List View */}
-                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-slate-100 dark:border-slate-800/80 flex flex-col xs:flex-row gap-2 items-stretch xs:items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-slate-700"
-                                    onClick={() => {
-                                        if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
-                                            clearAllFiles();
-                                        }
-                                    }}
+                    {/* Header: back, title, clear */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Back"
+                                className="h-8 w-8 -ml-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-100"
+                                onClick={() => {
+                                    if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
+                                        clearAllFiles();
+                                    }
+                                }}
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                            <h1 className="text-[15px] font-semibold text-slate-800 dark:text-slate-100 truncate">Selected files</h1>
+                            <span className="ml-1 text-[11px] font-medium tabular-nums text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-px">
+                                {files.length}
+                            </span>
+                        </div>
+                        {files.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={clearAllFiles}
+                                className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors px-2 py-1 rounded-md"
+                            >
+                                Clear all
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Composer: attached files on top, actions along the bottom edge */}
+                    <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                            appendFiles(Array.from(e.dataTransfer.files || []));
+                        }}
+                        className={`relative rounded-2xl border bg-white dark:bg-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)] transition-[border-color,box-shadow] duration-200 ${
+                            isDragging
+                                ? 'border-indigo-400 ring-4 ring-indigo-100 dark:ring-indigo-900/40'
+                                : 'border-slate-200 dark:border-slate-800'
+                        }`}
+                    >
+                        <div className={`p-3 grid grid-cols-1 gap-2 ${files.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+                            {files.map((fileObj) => (
+                                <div
+                                    key={fileObj.id}
+                                    className="relative flex items-center gap-3 min-w-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-2 pr-10"
                                 >
-                                    <ArrowLeft className="w-4 h-4" />
-                                </Button>
-                                <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-                                    Selected {uploadType === 'document' ? 'Document' : 'Images'} ({files.length})
+                                    {fileObj.preview ? (
+                                        <img
+                                            src={fileObj.preview}
+                                            alt=""
+                                            className="w-10 h-10 rounded-lg object-cover border border-slate-200/80 dark:border-slate-800 shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0">
+                                            <FileText className="w-5 h-5" />
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-100 truncate" title={fileObj.file.name}>
+                                            {fileObj.file.name}
+                                        </p>
+                                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                            {fileObj.type === 'pdf' ? 'PDF' : 'Image'} · {formatFileSize(fileObj.file.size)}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeFile(fileObj.id)}
+                                        aria-label={`Remove ${fileObj.file.name}`}
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => documentInputRef.current?.click()}
+                                    aria-label="Add files"
+                                    title="Add files"
+                                    className="w-9 h-9 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                    <Plus className="w-[18px] h-[18px]" />
+                                </button>
+                                <span className="hidden sm:inline text-xs text-slate-400 dark:text-slate-500 truncate">
+                                    {isDragging ? 'Drop to add' : 'Add more pages, or drop files here'}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 text-xs gap-1.5 font-semibold text-slate-650 dark:text-slate-305 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            {algorithm === 'parallel' ? (
-                                                <>
-                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                                    <span>Fast Mode</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                    <span>High Accuracy</span>
-                                                </>
-                                            )}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-64 p-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                                        <DropdownMenuItem
-                                            onClick={() => setAlgorithm('parallel')}
-                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
-                                                algorithm === 'parallel' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between w-full font-bold text-xs">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                                    <span>Fast Mode (Parallel)</span>
-                                                </div>
-                                                {algorithm === 'parallel' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
-                                                Splits pages into parallel chunks. Extremely fast (~15s) and streams questions instantly.
-                                            </p>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => setAlgorithm('stateful')}
-                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
-                                                algorithm === 'stateful' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between w-full font-bold text-xs">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                    <span>High Accuracy (Stateful)</span>
-                                                </div>
-                                                {algorithm === 'stateful' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
-                                                Page-by-page stateful chat. Slower, but preserves sequence and extracts multi-page questions seamlessly.
-                                            </p>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => documentInputRef.current?.click()}
-                                    className="h-8 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 font-semibold"
-                                >
-                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add File
-                                </Button>
-                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={clearAllFiles} 
-                                    className="h-8 text-xs text-slate-400 hover:text-red-500 transition-colors"
-                                >
-                                    <X className="w-3.5 h-3.5 mr-1" /> Clear All
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="p-3">
-                            <div className="space-y-1.5">
-                                {files.map((fileObj) => (
-                                    <div 
-                                        key={fileObj.id} 
-                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-2 rounded-lg text-[13px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-slate-800 transition-colors shrink-0"
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {fileObj.preview ? (
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
-                                                    <img
-                                                        src={fileObj.preview}
-                                                        alt={fileObj.file.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 shrink-0">
-                                                    <FileText className="w-5 h-5" />
-                                                </div>
-                                            )}
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[180px] sm:max-w-xs">
-                                                    {fileObj.file.name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400">
-                                                    {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeFile(fileObj.id)}
-                                            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                        {algorithm === 'parallel'
+                                            ? <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                            : <Sparkles className="w-3.5 h-3.5 text-indigo-500" />}
+                                        <span>{READING_MODES.find(m => m.id === algorithm)?.name}</span>
+                                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    side="top"
+                                    align="end"
+                                    sideOffset={6}
+                                    className="w-[19rem] max-w-[calc(100vw-2rem)] p-1.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-lg"
+                                >
+                                    <p className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                        How should AI read your paper?
+                                    </p>
+                                    {READING_MODES.map((m) => (
+                                        <DropdownMenuItem
+                                            key={m.id}
+                                            onClick={() => setAlgorithm(m.id)}
+                                            className={`flex items-start gap-2.5 p-2 rounded-lg cursor-pointer ${
+                                                algorithm === m.id ? 'bg-slate-50 dark:bg-slate-900' : ''
+                                            }`}
                                         >
-                                            <X className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                                            {m.id === 'parallel'
+                                                ? <Zap className="w-4 h-4 mt-0.5 text-amber-500 fill-amber-500 shrink-0" />
+                                                : <Sparkles className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{m.name}</span>
+                                                    {m.note && (
+                                                        <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 rounded-full px-1.5 py-px">
+                                                            {m.note}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400 mt-0.5">{m.description}</p>
+                                            </div>
+                                            {algorithm === m.id && <Check className="w-4 h-4 mt-0.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
-                    {/* Answer Key Upload - Reduced Inline Style */}
-                    <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
+                    {/* Answer key: only for papers whose answers are printed separately */}
+                    <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 p-3.5 flex items-center justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
                             <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
-                                <Key className="w-4.5 h-4.5" />
+                                <Key className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Answer Key (Optional)</p>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[180px] sm:max-w-xs">
-                                    {answerKeyFile ? answerKeyFile.name : "Upload key to auto-match correct answers"}
+                                <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                                    Answer key <span className="font-normal text-slate-400">· Optional</span>
                                 </p>
+                                {answerKeyFile ? (
+                                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 min-w-0">
+                                        <Check className="w-3 h-3 shrink-0" />
+                                        <span className="truncate" title={answerKeyFile.name}>{answerKeyFile.name}</span>
+                                    </p>
+                                ) : (
+                                    <p className="text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                        Are the answers not next to each question, like an answer key on the last pages? Upload them here.
+                                    </p>
+                                )}
                             </div>
                         </div>
                         {answerKeyFile ? (
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => setAnswerKeyFile(null)} 
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove answer key"
+                                onClick={() => setAnswerKeyFile(null)}
+                                className="h-8 w-8 shrink-0 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                             >
                                 <X className="w-4 h-4" />
                             </Button>
@@ -1809,9 +1945,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 variant="outline"
                                 size="sm"
                                 onClick={() => answerKeyInputRef.current?.click()}
-                                className="text-[11px] h-8 px-3 shrink-0 border-dashed hover:border-solid"
+                                className="text-xs h-8 px-3 shrink-0 rounded-lg"
                             >
-                                Upload Key
+                                Upload key
                             </Button>
                         )}
                         <Input
@@ -1822,6 +1958,34 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             className="hidden"
                         />
                     </div>
+
+                    {/* Login needed: the run starts by itself once they're in */}
+                    {signInPrompt && (
+                        <div ref={signInCardRef} role="status" className="scroll-mt-24 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                                    <LogIn className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                                        {signInPrompt.expired ? 'Your session has expired' : 'Log in to continue'}
+                                    </p>
+                                    <p className="text-[11px] leading-snug text-slate-600 dark:text-slate-400 mt-0.5">
+                                        {signInPrompt.expired
+                                            ? 'Please log in again to use AI import. Your file and settings are still here, and we’ll start as soon as you’re in.'
+                                            : 'Please log in to use AI import. Your file and settings will stay right here, and we’ll start as soon as you’re in.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => askToSignIn(signInPrompt.mode, signInPrompt.isContinue, signInPrompt.expired)}
+                                className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shrink-0 sm:self-center self-stretch"
+                            >
+                                Log in
+                            </Button>
+                        </div>
+                    )}
 
                     {error && (
                         <Alert variant="destructive">
@@ -1871,43 +2035,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 <Badge className="text-[9px] h-4 px-1.5 bg-indigo-500 text-white font-medium">Bilingual</Badge>
                                             )}
                                         </label>
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('default')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('default')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                Same as Material
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('English')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('English')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                English
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleLanguageToggle('Hindi')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                                    selectedLanguages.includes('Hindi')
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                }`}
-                                            >
-                                                Hindi
-                                            </button>
-                                        </div>
+                                        <OutputLanguagePicker value={selectedLanguages} onChange={setSelectedLanguages} />
                                         <p className="text-[10px] text-slate-400 leading-tight">
-                                            Select multiple (e.g. English + Hindi) for bilingual questions.
+                                            Select two (e.g. English + your language) for bilingual questions. 文A has every language.
                                         </p>
                                     </div>
 
@@ -1947,17 +2077,50 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </div>
                                 </div>
 
+                                {/* Row 2: Marking. Blank = read from the paper; else +1 / 0. */}
+                                <div id="ai-marks-row" className="space-y-2 pt-1">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <span className="text-xs font-semibold text-slate-650 dark:text-slate-300">⚖️ Marking</span>
+                                        <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800/50">
+                                            Optional — leave blank to read it from the paper
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <MarkInput
+                                            id="ai-marks"
+                                            label="Marks per question"
+                                            sign="+"
+                                            value={marksInput}
+                                            onChange={setMarksInput}
+                                            presets={['1', '2', '3', '4']}
+                                            error={marksField.error}
+                                        />
+                                        <MarkInput
+                                            id="ai-negative"
+                                            label="Negative marks per wrong answer"
+                                            sign="−"
+                                            value={negativeInput}
+                                            onChange={setNegativeInput}
+                                            presets={['0', '0.25', '0.5', '1']}
+                                            error={negativeField.error}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 leading-tight">
+                                        {markingHint(marksField.value, negativeField.value)}
+                                    </p>
+                                </div>
+
                                 {/* Custom Instructions Textarea */}
                                 <div className="space-y-1.5 pt-1">
                                     <label className="text-xs font-semibold text-slate-650 dark:text-slate-300 flex items-center justify-between">
                                         <span>📝 Custom Instructions (Optional)</span>
-                                        <span className="text-[10px] text-slate-400 font-normal">e.g. Marks, Negative marking, Count</span>
+                                        <span className="text-[10px] text-slate-400 font-normal">e.g. Count, Topic focus</span>
                                     </label>
                                     <textarea
                                         rows={2}
                                         value={customInstructions}
                                         onChange={(e) => setCustomInstructions(e.target.value)}
-                                        placeholder="e.g. Each question 2 marks, 0.5 negative. Generate minimum 30 questions with top conceptual focus..."
+                                        placeholder="e.g. Generate at least 30 questions, focus on numericals from Chapter 3..."
                                         className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all resize-none"
                                     />
                                 </div>
@@ -2050,683 +2213,135 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Step 3: Loading state - ULTRA-FAST Streaming with Progress
+    // Step 3: Live processing — streamed questions with real progress
     if (loading || generatingMore) {
-        // Show ULTRA-FAST streaming UI for new uploads
         if (isStreaming) {
-            const currentStage = streamProgress?.stage || 'uploading';
-            const currentPercent = streamProgress?.percent || 10;
-            const currentMessage = streamProgress?.message || 'Connecting to AI model...';
-            const pipelineType = streamProgress?.data?.pipeline || 'hybrid';
-
+            const finalCount = pendingParsedData
+                ? (pendingParsedData.questions?.length
+                    || (pendingParsedData.sections || []).reduce((sum, sec) => sum + (sec.questions?.length || 0), 0))
+                : null;
             return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-6xl space-y-6">
-                    <SEO
-                        title="Extracting Exam Questions - TestoZa"
-                        description="Extracting questions in real time using Hybrid OCR + Gemini."
-                    />
-
-                    {/* Inject custom styling for premium animations */}
-                    <style dangerouslySetInnerHTML={{__html: `
-                        @keyframes scan-line {
-                            0% { top: 0%; }
-                            50% { top: 100%; }
-                            100% { top: 0%; }
-                        }
-                        @keyframes pulse-ring {
-                            0% { transform: scale(0.95); opacity: 0.5; }
-                            50% { transform: scale(1.05); opacity: 0.8; }
-                            100% { transform: scale(0.95); opacity: 0.5; }
-                        }
-                        .animate-scan-line {
-                            position: absolute;
-                            left: 0;
-                            width: 100%;
-                            height: 3px;
-                            background: linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent);
-                            animation: scan-line 3.5s infinite linear;
-                            box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
-                        }
-                        .animate-pulse-ring {
-                            animation: pulse-ring 3.5s infinite ease-in-out;
-                        }
-                    `}} />
-
-                    {/* Progress Overview Header */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                        
-                        {/* LEFT COLUMN: Pipeline Dashboard & Checkpoints (4 cols) */}
-                        <div className="md:col-span-4 space-y-4">
-                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden bg-card">
-                                <div className="p-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 animate-pulse" />
-                                <CardContent className="p-6 space-y-6">
-                                    {/* App Info / Header */}
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 border-0 flex items-center gap-1 font-semibold">
-                                                <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                                Active Stream
-                                            </Badge>
-                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                                        </div>
-                                        <h3 className="text-xl font-bold tracking-tight">AI Engine Pipeline</h3>
-                                        <p className="text-xs text-muted-foreground">Hybrid OCR & Vision architecture</p>
-                                    </div>
-
-                                    {/* Progress Meter */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-xs font-semibold">
-                                            <span className="text-muted-foreground">Total Completion</span>
-                                            <span className="text-primary">{currentPercent}%</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-500 ease-out shadow-inner"
-                                                style={{ width: `${currentPercent}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground italic text-center animate-pulse">
-                                            "{currentMessage}"
-                                        </p>
-                                    </div>
-
-                                    {/* Status Checkpoints */}
-                                    <div className="space-y-4 pt-4 border-t text-sm">
-                                        {/* Step 1: Upload */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' 
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
-                                                        : 'bg-blue-100 text-blue-600 animate-pulse'
-                                                }`}>
-                                                    {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
-                                                </div>
-                                                <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    File Upload & Parse
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.uploading > 0 ? `${timers.uploading.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 2: Analyzer */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' && currentStage !== 'analyzing'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'analyzing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
-                                                </div>
-                                                <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    OCR Page Classification
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.analyzing > 0 ? `${timers.analyzing.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 3: Extraction */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'finalizing' || currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'processing' || currentStage === 'extracting'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
-                                                </div>
-                                                <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    AI Question Extraction
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.extracting > 0 ? `${timers.extracting.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 4: Finalizing */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'finalizing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
-                                                </div>
-                                                <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    Structure Finalization
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.finalizing > 0 ? `${timers.finalizing.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Live stats */}
-                                    {extractionMeta && (
-                                        <div className="p-3 bg-muted/50 rounded-lg text-xs space-y-2 border border-slate-100 dark:border-slate-800">
-                                            <p className="font-semibold text-muted-foreground">DOCUMENT METADATA</p>
-                                            <div className="flex justify-between">
-                                                <span>Scan Tier:</span>
-                                                <span className="font-medium text-foreground">{extractionMeta.quality_tier?.toUpperCase()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>DPI setting:</span>
-                                                <span className="font-medium text-foreground">{extractionMeta.dpi} DPI</span>
-                                            </div>
-                                            {extractionMeta.warning && (
-                                                <p className="text-[10px] text-amber-500 font-medium leading-normal pt-1">
-                                                    ⚠️ Image resolution is low. Results may need review.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleCancelStream}
-                                        className="w-full text-muted-foreground hover:text-destructive border-slate-200 dark:border-slate-800"
-                                    >
-                                        <X className="w-4 h-4 mr-2" />
-                                        Cancel Processing
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* RIGHT COLUMN: Stream Output Feed (8 cols) */}
-                        <div className="md:col-span-8 space-y-4">
-                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl bg-card min-h-[500px] flex flex-col">
-                                <CardHeader className="py-4 border-b">
-                                    <CardTitle className="text-lg">Extracted Questions</CardTitle>
-                                </CardHeader>
-                                
-                                <div className="flex-1 flex flex-col p-4">
-                                    {streamingQuestions.length > 0 ? (
-                                        <ScrollArea ref={scrollContainerRef} className="h-[480px] w-full pr-2">
-                                            <div className="space-y-4">
-                                                {streamingQuestions.map((q, idx) => (
-                                                    <Card
-                                                        key={idx}
-                                                        className="border-l-4 border-l-primary/60 hover:border-l-primary shadow-sm bg-slate-50/50 dark:bg-slate-900/50 transition-all duration-300 transform translate-y-0 animate-in fade-in-50 duration-500"
-                                                    >
-                                                        <CardContent className="p-4 space-y-3">
-                                                            <div className="flex gap-2 justify-between">
-                                                                <div className="flex gap-2">
-                                                                    <span className="font-bold text-primary min-w-[20px]">
-                                                                        Q{q.id}.
-                                                                    </span>
-                                                                    <div className="text-sm font-medium text-foreground">
-                                                                        <MarkdownPreview content={q.question || 'No question text'} />
-                                                                    </div>
-                                                                </div>
-                                                                <Badge variant="outline" className="text-xs self-start shrink-0 font-medium uppercase">
-                                                                    {q.type || 'single'}
-                                                                </Badge>
-                                                            </div>
-                                                            {q.options && Object.keys(q.options).length > 0 && (
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7 pt-1">
-                                                                    {Object.entries(q.options).slice(0, 4).map(([key, value]) => {
-                                                                        const optionText = typeof value === 'object' && value !== null 
-                                                                            ? (value as any).text 
-                                                                            : String(value || '');
-                                                                        return (
-                                                                            <div
-                                                                                key={key}
-                                                                                className="text-xs text-muted-foreground bg-muted p-2 rounded border border-slate-100 dark:border-slate-800 flex gap-1.5 items-start"
-                                                                            >
-                                                                                <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0">{key}:</span>
-                                                                                <div className="line-clamp-2 text-xs overflow-hidden">
-                                                                                    <MarkdownPreview content={optionText} />
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            )}
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </ScrollArea>
-                                    ) : (
-                                        /* Elegant Scanning / Document analyzing visualizer */
-                                        <div className="flex-1 flex flex-col items-center justify-center py-10 space-y-6">
-                                            <div className="relative w-44 h-56 border-2 border-dashed border-primary/20 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner">
-                                                {/* Scanner scanning bar */}
-                                                <div className="animate-scan-line" />
-                                                
-                                                {/* Pulsing glow orb */}
-                                                <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-pulse-ring blur-xl" />
-                                                
-                                                {/* Mock doc details */}
-                                                <FileText className="w-14 h-14 text-primary/40 mb-3" />
-                                                <div className="w-full space-y-2">
-                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
-                                                    <div className="h-2 bg-primary/10 rounded w-4/6 mx-auto animate-pulse" />
-                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="text-center space-y-2 max-w-sm">
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">AI Reading Document</h4>
-                                                <p className="text-xs text-muted-foreground leading-normal">
-                                                    Using PyMuPDF native OCR. Examining page structure to extract bold text, symbols, formatting, and mathematical equations...
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
+                <ProcessingView
+                    mode={mode}
+                    files={files.map(f => ({ name: f.file.name, size: f.file.size, type: f.type }))}
+                    progress={streamProgress}
+                    info={pipelineInfo}
+                    questions={streamingQuestions}
+                    stageTimes={stageTimes}
+                    startedAt={runStartedAt || Date.now()}
+                    finalCount={finalCount}
+                    extractionMeta={extractionMeta}
+                    onCancel={handleCancelStream}
+                />
             );
         }
 
-        // Legacy loading UI for "generate more" mode
+        // "Generate more" still uses the one-shot endpoint
         return (
-            <div className="container mx-auto p-4 max-w-3xl">
-                <div className="flex flex-col items-center justify-center py-20 space-y-6">
-                    <div className="relative">
-                        <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            {mode === 'extract'
-                                ? <ClipboardList className="w-8 h-8 text-primary" />
-                                : <Sparkles className="w-8 h-8 text-primary" />
-                            }
+            <div className="aix aix-page">
+                <div className="aix-center">
+                    <div className="aix-card" role="status" aria-live="polite">
+                        <div className={`aix-appicon aix-appicon--live ${mode === 'generate' ? 'aix-appicon--generate' : ''}`} aria-hidden="true">
+                            {mode === 'extract' ? <ClipboardList /> : <Sparkles />}
                         </div>
-                    </div>
-                    <div className="text-center space-y-2">
-                        <h2 className="text-xl font-semibold">
-                            {generatingMore ? 'Generating More Questions...' : (mode === 'extract' ? 'Extracting Questions...' : 'Generating Questions...')}
-                        </h2>
-                        <p className="text-muted-foreground animate-pulse">{progress}</p>
-
-                        {extractionMeta && (
-                            <div className="flex items-center justify-center gap-2 mt-2">
-                                <Badge variant={extractionMeta.warning ? "destructive" : "secondary"} className="text-xs">
-                                    Quality: {extractionMeta.quality_tier?.toUpperCase()} ({extractionMeta.dpi} DPI)
-                                </Badge>
-                                {extractionMeta.warning && (
-                                    <span className="text-xs text-destructive">Low quality may affect accuracy</span>
-                                )}
-                            </div>
-                        )}
-                        <p className="text-xs text-muted-foreground/60 mt-2">Processing...</p>
+                        <h2>{generatingMore ? 'Generating more questions' : (mode === 'extract' ? 'Extracting questions' : 'Generating questions')}</h2>
+                        <p>{progress || 'AI is reading the rest of your document. This usually takes a minute or two.'}</p>
+                        <div className="aix-bar aix-bar--live" style={{ marginTop: 22 }}>
+                            <div className="aix-skel-bar" style={{ height: '100%' }} />
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // Step 4: Preview & Import
+    // Step 4: Review & save
     if (parsedData) {
-        try {
-            const questions = parsedData.questions || [];
-            if (questions.length === 0) {
-                return (
-                    <div className="container mx-auto p-4 text-center">
-                        <Alert variant="destructive" className="max-w-md mx-auto text-left">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Extraction Failed</AlertTitle>
-                            <AlertDescription className="mt-2 space-y-2">
-                                <p>No extractable questions could be found.</p>
-                                {error && (
-                                    <div className="bg-destructive/10 p-2 rounded text-xs mt-2 overflow-auto max-h-32">
-                                        <p className="font-semibold mb-1">Details:</p>
-                                        <p className="whitespace-pre-wrap">{error}</p>
-                                    </div>
-                                )}
-                            </AlertDescription>
-                        </Alert>
-                        <div className="flex gap-2 justify-center mt-4">
-                            <Button variant="outline" onClick={() => { setParsedData(null); setMode(null); }}>
-                                Try Another Document
-                            </Button>
-                            {mode === 'extract' && (
-                                <Button variant="secondary" onClick={() => handleProcess('generate')}>
-                                    Try Generate Mode Instead
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                );
-            }
-
-            // Count question types
-            const singleCount = questions.filter(q => q.type === 'single' || !q.type).length;
-            const multipleCount = questions.filter(q => q.type === 'multiple').length;
-            const numericalCount = questions.filter(q => q.type === 'numerical').length;
-
-            return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-4xl">
-                    <ErrorBoundary>
-                        <div className="space-y-6 slide-in-from-bottom-5 animate-in duration-500">
-                            {/* Header */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm sticky top-0 z-10">
-                                <div>
-                                    <h2 className="text-xl font-semibold">
-                                        Preview — {questions.length} Questions
-                                    </h2>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        <Badge variant={mode === 'extract' ? 'default' : 'secondary'}>
-                                            {mode === 'extract' ? '📋 Extracted' : '✨ Generated'}
-                                        </Badge>
-                                        {singleCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {singleCount} Single Choice
-                                            </Badge>
-                                        )}
-                                        {multipleCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {multipleCount} Multiple Choice
-                                            </Badge>
-                                        )}
-                                        {numericalCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {numericalCount} Numerical
-                                            </Badge>
-                                        )}
-                                        {extractionMeta && (
-                                            <Badge variant={extractionMeta.warning ? "secondary" : "secondary"} className="text-xs bg-slate-100 dark:bg-slate-800">
-                                                🖥️ {extractionMeta.dpi} DPI ({extractionMeta.quality_tier})
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => { setParsedData(null); setMode(null); }}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4"
-                                    >
-                                        Try Again
-                                    </Button>
-                                    <Button
-                                        onClick={handleImport}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4 bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
-                                    >
-                                        <PenLine className="w-4 h-4" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        className="w-full sm:w-auto text-xs sm:text-sm px-2.5 sm:px-4 bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4" /> Save & Continue</>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Title/Description if available */}
-                            {(parsedData.title || parsedData.description) && (
-                                <Card className="bg-muted/30">
-                                    <CardContent className="p-4 space-y-1">
-                                        {parsedData.title && (
-                                            <p className="font-semibold text-lg">{parsedData.title}</p>
-                                        )}
-                                        {parsedData.description && (
-                                            <p className="text-sm text-muted-foreground">{parsedData.description}</p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* Questions List */}
-                            <ScrollArea className="h-[600px] border rounded-md p-4 bg-muted/20">
-                                {questions.map((q, idx) => (
-                                    <Card key={idx} className="mb-4 hover:shadow-md transition-shadow">
-                                        <CardContent className="p-4 sm:p-6 space-y-4">
-
-                                            <div className="flex gap-4">
-                                                <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
-                                                <div className="flex-1 space-y-3">
-                                                    {/* Question Type Badge & Page */}
-                                                    <div className="flex gap-2 items-center flex-wrap">
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            {q.type === 'multiple' ? (
-                                                                <><CheckSquare className="w-3 h-3 mr-1" /> Multiple Choice</>
-                                                            ) : q.type === 'numerical' ? (
-                                                                <><Calculator className="w-3 h-3 mr-1" /> Numerical</>
-                                                            ) : (
-                                                                <><Check className="w-3 h-3 mr-1" /> Single Choice</>
-                                                            )}
-                                                        </Badge>
-                                                        {q.page && (
-                                                            <Badge variant="outline" className="text-xs">
-                                                                Page {q.page}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Question Content Toggle */}
-                                                    <Tabs defaultValue="preview" className="w-full">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Question</label>
-                                                            <TabsList className="h-6">
-                                                                <TabsTrigger value="preview" className="text-xs px-2 h-5"><Eye className="w-3 h-3 mr-1" /> Preview</TabsTrigger>
-                                                                <TabsTrigger value="raw" className="text-xs px-2 h-5"><Code className="w-3 h-3 mr-1" /> Raw</TabsTrigger>
-                                                            </TabsList>
-                                                        </div>
-                                                        <TabsContent value="preview" className="mt-0 border rounded-md p-3 bg-card min-h-[60px]">
-                                                            <ErrorBoundary>
-                                                                <MarkdownPreview content={q.question || ""} />
-                                                            </ErrorBoundary>
-                                                        </TabsContent>
-                                                        <TabsContent value="raw" className="mt-0">
-                                                            <Textarea
-                                                                defaultValue={q.question}
-                                                                className="font-mono text-sm min-h-[80px]"
-                                                                readOnly
-                                                            />
-                                                        </TabsContent>
-                                                    </Tabs>
-
-                                                    {/* Question Image */}
-                                                    {q.image && (
-                                                        <div className="mt-2 border rounded-lg p-2 bg-white dark:bg-gray-900 inline-block shadow-sm">
-                                                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                                                                <ImageIcon className="w-3 h-3" /> Diagram {q.diagramPage ? `(Page ${q.diagramPage})` : ''}
-                                                            </div>
-                                                            <img src={q.image} alt="Question Diagram" className="max-h-60 object-contain" />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Passage Content for Comprehension */}
-                                                    {q.passageContent && (
-                                                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                                                            <label className="text-xs font-semibold uppercase text-blue-600 dark:text-blue-400">Passage</label>
-                                                            <div className="text-sm mt-1 text-blue-800 dark:text-blue-200">
-                                                                <MarkdownPreview content={q.passageContent} />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Options - Only show for single/multiple choice */}
-                                            {q.type !== 'numerical' && q.options && Object.keys(q.options).length > 0 && (
-                                                <div className="space-y-2 ml-2 sm:ml-10 mt-2">
-                                                    <label className="text-xs font-semibold uppercase text-muted-foreground">Options</label>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {Object.entries(q.options).map(([key, text]) => (
-                                                            <div key={key} className={`flex gap-3 items-start border p-3 rounded-md bg-card group transition-colors ${isCorrectAnswer(q, key) ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'hover:border-primary/50'}`}>
-                                                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm shrink-0 ${isCorrectAnswer(q, key) ? 'bg-green-100 border-green-600 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'}`}>
-                                                                    {q.type === 'multiple' ? (
-                                                                        isCorrectAnswer(q, key) ? <CheckSquare className="w-4 h-4" /> : <div className="w-4 h-4 border-2 border-gray-400 rounded" />
-                                                                    ) : (
-                                                                        key
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 space-y-2">
-                                                                    <div className="text-sm pt-1">
-                                                                        {(() => {
-                                                                            const displayValue = typeof text === 'object' && text !== null ? (text as any).text : text;
-                                                                            return displayValue ? (
-                                                                                <ErrorBoundary>
-                                                                                    <MarkdownPreview content={String(displayValue)} />
-                                                                                </ErrorBoundary>
-                                                                            ) : <span className="text-muted-foreground italic">Empty</span>;
-                                                                        })()}
-                                                                    </div>
-                                                                    {(q.optionImages?.[key] || (typeof text === 'object' && text !== null && (text as any).image)) && (
-                                                                        <div className="border rounded bg-white dark:bg-gray-900 p-1">
-                                                                            <img
-                                                                                src={(q.optionImages?.[key] || (text as any).image)!}
-                                                                                alt={`Option ${key}`}
-                                                                                className="h-24 object-contain"
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                {isCorrectAnswer(q, key) && (
-                                                                    <Check className="w-5 h-5 text-green-600 shrink-0" />
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Numerical Answer Display */}
-                                            {q.type === 'numerical' && (
-                                                <div className="ml-2 sm:ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
-                                                    <label className="text-xs font-semibold uppercase text-purple-600 dark:text-purple-400">Correct Answer (Numerical)</label>
-                                                    <div className="text-lg font-mono mt-1 text-purple-800 dark:text-purple-200">
-                                                        {formatCorrectAnswer(q)}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Unanswered Warning */}
-                                            {!q.correctAnswer && (
-                                                <div className="ml-2 sm:ml-10">
-                                                    <Badge variant="outline" className="text-orange-600 border-orange-300">
-                                                        ⚠ Correct answer not detected — set it in the editor
-                                                    </Badge>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </ScrollArea>
-
-                            {files.length > 0 && mode && (
-                                <Card className="mt-4 border-dashed border-2 border-primary/30">
-                                    <CardContent className="p-4">
-                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div>
-                                                <h3 className="font-semibold text-lg">Need more questions?</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    AI will analyze the remaining content in your document
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={() => handleProcess(mode, true)}
-                                                disabled={generatingMore}
-                                                variant="outline"
-                                                className="gap-2 min-w-[200px]"
-                                            >
-                                                {generatingMore ? (
-                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-                                                ) : (
-                                                    <><Plus className="w-4 h-4" /> Generate More Questions</>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* Proceed to test builder button */}
-                            <div className="mt-8 mb-4 border-t pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                                    <span>Review complete? Save directly or edit to customize.</span>
-                                    
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full shrink-0">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start">
-                                            <DropdownMenuItem onClick={handleDownloadJSON} className="gap-2">
-                                                <Download className="w-4 h-4" />
-                                                Download raw JSON
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <div className="flex gap-3 w-full md:w-auto">
-                                    <Button
-                                        onClick={handleImport}
-                                        size="lg"
-                                        variant="outline"
-                                        className="flex-1 md:flex-none gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        <PenLine className="w-4 h-4 md:w-5 md:h-5" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        size="lg"
-                                        className="flex-1 md:flex-none gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-200" /> Save & Continue</>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </ErrorBoundary>
-                </div>
-            );
-        } catch (err) {
-            console.error("Critical Rendering Error:", err);
-            return (
-                <div className="container mx-auto p-4 max-w-3xl text-center">
-                    <Alert variant="destructive">
-                        <AlertTitle>Rendering Error</AlertTitle>
-                        <AlertDescription>
-                            Failed to display questions: {String(err)}
-                        </AlertDescription>
-                    </Alert>
-                    <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => { setParsedData(null); setMode(null); }}
-                    >
-                        Try Again
-                    </Button>
-                </div>
-            );
-        }
+        return (
+            <ErrorBoundary>
+                <SEO title="Review your questions" description="Review AI-extracted questions before saving your test." noindex />
+                <PreviewView
+                    data={parsedData}
+                    mode={mode}
+                    extractionMeta={extractionMeta}
+                    durationSeconds={parsedData.execution_time_seconds}
+                    saving={savingTest}
+                    canGenerateMore={files.length > 0 && !!mode}
+                    generatingMore={generatingMore}
+                    onFixQuestion={handleFixQuestion}
+                    onTryAgain={() => { setParsedData(null); setMode(null); }}
+                    onEdit={handleImport}
+                    onSave={handleDirectSave}
+                    onGenerateMore={() => mode && handleProcess(mode, true)}
+                    onGenerateInstead={() => handleProcess('generate')}
+                    onDownloadJSON={handleDownloadJSON}
+                />
+            </ErrorBoundary>
+        );
     }
 
     return null;
+}
+
+/** What the marking fields will do, in one sentence, as the teacher types. */
+function markingHint(marks: number | null, negative: number | null): string {
+    const penalty = (n: number) => (n === 0 ? 'no negative marking' : `−${n} for a wrong answer`);
+    if (marks !== null && negative !== null) return `Every question: +${marks}, ${penalty(negative)}.`;
+    if (marks !== null) return `Every question: +${marks}. Negative marks read from your paper (none if it doesn't say).`;
+    if (negative !== null) return `Every question: ${penalty(negative)}. Marks read from your paper (+1 if it doesn't say).`;
+    return "Blank: the AI reads the marking from your paper. If the paper doesn't say, each question gets +1 and no negative marking.";
+}
+
+/** One marking field: a small decimal input with quick picks beside it. */
+function MarkInput({ id, label, sign, value, onChange, presets, error }: {
+    id: string;
+    label: string;
+    sign: string;
+    value: string;
+    onChange: (v: string) => void;
+    presets: string[];
+    error: string | null;
+}) {
+    return (
+        <div className="space-y-1.5">
+            <label htmlFor={id} className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</label>
+            <div className="flex items-center gap-1.5 flex-wrap">
+                <div className={`flex items-center rounded-lg border bg-slate-50/50 dark:bg-slate-900/50 focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-1 transition-all ${
+                    error
+                        ? 'border-rose-300 dark:border-rose-800 focus-within:ring-rose-500'
+                        : 'border-slate-200 dark:border-slate-800 focus-within:ring-indigo-500'
+                }`}>
+                    <span aria-hidden="true" className="pl-2.5 text-xs font-semibold text-slate-400">{sign}</span>
+                    <input
+                        id={id}
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={value}
+                        onChange={(e) => onChange(cleanMarkInput(e.target.value))}
+                        placeholder="Auto"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? `${id}-error` : undefined}
+                        className="w-16 bg-transparent px-1.5 py-1 text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-200 placeholder:font-normal placeholder:text-slate-400 focus:outline-none"
+                    />
+                </div>
+                {presets.map((p) => (
+                    <button
+                        key={p}
+                        type="button"
+                        onClick={() => onChange(value === p ? '' : p)}
+                        aria-pressed={value === p}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium tabular-nums transition-all ${
+                            value === p
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        {p}
+                    </button>
+                ))}
+            </div>
+            {error && <p id={`${id}-error`} className="text-[10px] font-medium text-rose-600 dark:text-rose-400">{error}</p>}
+        </div>
+    );
 }

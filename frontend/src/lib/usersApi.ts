@@ -34,21 +34,6 @@ export async function updateProfile(userId: string, data: any) {
         const response = await apiClient.put(`/users/${userId}`, data);
         return { data: response.data, error: null };
     } catch (error: any) {
-        console.warn('[usersApi] Backend updateProfile failed, falling back to direct Supabase upsert:', error);
-        try {
-            const { supabase } = await import('@/integrations/supabase/client');
-            const cleanData = { ...data, id: userId };
-            const { data: sbData, error: sbError } = await supabase
-                .from('profiles')
-                .upsert(cleanData)
-                .select()
-                .single();
-            if (!sbError) {
-                return { data: sbData, error: null };
-            }
-        } catch (sbErr) {
-            console.error('[usersApi] Supabase direct profile update error:', sbErr);
-        }
         return { data: null, error };
     }
 }
@@ -100,10 +85,10 @@ export async function uploadAvatar(userId: string, file: File) {
     }
 }
 
-export async function updatePassword(password: string) {
+export async function updatePassword(password: string, currentPassword: string) {
     try {
         const { authApi } = await import('@/lib/authApi');
-        const response = await authApi.updatePassword(password);
+        const response = await authApi.updatePassword(password, currentPassword);
         return { error: response.error };
     } catch (error: any) {
         return { error };

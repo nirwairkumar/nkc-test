@@ -76,8 +76,8 @@ const PrivacyPolicy = () => {
           </h1>
           <div className="flex flex-wrap gap-4 sm:gap-6 text-[13px] text-slate-500 dark:text-slate-400">
             <span><strong className="text-slate-700 dark:text-slate-300 font-medium">Effective date:</strong> April 10, 2026</span>
-            <span><strong className="text-slate-700 dark:text-slate-300 font-medium">Last updated:</strong> April 10, 2026</span>
-            <span><strong className="text-slate-700 dark:text-slate-300 font-medium">Version:</strong> 2.0</span>
+            <span><strong className="text-slate-700 dark:text-slate-300 font-medium">Last updated:</strong> October 19, 2026</span>
+            <span><strong className="text-slate-700 dark:text-slate-300 font-medium">Version:</strong> 2.1</span>
           </div>
         </section>
 
@@ -103,8 +103,9 @@ const PrivacyPolicy = () => {
               { id: "s8", num: "08", title: "Children's Privacy" },
               { id: "s9", num: "09", title: "Data Retention" },
               { id: "s10", num: "10", title: "Third-Party Links" },
-              { id: "s11", num: "11", title: "Changes to This Policy" },
-              { id: "s12", num: "12", title: "Contact Us" }
+              { id: "s11", num: "11", title: "YouTube API Services" },
+              { id: "s12", num: "12", title: "Changes to This Policy" },
+              { id: "s13", num: "13", title: "Contact Us" }
             ].map(item => (
               <li key={item.id}>
                 <a 
@@ -390,6 +391,33 @@ const PrivacyPolicy = () => {
         <section id="s11" className="mb-14 opacity-0 translate-y-4 reveal-transition" ref={addToRefs}>
           <div className="flex items-baseline gap-3 mb-5 pb-3 border-b border-slate-200 dark:border-slate-800">
             <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 tracking-wider">11</span>
+            <h2 className="font-display text-2xl sm:text-3xl font-normal tracking-tight text-slate-900 dark:text-white">YouTube API Services</h2>
+          </div>
+          <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-4">
+            TestoZa uses YouTube API Services through an internal tool, TestoZa Channel Uploader, to upload and manage videos on TestoZa's own YouTube channel. By using any feature that relies on YouTube API Services, you agree to be bound by the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">YouTube Terms of Service</a>. YouTube's handling of data is governed by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">Google Privacy Policy</a>.
+          </p>
+          <ul className="space-y-3 mb-6">
+            {[
+              "What we access: through Google sign-in (OAuth), only the TestoZa channel's basic details, its uploaded videos, playlists, captions, and view statistics",
+              "How we use it: to upload videos, set titles, descriptions, thumbnails, captions and playlists, and to read our own channel's statistics. We do not access, collect, or store data about other YouTube users or channels",
+              "What we store: only the sign-in token needed to keep the tool connected, kept on the channel owner's own computer. It is never shared with third parties or used for advertising",
+              "Cookies: the tool runs on the owner's computer and places no cookies on your device"
+            ].map((text, i) => (
+              <li key={i} className="flex gap-3 items-start py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0 border-dashed">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 dark:bg-indigo-500 shrink-0 mt-2"></span>
+                <span className="text-[15px] text-slate-600 dark:text-slate-300 font-light">{text}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed">
+            Access can be revoked at any time from the <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">Google security settings page</a>. When access is revoked, or on request to <a href="mailto:support@testoza.com" className="text-indigo-600 dark:text-indigo-400 hover:underline">support@testoza.com</a>, the stored token and any data obtained through YouTube API Services are deleted within 7 days.
+          </p>
+        </section>
+
+        {/* Section 12 */}
+        <section id="s12" className="mb-14 opacity-0 translate-y-4 reveal-transition" ref={addToRefs}>
+          <div className="flex items-baseline gap-3 mb-5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 tracking-wider">12</span>
             <h2 className="font-display text-2xl sm:text-3xl font-normal tracking-tight text-slate-900 dark:text-white">Changes to This Policy</h2>
           </div>
           <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-4">
@@ -400,10 +428,10 @@ const PrivacyPolicy = () => {
           </p>
         </section>
 
-        {/* Section 12 */}
-        <section id="s12" className="mb-16 opacity-0 translate-y-4 reveal-transition" ref={addToRefs}>
+        {/* Section 13 */}
+        <section id="s13" className="mb-16 opacity-0 translate-y-4 reveal-transition" ref={addToRefs}>
           <div className="flex items-baseline gap-3 mb-5 pb-3 border-b border-slate-200 dark:border-slate-800">
-            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 tracking-wider">12</span>
+            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 tracking-wider">13</span>
             <h2 className="font-display text-2xl sm:text-3xl font-normal tracking-tight text-slate-900 dark:text-white">Contact Us</h2>
           </div>
           <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-6">

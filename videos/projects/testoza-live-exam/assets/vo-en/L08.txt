@@ -1,0 +1,6 @@
+Now decide what happens when they do.
+Warn only — fine for a practice test.
+Strict — the test submits on the very first switch.
+Or my favourite: give a few warnings, then submit.
+Three is fair. One notification can pop up by accident — three times is a habit.
+And full-screen exits count toward the same limit.
