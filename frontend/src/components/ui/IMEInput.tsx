@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, useDeferredValue } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useDeferredValue, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import LatexFixHints from '@/components/ui/LatexFixHints';
+import { LatexFixList } from '@/components/ui/LatexFixHints';
+import { fixFlags, useLatexFixes } from '@/hooks/useLatexFixes';
 import { getLanguage } from '@/lib/typingLanguages';
 
 interface IMEInputProps {
@@ -184,6 +185,9 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     const showPreview = enablePreview && !isEditing && hasFormatting;
     // The rendered maths under the box can lag a keystroke behind; the typing itself never waits for it.
     const previewValue = useDeferredValue(value);
+    // Maths fixes: the previews underline what won't display, the list under the box fixes it.
+    const fixes = useLatexFixes(livePreview ? value || '' : '', 700);
+    const flags = useMemo(() => fixFlags(fixes), [fixes]);
 
     // Typing in another script (Hindi, Marathi, Arabic, Chinese…). A word goes to the
     // transliteration service when space follows it, and the answer can arrive after more
@@ -325,7 +329,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         className
                     )}
                 >
-                    <LatexRenderer>{value}</LatexRenderer>
+                    <LatexRenderer flags={flags}>{value}</LatexRenderer>
                 </div>
             ) : (
                 <>
@@ -360,13 +364,13 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         <div className="flex items-start gap-2 border-t border-dashed border-slate-200 px-3 pb-2 pt-1.5 text-left">
                             <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-slate-500">Preview</span>
                             <div className="min-w-0 flex-1 overflow-x-auto text-[15px] text-slate-800 [&_.katex-display]:!my-1 [&_.katex-display]:!text-left">
-                                <LatexRenderer>{previewValue}</LatexRenderer>
+                                <LatexRenderer flags={previewValue === value ? flags : undefined}>{previewValue}</LatexRenderer>
                             </div>
                         </div>
                     )}
                 </>
             )}
-            {livePreview && <LatexFixHints text={value} onApply={next => emit(next, null)} delay={700} className="px-2 pb-1.5 pt-1" />}
+            {livePreview && <LatexFixList issues={fixes} onApply={next => emit(next, null)} className="px-2 pb-1.5 pt-1.5" />}
         </div>
     );
 });

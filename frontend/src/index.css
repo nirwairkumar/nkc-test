@@ -231,6 +231,24 @@
   unicode-bidi: isolate;
 }
 
+/* Maths that won't display, underlined in the text like a misspelt word (LatexFixHints). */
+.latex-renderer-container .tex-flag {
+  text-decoration: underline wavy #e5484d;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.latex-renderer-container .tex-flag.is-active {
+  background-color: rgb(229 72 77 / 0.12);
+}
+.dark .latex-renderer-container .tex-flag {
+  text-decoration-color: #ff6369;
+}
+
 /* Enhanced Mobile Table Styles - Ultra-compact for question view */
 .latex-renderer-container table {
   --table-cell-padding: 0.6rem;

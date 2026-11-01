@@ -9,7 +9,7 @@ email-validator
 httpx>=0.24.0
 cryptography
 google-generativeai
-google-genai>=1.0.0
+google-genai>=1.64.0
 youtube-transcript-api
 yt-dlp
 PyMuPDF

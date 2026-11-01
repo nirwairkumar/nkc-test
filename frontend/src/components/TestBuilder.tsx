@@ -49,7 +49,8 @@ import { GapMenu } from './test-builder/GapMenu';
 import {
     type QuestionState, DEFAULT_QUESTION, applyPhotoResult, questionIssue,
 } from './test-builder/builderUtils';
-import { type MarkingScheme, applyScheme, detectScheme, markingSummary } from './test-builder/marking';
+import { applyMarks, detectScheme, markingSummary } from './test-builder/marking';
+import MarkingSwitch from './test-builder/MarkingSwitch';
 import { markTestAsNew } from '@/utils/newTest';
 import type { PhotoQuestion } from '@/lib/photoQuestionApi';
 const JsonImporter = React.lazy(() => import('@/components/test-builder/JsonImporter'));
@@ -1773,20 +1774,27 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     );
 
     /* ── Marking: one named choice over the whole paper, and the total it adds up to ──
-       Per-question overrides still win; picking a named scheme rewrites them all. */
+       Read from the questions (so an AI import shows its own marks); per-question marks
+       stay editable, and setting marks here rewrites them all. */
+    // Subject and tags fold away for a private test; folded, they can't be tabbed into.
+    const listingRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (listingRef.current) listingRef.current.inert = !isPublic;
+    }, [isPublic]);
+
     const markingScheme = useMemo(() => detectScheme(allQuestions), [allQuestions]);
     const marking = useMemo(() => markingSummary(allQuestions), [allQuestions]);
-    const chooseMarkingScheme = (scheme: MarkingScheme) => {
-        if (scheme === 'custom') return;
+    /** Every question gets `marksValue` (null: keeps its own) and `negative` taken off when wrong. */
+    const setPaperMarks = (marksValue: number | null, negative: number) => {
         if (enableSectionMode) {
             setSections(prev => prev.map(s => ({
                 ...s,
-                marks_per_question: scheme === 'jee' ? 4 : s.marks_per_question,
-                negative_marks: scheme === 'jee' ? 1 : 0,
-                questions: s.questions.map(q => applyScheme(q, scheme)),
+                marks_per_question: marksValue ?? s.marks_per_question,
+                negative_marks: negative,
+                questions: s.questions.map(q => applyMarks(q, marksValue, negative)),
             })));
         } else {
-            setQuestions(prev => prev.map(q => applyScheme(q, scheme)));
+            setQuestions(prev => prev.map(q => applyMarks(q, marksValue, negative)));
         }
     };
 
@@ -2115,7 +2123,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     value={isPublic ? 'public' : 'private'}
                                     onChange={v => setIsPublic(v === 'public')}
                                     options={[
-                                        { value: 'private', label: <><Lock className="h-3.5 w-3.5" /> Only my students</> },
+                                        { value: 'private', label: <><Lock className="h-3.5 w-3.5" /> Only my candidates</> },
                                         { value: 'public', label: <><Globe className="h-3.5 w-3.5" /> Everyone</> },
                                     ]}
                                 />
@@ -2129,15 +2137,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             silent +4/−1 default was sending teachers' own trial runs negative. */}
                         <div>
                             <span className={FIELD_LABEL}>Marking</span>
-                            <Segmented
-                                label="Marking scheme"
-                                value={markingScheme}
-                                onChange={chooseMarkingScheme}
-                                options={[
-                                    { value: 'none' as MarkingScheme, label: <>No negative marking</> },
-                                    { value: 'jee' as MarkingScheme, label: <>JEE / NEET (+4, −1)</> },
-                                    ...(markingScheme === 'custom' ? [{ value: 'custom' as MarkingScheme, label: <>Custom</> }] : []),
-                                ]}
+                            <MarkingSwitch
+                                scheme={markingScheme}
+                                uniformMarks={marking.uniformMarks}
+                                uniformPenalty={marking.uniformPenalty}
+                                onSet={setPaperMarks}
                             />
                             <p className="mt-1.5 text-[13px] text-slate-500">
                                 {marking.penalised === 0 ? (
@@ -2147,14 +2151,28 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         <span className="font-semibold text-rose-700">
                                             {marking.uniformPenalty !== null ? `−${marking.uniformPenalty} for every wrong answer` : `${marking.penalised} of ${marking.count} questions deduct marks`}
                                         </span>
-                                        {' '}— a student can finish below zero. <span className="font-semibold text-slate-700">{marking.count} question{marking.count === 1 ? '' : 's'}, {marking.total} marks in total.</span>
+                                        {' '}— a candidate can finish below zero. <span className="font-semibold text-slate-700">{marking.count} question{marking.count === 1 ? '' : 's'}, {marking.total} marks in total.</span>
                                         {markingScheme === 'custom' && ' Set per question below.'}
                                     </>
                                 )}
                             </p>
                         </div>
 
-                        <div className="grid gap-5 md:grid-cols-2">
+                        {/* Subject and tags only matter for a test listed on TestoZa, so they open
+                            (the card grows downward) when "Everyone" is chosen. */}
+                        <div
+                            ref={listingRef}
+                            aria-hidden={!isPublic}
+                            className={cn(
+                                '!mt-0 grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
+                                isPublic ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                            )}
+                        >
+                        <div className="-mx-1 min-h-0 overflow-hidden px-1">
+                        <div className={cn(
+                            'grid gap-5 pb-1 pt-5 transition-transform duration-300 ease-out motion-reduce:transition-none md:grid-cols-2',
+                            isPublic ? 'translate-y-0' : '-translate-y-3',
+                        )}>
                             <div>
                                 <span className={FIELD_LABEL}>Subject / category</span>
                                 <Popover open={openCategoryCombobox} onOpenChange={setOpenCategoryCombobox}>
@@ -2257,6 +2275,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     </div>
                                 )}
                             </div>
+                        </div>
+                        </div>
                         </div>
                     </div>
                 </section>

@@ -696,15 +696,28 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
               <span className="ml-3 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">keep typing…</span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => commit('insert')}
-            disabled={!expression.trim()}
-            className="inline-flex shrink-0 items-center gap-1.5 self-center rounded-xl bg-primary px-4 h-11 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_-10px_rgba(2,132,199,0.9)] transition-[background-color,transform] hover:bg-[hsl(200,95%,30%)] motion-safe:active:scale-[0.97] disabled:bg-slate-300 disabled:shadow-none"
-          >
-            {inserted ? <Check className="h-4 w-4" /> : <CornerDownLeft className="h-4 w-4" />}
-            {inserted ? 'Added' : 'Insert'}
-          </button>
+          {/* Insert, with Copy right under it: the two ways out of the pad, together. */}
+          <div className="flex shrink-0 flex-col items-stretch justify-center gap-1 self-center">
+            <button
+              type="button"
+              onClick={() => commit('insert')}
+              disabled={!expression.trim()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 h-11 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_-10px_rgba(2,132,199,0.9)] transition-[background-color,transform] hover:bg-[hsl(200,95%,30%)] motion-safe:active:scale-[0.97] disabled:bg-slate-300 disabled:shadow-none"
+            >
+              {inserted ? <Check className="h-4 w-4" /> : <CornerDownLeft className="h-4 w-4" />}
+              {inserted ? 'Added' : 'Insert'}
+            </button>
+            <button
+              type="button"
+              onClick={() => commit('copy')}
+              disabled={!expression.trim()}
+              className="flex h-7 items-center justify-center gap-1 rounded-lg px-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40"
+              title="Copy the formula with $…$ to paste anywhere"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Code</span>
@@ -753,16 +766,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             placeholder="or type here, e.g. \frac{1}{2}"
             className="h-7 min-w-0 flex-1 select-text bg-transparent font-mono text-[13px] text-slate-600 placeholder:text-slate-300 focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={() => commit('copy')}
-            disabled={!expression.trim()}
-            className="flex h-7 shrink-0 items-center gap-1 rounded-lg px-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40"
-            title="Copy the formula with $…$ to paste anywhere"
-          >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? 'Copied' : 'Copy'}
-          </button>
         </div>
       </div>
 

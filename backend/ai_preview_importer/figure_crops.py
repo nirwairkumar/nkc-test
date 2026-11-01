@@ -31,7 +31,6 @@ from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
 logger = get_logger(__name__)
 
-LOCATE_MODEL = "gemini-3.5-flash"
 LOCATE_TIMEOUT_S = 45.0
 RENDER_MAX_DIM = 2048
 PAGE_CONCURRENCY = 6   # pages rendered, located and cropped at the same time
@@ -696,21 +695,28 @@ def _parse_located(value: Any) -> List[List[float]]:
 
 async def _locate_page(image: Image.Image, entries: List[Tuple[str, _Plan]]) -> Dict[str, Dict[str, List[List[float]]]]:
     from google.genai import types
+    from ai_preview_importer.models import LOCATE_MODEL, least_thinking
     from ai_preview_importer.pdf_vision_pipeline import client
+    from ai_preview_importer.retries import with_retries
     if not client:
         return {}
     prompt = LOCATE_PROMPT.format(questions='\n'.join(_describe_question(k, p) for k, p in entries))
     buf = io.BytesIO()
     image.save(buf, format='JPEG', quality=88)
     try:
-        response = await asyncio.wait_for(
-            asyncio.to_thread(
-                client.models.generate_content,
-                model=LOCATE_MODEL,
-                contents=[prompt, types.Part.from_bytes(data=buf.getvalue(), mime_type='image/jpeg')],
-                config=types.GenerateContentConfig(temperature=0.0, response_mime_type='application/json'),
+        response = await with_retries(
+            lambda: asyncio.wait_for(
+                asyncio.to_thread(
+                    client.models.generate_content,
+                    model=LOCATE_MODEL,
+                    contents=[prompt, types.Part.from_bytes(data=buf.getvalue(), mime_type='image/jpeg')],
+                    # Finding boxes on one page is looking, not reasoning: lowest thinking level.
+                    config=types.GenerateContentConfig(response_mime_type='application/json', thinking_config=least_thinking(LOCATE_MODEL)),
+                ),
+                timeout=LOCATE_TIMEOUT_S,
             ),
-            timeout=LOCATE_TIMEOUT_S,
+            "Figure localisation",
+            attempts=3,
         )
         raw = (response.text or '').strip()
         if raw.startswith('```'):

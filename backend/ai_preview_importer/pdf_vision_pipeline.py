@@ -24,7 +24,7 @@ import asyncio
 import fitz
 from google import genai
 from google.genai import types
-from typing import Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
@@ -609,16 +609,18 @@ def build_prompt(
     user_instructions: Optional[str] = None,
     marks_per_question: Optional[float] = None,
     negative_marks: Optional[float] = None,
+    base_prompt: Optional[str] = None,
 ) -> str:
-    base_prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
+    """The mode's prompt (or `base_prompt`) plus marking, difficulty, language and the teacher's instructions."""
+    base_prompt = base_prompt or (EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT)
 
     from ai_preview_importer.marking import marking_prompt
 
     # Marking first: teacher's values when given, otherwise read from the paper.
     prompt_additions = [marking_prompt(marks_per_question, negative_marks)]
 
-    # 1. Difficulty Level Instruction
-    if difficulty:
+    # 1. Difficulty Level Instruction (only when writing new questions: a copied paper keeps its own)
+    if difficulty and mode != "extract":
         diff_str = difficulty.strip().capitalize()
         if diff_str in ["Easy", "Moderate", "Tough"]:
             prompt_additions.append(
@@ -761,6 +763,117 @@ async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]
                 drop_unresolved_tags(q)
 
 
+# Maths the platform renders: $$...$$, \[...\], $...$, \(...\) (same order as LatexRenderer).
+_MATH_SPAN = re.compile(r'(?<!\\)\$\$.*?(?<!\\)\$\$|\\\[.*?\\\]|(?<!\\)\$(?:\\\$|[^$])*?(?<!\\)\$|\\\(.*?\\\)', re.S)
+# Formatting commands that only display inside maths. \text{} is handled separately.
+_FORMAT_CMD = re.compile(r'\\(textbf|textit|textrm|textsf|texttt|textnormal|emph|underline|mathbf|boldsymbol)\s*\{')
+_PLAIN_TEXT_CMD = re.compile(r'\\(?:text|mbox)\s*\{([^{}\\$]*)\}')
+
+
+def _close_brace(text: str, open_at: int) -> int:
+    """Index just past the } that closes the { at open_at, or -1."""
+    depth = 0
+    i = open_at
+    while i < len(text):
+        c = text[i]
+        if c == '\\':
+            i += 2
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return -1
+
+
+def _text_mode_safe(arg: str) -> str:
+    """Inside \\textbf{...} KaTeX rejects a bare _ & % #: put a \\ in front of them."""
+    return re.sub(r'(?<!\\)([_&%#])', r'\\\1', arg)
+
+
+def wrap_stray_text_commands(text: str) -> str:
+    r"""
+    Bold, italic and underlined words written outside $...$ show as raw code
+    ("\textbf{Statement (I) :} Alcohols are ..."). The prompt asks for $\textbf{...}$, but
+    gemini-3.6-flash with minimal thinking drops the $ about once in 70 questions (JEE Main
+    papers, 1 Nov 2026; the old pipeline ~1 in 3,000). Put each one, and any run of them
+    separated only by spaces, inside $...$; a \text{...} of plain words outside maths becomes
+    those words. Text inside maths, and text with an unmatched $ (money), are left alone.
+    """
+    if not isinstance(text, str) or '\\' not in text:
+        return text
+    if len(re.findall(r'(?<!\\)\$', text)) % 2:
+        return text
+
+    out: List[str] = []
+    last = 0
+    for m in list(_MATH_SPAN.finditer(text)) + [None]:
+        seg_end = m.start() if m else len(text)
+        out.append(_wrap_segment(text[last:seg_end], text, last, seg_end))
+        if m:
+            out.append(m.group(0))
+            last = m.end()
+    return ''.join(out)
+
+
+def _plain_words(words: str) -> str:
+    """\\text{plain words} outside maths was only ever words."""
+    return _PLAIN_TEXT_CMD.sub(lambda t: t.group(1), words)
+
+
+def _maths_besides_formatting(text: str) -> bool:
+    """Whether `text` has LaTeX other than \\textbf{...}-style formatting (a formula, ^ or _)."""
+    rest = text
+    for cmd in (_FORMAT_CMD, re.compile(r'\\(?:text|mbox)\s*\{')):
+        while True:
+            m = cmd.search(rest)
+            end = _close_brace(rest, m.end() - 1) if m else -1
+            if end < 0:
+                break
+            rest = rest[:m.start()] + ' ' + rest[end:]
+    return bool(re.search(r'\\[A-Za-z]{2,}|[\^_]', rest))
+
+
+def _wrap_segment(seg: str, full: str, seg_start: int, seg_end: int) -> str:
+    """One stretch of `full` (seg_start..seg_end) that holds no maths."""
+    if '\\' not in seg:
+        return seg
+    pieces: List[str] = []
+    i = 0
+    while i < len(seg):
+        m = _FORMAT_CMD.search(seg, i)
+        end = _close_brace(seg, m.end() - 1) if m else -1
+        if end < 0:
+            pieces.append(_plain_words(seg[i:]))
+            break
+        # Commands separated only by spaces share one $...$ (back to back, "$$" would open display maths).
+        run_end = end
+        while True:
+            j = run_end
+            while j < len(seg) and seg[j] == ' ':
+                j += 1
+            nxt = _FORMAT_CMD.match(seg, j)
+            nxt_end = _close_brace(seg, nxt.end() - 1) if nxt else -1
+            if nxt_end < 0:
+                break
+            run_end = nxt_end
+        # A bare _ & % # breaks a \textbf{...} of plain words; nested commands are left as written.
+        run = re.sub(
+            r'(\\(?:textbf|textit|textrm|textsf|texttt|textnormal|emph)\s*\{)([^{}\\]*)\}',
+            lambda a: a.group(1) + _text_mode_safe(a.group(2)) + '}',
+            seg[m.start():run_end],
+        )
+        # Right against another formula, a space keeps "$…$$…$" from reading as $$.
+        before = ' ' if m.start() == 0 and seg_start > 0 and full[seg_start - 1] == '$' else ''
+        after = ' ' if run_end == len(seg) and seg_end < len(full) and full[seg_end] == '$' else ''
+        pieces.append(_plain_words(seg[i:m.start()]) + f'{before}${run}${after}')
+        i = run_end
+    return ''.join(pieces)
+
+
 def sanitize_latex_and_mhchem(text: str) -> str:
     r"""
     Sanitizes LaTeX and mhchem expressions in questions and options:
@@ -805,6 +918,11 @@ def sanitize_latex_and_mhchem(text: str) -> str:
 
     text = re.sub(r'\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}', fix_array_columns, text)
 
+    # 4.5 Bold / italic / underlined words written outside $...$. A text with no $ and a
+    # formula in it is left to step 5, which puts the whole text in $...$.
+    if '$' in text or not _maths_besides_formatting(text):
+        text = wrap_stray_text_commands(text)
+
     # 5. Wrap bare LaTeX / mhchem in $...$ if no $ present
     if '$' not in text and ('\\' in text or '\\ce{' in text):
         cmds = re.findall(r'\\([a-zA-Z]+)', text)
@@ -812,8 +930,27 @@ def sanitize_latex_and_mhchem(text: str) -> str:
         has_sub_super = bool(re.search(r'[\^_]', text))
         if has_latex_cmd or has_sub_super:
             text = f"${text.strip()}$"
+    # 6. A whole formula with no \ and no $ ("x^2 + y^2 - 4y - 4 = 0", an option of JEE Main
+    # 2026 written so by gemini-3.6-flash): step 5 only looks at texts with a \.
+    elif _is_bare_formula(text):
+        text = f"${text.strip()}$"
 
     return text
+
+
+def _is_bare_formula(text: str) -> bool:
+    """A text that is only maths written without $: a power or subscript, no words, no blanks."""
+    t = text.strip()
+    return bool(
+        t
+        and '$' not in t
+        and '\\' not in t
+        and '__' not in t  # a blank line "_____", which KaTeX can't show
+        and re.search(r'[\w)\]}][\^_]\s*[\w{(+-]', t)
+        and not re.search(r'[A-Za-z]{3,}', t)  # "Find", "units": a sentence, not a formula
+        and re.fullmatch(r"[A-Za-z0-9\s+\-−=*/^_{}()\[\].,<>|:'!≤≥≠±×÷]+", t)
+    )
+
 
 wrap_bare_latex = sanitize_latex_and_mhchem
 
@@ -1122,26 +1259,28 @@ async def process_answer_key(answer_key_data: Dict) -> List[Dict]:
     content_parts = [ANSWER_KEY_PROMPT]
     for i, img_bytes in enumerate(images):
         content_parts.append(f"\n--- ANSWER KEY PAGE {i + 1} ---\n")
-        content_parts.append({
-            "mime_type": "image/png",
-            "data": base64.b64encode(img_bytes).decode("utf-8")
-        })
+        # A typed Part: the SDK rejects the old {"mime_type", "data"} dict, so every
+        # uploaded answer key used to come back empty.
+        content_parts.append(types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"))
     
     try:
-        model = "gemini-3.5-flash"
-        
-        response = await asyncio.wait_for(
-            asyncio.to_thread(
-                client.models.generate_content,
-                model=model,
-                contents=content_parts,
-                config=types.GenerateContentConfig(
-                    temperature=0.1,
-                    top_p=0.95,
-                    max_output_tokens=4096,
-                )
+        from ai_preview_importer.models import EXTRACT_MODEL, least_thinking
+        from ai_preview_importer.retries import with_retries
+
+        response = await with_retries(
+            lambda: asyncio.wait_for(
+                asyncio.to_thread(
+                    client.models.generate_content,
+                    model=EXTRACT_MODEL,
+                    contents=content_parts,
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=8192,
+                        thinking_config=least_thinking(EXTRACT_MODEL),
+                    )
+                ),
+                timeout=120.0
             ),
-            timeout=120.0
+            "Answer key",
         )
         raw_text = response.text
         
@@ -1211,64 +1350,63 @@ def merge_cross_page_questions(all_questions: List[Dict]) -> List[Dict]:
     return merged_questions
 
 
-async def _call_gemini_with_retry(content_parts: list, batch_num: int, max_retries: int = 3) -> str:
+async def _call_gemini_with_retry(
+    content_parts: list,
+    batch_num: int,
+    max_retries: int = 3,
+    model: Optional[str] = None,
+    thinking: Optional[types.ThinkingConfig] = None,
+) -> str:
     """
-    Call Gemini API with retry logic, exponential backoff, and fallback models/settings.
+    One non-streaming Gemini call, retried with growing waits when Google is busy or the call
+    breaks. `model` defaults to the generation model; the last try falls back to FALLBACK_MODEL.
+    `thinking` caps the model's reasoning (see models.least_thinking for copying jobs).
     """
-    base_model = "gemini-3.5-flash"
-    fallback_model = "gemini-2.0-flash-lite"
-    
-    for attempt in range(max_retries):
-        try:
-            # Adjust settings based on attempt
-            if attempt == 0:
-                model = base_model
-                temp = 0.1
-                max_tokens = 65536
-            elif attempt == 1:
-                logger.warning(f"Batch {batch_num}: Attempt {attempt + 1}. Using higher temperature.")
-                model = base_model
-                temp = 0.3  # Slightly higher temperature for different generation path
-                max_tokens = 65536
-            else:
-                logger.warning(f"Batch {batch_num}: Attempt {attempt + 1}. Falling back to {fallback_model}.")
-                model = fallback_model
-                temp = 0.2
-                max_tokens = 65536
+    from ai_preview_importer.models import FALLBACK_MODEL, GENERATE_MODEL, MAX_OUTPUT_TOKENS
+    from ai_preview_importer.retries import is_retryable, wait_before_retry
 
+    base_model = model or GENERATE_MODEL
+
+    for attempt in range(max_retries):
+        last_try = attempt == max_retries - 1
+        use_model = FALLBACK_MODEL if last_try and max_retries > 2 and FALLBACK_MODEL != base_model else base_model
+        try:
             response = await asyncio.wait_for(
                 asyncio.to_thread(
                     client.models.generate_content,
-                    model=model,
+                    model=use_model,
                     contents=content_parts,
                     config=types.GenerateContentConfig(
-                        temperature=temp,
-                        top_p=0.95,
-                        max_output_tokens=max_tokens,
+                        max_output_tokens=MAX_OUTPUT_TOKENS,
                         response_mime_type="application/json",
+                        # The fallback model may not accept the first model's thinking level.
+                        thinking_config=thinking if use_model == base_model else None,
                     )
                 ),
                 timeout=120.0
             )
-            
+
             if not response.text:
                 raise ValueError("Empty response received from Gemini.")
-                
+
             return response.text
 
         except Exception as e:
-            logger.error(f"Batch {batch_num}: Attempt {attempt + 1} failed: {e}")
-            if attempt == max_retries - 1:
+            logger.error(f"Batch {batch_num}: {use_model} try {attempt + 1} failed: {e}")
+            if last_try:
                 raise Exception(f"Failed after {max_retries} attempts: {e}")
-            
-            # Check for rate limits or overloaded service
-            if "429" in str(e) or "503" in str(e):
-                wait_time = (2 ** attempt) + 2  # 3s, 4s, 6s...
-                logger.info(f"Batch {batch_num}: Rate limit/overload detected. Waiting {wait_time}s before retry.")
-                await asyncio.sleep(wait_time)
+            if is_retryable(e):
+                await wait_before_retry(attempt)
             else:
-                # Short delay for other errors
                 await asyncio.sleep(1)
+
+def _model_for(mode: str) -> Dict:
+    """Model and thinking for a call in `mode`: copying runs on the cheap extraction model."""
+    from ai_preview_importer.models import EXTRACT_MODEL, least_thinking
+    if mode == "extract":
+        return {"model": EXTRACT_MODEL, "thinking": least_thinking(EXTRACT_MODEL)}
+    return {}
+
 
 def merge_question_parts(parts: List[Dict]) -> Dict:
     """
@@ -1423,7 +1561,7 @@ async def process_files(
         append_extracted_images_to_content(content_parts, all_embedded_images)
             
         try:
-            raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
+            raw_text = await _call_gemini_with_retry(content_parts, batch_num=1, **_model_for(mode))
             logger.info(f"Single batch response received. Length: {len(raw_text)}")
 
             batch_result = await _parse_response(raw_text, all_embedded_images)
@@ -1522,8 +1660,8 @@ async def process_files(
         logger.info(f"Sending batch {batch_num} to Gemini...")
         
         try:
-            raw_text = await _call_gemini_with_retry(content_parts, batch_num)
-            
+            raw_text = await _call_gemini_with_retry(content_parts, batch_num, **_model_for(mode))
+
             logger.info(f"Batch {batch_num} response received. Length: {len(raw_text)}")
             
             batch_result = await _parse_response(raw_text, all_embedded_images)
@@ -1609,6 +1747,78 @@ async def process_files(
     return result
 
 
+# Options that point at other options or at their place: shuffling them would break the question.
+_POSITIONAL_OPTION = re.compile(
+    r'\b(?:all|none|both|neither)\b.{0,20}\b(?:above|below|these|of the|options?|statements?)\b'
+    r'|\b(?:above|below)\b|\(?\b[A-E]\b\)?\s*(?:and|&|or|,)\s*\(?\b[A-E]\b\)?',
+    re.I,
+)
+
+
+def shuffle_generated_options(result: Dict) -> None:
+    """
+    Put the correct option of AI-written questions at a fair, random place, in place.
+    Gemini 3 Flash models writing new MCQs put the answer at A far too often (gemini-3.6-flash:
+    15 of 15 in one test, gemini-3.8-flash: 7 of 15), and candidates learn that quickly. The
+    order of a new question's options means nothing, so they are shuffled and the answer
+    letter follows. Seeded by the question text, so the flat list and the section copies of a
+    question are shuffled the same way. Questions whose options refer to other options or to
+    their position ("Both A and B", "All of the above") keep their order.
+    """
+    import hashlib
+    import random
+
+    def questions():
+        seen = set()  # the same dict listed twice must not be shuffled twice
+        for q in [*(result.get("questions") or []), *(q for s in result.get("sections") or [] for q in s.get("questions") or [])]:
+            if isinstance(q, dict) and id(q) not in seen:
+                seen.add(id(q))
+                yield q
+
+    for q in questions():
+        options = q.get("options")
+        if q.get("type") not in ("single", "multiple") or not isinstance(options, dict):
+            continue
+        keys = sorted(options.keys())
+        texts = [str(options[k].get("text") if isinstance(options[k], dict) else options[k] or "") for k in keys]
+        if keys not in (list("ABCD"), list("ABCDE")) or not all(t.strip() for t in texts):
+            continue
+        if any(_POSITIONAL_OPTION.search(t) for t in texts):
+            continue
+        order = list(keys)
+        random.Random(int(hashlib.md5(str(q.get("question") or "").encode("utf-8")).hexdigest(), 16)).shuffle(order)
+        # New letter keys[i] gets the option that was at order[i].
+        new_letter = {old: keys[i] for i, old in enumerate(order)}
+        q["options"] = {keys[i]: options[old] for i, old in enumerate(order)}
+        images = q.get("optionImages")
+        if isinstance(images, dict):
+            q["optionImages"] = {keys[i]: images.get(old) for i, old in enumerate(order)}
+        answer = q.get("correctAnswer")
+        if isinstance(answer, list):
+            q["correctAnswer"] = sorted(new_letter.get(str(a).upper(), a) for a in answer)
+        elif isinstance(answer, str) and answer.upper() in new_letter:
+            q["correctAnswer"] = new_letter[answer.upper()]
+
+
+def option_letter(answer: Any, question: Dict) -> Optional[str]:
+    """
+    The option letter an answer-key entry means, or None when it isn't an option.
+    "C", "(c)" and "c" are letters. A bare 1-5 is an option number ("(3)" → "C") only when
+    the question has printed options and isn't numerical; otherwise it's a numerical answer.
+    """
+    text = str(answer).strip().strip("().").strip().upper()
+    options = question.get("options")
+    has_options = isinstance(options, dict) and any(
+        (v.get("text") if isinstance(v, dict) else v) for v in options.values()
+    )
+    if text in ("A", "B", "C", "D", "E"):
+        return text
+    if has_options and question.get("type") != "numerical" and text in ("1", "2", "3", "4", "5"):
+        letter = "ABCDE"[int(text) - 1]
+        return letter if letter in options else None
+    return None
+
+
 def _match_answer_key(questions: List[Dict], answer_key: List[Dict]) -> List[Dict]:
     """
     Match extracted questions with answer key mappings.
@@ -1632,25 +1842,27 @@ def _match_answer_key(questions: List[Dict], answer_key: List[Dict]) -> List[Dic
     unmatched_questions = []
     
     for q in questions:
-        q_id = q.get("id")
+        # The number printed on the paper when the reader kept it; the running id otherwise.
+        q_id = q.get("qno") or q.get("id")
         normalized_q_id = normalize_question_id(q_id)
         
         logger.debug(f"Trying to match question {q_id} (normalized: {normalized_q_id})")
         
         if normalized_q_id in answer_lookup:
             answer = answer_lookup[normalized_q_id]
-            
+
             # Handle different answer formats
             if isinstance(answer, list):
                 # Multiple choice
-                q["correctAnswer"] = answer
+                q["correctAnswer"] = [option_letter(a, q) or str(a).strip().upper() for a in answer]
                 q["type"] = "multiple"
                 logger.debug(f"Matched Q{normalized_q_id} as multiple choice: {answer}")
             elif isinstance(answer, str):
-                if answer.upper() in ['A', 'B', 'C', 'D', 'E']:
-                    # Single choice
-                    q["correctAnswer"] = answer.upper()
-                    logger.debug(f"Matched Q{normalized_q_id} as single choice: {answer.upper()}")
+                letter = option_letter(answer, q)
+                if letter:
+                    # Single choice ("C", "(c)", or "3" for a paper whose options are (1)-(4))
+                    q["correctAnswer"] = letter
+                    logger.debug(f"Matched Q{normalized_q_id} as single choice: {letter}")
                 else:
                     # Try to parse as numerical
                     try:
@@ -1820,14 +2032,6 @@ def group_passage_questions(questions: List[Dict]) -> List[Dict]:
 async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     """Parse Gemini response into our strict Question format"""
     
-    # DEBUG: dump raw response to analyze
-    try:
-        with open("/tmp/gemini_raw_output_debug.txt", "a", encoding="utf-8") as f:
-            f.write("\n\n==== NEW RESPONSE ====\n\n")
-            f.write(raw_text)
-    except:
-        pass
-
     # Clean markdown code fences if present
     clean = raw_text.strip()
     if clean.startswith("```json"):
@@ -2018,7 +2222,7 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "negativeMarks": q.get("negativeMarks"),
             "crossPage": q.get("crossPage", False),
             "groupId": q.get("groupId", ""),
-            "passageContent": q.get("passageContent", ""),
+            "passageContent": wrap_stray_text_commands(q.get("passageContent", "")),
         }
         if sec_name:
             val_q["section_name"] = sec_name
@@ -2026,6 +2230,10 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             val_q["section_id"] = sec_id
         if sec_attempt:
             val_q["section_attempt_control"] = sec_attempt
+        # The page reader's printed question number, start page and subject (see page_extract.py).
+        for key in ("qno", "page", "subject"):
+            if q.get(key) is not None:
+                val_q[key] = q[key]
 
         validated.append(val_q)
 

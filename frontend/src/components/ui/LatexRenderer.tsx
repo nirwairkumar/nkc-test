@@ -15,10 +15,23 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 
+export interface LatexFlag {
+    start: number;
+    end: number;
+}
+
 interface LatexRendererProps {
     children: string;
     className?: string;
+    /**
+     * Stretches to show as written with a red wavy underline (the maths fixes, Grammarly
+     * style). Positions are in the text after restoreDecodedCommands, as findLatexIssues
+     * gives them. The n-th flag gets the classes "tex-flag tex-flag-n".
+     */
+    flags?: readonly LatexFlag[];
 }
+
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Only real image addresses become <img>; a tag pointing at nothing ("image_4", "fig")
 // would show a broken image.
@@ -28,15 +41,28 @@ const isImageSrc = (src: string) => /^(https?:|data:image\/|blob:|\/)/i.test(src
  * Custom LaTeX renderer that uses katex directly (not react-latex-next)
  * so that the mhchem extension is properly registered.
  */
-const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) => {
+const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className, flags }) => {
     const [maximizedTable, setMaximizedTable] = useState<string | null>(null);
     const tableDataRef = useRef<Record<string, string>>({});
+    const flagKey = flags?.length ? flags.map(f => `${f.start}-${f.end}`).join(',') : '';
 
     const rendered = useMemo(() => {
         if (!children) return '';
 
         try {
             let result = restoreDecodedCommands(children);
+            // Flagged stretches are swapped out first, so nothing below renders or alters them.
+            const flagHtml: Record<string, string> = {};
+            if (flags?.length) {
+                let floor = result.length;
+                [...flags].map((f, i) => ({ ...f, i })).sort((a, b) => b.start - a.start).forEach(f => {
+                    if (f.start < 0 || f.end > floor || f.end <= f.start) return;
+                    const key = `__FLAG_PH_${f.i}__`;
+                    flagHtml[key] = `<span class="tex-flag tex-flag-${f.i}">${escapeHtml(result.slice(f.start, f.end)).replace(/\n/g, '<br/>')}</span>`;
+                    result = result.slice(0, f.start) + key + result.slice(f.end);
+                    floor = f.start;
+                });
+            }
             // Pre-process & sanitize LaTeX/mhchem input
             // 1. Fix unescaped ce{...} -> \ce{...}
             result = result.replace(/(?<!\\)\bce\{/g, '\\ce{');
@@ -296,11 +322,15 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             // Just in case any IMGPH placeholders leaked out:
             result = swapPlaceholders(result);
 
+            result = result.replace(/__FLAG_PH_\d+__/g, (match) => flagHtml[match] ?? match);
+
             return result;
         } catch (e) {
             return children;
         }
-    }, [children]);
+        // flagKey stands for flags (a new array with the same ranges is the same render).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [children, flagKey]);
     // DOMPurify parses the whole string into a DOM; doing it on every parent render was
     // a large share of each keystroke in the test builder (one per formula on the page).
     const safeHtml = useMemo(() => sanitizeHtml(rendered), [rendered]);

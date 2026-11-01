@@ -499,7 +499,10 @@ async def parse_document(
         # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
         from ai_preview_importer.marking import resolve_marking
         resolve_marking(result, marks_per_question, negative_marks)
-        
+        if mode == "generate":
+            from ai_preview_importer.pdf_vision_pipeline import shuffle_generated_options
+            shuffle_generated_options(result)
+
         # 4. Return Result
         logger.info(f"Parsing complete ({mode} mode). Returning {len(result.get('questions', []))} questions.")
         return result
@@ -691,6 +694,10 @@ async def parse_document_stream(
                 # Teacher's values > the paper's own scheme > +1 / 0, settled on every question.
                 from ai_preview_importer.marking import resolve_marking
                 resolve_marking(result, marks_per_question, negative_marks)
+                if mode == "generate":
+                    # New questions' answers sit at a random option, not mostly at A.
+                    from ai_preview_importer.pdf_vision_pipeline import shuffle_generated_options
+                    shuffle_generated_options(result)
 
                 final_result = result
                 processing_complete = True
@@ -949,41 +956,58 @@ async def read_question_from_photo(
         _call_gemini_with_retry, _sanitize_gemini_json, convert_image_to_bytes, process_diagram_bboxes,
     )
     from ai_preview_importer.latex_json import repair_json_escapes
+    from ai_preview_importer.models import EXTRACT_MODEL, REPAIR_MODEL, least_thinking
 
     jpeg = await asyncio.to_thread(convert_image_to_bytes, content)
     prompt = PHOTO_QUESTION_PROMPT
     if expected_type:
         prompt += f"\nThe teacher expects a \"{expected_type}\" question; use that type unless the photo clearly shows otherwise.\n"
 
-    try:
+    async def read_with(model: str) -> Optional[Dict[str, Any]]:
+        """The question `model` reads from the photo, or None when its answer isn't usable."""
         raw = await _call_gemini_with_retry(
             [prompt, types.Part.from_bytes(data=jpeg, mime_type="image/jpeg")],
             batch_num=0,
             max_retries=2,
+            model=model,
+            thinking=least_thinking(model),
         )
-    except Exception as e:
-        logger.error(f"read-question Gemini call failed: {e}")
-        raise HTTPException(status_code=502, detail="Could not read the photo right now. Please try again.")
-
-    clean = raw.strip()
-    if clean.startswith("```"):
-        clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-    if clean.endswith("```"):
-        clean = clean[:-3]
-    clean = clean_json(clean.strip())
-
-    try:
-        data = json.loads(repair_json_escapes(clean))
-    except json.JSONDecodeError:
+        clean = raw.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+        if clean.endswith("```"):
+            clean = clean[:-3]
+        clean = clean_json(clean.strip())
         try:
-            data = json.loads(_sanitize_gemini_json(clean))
+            data = json.loads(repair_json_escapes(clean))
         except json.JSONDecodeError:
-            logger.error(f"read-question returned invalid JSON: {clean[:300]}")
-            raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
+            try:
+                data = json.loads(_sanitize_gemini_json(clean))
+            except json.JSONDecodeError:
+                logger.warning(f"read-question: {model} returned invalid JSON: {clean[:300]}")
+                return None
+        if isinstance(data, list):
+            data = data[0] if data else {}
+        if not isinstance(data, dict) or not (data.get("question") or data.get("options")):
+            return None
+        return data
 
-    if isinstance(data, list):
-        data = data[0] if data else {}
-    if not isinstance(data, dict):
+    # The fast copying model reads most photos in a second or two; messy handwriting it can't
+    # make out goes to the stronger model.
+    data = None
+    failed_calls = 0
+    for model in (EXTRACT_MODEL, REPAIR_MODEL):
+        try:
+            data = await read_with(model)
+        except Exception as e:
+            failed_calls += 1
+            logger.error(f"read-question {model} call failed: {e}")
+            continue
+        if data:
+            break
+    if data is None:
+        if failed_calls == 2:
+            raise HTTPException(status_code=502, detail="Could not read the photo right now. Please try again.")
         raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
 
     result = _normalize_photo_question(data)

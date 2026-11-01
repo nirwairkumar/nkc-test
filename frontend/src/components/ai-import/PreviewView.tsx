@@ -27,7 +27,7 @@ import {
     X,
 } from 'lucide-react';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import LatexFixHints from '@/components/ui/LatexFixHints';
+import { LatexWithFixes } from '@/components/ui/LatexFixHints';
 import { findLatexIssues, getKeptVersion, isKept, subscribeKept } from '@/lib/latexFixes';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -140,20 +140,26 @@ const QuestionCard = memo(function QuestionCard({ q, n, onZoom, onFix }: {
                         <ChevronDown className="aix-chev" />
                     </summary>
                     <div className="aix-passage-body aix-tex">
-                        {raw ? <pre className="aix-raw">{q.passageContent}</pre> : <LatexRenderer>{q.passageContent}</LatexRenderer>}
-                        {fix && <LatexFixHints text={q.passageContent} onApply={t => fix({ ...q, passageContent: t })} className="mt-2" />}
+                        {raw ? (
+                            <pre className="aix-raw">{q.passageContent}</pre>
+                        ) : fix ? (
+                            <LatexWithFixes text={q.passageContent} onApply={t => fix({ ...q, passageContent: t })} />
+                        ) : (
+                            <LatexRenderer>{q.passageContent}</LatexRenderer>
+                        )}
                     </div>
                 </details>
             ) : null}
 
             {raw ? (
                 <pre className="aix-raw">{q.question || ''}</pre>
+            ) : fix && q.question ? (
+                <LatexWithFixes text={q.question} onApply={t => fix({ ...q, question: t })} textClassName="aix-qtext aix-tex" />
             ) : (
                 <div className="aix-qtext aix-tex">
                     {q.question ? <LatexRenderer>{q.question}</LatexRenderer> : <span className="aix-opt-empty">No question text</span>}
                 </div>
             )}
-            {fix && q.question && <LatexFixHints text={q.question} onApply={t => fix({ ...q, question: t })} className="mt-2" />}
 
             {q.image ? (
                 <figure className="aix-figure">
@@ -176,22 +182,22 @@ const QuestionCard = memo(function QuestionCard({ q, n, onZoom, onFix }: {
                                 <div className="aix-opt-body">
                                     {raw ? (
                                         <code style={{ fontFamily: 'var(--f-mono)', fontSize: 13 }}>{text}</code>
+                                    ) : text && fix ? (
+                                        <LatexWithFixes
+                                            text={text}
+                                            onApply={t => fix({
+                                                ...q,
+                                                options: { ...q.options, [key]: value && typeof value === 'object' ? { ...value, text: t } : t },
+                                            })}
+                                            textClassName="aix-tex"
+                                            listClassName="mt-1.5"
+                                        />
                                     ) : text ? (
                                         <span className="aix-tex"><LatexRenderer>{text}</LatexRenderer></span>
                                     ) : (
                                         !img && <span className="aix-opt-empty">Empty option</span>
                                     )}
                                     {img ? <img src={img} alt={`Option ${key}`} loading="lazy" /> : null}
-                                    {fix && text && (
-                                        <LatexFixHints
-                                            text={text}
-                                            onApply={t => fix({
-                                                ...q,
-                                                options: { ...q.options, [key]: value && typeof value === 'object' ? { ...value, text: t } : t },
-                                            })}
-                                            className="mt-1.5"
-                                        />
-                                    )}
                                 </div>
                                 {correct && (
                                     <span className="aix-opt-seal"><Check /><span className="aix-sr">Correct answer</span></span>

@@ -52,6 +52,8 @@ from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 from ai_preview_importer.latex_json import repair_json_escapes, normalize_question_latex
 from ai_preview_importer.figure_crops import normalize_bbox_pages
 from ai_preview_importer.legacy_fonts import looks_like_legacy_hindi
+from ai_preview_importer.models import GENERATE_MODEL, MAX_OUTPUT_TOKENS
+from ai_preview_importer.retries import with_retries
 
 
 def _bbox_page(q: Dict) -> Optional[int]:
@@ -237,16 +239,25 @@ async def stream_gemini_and_parse(
     embedded_images: List[Dict],
     progress_callback: Optional[Callable] = None,
     question_callback: Optional[Callable] = None,
+    *,
+    model: Optional[str] = None,
+    thinking: Optional[types.ThinkingConfig] = None,
+    media_resolution: Optional[types.MediaResolution] = None,
 ) -> Dict:
     """
     Call Gemini with streaming and incrementally parse the JSON response.
     Yields individual questions to question_callback as soon as each
     complete question object is detected in the stream.
+
+    `model` defaults to the generation model; `thinking` caps its reasoning. The result's
+    "_meta" says how the answer ended (finish_reason, token counts, a stream error, the raw
+    text), so a caller can tell a finished answer from one that was cut off.
     """
     if not client:
         raise ValueError("Vertex AI client not initialized")
 
-    model = "gemini-3.5-flash"
+    model = model or GENERATE_MODEL
+    meta: Dict = {"model": model, "finish_reason": None, "usage": {}, "error": None}
     token_buffer = ""
     questions_found = []
     # Incremental scan state: open brackets as (bracket, start offset) and string flags.
@@ -270,14 +281,15 @@ async def stream_gemini_and_parse(
         logger.info("Starting Gemini streaming call...")
 
         def _stream_call():
+            # No temperature/top_p: Gemini 3 models are meant to run at their defaults.
             return client.models.generate_content_stream(
                 model=model,
                 contents=content_parts,
                 config=types.GenerateContentConfig(
-                    temperature=0.1,
-                    top_p=0.95,
-                    max_output_tokens=65536,
+                    max_output_tokens=MAX_OUTPUT_TOKENS,
                     response_mime_type="application/json",
+                    thinking_config=thinking,
+                    media_resolution=media_resolution,
                 ),
             )
 
@@ -292,6 +304,17 @@ async def stream_gemini_and_parse(
                 for chunk in stream:
                     if stop_reading.is_set():
                         break
+                    u = getattr(chunk, "usage_metadata", None)
+                    if u:
+                        meta["usage"] = {
+                            "input": u.prompt_token_count or 0,
+                            "output": u.candidates_token_count or 0,
+                            "thinking": u.thoughts_token_count or 0,
+                        }
+                    candidates = getattr(chunk, "candidates", None)
+                    if candidates and candidates[0].finish_reason:
+                        reason = candidates[0].finish_reason
+                        meta["finish_reason"] = getattr(reason, "name", str(reason))
                     if chunk.text:
                         loop.call_soon_threadsafe(queue.put_nowait, chunk.text)
             except Exception as e:
@@ -358,9 +381,10 @@ async def stream_gemini_and_parse(
                                     "data": {"questions_found": len(questions_found)},
                                 })
 
+        usage = meta["usage"]
         logger.info(
-            f"Streaming complete. {chunk_count} chunks, "
-            f"{len(questions_found)} questions extracted incrementally."
+            f"Streaming complete ({model}): {len(questions_found)} questions, finish={meta['finish_reason']}, "
+            f"tokens in={usage.get('input')} out={usage.get('output')} thinking={usage.get('thinking')}"
         )
 
     except asyncio.CancelledError:
@@ -371,6 +395,8 @@ async def stream_gemini_and_parse(
         logger.error(f"Streaming Gemini call failed: {e}")
         if not questions_found:
             raise
+        meta["error"] = str(e)
+    meta["raw"] = token_buffer
 
     # Final full parse for metadata (title, description, sections)
     try:
@@ -399,6 +425,7 @@ async def stream_gemini_and_parse(
         full_result["canConfirm"] = all(q.get("correctAnswer") is not None for q in questions_found)
         full_result["unansweredCount"] = sum(1 for q in questions_found if q.get("correctAnswer") is None)
 
+    full_result["_meta"] = meta
     return full_result
 
 
@@ -445,6 +472,7 @@ async def process_files_hybrid_stream(
     image_files: List[Dict] = []
     pdf_bytes_list: List[bytes] = []
 
+    doc_pages = 0  # pages so far across every uploaded file, in upload order (as diagram crops count them)
     for file_info in file_data:
         filename = file_info["filename"]
         content = file_info["content"]
@@ -454,9 +482,16 @@ async def process_files_hybrid_stream(
             all_page_infos.extend(page_infos)
             pdf_bytes_list.append(content)
             embedded = extract_embedded_images(content)
+            for img in embedded:
+                img["page"] += doc_pages
             all_embedded_images.extend(embedded)
+            doc_pages += len(page_infos)
         elif is_image(filename):
             image_files.append({'filename': filename, 'content': content})
+            doc_pages += 1
+    # Each PDF numbers its figures from image_1; make the ids unique across files.
+    for i, img in enumerate(all_embedded_images):
+        img["id"] = f"image_{i + 1}"
 
     text_rich_count = sum(1 for p in all_page_infos if p["classification"] == "text_rich")
     image_only_count = sum(1 for p in all_page_infos if p["classification"] == "image_only")
@@ -494,7 +529,8 @@ async def process_files_hybrid_stream(
     image_only_page_images: Dict[int, bytes] = {}
     render_dpi = 150
 
-    if pages_needing_render and pdf_bytes_list:
+    # Extract renders every page itself (see page_extract.build_pages).
+    if pages_needing_render and pdf_bytes_list and mode != "extract":
         if progress_callback:
             await progress_callback({
                 'stage': 'processing',
@@ -530,7 +566,23 @@ async def process_files_hybrid_stream(
         logger.info("Pure image upload detected: forcing PARALLEL mode for instant extraction")
         algorithm = "parallel"
 
-    if algorithm == "stateful":
+    if mode == "extract":
+        # --- PAGE READER: a few pages per call, then every printed number is checked ---
+        # Both reading modes land here: copying a paper needs no chat history.
+        from ai_preview_importer.page_extract import build_pages, extract_questions  # lazy: imports this module
+        pages = await asyncio.to_thread(build_pages, file_data, all_page_infos)
+        result_data = await extract_questions(
+            pages,
+            all_embedded_images,
+            {
+                "languages": languages, "difficulty": difficulty, "user_instructions": user_instructions,
+                "marks_per_question": marks_per_question, "negative_marks": negative_marks,
+            },
+            progress_callback=progress_callback,
+            question_callback=question_callback,
+        )
+
+    elif algorithm == "stateful":
         # --- STATEFUL SEQUENTIAL CHAT PIPELINE ---
         logger.info("Using STATEFUL sequential chat pipeline")
         
@@ -659,11 +711,16 @@ async def process_files_hybrid_stream(
                         if question_callback:
                             await question_callback({"type": "question", "question": q, "batch": step_num})
 
-                result = await stream_gemini_and_parse(
-                    request_contents, chunk_embedded,
-                    progress_callback=None,
-                    question_callback=local_question_callback
-                )
+                async def run_step():
+                    chunk_questions_found.clear()  # a retried step starts its list again
+                    return await stream_gemini_and_parse(
+                        request_contents, chunk_embedded,
+                        progress_callback=None,
+                        question_callback=local_question_callback
+                    )
+
+                # A busy Google (429) used to throw this step's pages away: retry first.
+                result = await with_retries(run_step, f"Stateful step {step_num}")
 
                 batch_questions = result.get("questions") or chunk_questions_found
                 normalize_bbox_pages(batch_questions, c_start, batch_size)
@@ -677,7 +734,7 @@ async def process_files_hybrid_stream(
 
                 all_questions.extend(batch_questions)
                 
-                serialized_response = json.dumps(result)
+                serialized_response = json.dumps({k: v for k, v in result.items() if k != "_meta"})
                 chat_history.append(compact_user_content)
                 chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text=serialized_response)]))
                 
@@ -710,11 +767,11 @@ async def process_files_hybrid_stream(
             append_extracted_images_to_content(content_parts, all_embedded_images)
 
             try:
-                result_data = await stream_gemini_and_parse(
+                result_data = await with_retries(lambda: stream_gemini_and_parse(
                     content_parts, all_embedded_images,
                     progress_callback=progress_callback,
                     question_callback=question_callback,
-                )
+                ), "Hybrid single call")
             except Exception as e:
                 logger.error(f"Hybrid streaming failed: {e}. Falling back to vision...")
                 result_data = None
@@ -791,11 +848,11 @@ async def process_files_hybrid_stream(
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
 
-                        result = await stream_gemini_and_parse(
+                        result = await with_retries(lambda: stream_gemini_and_parse(
                             content_parts, batch_embedded,
                             progress_callback=None,
                             question_callback=local_question_callback
-                        )
+                        ), f"Hybrid batch {b_num}")
 
                         batch_questions = result.get("questions") or batch_questions_found
                         normalize_bbox_pages(batch_questions, b_start, len(b_infos))
@@ -893,11 +950,11 @@ async def process_files_hybrid_stream(
             append_extracted_images_to_content(content_parts, all_embedded_images)
 
             try:
-                result_data = await stream_gemini_and_parse(
+                result_data = await with_retries(lambda: stream_gemini_and_parse(
                     content_parts, all_embedded_images,
                     progress_callback=progress_callback,
                     question_callback=question_callback,
-                )
+                ), "Vision single call")
             except Exception as e:
                 logger.error(f"Vision streaming failed: {e}. Non-streaming fallback...")
                 raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
@@ -983,11 +1040,11 @@ async def process_files_hybrid_stream(
                         result = None
                         for attempt in range(2):
                             try:
-                                result = await stream_gemini_and_parse(
+                                result = await with_retries(lambda: stream_gemini_and_parse(
                                     content_parts, batch_embedded,
                                     progress_callback=None,
                                     question_callback=local_question_callback
-                                )
+                                ), f"Vision batch {b_num}")
                                 if result and (result.get("questions") or batch_questions_found):
                                     break
                             except Exception as b_err:
@@ -1143,27 +1200,30 @@ async def process_files_hybrid_stream(
         ak_mappings = await process_answer_key(answer_key)
         unique_questions = _match_answer_key(unique_questions, ak_mappings)
 
+    check = result_data.get("extraction_check")
     if progress_callback:
+        missing_note = f" Could not read: Q{', Q'.join(check['missing'])}." if check and check.get("missing") else ""
         await progress_callback({
             'stage': 'complete',
             'percent': 100,
-            'message': f'Complete! Extracted {len(unique_questions)} questions.',
+            'message': f'Complete! Extracted {len(unique_questions)} questions.{missing_note}',
             'data': {
                 'questions_count': len(unique_questions),
-                'pipeline': 'hybrid' if text_rich_count > 0 else 'vision',
+                'pipeline': 'pages' if check else ('hybrid' if text_rich_count > 0 else 'vision'),
                 'text_pages': text_rich_count,
                 'image_pages': image_only_count + len(image_files),
             }
         })
 
-    # Build final result
+    # Build final result. The page reader's own bookkeeping stays out of the saved questions.
+    internal_keys = {"section_name", "section_id", "section_attempt_control", "qno", "page", "subject", "unreadable"}
     has_sections = any(q.get("section_name") for q in unique_questions)
 
     result = {
         'title': result_data.get("title") or 'Extracted Exam',
         'description': result_data.get("description") or 'Extracted from document',
         'questions': [
-            {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            {k: v for k, v in q.items() if k not in internal_keys}
             for q in unique_questions
         ],
         'canConfirm': all(q.get('correctAnswer') is not None for q in unique_questions),
@@ -1174,6 +1234,9 @@ async def process_files_hybrid_stream(
         result["duration"] = result_data["duration"]
     if result_data.get("revision_notes"):
         result["revision_notes"] = result_data["revision_notes"]
+    if check:
+        # Saved with the import history: pages, calls, re-reads, numbers still missing, tokens.
+        result["extraction_check"] = check
 
     if has_sections:
         sections_map = {}
@@ -1181,6 +1244,10 @@ async def process_files_hybrid_stream(
         for q in unique_questions:
             sec_name = q.get("section_name") or "General"
             sec_key = sec_name.strip().lower()
+            if sec_key in sections_map and sections_list[-1] is not sections_map[sec_key]:
+                # The same name again after another section (Physics' "Section A" after Maths'):
+                # a new section here, so no question moves away from its place in the paper.
+                del sections_map[sec_key]
             if sec_key not in sections_map:
                 attempt_control = q.get("section_attempt_control") or {"enabled": False}
                 sec_obj = {
@@ -1191,7 +1258,7 @@ async def process_files_hybrid_stream(
                 }
                 sections_map[sec_key] = sec_obj
                 sections_list.append(sec_obj)
-            q_clean = {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            q_clean = {k: v for k, v in q.items() if k not in internal_keys}
             sections_map[sec_key]["questions"].append(q_clean)
 
         result["enable_section_mode"] = True

@@ -42,6 +42,9 @@ export interface LatexIssue {
     replacement: string;
     /** The whole text with this one fix made. */
     next: string;
+    /** Where `original` sits in the text as LatexRenderer sees it (after restoreDecodedCommands). */
+    start: number;
+    end: number;
 }
 
 // ── Does it render? ──────────────────────────────────────────────────────────
@@ -200,7 +203,8 @@ function findMath(text: string): { blocks: MathBlock[]; masked: string } {
 
 // ── Maths written outside $ … $ ──────────────────────────────────────────────
 
-type WordKind = 'tex' | 'escaped' | 'number' | 'operator' | 'letter' | 'plain';
+// 'term': a number times a variable ("4y", "2xy"), as in x^2 + y^2 - 4y - 4 = 0.
+type WordKind = 'tex' | 'escaped' | 'number' | 'term' | 'operator' | 'letter' | 'plain';
 interface Word { start: number; end: number; text: string; kind: WordKind; open: number }
 
 const COMMAND = /\\[A-Za-z]{2,}/;
@@ -212,6 +216,7 @@ function wordKind(w: string): WordKind {
     if (COMMAND.test(w) || SCRIPT.test(w)) return 'tex';
     if (/\\[_%&#]/.test(w)) return 'escaped';
     if (/^[-+]?\d+(?:[.,]\d+)?$/.test(w)) return 'number';
+    if (/^[-+]?\d+(?:\.\d+)?[A-Za-z]{1,2}$/.test(w) && !/\d(?:st|nd|rd|th)$/i.test(w)) return 'term';
     if (/^(?:[-+=<>×÷−±*/]|<=|>=|!=)$/.test(w)) return 'operator';
     if (/^[A-Za-z]$/.test(w)) return 'letter';
     return 'plain';
@@ -235,9 +240,9 @@ function texRuns(words: Word[], masked: string): Array<[number, number]> {
         for (let j = i + 1; j < words.length && joinable(masked, words[j - 1], words[j]); j++) {
             const k = words[j].kind;
             if (k === 'tex') b = j;
-            else if (k !== 'number' && k !== 'operator' && k !== 'letter') break;
+            else if (k !== 'number' && k !== 'term' && k !== 'operator' && k !== 'letter') break;
         }
-        const glue = (k: WordKind) => k === 'number' || k === 'operator';
+        const glue = (k: WordKind) => k === 'number' || k === 'term' || k === 'operator';
         while (a > 0 && joinable(masked, words[a - 1], words[a])
             && (glue(words[a - 1].kind) || (words[a - 1].kind === 'letter' && words[a].kind === 'operator'))) a--;
         while (b < words.length - 1 && joinable(masked, words[b], words[b + 1])
@@ -350,10 +355,12 @@ export function findLatexIssues(input: string): LatexIssue[] {
     const issues = found
         .filter(f => f.replacement !== f.original)
         .sort((x, y) => x.start - y.start)
-        .map(({ start, end, ...f }) => ({
+        // Two fixes over the same characters can't both be underlined or applied: keep the first.
+        .filter((f, i, all) => i === 0 || f.start >= all[i - 1].end)
+        .map(f => ({
             ...f,
             key: `${f.original}\u0001${f.replacement}`,
-            next: text.slice(0, start) + f.replacement + text.slice(end),
+            next: text.slice(0, f.start) + f.replacement + text.slice(f.end),
         }));
     if (issueCache.size > 500) issueCache.clear();
     issueCache.set(input, issues);
