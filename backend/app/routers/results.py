@@ -118,12 +118,37 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
         return None
 
 
+def _may_score_against_stored_key(stored_test: Dict[str, Any], requester: Optional[str]) -> bool:
+    """Scoring against the stored key is an answer oracle: send any answers, read back which
+    are right (and, since 2026-10-12, the whole `answerKey`). Only the creator, an admin, or
+    someone who has already submitted this test may do it. A student mid-exam has no
+    submitted attempt yet, so the exam link's slug alone no longer opens the key."""
+    if not requester:
+        return False
+    if requester == stored_test.get("created_by") or is_admin_user(requester):
+        return True
+    try:
+        attempt = supabase.table("user_tests").select("id") \
+            .eq("user_id", requester).eq("test_id", stored_test.get("id")).limit(1).execute()
+        return bool(attempt.data)
+    except Exception as e:
+        logger.error(f"analyze: could not check attempt for {stored_test.get('id')}: {e}")
+        return False
+
+
 @router.post("/analyze")
 def analyze_test_results(payload: AnalyzeRequest, request: Request):
     # C4: the questions the browser holds no longer carry correctAnswer, so the answer
     # key is reloaded server-side. The client copy stays as a fallback for callers that
     # still pass a full test object (e.g. the creator analysis view, which is allowed it).
     stored_test = _load_authoritative_test(payload.test_id or (payload.test or {}).get("id"))
+    requester = get_optional_user_id(request)
+    if stored_test and not _may_score_against_stored_key(stored_test, requester):
+        # 401 lets the app refresh an expired login and retry; 403 means signed in but
+        # this person has not submitted the test.
+        if not requester:
+            raise HTTPException(status_code=401, detail="Sign in to see this result.")
+        raise HTTPException(status_code=403, detail="Submit the test to see its result.")
     if stored_test and (stored_test.get("questions") or stored_test.get("sections")):
         test = {**(payload.test or {}), **{k: v for k, v in stored_test.items() if v is not None}}
     else:
@@ -452,7 +477,6 @@ def analyze_test_results(payload: AnalyzeRequest, request: Request):
     answer_key = {}
     key_allowed = not exam_window_still_open(test.get("settings"))
     if key_allowed and not result_view_allows(test.get("settings"), "solution_key"):
-        requester = get_optional_user_id(request)
         key_allowed = bool(requester) and (requester == test.get("created_by") or is_admin_user(requester))
     if key_allowed:
         for q in questions:
