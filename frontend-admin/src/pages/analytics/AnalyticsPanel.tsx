@@ -138,7 +138,7 @@ export default function AnalyticsPanel() {
                     {tab === 'overview' && <OverviewTab period={period} site={site} nav={nav} />}
                     {tab === 'traffic' && <TrafficTab period={period} site={site} />}
                     {tab === 'growth' && <GrowthTab period={period} />}
-                    {tab === 'tests' && <TestsTab period={period} onSeeCreated={() => { setContentKind('test'); setTab('content'); }} />}
+                    {tab === 'tests' && <TestsTab period={period} nav={nav} onSeeCreated={() => { setContentKind('test'); setTab('content'); }} />}
                     {tab === 'content' && <ContentTab period={period} kind={contentKind} onKind={setContentKind} nav={nav} />}
                     {tab === 'video' && <VideoTab period={period} nav={nav} />}
                     {tab === 'people' && <PeopleTab period={period} site={site} nav={nav} />}

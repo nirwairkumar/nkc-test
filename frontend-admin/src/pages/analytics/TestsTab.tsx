@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 import { insightsApi, type Period, type TestRow } from './api';
 import { change, derive, num, pct, ratio } from './format';
 import { previousLabel } from './period';
+import type { Nav } from './AnalyticsPanel';
 import { ErrorState } from './shared';
+import SocialTestsCard from './SocialTestsCard';
 import { BarList, CARD, Card, Chip, Empty, Segmented, Skeleton, StatTile, TileSkeletons } from './ui';
 
 type Sort = 'submissions' | 'starts' | 'viewers' | 'completion';
@@ -18,7 +20,7 @@ const TOOL_LABEL: Record<string, string> = {
 };
 const MODE_LABEL: Record<string, string> = { extract: 'From a file (extract)', generate: 'From a topic (generate)' };
 
-export default function TestsTab({ period, onSeeCreated }: { period: Period; onSeeCreated?: () => void }) {
+export default function TestsTab({ period, nav, onSeeCreated }: { period: Period; nav: Nav; onSeeCreated?: () => void }) {
     const q = useQuery({
         queryKey: ['analytics', 'tests', period],
         queryFn: () => insightsApi.tests(period),
@@ -144,6 +146,8 @@ export default function TestsTab({ period, onSeeCreated }: { period: Period; onS
                     )}
                 </div>
             </section>
+
+            <SocialTestsCard period={period} nav={nav} />
 
             <div className="grid gap-4 lg:grid-cols-3">
                 <Card title="AI test generation" subtitle="Excluding your team">

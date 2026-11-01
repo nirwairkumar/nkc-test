@@ -265,6 +265,18 @@ def tests(period: str = "30d", limit: int = Query(25, ge=1, le=200),
     return {"range": r, **data["report"], "summary": data["summary"], "previous": data["previous"]}
 
 
+@router.get("/social-tests")
+def social_tests(period: str = "30d", limit: int = Query(60, ge=1, le=300),
+                 start: Optional[str] = None, end: Optional[str] = None):
+    """
+    Test links opened from Instagram, Facebook and other social apps: which test, whose, how
+    people arrived (in-app browser, re-shared) and on which days. The apps never say which post.
+    """
+    r = resolve_period(period, start, end)
+    data = _rpc("analytics_report_social_tests", {"p_from": r["from"], "p_to": r["to"], "p_limit": limit})
+    return {"range": r, **data}
+
+
 CONTENT_KINDS = ("all", "test", "ai_upload")
 
 

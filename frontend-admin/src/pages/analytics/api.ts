@@ -274,6 +274,43 @@ export interface TestsReport {
     previous: Summary;
 }
 
+/** One test link × one social platform it was opened from. */
+export interface SocialTestRow {
+    platform: string;
+    test_id: string | null;
+    path: string;
+    title: string | null;
+    /** The test no longer exists; the title comes from the page title we recorded. */
+    deleted: boolean;
+    creator_id: string | null;
+    creator_name: string | null;
+    is_team: boolean | null;
+    visitors: number;
+    sessions: number;
+    /** Visitors whose page opened inside the app's own browser (story link, bio, DM, post). */
+    in_app: number;
+    /** Visitors on a link the app tagged when someone shared it on (e.g. utm_source=ig). */
+    reshared: number;
+    mobile: number;
+    engagement_rate: number | null;
+    avg_engaged_ms: number | null;
+    first_seen: string;
+    last_seen: string;
+    /** Different IST days it was opened on. */
+    days: number;
+    /** Visitors per IST weekday, Sunday first. */
+    weekdays: number[];
+    /** Everyone who opened this test in the period, from any source. */
+    all_viewers: number;
+}
+
+export interface SocialTestsReport {
+    range: Range;
+    platforms: { key: string; visitors: number; test_visitors: number; other_visitors: number }[];
+    totals: { visitors: number; tests: number; educators: number; in_app: number };
+    tests: SocialTestRow[];
+}
+
 export interface Health {
     tracking_since: string | null;
     last_event_at: string | null;
@@ -442,6 +479,7 @@ export const insightsApi = {
         get<Person>('person', { visitor: p.visitor || undefined, user: p.user || undefined }),
     growth: (period: Period) => get<GrowthReport>('growth', periodParams(period)),
     tests: (period: Period) => get<TestsReport>('tests', { ...periodParams(period), limit: 50 }),
+    socialTests: (period: Period) => get<SocialTestsReport>('social-tests', { ...periodParams(period), limit: 150 }),
     content: (p: { period: Period; kind: ContentKind; q?: string; before?: ContentCursor | null; limit?: number }) =>
         get<ContentPage>('content', {
             ...periodParams(p.period), kind: p.kind, q: p.q || undefined,
