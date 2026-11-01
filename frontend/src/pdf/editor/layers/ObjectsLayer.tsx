@@ -5,12 +5,15 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { Eraser, RotateCw, Trash2 } from 'lucide-react';
-import type { AddTextEdit, PageKey, RGB } from '../../engine/edits';
+import type { AddTextEdit, PageKey, RGB, StyleRun } from '../../engine/edits';
 import type { FontInfo } from '../../engine/fonts';
 import type { Rect } from '../../engine/matrix';
+import { normalizeRuns, sameRuns, segments, styleOf } from '../../engine/runs';
 import { useEditor, rgbCss } from '../EditorContext';
 import FormatBar, { ColorDots, Divider, IconButton, type Fmt } from '../FormatBar';
 import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics, usesEditorFont } from '../fonts';
+import RichText, { type RichTextHandle } from '../RichText';
+import { fmtAt, fmtStyle, restyle, runCssFor, runFamilies } from '../richFormat';
 import type { View } from '../geometry';
 import GuideLines from '../GuideLines';
 import { buildTargets, shiftBox, snapMove, toBox, type Baseline, type Box, type Guide, type SnapSpec } from '../guides';
@@ -450,26 +453,36 @@ function AddTextBox({
 }) {
     const [text, setText] = useState(o.text);
     const [fmt, setFmt] = useState<Fmt>({ family: o.family, size: o.size, color: o.color, bold: o.bold, italic: o.italic, align: o.align });
+    /** Words styled apart from the rest of the box. */
+    const [runs, setRuns] = useState<StyleRun[]>(o.runs ?? []);
+    const [styleVersion, setStyleVersion] = useState(0);
+    const [sel, setSel] = useState<[number, number] | null>(null);
     const boxRef = useRef<HTMLDivElement>(null);
-    const taRef = useRef<HTMLTextAreaElement>(null);
+    const rich = useRef<RichTextHandle>(null);
     const [, bump] = useState(0);
 
     useEffect(() => setText(o.text), [o.text]);
     useEffect(() => setFmt({ family: o.family, size: o.size, color: o.color, bold: o.bold, italic: o.italic, align: o.align }), [o.family, o.size, o.color, o.bold, o.italic, o.align]);
+    useEffect(() => {
+        setRuns(o.runs ?? []);
+        setStyleVersion((v) => v + 1);
+    }, [o.runs]);
 
     const f = editing ? fmt : { family: o.family, size: o.size, color: o.color, bold: o.bold, italic: o.italic, align: o.align };
+    const r = editing ? runs : (o.runs ?? []);
     const css = familyCss(f.family, docFonts);
+    const runCss = useMemo(() => runCssFor(view.scale, css, docFonts), [view.scale, css, docFonts]);
     // Web fonts change metrics once loaded; re-measure then.
+    const families = [css, ...runFamilies(r, css, docFonts)].filter(usesEditorFont).join('|');
     useEffect(() => {
-        if (!usesEditorFont(css) || !document.fonts) return;
-        document.fonts
-            .load(`${f.italic ? 'italic ' : ''}${f.bold ? 700 : 400} 16px ${css}`, text || 'a')
+        if (!families || !document.fonts) return;
+        Promise.all(families.split('|').flatMap((fam) => [400, 700].map((w) => document.fonts.load(`${w} 16px ${fam}`, text || 'a'))))
             .then(() => {
                 resetFontMetrics();
                 bump((n) => n + 1);
             })
             .catch(() => {});
-    }, [css, f.bold, f.italic]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [families]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fontSize = f.size * view.scale;
     const lh = f.size * (o.lineHeight || 1.25) * view.scale;
@@ -485,21 +498,32 @@ function AddTextBox({
         textAlign: f.align === 'justify' ? ('justify' as const) : f.align,
         whiteSpace: width ? ('pre-wrap' as const) : ('pre' as const),
         width,
+        minWidth: fontSize * 2,
     };
 
-    useLayoutEffect(() => {
-        const ta = taRef.current;
-        if (!ta) return;
-        ta.style.height = '0px';
-        ta.style.height = `${Math.max(lh, ta.scrollHeight)}px`;
-        if (!width) {
-            ta.style.width = '0px';
-            ta.style.width = `${Math.max(fontSize * 2, ta.scrollWidth + 2)}px`;
+    /** Toolbar shows the selected words' style while typing, else the box's. */
+    const shown = editing ? fmtAt(fmt, runs, sel ? sel[0] : null) : f;
+    const applyFormat = (p: Partial<Fmt>) => {
+        if (!editing) {
+            // Not typing: the whole box (its styled words drop the changed fields).
+            const next = restyle(f, o.runs ?? [], o.text.length, null, p);
+            onStyle({ ...p, runs: next.runs.length ? next.runs : undefined } as Partial<AddTextEdit>);
+            return;
         }
-    }, [text, fmt, lh, width, fontSize, editing]);
+        const next = restyle(fmt, runs, text.length, rich.current?.selection() ?? null, p);
+        setFmt(next.fmt);
+        if (!sameRuns(next.runs, runs)) {
+            setRuns(next.runs);
+            setStyleVersion((v) => v + 1);
+        }
+    };
+    const finish = () => {
+        const rs = normalizeRuns(runs, text.length, fmtStyle(fmt));
+        onCommit(text, { ...fmt, runs: rs.length ? rs : undefined });
+    };
 
     useEffect(() => {
-        if (editing) taRef.current?.focus({ preventScroll: true });
+        if (editing) rich.current?.focus();
     }, [editing]);
 
     // Clicking elsewhere finishes typing.
@@ -507,11 +531,11 @@ function AddTextBox({
         if (!editing) return;
         const onDown = (ev: PointerEvent) => {
             if (boxRef.current?.contains(ev.target as Node)) return;
-            onCommit(text, fmt);
+            finish();
         };
         document.addEventListener('pointerdown', onDown, true);
         return () => document.removeEventListener('pointerdown', onDown, true);
-    }, [editing, text, fmt]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [editing, text, fmt, runs]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div
@@ -523,34 +547,46 @@ function AddTextBox({
             {(selected || editing) && interactive && (
                 <div className={`absolute left-0 ${sy - off > 90 ? 'bottom-full mb-2' : 'top-full mt-2'}`} style={{ minWidth: 280 }}>
                     <FormatBar
-                        value={f}
+                        value={shown}
                         docFonts={docFonts}
-                        onChange={(p) => {
-                            if (editing) setFmt((x) => ({ ...x, ...p }));
-                            else onStyle(p as Partial<AddTextEdit>);
-                        }}
+                        onChange={applyFormat}
                         onDelete={onDelete}
-                        onDone={editing ? () => onCommit(text, fmt) : undefined}
-                        hint={editing ? 'Ctrl+Enter or click outside to finish' : 'Drag to move · double-click to edit'}
+                        onDone={editing ? finish : undefined}
+                        hint={
+                            editing
+                                ? sel
+                                    ? 'Font, size, colour, bold and italic now change only the selected text'
+                                    : 'Ctrl+Enter or click outside to finish · select words to style just them'
+                                : 'Drag to move · double-click to edit'
+                        }
                     />
                 </div>
             )}
             {editing ? (
-                <textarea
-                    ref={taRef}
-                    value={text}
-                    spellCheck={false}
+                <RichText
+                    ref={rich}
+                    text={text}
+                    runs={runs}
+                    version={`${styleVersion}:${view.scale}`}
+                    runCss={runCss}
+                    onChange={(nt, rs) => {
+                        setText(nt);
+                        setRuns(rs);
+                    }}
+                    onSelect={setSel}
                     placeholder="Type here"
-                    onChange={(e) => setText(e.target.value)}
                     onKeyDown={(e) => {
                         if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
                             e.preventDefault();
-                            onCommit(text, fmt);
+                            finish();
+                        } else if ((e.ctrlKey || e.metaKey) && /^[bi]$/i.test(e.key)) {
+                            e.preventDefault();
+                            applyFormat(e.key.toLowerCase() === 'b' ? { bold: !shown.bold } : { italic: !shown.italic });
                         }
                     }}
-                    aria-label="New text"
-                    className="block resize-none overflow-hidden border-0 bg-transparent p-0 outline-none ring-2 ring-emerald-500/70 ring-offset-2 placeholder:text-slate-400"
-                    style={style}
+                    ariaLabel="New text"
+                    className="block overflow-hidden border-0 bg-transparent p-0 outline-none ring-2 ring-emerald-500/70 ring-offset-2"
+                    style={{ ...style, minHeight: lh }}
                 />
             ) : (
                 <div
@@ -559,7 +595,17 @@ function AddTextBox({
                     className={`select-none ${interactive ? 'cursor-move' : ''} ${selected ? 'outline outline-2 outline-offset-2 outline-emerald-500' : interactive ? 'hover:outline hover:outline-1 hover:outline-offset-2 hover:outline-emerald-400' : ''}`}
                     style={style}
                 >
-                    {o.text || ' '}
+                    {o.text
+                        ? segments(o.text.length, o.runs).map((s, i) =>
+                              s.run ? (
+                                  <span key={i} style={{ ...runCss(styleOf(s.run)), lineHeight: 0 }}>
+                                      {o.text.slice(s.start, s.end)}
+                                  </span>
+                              ) : (
+                                  o.text.slice(s.start, s.end)
+                              ),
+                          )
+                        : ' '}
                 </div>
             )}
             {selected && interactive && !editing && (

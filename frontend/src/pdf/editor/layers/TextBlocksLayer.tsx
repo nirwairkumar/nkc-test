@@ -350,7 +350,17 @@ export default function TextBlocksLayer({ pageKey, view, pending, overlay }: { p
                                 textAlign: g.align === 'justify' ? 'justify' : (g.align as 'left'),
                             }}
                         >
-                            {g.text}
+                            {g.parts
+                                ? g.parts.map((p, i) =>
+                                      p.css ? (
+                                          <span key={i} style={{ ...p.css, lineHeight: 0 }}>
+                                              {p.text}
+                                          </span>
+                                      ) : (
+                                          p.text
+                                      ),
+                                  )
+                                : g.text}
                         </div>
                     </Fragment>
                 ))}

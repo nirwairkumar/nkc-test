@@ -48,6 +48,7 @@ export function withOffset(page: PageKey, block: TextBlock, edit: TextEdit | und
     if (src.color) e.color = src.color;
     if (src.bold !== undefined) e.bold = src.bold;
     if (src.italic !== undefined) e.italic = src.italic;
+    if (src.runs?.length) e.runs = src.runs;
     if (src.align !== undefined) e.align = src.align;
     if (src.width !== undefined) e.width = src.width;
     const untouched =
@@ -57,6 +58,7 @@ export function withOffset(page: PageKey, block: TextBlock, edit: TextEdit | und
         !e.color &&
         e.bold === undefined &&
         e.italic === undefined &&
+        !e.runs &&
         e.align === undefined &&
         e.width === undefined &&
         !e.dx &&

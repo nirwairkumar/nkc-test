@@ -24,6 +24,21 @@ export const pageIndexOf = (key: PageKey): number => (/^p\d+$/.test(key) ? Numbe
  */
 export type FamilyId = string;
 
+/**
+ * Style of part of a text: [start, end) in UTF-16 units of the edit's text.
+ * Each field set here replaces the whole text's own value for those characters.
+ */
+export interface StyleRun {
+    start: number;
+    end: number;
+    family?: FamilyId;
+    /** Effective size in page units. */
+    size?: number;
+    color?: RGB;
+    bold?: boolean;
+    italic?: boolean;
+}
+
 export interface TextEdit {
     kind: 'text';
     id: string;
@@ -37,6 +52,8 @@ export interface TextEdit {
     color?: RGB;
     bold?: boolean;
     italic?: boolean;
+    /** Words or letters styled apart from the rest (sorted, not overlapping). */
+    runs?: StyleRun[];
     align?: Align;
     /** Move offset in page units. */
     dx?: number;
@@ -63,6 +80,8 @@ export interface AddTextEdit {
     color: RGB;
     bold: boolean;
     italic: boolean;
+    /** Words or letters styled apart from the rest (sorted, not overlapping). */
+    runs?: StyleRun[];
     align: Align;
     /** Wrap width in page units (0 = no wrapping). */
     width: number;

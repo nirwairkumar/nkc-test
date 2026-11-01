@@ -8,14 +8,17 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { Move } from 'lucide-react';
-import type { PageKey, RGB, TextEdit } from '../engine/edits';
+import type { PageKey, RGB, StyleRun, TextEdit } from '../engine/edits';
 import { colorToRgb } from '../engine/interpreter';
 import { fromFrame, toFrame, type TextBlock } from '../engine/layout';
 import type { Rect } from '../engine/matrix';
 import { textBox, type TextPlan } from '../engine/planner';
+import { normalizeRuns, sameRuns, segments, styleOf } from '../engine/runs';
 import { useEditor, rgbCss } from './EditorContext';
 import FormatBar, { type Fmt } from './FormatBar';
 import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics, usesEditorFont } from './fonts';
+import RichText, { measureRich, type RichTextHandle, type RunCss } from './RichText';
+import { fmtAt, fmtStyle, restyle, runCssFor, runFamilies, runFontFor } from './richFormat';
 import type { View } from './geometry';
 import GuideLines from './GuideLines';
 import { shiftBox, snapEdge, type Box, type Guide, type Item, type Targets } from './guides';
@@ -37,6 +40,8 @@ export interface CommitInfo {
     italic: boolean;
     lineHeight: number;
     align: string;
+    /** The text in pieces with their own style (words styled apart), when there are any. */
+    parts?: { text: string; css: ReturnType<RunCss> | null }[];
 }
 
 export function summarizePlan(plan: TextPlan | undefined | null): string | null {
@@ -53,14 +58,6 @@ export function summarizePlan(plan: TextPlan | undefined | null): string | null 
     return parts.length ? parts.join(' · ') : null;
 }
 
-let measureCtx: CanvasRenderingContext2D | null = null;
-function measure(text: string, font: string): number {
-    measureCtx ??= document.createElement('canvas').getContext('2d');
-    if (!measureCtx) return text.length * 8;
-    measureCtx.font = font;
-    return Math.max(...text.split('\n').map((l) => measureCtx!.measureText(l).width));
-}
-
 /** Same text and layout (offsets aside). */
 const sameContent = (a: TextEdit, b: TextEdit) =>
     a.text === b.text &&
@@ -69,6 +66,7 @@ const sameContent = (a: TextEdit, b: TextEdit) =>
     String(a.color) === String(b.color) &&
     a.bold === b.bold &&
     a.italic === b.italic &&
+    sameRuns(a.runs, b.runs) &&
     a.align === b.align &&
     a.width === b.width;
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -125,8 +123,14 @@ export default function InlineTextEditor({
     /** Width (page units) the text wraps to, when the user has set one. */
     const [boxW, setBoxW] = useState<number | null>(edit?.width ?? null);
     const [warning, setWarning] = useState<string | null>(null);
+    /** Words styled apart from the rest of the text. */
+    const [runs, setRuns] = useState<StyleRun[]>(edit?.runs ?? []);
+    /** Bumped when a style change must redraw the text box. */
+    const [styleVersion, setStyleVersion] = useState(0);
+    /** Selected range in the text box (formatting then applies to it only). */
+    const [sel, setSel] = useState<[number, number] | null>(null);
     const boxRef = useRef<HTMLDivElement>(null);
-    const taRef = useRef<HTMLTextAreaElement>(null);
+    const rich = useRef<RichTextHandle>(null);
     const done = useRef(false);
     const drag = useGuidedDrag();
     const resize = useGuidedDrag();
@@ -135,7 +139,7 @@ export default function InlineTextEditor({
     const first = block.lines[0];
     const naturalW = block.paragraph ? block.uRight - block.uLeft : first.u1 - first.u0;
 
-    const buildEdit = (t: string, f: Fmt): TextEdit | null => {
+    const buildEdit = (t: string, f: Fmt, rs: StyleRun[] = runs): TextEdit | null => {
         const e: TextEdit = { kind: 'text', id, page: pageKey, blockId: block.id, text: t };
         if (Math.abs(off[0]) >= 0.01) e.dx = round2(off[0]);
         if (Math.abs(off[1]) >= 0.01) e.dy = round2(off[1]);
@@ -144,9 +148,12 @@ export default function InlineTextEditor({
         if (f.color.some((v, i) => Math.abs(v - original.color[i]) > 0.004)) e.color = f.color;
         if (f.bold !== original.bold) e.bold = f.bold;
         if (f.italic !== original.italic) e.italic = f.italic;
+        const r = normalizeRuns(rs, t.length, fmtStyle(f));
+        if (r.length) e.runs = r;
         if (f.align !== original.align) e.align = f.align;
         if (boxW !== null && Math.abs(boxW - naturalW) > 0.5) e.width = round2(boxW);
-        const styled = e.family !== undefined || e.size !== undefined || !!e.color || e.bold !== undefined || e.italic !== undefined || e.align !== undefined || e.width !== undefined;
+        const styled =
+            e.family !== undefined || e.size !== undefined || !!e.color || e.bold !== undefined || e.italic !== undefined || !!e.runs || e.align !== undefined || e.width !== undefined;
         return t === block.text && !styled && !e.dx && !e.dy ? null : e;
     };
 
@@ -156,14 +163,26 @@ export default function InlineTextEditor({
     const fontSize = fmt.size * view.scale;
     const lineHeight = block.paragraph ? block.lineGap * sizeScale * view.scale : fontSize * 1.25;
     const cssFont = `${fmt.italic ? 'italic ' : ''}${fmt.bold ? 700 : 400} ${fontSize}px ${cssFamily}`;
+    const runCss = useMemo(() => runCssFor(view.scale, main.font.cssFamily, docFonts), [view.scale, main.font, docFonts]);
+    const runFont = runFontFor(fmt, view.scale, main.font.cssFamily, docFonts);
+    /** Toolbar shows the selected words' style, else the whole text's. */
+    const shown = fmtAt(fmt, runs, sel ? sel[0] : null);
+    const applyFormat = (p: Partial<Fmt>) => {
+        const next = restyle(fmt, runs, text.length, rich.current?.selection() ?? null, p);
+        setFmt(next.fmt);
+        if (!sameRuns(next.runs, runs)) {
+            setRuns(next.runs);
+            setStyleVersion((v) => v + 1);
+        }
+    };
     // Bundled fonts (e.g. the full Playfair Display) arrive after the box first draws: re-measure then.
     const [, bump] = useState(0);
+    const families = [cssFamily, ...runFamilies(runs, main.font.cssFamily, docFonts)].filter(usesEditorFont).join('|');
     useEffect(() => {
         ensureEditorFonts();
-        if (!usesEditorFont(cssFamily) || !document.fonts) return;
+        if (!families || !document.fonts) return;
         let live = true;
-        document.fonts
-            .load(`${fmt.italic ? 'italic ' : ''}${fmt.bold ? 700 : 400} 16px ${cssFamily}`, text || 'a')
+        Promise.all(families.split('|').flatMap((f) => [400, 700].map((w) => document.fonts.load(`${w} 16px ${f}`, text || 'a'))))
             .then(() => {
                 if (!live) return;
                 resetFontMetrics();
@@ -173,7 +192,7 @@ export default function InlineTextEditor({
         return () => {
             live = false;
         };
-    }, [cssFamily, fmt.bold, fmt.italic]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [families]); // eslint-disable-line react-hooks/exhaustive-deps
     const box = boxW !== null ? textBox(block, boxW) : null;
     /** The text wraps: paragraphs always, single lines once given a width. */
     const wraps = block.paragraph || box !== null;
@@ -183,7 +202,11 @@ export default function InlineTextEditor({
     const angle = view.screenAngle(block.angle);
     const baseOff = baselineOffset(cssFamily, fmt.bold, fmt.italic, fontSize, lineHeight);
     const origWidth = naturalW * view.scale;
-    const width = box ? (box.right - box.left) * view.scale : block.paragraph ? origWidth * Math.max(1, sizeScale) : Math.max(origWidth, measure(text || ' ', cssFont) + fontSize * 0.3);
+    const width = box
+        ? (box.right - box.left) * view.scale
+        : block.paragraph
+          ? origWidth * Math.max(1, sizeScale)
+          : Math.max(origWidth, measureRich(text || ' ', runs, cssFont, runFont) + fontSize * 0.3);
     let shift = 0;
     if (!wraps && fmt.align === 'right') shift = origWidth - width;
     else if (!wraps && fmt.align === 'center') shift = (origWidth - width) / 2;
@@ -191,26 +214,12 @@ export default function InlineTextEditor({
 
     const [height, setHeight] = useState(lineHeight * Math.max(1, block.lines.length));
     useLayoutEffect(() => {
-        // Unwrapped single lines: exactly one line box per hard line (scrollHeight over-reports for wrap=off).
-        if (!wraps) {
-            setHeight(lineHeight * Math.max(1, text.split('\n').length));
-            return;
-        }
-        const ta = taRef.current;
-        if (!ta) return;
-        ta.style.height = '0px';
-        const h = Math.max(lineHeight, ta.scrollHeight);
-        // Set it directly too: if `h` equals the current state React won't re-apply it.
-        ta.style.height = `${h}px`;
-        setHeight(h);
-    }, [text, fmt, lineHeight, width, wraps]);
+        const el = boxRef.current?.querySelector<HTMLElement>('[role="textbox"]');
+        if (!el) return;
+        setHeight(Math.max(lineHeight, el.offsetHeight));
+    }, [text, runs, fmt, lineHeight, width, wraps, styleVersion]);
 
-    useEffect(() => {
-        const ta = taRef.current;
-        if (!ta) return;
-        ta.focus({ preventScroll: true });
-        ta.setSelectionRange(ta.value.length, ta.value.length);
-    }, []);
+    useEffect(() => rich.current?.focus(), []);
 
     /** Moved or re-boxed: the text no longer sits exactly on its old rendering, which must be hidden separately. */
     const detached = moved || boxW !== (edit?.width ?? null);
@@ -227,6 +236,7 @@ export default function InlineTextEditor({
         italic: fmt.italic,
         lineHeight,
         align: fmt.align,
+        parts: runs.length ? segments(text.length, runs).map((s) => ({ text: text.slice(s.start, s.end), css: s.run ? runCss(styleOf(s.run)) : null })) : undefined,
     });
 
     /** Applies the edit; returns ghost info when the text itself visibly changed. */
@@ -242,6 +252,13 @@ export default function InlineTextEditor({
         const before: TextEdit = edit ?? { kind: 'text', id, page: pageKey, blockId: block.id, text: block.text };
         if (!block.editable && !sameContent(before, e)) {
             // Font we can't re-encode: remove the old glyphs and retype the text as a new object, where it now sits.
+            const lookAlike = main.font.webFamily ?? (main.font.fontClass === 'serif' ? 'times' : main.font.fontClass === 'mono' ? 'courier' : 'helvetica');
+            const family = fmt.family !== 'original' ? fmt.family : lookAlike;
+            const addRuns = normalizeRuns(
+                (e.runs ?? []).map((r) => (r.family === 'original' ? { ...r, family: lookAlike } : r)),
+                text.length,
+                fmtStyle({ ...fmt, family }),
+            );
             dispatch({
                 type: 'upsertMany',
                 remove: edit ? [id] : undefined,
@@ -255,14 +272,12 @@ export default function InlineTextEditor({
                         y: by + off[1],
                         angle: block.angle,
                         text,
-                        family:
-                            fmt.family !== 'original'
-                                ? fmt.family
-                                : (main.font.webFamily ?? (main.font.fontClass === 'serif' ? 'times' : main.font.fontClass === 'mono' ? 'courier' : 'helvetica')),
+                        family,
                         size: fmt.size,
                         color: fmt.color,
                         bold: fmt.bold,
                         italic: fmt.italic,
+                        ...(addRuns.length ? { runs: addRuns } : {}),
                         align: box ? fmt.align : 'left',
                         width: box ? box.right - box.left : block.paragraph ? block.uRight - block.uLeft : 0,
                         lineHeight: block.paragraph ? block.lineGap / fmt.size : 1.25,
@@ -285,7 +300,7 @@ export default function InlineTextEditor({
         document.addEventListener('pointerdown', onDown, true);
         return () => document.removeEventListener('pointerdown', onDown, true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, fmt, off, boxW]);
+    }, [text, fmt, runs, off, boxW]);
 
     // Live feedback: run the real planner on the draft.
     useEffect(() => {
@@ -302,11 +317,11 @@ export default function InlineTextEditor({
         }, 350);
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, fmt, boxW]);
+    }, [text, fmt, runs, boxW]);
 
     const beginMove = (e: RPointerEvent) => {
         e.stopPropagation();
-        const ta = taRef.current;
+        const ta = textEl();
         const layer = boxRef.current?.parentElement;
         if (!ta || !layer) return;
         const origin = off;
@@ -329,10 +344,10 @@ export default function InlineTextEditor({
                 const [px, py] = pdfVector(view, dx, dy);
                 setOff([origin[0] + px, origin[1] + py]);
             },
-            onEnd: () => taRef.current?.focus({ preventScroll: true }),
+            onEnd: () => textEl()?.focus({ preventScroll: true }),
             onCancel: () => {
                 setOff(origin);
-                taRef.current?.focus({ preventScroll: true });
+                textEl()?.focus({ preventScroll: true });
             },
         });
     };
@@ -340,7 +355,7 @@ export default function InlineTextEditor({
     /** Drag a side: the text wraps to the new width while the other side stays where it is. */
     const beginResize = (e: RPointerEvent, side: 'left' | 'right') => {
         e.stopPropagation();
-        const ta = taRef.current;
+        const ta = textEl();
         const layer = boxRef.current?.parentElement;
         if (!ta || !layer) return;
         const startOff = off, startW = boxW;
@@ -379,14 +394,18 @@ export default function InlineTextEditor({
                 // The planner anchors the box by the original alignment; offset it so this side stays put.
                 setOff(fromFrame(block.angle, L - textBox(block, w).left, dv0));
             },
-            onEnd: () => taRef.current?.focus({ preventScroll: true }),
+            onEnd: () => textEl()?.focus({ preventScroll: true }),
             onCancel: () => {
                 setBoxW(startW);
                 setOff(startOff);
-                taRef.current?.focus({ preventScroll: true });
+                textEl()?.focus({ preventScroll: true });
             },
         });
     };
+
+    function textEl() {
+        return boxRef.current?.querySelector<HTMLElement>('[role="textbox"]') ?? null;
+    }
 
     const barAbove = sy - baseOff > 90;
     const cover = detached ? view.rectToScreen(rendered) : null;
@@ -406,12 +425,16 @@ export default function InlineTextEditor({
                 {!drag.state && !resize.state && (
                     <div className={`absolute left-0 ${barAbove ? 'bottom-full mb-2' : 'top-full mt-2'}`} style={{ minWidth: 280 }}>
                         <FormatBar
-                            value={fmt}
-                            onChange={(p) => setFmt((f) => ({ ...f, ...p }))}
+                            value={shown}
+                            onChange={applyFormat}
                             originalLabel={main.font.displayName}
                             docFonts={docFonts}
                             warning={block.editable ? warning : "This PDF's font can't be re-encoded; your text will be typed in a similar font."}
-                            hint={`${block.paragraph ? 'Ctrl+Enter' : 'Enter'} to finish · Tab: next text · Esc: cancel · drag ✥ to move, the side handles to change the width`}
+                            hint={
+                                sel
+                                    ? 'Font, size, colour, bold and italic now change only the selected text'
+                                    : `${block.paragraph ? 'Ctrl+Enter' : 'Enter'} to finish · select words to style just them · Tab: next text · Esc: cancel · drag ✥ to move`
+                            }
                             onRevert={
                                 edit
                                     ? () => {
@@ -453,13 +476,17 @@ export default function InlineTextEditor({
                         style={{ [side]: -11, top: Math.max(0, height / 2 - 10), zIndex: 1, touchAction: 'none' }}
                     />
                 ))}
-                <textarea
-                    ref={taRef}
-                    value={text}
-                    rows={1}
-                    spellCheck={false}
-                    wrap={wraps ? 'soft' : 'off'}
-                    onChange={(e) => setText(e.target.value)}
+                <RichText
+                    ref={rich}
+                    text={text}
+                    runs={runs}
+                    version={`${styleVersion}:${view.scale}`}
+                    runCss={runCss}
+                    onChange={(t, rs) => {
+                        setText(t);
+                        setRuns(rs);
+                    }}
+                    onSelect={setSel}
                     onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                             e.preventDefault();
@@ -471,13 +498,16 @@ export default function InlineTextEditor({
                         } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || (!block.paragraph && !e.shiftKey))) {
                             e.preventDefault();
                             onClose(commit());
+                        } else if ((e.ctrlKey || e.metaKey) && /^[bi]$/i.test(e.key)) {
+                            e.preventDefault();
+                            applyFormat(e.key.toLowerCase() === 'b' ? { bold: !shown.bold } : { italic: !shown.italic });
                         }
                     }}
-                    aria-label="Edit text"
-                    className="block resize-none overflow-hidden border-0 p-0 outline-none ring-2 ring-emerald-500/70 ring-offset-2 selection:bg-emerald-200"
+                    ariaLabel="Edit text"
+                    className="block overflow-hidden border-0 p-0 outline-none ring-2 ring-emerald-500/70 ring-offset-2 selection:bg-emerald-200"
                     style={{
                         width,
-                        height,
+                        minHeight: lineHeight,
                         font: cssFont,
                         lineHeight: `${lineHeight}px`,
                         color: rgbCss(fmt.color),
