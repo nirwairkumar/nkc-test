@@ -11,6 +11,8 @@ import { inputsOn } from '@/lib/candidateInputs';
 import { getExamUrl, examWhatsAppUrl } from '@/lib/conductExam';
 import { isLiveTest, WRITING_WINDOW_MS } from '@/lib/teacherDashboardApi';
 import StudentDetailedResultModal from './StudentDetailedResultModal';
+import HelpHoverCard from './help/HelpHoverCard';
+import { RESULTS_HELP } from '@/lib/helpVideos';
 import * as XLSX from 'xlsx';
 import {
     Sheet,
@@ -1556,9 +1558,17 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     >
                         <X className="h-4 w-4" />
                     </button>
+                    {/* Help: the results video and guide. After the X in the DOM so the sheet's
+                        autofocus lands on the X and doesn't open the card by itself. */}
+                    <HelpHoverCard
+                        topic={RESULTS_HELP}
+                        where="results_panel"
+                        label="How to read these results: video and guide"
+                        className="absolute top-3 right-11 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 data-[state=open]:text-white data-[state=open]:bg-white/10 transition-colors"
+                    />
 
                     {/* Title */}
-                    <div className="pr-8">
+                    <div className="pr-16">
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-0.5">Test Results</p>
                         <h3 className="text-base font-bold text-white leading-tight line-clamp-2">
                             {currentTest.title}
