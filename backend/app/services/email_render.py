@@ -252,13 +252,8 @@ def body_html(body: str, values: Dict[str, str], link: LinkFn, warnings: List[st
             if not url:
                 warnings.append(f"The button “{label}” needs a link that starts with https://")
                 continue
-            parts.append(
-                '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 22px;">'
-                f'<tr><td style="border-radius:12px;background:{ACCENT};">'
-                f'<a href="{html.escape(link(url))}" style="display:inline-block;padding:13px 22px;font-family:{FONT};'
-                f'font-size:15px;font-weight:600;line-height:1.2;color:#ffffff;text-decoration:none;border-radius:12px;">'
-                f"{label}</a></td></tr></table>"
-            )
+            # A bold link on its own line, not a styled button: buttons read as marketing to Gmail.
+            parts.append(f'<p style="margin:0 0 14px;"><a href="{html.escape(link(url))}"><strong>{label}</strong></a></p>')
         elif all(line.lstrip().startswith("- ") for line in lines):
             items = "".join(
                 f'<li style="margin:0 0 8px;">{_inline_html(line.lstrip()[2:], values, link, warnings)}</li>'
@@ -290,38 +285,43 @@ def body_text(body: str, values: Dict[str, str], link: LinkFn) -> str:
     return "\n\n".join(out)
 
 
-def shell(content: str, preheader: str, unsubscribe: str, title: str) -> str:
-    # Spacer characters after the preheader keep mail apps from pulling body text into the preview line.
-    spacer = "&#8199;&#847; " * 40
+def _preview_line(text: str) -> str:
+    """The inbox preview: the first paragraph that isn't the greeting."""
+    for para in (text or "").split("\n\n"):
+        p = " ".join(para.split())
+        if p and not re.match(r"^(hi|hello|dear)\b[^.!?]{0,40},$", p, re.I):
+            return p[:140]
+    return ""
+
+
+def plain_shell(content: str, title: str, footer_html: str) -> str:
+    """
+    The frame of every TestoZa email: one column of text, as if typed in Gmail. No background,
+    card, logo bar, images, styled buttons or hidden preview text: Gmail's Promotions tab keys on
+    exactly those, and a new sending domain gets no benefit of the doubt. The inbox preview is
+    the first line of the email, so the first sentence must carry the message.
+    """
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light only">
 <title>{html.escape(title)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">{html.escape(preheader)}{spacer}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;">
-<tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#ffffff;border-radius:16px;">
-<tr><td style="padding:26px 28px 6px;font-family:{FONT};font-size:14px;font-weight:700;letter-spacing:-0.01em;color:{ACCENT};">TestoZa</td></tr>
-<tr><td style="padding:10px 28px 12px;font-family:{FONT};font-size:16px;line-height:1.6;color:#0f172a;">
+<body>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#202124;max-width:600px;">
 {content}
-</td></tr>
-</table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
-<tr><td style="padding:16px 28px 8px;font-family:{FONT};font-size:12px;line-height:1.6;color:#64748b;text-align:center;">
-You're getting this because you have a TestoZa account.
-<a href="{html.escape(unsubscribe)}" style="color:#64748b;text-decoration:underline;">Unsubscribe</a><br>
-TestoZa · testoza.com · {SUPPORT_EMAIL}
-</td></tr>
-</table>
-</td></tr>
-</table>
+<p style="margin:28px 0 0;font-size:12px;color:#5f6368;">{footer_html}</p>
+</div>
 </body>
 </html>"""
+
+
+def shell(content: str, preheader: str, unsubscribe: str, title: str) -> str:
+    """Broadcasts: the plain frame with a one-line unsubscribe. `preheader` is no longer embedded
+    (hidden preview text is a marketing signal); admin's inbox mock still shows it."""
+    return plain_shell(content, title, "You're getting this because you have a TestoZa account. "
+                       f'<a href="{html.escape(unsubscribe)}">Unsubscribe</a>')
 
 
 def render(
@@ -362,7 +362,8 @@ def render(
 
     return {
         "subject": final_subject,
-        "preheader": final_pre,
+        # What the inbox shows under the subject: the first line after the greeting (no hidden preheader).
+        "preheader": _preview_line(text) or final_pre,
         "html": shell(content, final_pre, unsub, final_subject),
         "text": text,
         "warnings": seen,

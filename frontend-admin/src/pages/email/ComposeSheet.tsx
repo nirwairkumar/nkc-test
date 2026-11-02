@@ -296,9 +296,10 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                     hint={draft.subject.length > 50 ? 'Phones cut subjects after about 40–50 characters.' : undefined}>
                                     <input className={INPUT} value={draft.subject} onChange={set('subject')} placeholder="One clear promise, under 50 characters" />
                                 </Field>
-                                <Field label="Preview text" hint="The grey line after the subject in the inbox.">
-                                    <input className={INPUT} value={draft.preheader} onChange={set('preheader')} placeholder="Adds to the subject, doesn’t repeat it" />
-                                </Field>
+                                <p className="px-1 text-[12px] leading-snug text-slate-500">
+                                    The inbox shows your first sentence under the subject, so make it the point of the email.
+                                    Emails go out as plain text-style mail so they land in Primary, not Promotions.
+                                </p>
                                 {template && templates.isLoading ? (
                                     <div className="h-72 animate-pulse rounded-2xl bg-slate-200/60" />
                                 ) : (

@@ -181,9 +181,9 @@ function TemplateSheet({ template, variables, fromName, onClose, onSend }: {
                             <Field label="Subject" right={`${d.subject.length} / 50`}>
                                 <input className={INPUT} value={d.subject} onChange={(e) => set('subject', e.target.value)} />
                             </Field>
-                            <Field label="Preview text" hint="The grey line after the subject in the inbox.">
-                                <input className={INPUT} value={d.preheader} onChange={(e) => set('preheader', e.target.value)} />
-                            </Field>
+                            <p className="px-1 text-[12px] leading-snug text-slate-500">
+                                The inbox shows the first sentence under the subject, so make it the point of the email.
+                            </p>
                             <BodyEditor value={d.body} onChange={(v) => set('body', v)} variables={variables} />
                         </div>
                     </Group>
