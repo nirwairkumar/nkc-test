@@ -49,6 +49,59 @@ def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
     return requesting_user_id
 
 
+def _email_test_created(db: Client, test: Dict[str, Any]) -> None:
+    """"Your test is ready" email (services/auto_email.py). Never fails the save."""
+    try:
+        from app.services import auto_email
+        auto_email.on_test_created(db, test)
+    except Exception as e:
+        logger.warning(f"Test-created email skipped: {e}")
+
+
+def _row(res: Any) -> Dict[str, Any]:
+    """A PostgREST result as one row: .single() gives a dict, a plain select a list."""
+    data = getattr(res, "data", None) if res is not None else None
+    if isinstance(data, dict):
+        return data
+    return (data or [{}])[0] if isinstance(data, list) else {}
+
+
+def _conduct_on(settings: Any) -> bool:
+    return bool(((settings or {}).get("conduct_exam") or {}).get("enabled")) if isinstance(settings, dict) else False
+
+
+def _after_conduct_change(db: Client, owner_id: str, test_id: str, before: Dict[str, Any], updated: Dict[str, Any], sent_settings: bool) -> None:
+    """
+    Going live or stopping an exam: the in-app "Exam concluded" note and the automatic emails.
+    Until 2026-11-02 this read `.single().data[0]`, a KeyError on every call, so neither fired.
+    """
+    if not sent_settings:
+        return
+    try:
+        from app.services import auto_email
+        change = auto_email.on_conduct_change(db, before.get("settings"), updated)
+    except Exception as e:
+        logger.warning(f"Exam email skipped: {e}")
+        change = "ended" if _conduct_on(before.get("settings")) and not _conduct_on(updated.get("settings")) else None
+    if change != "ended":
+        return
+    try:
+        from app.utils.notifications import send_notification
+        subs_res = db.table("user_tests").select("id", count="exact", head=True).eq("test_id", test_id).neq("user_id", owner_id).execute()
+        total_subs = int(subs_res.count or 0)
+        test_title = updated.get("title", "Exam")
+        send_notification(
+            user_id=owner_id,
+            title="Exam Concluded",
+            message=f'"{test_title}" has ended with {total_subs} submission{"s" if total_subs != 1 else ""}.',
+            link=f"/test-analysis/{test_id}",
+            custom_test_id=test_id,
+            db=db
+        )
+    except Exception as ne:
+        logger.error(f"Failed to send exam concluded notification: {ne}")
+
+
 # Note: /debug/schema endpoint was removed for security — it exposed DB schema without auth
 
 
@@ -91,6 +144,7 @@ def create_test(
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                _email_test_created(db, result)
                 try:
                     from app.utils.notifications import send_notification
                     test_title = result.get("title", "Untitled Test")
@@ -122,6 +176,7 @@ def create_test(
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                _email_test_created(db, result)
                 try:
                     from app.utils.notifications import send_notification
                     test_title = result.get("title", "Untitled Test")
@@ -173,6 +228,7 @@ def update_test(
         externalize_images(db, payload)
 
         # Enforce private visibility for example template, user example, or cloned tests on update
+        existing_meta = None
         try:
             existing_meta = db.table("tests").select("settings, is_cloned").eq("id", test_id).single().execute()
             if existing_meta.data:
@@ -211,30 +267,8 @@ def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
-                
-                # Check if conduct exam transitioned from active/enabled to finished/disabled
-                try:
-                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
-                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
-                    new_sett = payload.get("settings") or {}
-                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
-                    
-                    if old_conduct and not new_conduct:
-                        from app.utils.notifications import send_notification
-                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
-                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
-                        test_title = response.data[0].get("title", "Exam")
-                        send_notification(
-                            user_id=owner_id,
-                            title="Exam Concluded",
-                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
-                            link="/my-tests",
-                            custom_test_id=test_id,
-                            db=db
-                        )
-                except Exception as ne:
-                    logger.error(f"Failed to send exam concluded notification: {ne}")
-
+                # Went live or stopped: in-app note + automatic emails.
+                _after_conduct_change(db, owner_id, test_id, _row(existing_meta), response.data[0], "settings" in payload)
                 return response.data[0]
             return None
         except Exception as e:
@@ -253,29 +287,7 @@ def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
-                
-                try:
-                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
-                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
-                    new_sett = safe_payload.get("settings") or {}
-                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
-                    
-                    if old_conduct and not new_conduct:
-                        from app.utils.notifications import send_notification
-                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
-                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
-                        test_title = response.data[0].get("title", "Exam")
-                        send_notification(
-                            user_id=owner_id,
-                            title="Exam Concluded",
-                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
-                            link="/my-tests",
-                            custom_test_id=test_id,
-                            db=db
-                        )
-                except Exception as ne:
-                    logger.error(f"Failed to send exam concluded notification: {ne}")
-
+                _after_conduct_change(db, owner_id, test_id, _row(existing_meta), response.data[0], "settings" in safe_payload)
                 return response.data[0]
             return None
 

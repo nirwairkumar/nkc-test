@@ -1,10 +1,11 @@
 /**
- * Admin → Email → Settings: the broadcast connection (Amazon SES, set on the server as
- * BROADCAST_SMTP_*; this form only replaces it until the next restart), the sending limits
+ * Admin → Email → Settings: which service sends (Amazon SES for everything, set on the server as
+ * SMTP_*, with Brevo as the backup for automatic emails; this form only replaces the broadcast
+ * connection until the next restart), a shortcut to the automatic emails, the sending limits
  * (read-only: set on the server so they can't be loosened from here), and the do-not-email list.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ShieldCheck, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { istDate } from '../analytics/format';
@@ -18,7 +19,9 @@ const REASON: Record<Suppression['reason'], { label: string; tone: 'rose' | 'amb
     stopped: { label: 'Stopped by us', tone: 'slate' },
 };
 
-export default function SettingsSheet({ open, onOpenChange, overview }: { open: boolean; onOpenChange: (o: boolean) => void; overview?: Overview }) {
+export default function SettingsSheet({ open, onOpenChange, overview, onOpenAutomatic }: {
+    open: boolean; onOpenChange: (o: boolean) => void; overview?: Overview; onOpenAutomatic?: () => void;
+}) {
     const qc = useQueryClient();
     const smtp = useQuery({ queryKey: ['email', 'smtp'], queryFn: emailApi.smtpStatus, enabled: open });
     const [form, setForm] = useState({ host: 'email-smtp.ap-southeast-2.amazonaws.com', port: 587, user: '', password: '', from_name: 'TestoZa Team' });
@@ -60,7 +63,7 @@ export default function SettingsSheet({ open, onOpenChange, overview }: { open: 
         <WideSheet open={open} onOpenChange={onOpenChange} width="narrow" title="Email settings" subtitle="Connection, limits and who we never email">
             <div className="space-y-6">
                 <Group title="Connection"
-                    footer="Broadcasts go out through their own service, so a bad send can’t hurt help replies or submission emails. The owner sets it on the server (BROADCAST_SMTP_*). The form below replaces it only until the server restarts.">
+                    footer="The owner sets the service on the server (SMTP_* for everything, BROADCAST_SMTP_* only if broadcasts ever need their own). The form below replaces the broadcast connection only until the server restarts.">
                     <div className="mb-4 space-y-2 text-[14px]">
                         <div className="flex items-center gap-2">
                             {configured ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />}
@@ -68,10 +71,11 @@ export default function SettingsSheet({ open, onOpenChange, overview }: { open: 
                                 {configured ? `Broadcasts send through ${service || 'the mail server'}` : 'Broadcasts aren’t connected'}
                             </span>
                         </div>
-                        {configured && s?.from_email && <p className="pl-7 text-[13px] text-slate-500">From {s.from_email}{s.separate ? '' : ' · shared with the platform’s own emails'}</p>}
+                        {configured && s?.from_email && <p className="pl-7 text-[13px] text-slate-500">From {s.from_email}{s.separate ? ' · its own connection' : ' · same connection as the automatic emails'}</p>}
                         {s?.automatic && (
                             <p className="pl-7 text-[13px] text-slate-500">
-                                Help replies and submission emails: {s.automatic.configured ? s.automatic.service : 'not connected'}
+                                Automatic emails, help replies and referral news: {s.automatic.configured ? s.automatic.service : 'not connected'}
+                                {s.automatic.fallback?.configured ? ` · backup ${s.automatic.fallback.service}` : ''}
                             </p>
                         )}
                         {s && service === 'Amazon SES' && (
@@ -95,6 +99,19 @@ export default function SettingsSheet({ open, onOpenChange, overview }: { open: 
                         <button type="submit" className={PRIMARY_BTN} disabled={!form.password || save.isPending}>{save.isPending ? 'Saving…' : 'Save and connect'}</button>
                     </form>
                 </Group>
+
+                {onOpenAutomatic && (
+                    <Group title="Automatic emails">
+                        <button type="button" onClick={onOpenAutomatic} className="-m-1 flex w-[calc(100%+8px)] items-center gap-3 rounded-xl p-1 text-left hover:bg-slate-50">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white"><Zap className="h-4 w-4" aria-hidden="true" /></span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-[14px] font-medium text-slate-900">Welcome, test created, live, submissions, exam ended</span>
+                                <span className="block text-[13px] text-slate-500">Switch each on or off, see how many went, preview and test</span>
+                            </span>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+                        </button>
+                    </Group>
+                )}
 
                 <Group title="Limits" footer="Set on the server by the owner (EMAIL_COOLDOWN_DAYS, EMAIL_MONTHLY_CAP, EMAIL_HOURLY_LIMIT, EMAIL_DAILY_LIMIT). They protect our name with Gmail and Outlook.">
                     <ul className="space-y-2.5 text-[14px]">

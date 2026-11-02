@@ -292,9 +292,10 @@ def save_attempt(
                     custom_test_id=target_test_id,
                     db=supabase
                 )
-                # …and by email at milestones (1st, 5th, 10th…), off the request path.
-                from app.services.submission_email import notify_creator_in_background
-                notify_creator_in_background(supabase, creator_id, target_test_id, test_title)
+                # …and by email at milestones (1st, 5th, 10th…), off the request path,
+                # all in one thread per test (services/auto_email.py).
+                from app.services import auto_email
+                auto_email.on_submission(supabase, creator_id, target_test_id, test_title)
         except Exception as ne:
             logger.error(f"Failed to send submission notification: {ne}")
 

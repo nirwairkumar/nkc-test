@@ -179,6 +179,27 @@ class FakeSMTP:
             raise smtplib.SMTPRecipientsRefused({to[0]: (550, b"No such user")})
         self.sent.append((envelope, to[0], msg))
 
+    # services/mailer.py speaks MAIL / RCPT / DATA itself (it reads the id SES returns).
+    def ehlo_or_helo_if_needed(self):
+        pass
+
+    def mail(self, envelope):
+        self._envelope = envelope
+        return 250, b"OK"
+
+    def rcpt(self, to):
+        if to in self.refuse:
+            return 550, b"No such user"
+        self._to = to
+        return 250, b"OK"
+
+    def data(self, msg):
+        self.sent.append((self._envelope, self._to, msg.decode() if isinstance(msg, bytes) else msg))
+        return 250, b"Ok 0108019a2b3c4d5e-11112222-3333-4444-5555-666677778888-000000"
+
+    def rset(self):
+        pass
+
     def quit(self):
         pass
 
@@ -352,7 +373,7 @@ def test_broadcasts_go_through_their_own_connection_and_platform_mail_does_not(e
     assert email_broadcast.senders() == ["no-reply@testoza.com", "nirwair@testoza.com"]
     status = env["client"].get("/api/email-broadcast/smtp-status", headers={"Authorization": f"Bearer {ADMIN}"}).json()
     assert status["service"] == "Amazon SES" and status["separate"] is True
-    assert status["automatic"] == {"service": "Brevo", "configured": True}
+    assert status["automatic"]["service"] == "Brevo" and status["automatic"]["configured"] is True
 
     r = env["client"].post("/api/email-broadcast/test", headers={"Authorization": f"Bearer {ADMIN}"},
                            json={"to": "owner@testoza.com", "subject": "Hi", "preheader": "", "body": "Hello",
@@ -362,8 +383,24 @@ def test_broadcasts_go_through_their_own_connection_and_platform_mail_does_not(e
     support_mail._send("asha@coaching.in", "Hi", "<p>Hi</p>")
 
     assert used == ["email-smtp.ap-southeast-2.amazonaws.com", "smtp-relay.brevo.com"]
-    assert smtp.sent[0][0] == "no-reply@testoza.com" and "From: TestoZa <nirwair@testoza.com>" in smtp.sent[0][2]
+    # SES: the envelope is the From address, so bounces use that domain's own MAIL FROM.
+    assert smtp.sent[0][0] == "nirwair@testoza.com" and "From: TestoZa <nirwair@testoza.com>" in smtp.sent[0][2]
     assert smtp.sent[1][0] == "no-reply@updates.testoza.com"
+
+
+def test_one_ses_connection_two_subdomains(monkeypatch):
+    """Automatic emails from notify.testoza.com, broadcasts from news.testoza.com, one SES sign-in."""
+    monkeypatch.setitem(email_broadcast.broadcast_smtp_config, "password", "")
+    for k, v in {**SES, "from_email": "no-reply@notify.testoza.com"}.items():
+        monkeypatch.setitem(email_broadcast.runtime_smtp_config, k, v)
+    monkeypatch.setenv("BROADCAST_FROM", "nirwair@news.testoza.com")
+    monkeypatch.delenv("EMAIL_SENDERS", raising=False)
+    assert email_broadcast.senders() == ["nirwair@news.testoza.com"]
+    cfg = email_broadcast.runtime_smtp_config
+    assert email_broadcast.envelope_sender(cfg, "nirwair@news.testoza.com") == "nirwair@news.testoza.com"
+    assert email_broadcast.sender_address() == "no-reply@notify.testoza.com"  # the automatic emails' From
+    brevo = {"host": "smtp-relay.brevo.com", "user": "b@smtp-brevo.com", "from_email": "no-reply@updates.testoza.com"}
+    assert email_broadcast.envelope_sender(brevo, "nirwair@news.testoza.com") == "no-reply@updates.testoza.com"
 
 
 def test_without_a_broadcast_connection_broadcasts_use_the_platform_one(monkeypatch):

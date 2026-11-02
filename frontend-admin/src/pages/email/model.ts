@@ -2,7 +2,7 @@
  * Words and colours for admin → Email. Stage and group rules live in SQL
  * (public.email_people); these are only how they read on screen.
  */
-import type { AudienceFilter, Stage, Status, TemplateSummary, Who } from './api';
+import type { AudienceFilter, AutoKind, Rule, Stage, Status, TemplateSummary, Who } from './api';
 
 export const STAGES: { key: Stage; label: string; short: string; goal: string; color: string }[] = [
     { key: 'new', label: 'Signed up, no test yet', short: 'Signed up', goal: 'Make their first test', color: '#94a3b8' },
@@ -21,6 +21,23 @@ export const WHOS: { key: Who; label: string; plural: string; hint: string }[] =
     { key: 'corporate', label: 'Corporate', plural: 'Corporate', hint: 'Signed up with a company email. A school with its own domain can land here, so check the list' },
     { key: 'no_role', label: 'No role', plural: 'No role', hint: 'Skipped choosing a role and hasn’t made a test' },
 ];
+
+/** Reminders the team sends by hand: who each one is for (SQL email_rule_ok). */
+export const RULES: Record<Rule, { label: string; short: string; hint: string }> = {
+    live_48h: {
+        label: 'Exam live 48+ hours, under 5 submissions',
+        short: 'Live 48h, few answers',
+        hint: 'Their exam has been live for 2+ days and fewer than 5 candidates took it. Usually the link never reached the group.',
+    },
+    away_7d: {
+        label: 'Hasn’t opened TestoZa for 7+ days',
+        short: 'Away 7+ days',
+        hint: 'Their own visits, tests and AI uploads. Candidates answering doesn’t count as a visit.',
+    },
+};
+
+/** Icons are picked in AutomaticTab; these are the words. */
+export const AUTO_ORDER: AutoKind[] = ['welcome', 'test_created', 'test_live', 'results', 'test_ended'];
 
 export const WHO: Record<Who, (typeof WHOS)[number]> = Object.fromEntries(WHOS.map((w) => [w.key, w])) as any;
 
@@ -72,6 +89,7 @@ export function sendTimeHint(now = new Date()): string | null {
 const VAR_WORD: Record<string, string> = {
     first_name: 'Name', name: 'Name', email: 'Email', test_title: 'Test name', top_test_title: 'Test name',
     top_test_results: 'N', results: 'N', tests_created: 'N',
+    live_test_title: 'Test name', live_days: 'N', live_test_results: 'N', last_visit: 'When',
 };
 
 /** "{test_title|Your test} is ready" → "‹Test name› is ready", for lists. */

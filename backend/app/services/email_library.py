@@ -26,6 +26,8 @@ the question palette). Never write "free": pricing is changing.
 from typing import Any, Dict, List
 
 EDU = ["educator", "institution"]
+EDU_ALL = ["educator", "institution", "corporate"]  # everyone who runs exams
+RULES = ("live_48h", "away_7d")
 
 SIGN = "Nirwair\nTestoZa"
 SIGN_FOUNDER = "Nirwair\nFounder, TestoZa"
@@ -536,6 +538,62 @@ Thank you for trusting TestoZa with your class. If you'd rather just reply to th
 {SIGN_FOUNDER}""",
     },
 
+    # ── Reminders the team sends by hand (rule = who it's for, 20261102120000) ──
+    {
+        "key": "reminder-live-48h-share", "sort": 450, "track": None, "step": 1, "wait_days": 0,
+        "stages": [], "audiences": EDU_ALL, "min_days_joined": 0, "min_days_quiet": 0, "rule": "live_48h",
+        "name": "Live for 2 days: share the link",
+        "subject": "Has everyone got the link to {live_test_title|your exam}?",
+        "preheader": "It has been live for {live_days|2} days. One message to your group usually does it.",
+        "why": "For educators whose exam has been live for 48+ hours with fewer than 5 submissions. Almost "
+               "always the link never reached the group, or went to one person. It shows the link again and "
+               "the two easiest ways to share it, and suggests stopping the exam if it's done. Each person gets "
+               "it once: Duplicate it for a later round.",
+        "body": f"""Hi {{first_name|there}},
+
+**{{live_test_title|Your exam}}** has been live on TestoZa for {{live_days|2}} days, and fewer than five candidates have taken it so far. Usually that means the link hasn't reached everyone yet.
+
+Here is the exam link: [{{live_test_link|https://app.testoza.com/my-tests}}]({{live_test_link|https://app.testoza.com/my-tests}})
+
+Two quick ways to get it to them:
+
+- **WhatsApp:** on My Tests, tap Copy or Share on the live exam and send it to your class group. Candidates open it on their phone, with no app to install.
+- **In class:** in the exam's ••• menu, tap Get a join code and write the six digits on the board. Candidates open testoza.com/join and type it.
+
+[[Share it from My Tests]]({{app}}/my-tests)
+
+If the exam is over, stop it on My Tests. Every result stays saved. And if candidates can't open it, reply and tell me what they see.
+
+{SIGN}""",
+    },
+    {
+        "key": "reminder-away-7d", "sort": 460, "track": None, "step": 1, "wait_days": 0,
+        "stages": [], "audiences": EDU_ALL, "min_days_joined": 0, "min_days_quiet": 0, "rule": "away_7d",
+        "name": "Not seen for a week",
+        "subject": "Ready for this week's test?",
+        "preheader": "You last opened TestoZa {last_visit|over a week ago}. Here's the quickest way back in.",
+        "why": "For educators who haven't opened TestoZa for 7+ days (their own visits, tests and AI uploads; "
+               "candidates answering doesn't count as a visit). When answers came in since, it says how many. "
+               "Each person gets it once: Duplicate it for a later round.",
+        "body": f"""Hi {{first_name|there}},
+
+You last opened TestoZa {{last_visit|over a week ago}}.
+
+{{results_waiting|}}
+
+When you're ready for this week's test, the quickest way is the paper you already have:
+
+- **Upload it** as a PDF, a Word file or a photo. TestoZa reads the questions for you.
+- **Go live** on My Tests and send the link to your WhatsApp group.
+- **See the marks** as candidates submit, with a rank list at the end.
+
+[[Make this week's test]]({{app}}/generate-with-ai)
+
+Every result you've had so far is on [All results]({{app}}/all-submissions). If something got in the way, reply and tell me. I read every reply.
+
+{SIGN}""",
+    },
+
     # ── One-off: product news (edit before every send) ──────────────────────
     {
         "key": "news-monthly", "sort": 950, "track": None, "step": 1, "wait_days": 0,
@@ -571,4 +629,6 @@ FIELDS = (
 
 
 def as_row(t: Dict[str, Any]) -> Dict[str, Any]:
-    return {**{f: t.get(f) for f in FIELDS}, "is_builtin": True}
+    """A row for public.email_templates. The `rule` column arrives with 20261102120000_email_automatic.sql;
+    routers/email_broadcast.ensure_library() copes when it isn't there yet."""
+    return {**{f: t.get(f) for f in FIELDS}, "rule": t.get("rule"), "is_builtin": True}

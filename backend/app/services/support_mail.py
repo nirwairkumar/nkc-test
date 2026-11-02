@@ -45,11 +45,10 @@ def admin_link(message_id: str) -> str:
 
 
 def _smtp_ready() -> Optional[Dict[str, Any]]:
-    from app.routers.email_broadcast import runtime_smtp_config
+    """The platform's mail connection when anything can be sent (SES, or the Brevo fallback)."""
+    from app.services import mailer
 
-    if not runtime_smtp_config.get("user") or not runtime_smtp_config.get("password"):
-        return None
-    return runtime_smtp_config
+    return mailer.primary() if mailer.ready() else None
 
 
 def smtp_configured() -> bool:
@@ -57,12 +56,11 @@ def smtp_configured() -> bool:
 
 
 def _send(to: str, subject: str, body: str, reply_to: Optional[str] = None) -> None:
-    cfg = _smtp_ready()
-    if not cfg or not to:
+    if not to or not _smtp_ready():
         return
-    from app.routers.email_broadcast import send_smtp_message, sender_address
+    from app.services import mailer
 
-    send_smtp_message(cfg, sender_address(cfg), "TestoZa Support", to, subject, body, reply_to=reply_to)
+    mailer.deliver(to, subject, body, from_name="TestoZa Support", reply_to=reply_to or SUPPORT_EMAIL)
 
 
 def _paragraphs(text: str) -> str:

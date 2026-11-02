@@ -18,28 +18,28 @@ Limits (environment, so a new admin can't loosen them):
                            bounce and spam rates stay low (Amazon SES allows far more)
   EMAIL_DAILY_LIMIT=200
   EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="TestoZa"
-  EMAIL_SENDERS=nirwair@testoza.com,… · extra From addresses for broadcasts; each must be
+  EMAIL_SENDERS=a@news.testoza.com,… · extra From addresses for broadcasts; each must be
                                          allowed by the broadcast service (SES: a verified domain)
 
-SMTP (environment):
-  SMTP_HOST, SMTP_PORT (465 = SSL, 587 = STARTTLS), SMTP_USER, SMTP_PASSWORD
-  SMTP_FROM=no-reply@testoza.com · the From address when the SMTP login isn't one of our
-                                    addresses (Brevo: xxx@smtp-brevo.com, SES: an access key).
+SMTP (environment) — since 2026-11-02 everything goes through Amazon SES (Sydney):
+  SMTP_HOST=email-smtp.ap-southeast-2.amazonaws.com SMTP_PORT=587 (465 = SSL, 587 = STARTTLS)
+  SMTP_USER / SMTP_PASSWORD = SES SMTP credentials (not the AWS access key pair)
+  SMTP_FROM=no-reply@notify.testoza.com · From for automatic emails (the SES login isn't an address).
                                     Unset = From the login, as with Zoho.
-  Brevo: SMTP_HOST=smtp-relay.brevo.com SMTP_PORT=587 SMTP_USER=<login> SMTP_PASSWORD=<SMTP key>
+  BROADCAST_FROM=nirwair@news.testoza.com · broadcasts' default From on the same connection
+                                    (own subdomain = own reputation; see broadcast_from()).
+  FALLBACK_SMTP_* · services/mailer.py: Brevo, used only when SES can't send at all.
 
-  BROADCAST_SMTP_HOST / _PORT / _USER / _PASSWORD / _FROM · broadcasts only, so a bad broadcast
-      can't hurt help replies and submission emails (those stay on SMTP_*). Unset = SMTP_*.
-  Amazon SES: BROADCAST_SMTP_HOST=email-smtp.<region>.amazonaws.com BROADCAST_SMTP_PORT=587
-      BROADCAST_SMTP_USER/PASSWORD = SES SMTP credentials (not the AWS access key pair).
+  BROADCAST_SMTP_HOST / _PORT / _USER / _PASSWORD / _FROM · broadcasts only, if they ever need
+      their own service. Unset = SMTP_* (the normal case).
 
 Bounces and spam reports (Amazon SES):
   SES → SNS topic → POST /ses-events. Hard bounces land on the never-email list as 'bounced',
   spam reports as 'unsubscribed'. SES_SNS_TOPIC_ARN (comma-separated) names the topics we
   accept: the signature proves a message came from SNS, not that it came from our topic.
 
-runtime_smtp_config and send_smtp_message are also used by services/support_mail.py and
-services/submission_email.py: keep their names and signatures.
+runtime_smtp_config, sender_address, build_message and open_smtp are also used by
+services/mailer.py (every automatic email, help replies, referral news): keep their names.
 """
 
 import base64
@@ -135,6 +135,27 @@ REPLY_TO = os.getenv("EMAIL_REPLY_TO", "support@testoza.com")
 DEFAULT_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "TestoZa")
 
 
+def broadcast_from() -> str:
+    """
+    The broadcasts' own From address. With one shared connection (the normal case since SES),
+    BROADCAST_FROM keeps broadcasts on their own subdomain (nirwair@news.testoza.com) while the
+    automatic emails go from SMTP_FROM (no-reply@notify.testoza.com): two reputations, one sign-in.
+    """
+    cfg = broadcast_smtp()
+    own = os.getenv("BROADCAST_FROM", "").strip().lower()
+    if own and cfg is not broadcast_smtp_config:
+        return own
+    return sender_address(cfg).lower()
+
+
+def envelope_sender(cfg: Dict[str, Any], from_email: str) -> str:
+    """The SMTP envelope (bounce) address. Zoho and Brevo need their own login / verified sender;
+    Amazon SES takes the From address, so bounces use that domain's own MAIL FROM (bounce.news…)."""
+    if "amazonaws" in (cfg.get("host") or "").lower() and from_email:
+        return from_email
+    return sender_address(cfg)
+
+
 def senders() -> List[str]:
     """
     Broadcast From addresses that will work: the broadcast connection's own address plus any
@@ -142,7 +163,7 @@ def senders() -> List[str]:
     sends From the signed-in mailbox or its aliases, Brevo from verified senders, SES from
     verified domains.
     """
-    user = sender_address(broadcast_smtp()).lower()
+    user = broadcast_from()
     extra = [a.strip().lower() for a in os.getenv("EMAIL_SENDERS", "").split(",") if a.strip()]
     out = ([user] if user else []) + [a for a in extra if a != user]
     return out or ["no-reply@testoza.com"]
@@ -230,7 +251,7 @@ def send_smtp_message(
     msg = build_message(sender_email, sender_name, recipient_email, subject, html_body, reply_to, text_body, headers)
     server = open_smtp(smtp_cfg)
     try:
-        server.sendmail(sender_address(smtp_cfg), [recipient_email], msg.as_string())
+        server.sendmail(envelope_sender(smtp_cfg, sender_email), [recipient_email], msg.as_string())
     finally:
         try:
             server.quit()
@@ -289,7 +310,16 @@ def ensure_library(db: Client, force: bool = False) -> None:
         raise
     missing = [email_library.as_row(t) for t in email_library.LIBRARY if t["key"] not in have]
     if missing:
-        _table(db, "email_templates").insert(missing).execute()
+        try:
+            _table(db, "email_templates").insert(missing).execute()
+        except Exception as exc:
+            if "rule" not in str(exc):
+                raise
+            # Before 20261102120000_email_automatic.sql there is no `rule` column. A reminder without
+            # its rule would reach every educator, so reminders wait for the SQL; the rest go in.
+            plain = [{k: v for k, v in r.items() if k != "rule"} for r in missing if not r.get("rule")]
+            if plain:
+                _table(db, "email_templates").insert(plain).execute()
     _library_checked["at"] = _now()
 
 
@@ -445,6 +475,8 @@ class TemplateFields(BaseModel):
     audiences: Optional[List[str]] = None
     min_days_joined: Optional[int] = Field(None, ge=0, le=3650)
     min_days_quiet: Optional[int] = Field(None, ge=0, le=3650)
+    # Reminders only: 'live_48h' | 'away_7d'; "" clears it (20261102120000_email_automatic.sql).
+    rule: Optional[str] = Field(None, max_length=20)
     archived: Optional[bool] = None
 
 
@@ -488,6 +520,8 @@ def _template_values(t: TemplateFields, creating: bool) -> Dict[str, Any]:
         v["audiences"] = _clean_list(v["audiences"], AUDIENCES)
     if "track" in v:
         v["track"] = _slug(v["track"]) if v["track"].strip() else None
+    if "rule" in v:
+        v["rule"] = v["rule"] if v["rule"] in email_library.RULES else None
     if creating:
         for f in ("name", "subject", "body"):
             if not (v.get(f) or "").strip():
@@ -496,6 +530,15 @@ def _template_values(t: TemplateFields, creating: bool) -> Dict[str, Any]:
 
 
 # ── Admin: overview, library, audiences ───────────────────────────────────────
+
+def _automatic_status() -> Dict[str, Any]:
+    """The connection the platform's own emails use (services/mailer.py), and its fallback."""
+    from app.services import mailer
+
+    s = mailer.status()
+    return {"service": service_name(runtime_smtp_config.get("host")), "configured": s["configured"],
+            "from_email": s["from_email"], "fallback": s["fallback"]}
+
 
 @router.get("/smtp-status")
 def get_smtp_status(request: Request, db: Client = Depends(get_db)):
@@ -506,12 +549,11 @@ def get_smtp_status(request: Request, db: Client = Depends(get_db)):
         "host": cfg.get("host"),
         "port": cfg.get("port"),
         "user": cfg.get("user"),
-        "from_email": sender_address(cfg),
+        "from_email": broadcast_from(),
         "from_name": cfg.get("from_name"),
         "service": service_name(cfg.get("host")),
         "separate": cfg is broadcast_smtp_config,
-        "automatic": {"service": service_name(runtime_smtp_config.get("host")),
-                      "configured": _smtp_ready(runtime_smtp_config)},
+        "automatic": _automatic_status(),
         "bounce_reports": bool(_sns_topics()),
         "available_senders": senders(),
     }
@@ -593,6 +635,8 @@ def duplicate_template(key: str, request: Request, db: Client = Depends(get_db))
         k: src.get(k) for k in ("subject", "preheader", "body", "why", "stages", "audiences",
                                 "min_days_joined", "min_days_quiet", "sort")
     }
+    if src.get("rule"):  # a reminder's copy is still a reminder: same people, never everyone
+        row["rule"] = src["rule"]
     row.update({
         "key": f"{_slug(src['name'])[:30]}-copy-{uuid.uuid4().hex[:4]}",
         "name": f"{src['name']} (copy)", "track": None, "step": 1, "wait_days": 0,
@@ -609,6 +653,8 @@ def restore_template(key: str, request: Request, db: Client = Depends(get_db)):
     if not orig:
         raise HTTPException(status_code=400, detail="Only ready-made emails can be restored")
     v = {f: orig.get(f) for f in email_library.FIELDS if f != "key"}
+    if orig.get("rule"):
+        v["rule"] = orig["rule"]
     v.update({"archived": False, "updated_at": _iso(_now()), "updated_by": admin_id})
     res = _table(db, "email_templates").update(v).eq("key", key).execute()
     return (res.data or [{"key": key, **v}])[0]
@@ -638,7 +684,7 @@ def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(g
     cfg = broadcast_smtp()
     if not _smtp_ready(cfg):
         raise HTTPException(status_code=400, detail=NOT_CONNECTED)
-    from_email = payload.from_email or sender_address(cfg)
+    from_email = payload.from_email or broadcast_from()
     if not _sender_ok(from_email):
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
     person = _person(db, payload.user_id)
@@ -814,10 +860,10 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
             )
             try:
                 try:
-                    server.sendmail(sender_address(cfg), [r["email"]], msg.as_string())
+                    server.sendmail(envelope_sender(cfg, camp["from_email"]), [r["email"]], msg.as_string())
                 except smtplib.SMTPServerDisconnected:
                     server = open_smtp(cfg)
-                    server.sendmail(sender_address(cfg), [r["email"]], msg.as_string())
+                    server.sendmail(envelope_sender(cfg, camp["from_email"]), [r["email"]], msg.as_string())
                 mark(r["send_id"], "sent")
                 sent += 1
             except smtplib.SMTPSenderRefused:
@@ -841,7 +887,7 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
         logger.warning("broadcast %s stopped: %s", cid_s, exc)
         if isinstance(exc, smtplib.SMTPSenderRefused):
             detail = (f"{service_name(cfg.get('host'))} refused the From address {camp['from_email']}. "
-                      f"Pick {sender_address(cfg)} as From, or verify this address with the mail service.")
+                      f"Pick {broadcast_from()} as From, or verify this address with the mail service.")
         elif isinstance(exc, smtplib.SMTPAuthenticationError):
             detail = (f"{service_name(cfg.get('host'))} rejected the sign-in. "
                       "Check BROADCAST_SMTP_USER and BROADCAST_SMTP_PASSWORD (or SMTP_*) on the server.")

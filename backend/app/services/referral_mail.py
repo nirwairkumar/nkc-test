@@ -3,7 +3,7 @@
 new account (app/routers/referrals.py → claim).
 
   - Always: an in-app notification that opens Settings → Invite educators.
-  - Once SMTP is configured (Brevo or Amazon SES both give SMTP credentials): an email
+  - Once email is connected (services/mailer.py: Amazon SES, Brevo as fallback): an email
     too. Until then the email is skipped, the same as support replies.
 
 Best-effort on a background thread: nothing here can fail the sign-up.
@@ -57,10 +57,10 @@ def _tell_referrer(db, referrer: Dict[str, Any], joined_name: str, joined_count:
     if not cfg or not to or to.lower().endswith(GUEST_DOMAIN):
         return
     try:
-        from app.routers.email_broadcast import send_smtp_message, sender_address
+        from app.services import mailer
 
         mail = build_joined_email(referrer.get("full_name"), joined_name, joined_count)
-        send_smtp_message(cfg, sender_address(cfg),"TestoZa", to, mail["subject"], mail["html"], reply_to=SUPPORT_EMAIL)
+        mailer.deliver(to, mail["subject"], mail["html"], from_name="TestoZa", reply_to=SUPPORT_EMAIL)
     except Exception as err:
         logger.warning("Referral: email to %s failed: %s", referrer_id, err)
 

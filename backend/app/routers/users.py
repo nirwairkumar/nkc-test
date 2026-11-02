@@ -287,7 +287,8 @@ def update_user_profile(
             raise HTTPException(status_code=400, detail="No valid profile fields provided for update")
 
         # 3. Check if profile exists using service role client 'supabase' to avoid RLS blockages
-        profile_check = supabase.table("profiles").select("id").eq("id", user_id).execute()
+        profile_check = supabase.table("profiles").select("id, designation").eq("id", user_id).execute()
+        old_designation = (profile_check.data[0].get("designation") if profile_check.data else None)
         
         if not profile_check.data:
             logger.debug(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
@@ -334,6 +335,18 @@ def update_user_profile(
                 # Minimal: the default sends every updated test back, questions and all.
                 supabase.table("tests").update(test_updates, returning=ReturnMethod.minimal)\
                     .eq("created_by", user_id).execute()
+
+        # Became an educator / institute account (onboarding after Google sign-in): the welcome
+        # email with the tutorial videos. Once per account, off the request path.
+        new_designation = sanitized_updates.get("designation")
+        if new_designation and new_designation != old_designation:
+            try:
+                from app.services import auto_email
+                if old_designation not in auto_email.EDUCATOR_ROLES:
+                    row = (response.data or [{}])[0] if response.data else {}
+                    auto_email.on_signup(supabase, user_id, new_designation, row.get("email"), row.get("full_name"))
+            except Exception as mail_err:
+                logger.warning(f"Welcome email skipped for {user_id}: {mail_err}")
 
         if response.data and len(response.data) > 0:
             return response.data[0]

@@ -9,9 +9,9 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { relative } from '../analytics/format';
 import { CARD, Chip, Skeleton } from '../analytics/ui';
-import { emailApi, errorText, type Overview, type Stage, type Template, type TemplateSummary, type Who } from './api';
+import { emailApi, errorText, type Overview, type Rule, type Stage, type Template, type TemplateSummary, type Who } from './api';
 import TemplateList from './TemplateList';
-import { STAGES, WHOS } from './model';
+import { RULES, STAGES, WHOS } from './model';
 import { BodyEditor, ChoiceChips, Confirm, EmailPreview, Field, Group, INPUT, PRIMARY_BTN, SOFT_BTN, WideSheet } from './parts';
 
 export default function LibraryTab({ overview, onSend }: { overview?: Overview; onSend: (t: TemplateSummary) => void }) {
@@ -26,9 +26,11 @@ export default function LibraryTab({ overview, onSend }: { overview?: Overview; 
     };
     const live = all.filter((t) => !t.archived);
     const archived = all.filter((t) => t.archived);
+    const byStage = live.filter((t) => !t.rule);
     const groups: { title: string; items: Template[] }[] = [
-        ...STAGES.map((s) => ({ title: s.label, items: live.filter((t) => t.stages.length === 1 && t.stages[0] === s.key) })),
-        { title: 'For several stages', items: live.filter((t) => t.stages.length !== 1) },
+        { title: 'Reminders', items: live.filter((t) => t.rule) },
+        ...STAGES.map((s) => ({ title: s.label, items: byStage.filter((t) => t.stages.length === 1 && t.stages[0] === s.key) })),
+        { title: 'For several stages', items: byStage.filter((t) => t.stages.length !== 1) },
         ...(showArchived ? [{ title: 'Archived', items: archived }] : []),
     ].filter((g) => g.items.length);
 
@@ -73,11 +75,11 @@ export default function LibraryTab({ overview, onSend }: { overview?: Overview; 
     );
 }
 
-type Draft = Pick<Template, 'name' | 'subject' | 'preheader' | 'body' | 'why' | 'track' | 'step' | 'wait_days' | 'stages' | 'audiences' | 'min_days_joined' | 'min_days_quiet'>;
+type Draft = Pick<Template, 'name' | 'subject' | 'preheader' | 'body' | 'why' | 'track' | 'step' | 'wait_days' | 'stages' | 'audiences' | 'min_days_joined' | 'min_days_quiet' | 'rule'>;
 
 const BLANK: Draft = {
     name: '', subject: '', preheader: '', why: '', track: null, step: 1, wait_days: 0, stages: [], audiences: ['educator', 'institution'],
-    min_days_joined: 0, min_days_quiet: 0,
+    min_days_joined: 0, min_days_quiet: 0, rule: null,
     body: 'Hi {first_name|there},\n\n\n\n[[Open TestoZa]](https://app.testoza.com/dashboard)\n\nNirwair\nTestoZa',
 };
 
@@ -96,10 +98,10 @@ function TemplateSheet({ template, variables, fromName, onClose, onSend }: {
 
     useEffect(() => {
         if (template === 'new') setD(BLANK);
-        else if (template) setD({ ...template });
+        else if (template) setD({ ...template, rule: template.rule ?? null });
     }, [template]);
 
-    const dirty = isNew || (t && (Object.keys(BLANK) as (keyof Draft)[]).some((k) => JSON.stringify(d[k]) !== JSON.stringify(t[k])));
+    const dirty = isNew || (t && (Object.keys(BLANK) as (keyof Draft)[]).some((k) => JSON.stringify(d[k] ?? null) !== JSON.stringify(t[k] ?? null)));
     const done = (msg: string) => {
         toast.success(msg);
         qc.invalidateQueries({ queryKey: ['email'] });
@@ -108,7 +110,10 @@ function TemplateSheet({ template, variables, fromName, onClose, onSend }: {
     const save = useMutation({
         // An empty series name (not null) is how the server knows to clear it.
         mutationFn: () => {
-            const body = { ...d, track: (d.track ?? '') as string | null };
+            const { rule, ...rest } = d;
+            const body: Partial<Template> = { ...rest, track: (rest.track ?? '') as string | null };
+            // The rule goes only when it changed ("" clears it), so saving works before the reminders SQL.
+            if ((rule ?? null) !== (t?.rule ?? null)) body.rule = (rule ?? '') as Rule;
             return isNew ? emailApi.createTemplate(body) : emailApi.updateTemplate(t!.key, body);
         },
         onSuccess: () => { done(isNew ? 'Email added to the library' : 'Saved'); onClose(); },
@@ -120,7 +125,7 @@ function TemplateSheet({ template, variables, fromName, onClose, onSend }: {
                 : what === 'restore' ? emailApi.restoreTemplate(t!.key)
                     : emailApi.updateTemplate(t!.key, { archived: what === 'archive' }),
         onSuccess: (_r, what) => {
-            done({ duplicate: 'Copy made: find it under “For several stages”', restore: 'Back to the original text', archive: 'Archived: it won’t be offered or sent', unarchive: 'Back in the library' }[what]);
+            done({ duplicate: t?.rule ? 'Copy made: find it under “Reminders”' : 'Copy made: find it under “For several stages”', restore: 'Back to the original text', archive: 'Archived: it won’t be offered or sent', unarchive: 'Back in the library' }[what]);
             onClose();
         },
         onError: (e) => toast.error(errorText(e)),
@@ -194,6 +199,12 @@ function TemplateSheet({ template, variables, fromName, onClose, onSend }: {
                                 <p className="mb-1.5 text-[13px] font-medium text-slate-600">Group</p>
                                 <ChoiceChips<Who> ariaLabel="Group" value={d.audiences} onChange={(v) => set('audiences', v)} anyLabel="Everyone"
                                     options={WHOS.map((w) => ({ value: w.key, label: w.plural, title: w.hint }))} />
+                            </div>
+                            <div>
+                                <p className="mb-1.5 text-[13px] font-medium text-slate-600">Only people who</p>
+                                <ChoiceChips<Rule> ariaLabel="Only people who" value={d.rule ? [d.rule] : []}
+                                    onChange={(v) => set('rule', v.length ? v[v.length - 1] : null)} anyLabel="No extra rule"
+                                    options={(Object.keys(RULES) as Rule[]).map((r) => ({ value: r, label: RULES[r].label, title: RULES[r].hint }))} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <Field label="Days after joining">{numInput('min_days_joined')}</Field>

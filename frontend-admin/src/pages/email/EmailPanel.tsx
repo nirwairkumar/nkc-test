@@ -1,32 +1,36 @@
 /**
- * Admin → Email. Four tabs:
+ * Admin → Email. Five tabs:
  *   Playbook — where people are in their journey, and the next email for each stage,
- *              with how many people it can go to today. The weekly job starts here.
+ *              with how many people it can go to today, plus the reminders the team sends
+ *              by hand (exam live 48h with few answers, away 7+ days). The weekly job starts here.
  *   People   — everyone we may email, filtered by stage and group; write to any slice.
  *   Library  — every ready-made email: edit, duplicate, restore, archive, or write a new one.
  *   History  — every send and what happened after (came back, made a test, clicked).
+ *   Automatic — the emails TestoZa sends by itself (welcome, test created, live, submissions,
+ *              exam ended): on/off, counts, preview, test, and the latest sends.
  * The rules (one email a week per person, three a month, never the same email twice,
  * unsubscribes, 40 an hour) are enforced by the server; this page explains them.
  * Manual for new team members: "TestoZa Email Broadcasting Manual" (Claude Docs).
  */
 import { useQuery } from '@tanstack/react-query';
-import { Mail, PenSquare, Settings } from 'lucide-react';
+import { BellRing, Mail, PenSquare, Settings } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { num } from '../analytics/format';
 import { usePersisted } from '../analytics/shared';
 import { CARD, Empty, InfoTip, Segmented, Skeleton } from '../analytics/ui';
-import { emailApi, NotInstalledError, type Overview, type Stage, type TemplateSummary, type Who } from './api';
+import { emailApi, NotInstalledError, type Overview, type Rule, type Stage, type TemplateSummary, type Who } from './api';
+import AutomaticTab from './AutomaticTab';
 import ComposeSheet, { type ComposeStart } from './ComposeSheet';
 import HistoryTab from './HistoryTab';
 import LibraryTab from './LibraryTab';
-import { STAGES, whoCount } from './model';
+import { RULES, STAGES, whoCount } from './model';
 import PeopleTab from './PeopleTab';
 import SettingsSheet from './SettingsSheet';
 import TemplateList from './TemplateList';
 
-type Tab = 'playbook' | 'people' | 'library' | 'history';
-const TABS: readonly Tab[] = ['playbook', 'people', 'library', 'history'];
+type Tab = 'playbook' | 'people' | 'library' | 'history' | 'automatic';
+const TABS: readonly Tab[] = ['playbook', 'people', 'library', 'history', 'automatic'];
 
 export default function EmailPanel() {
     const [tab, setTab] = usePersisted<Tab>('tz_admin_email_tab', 'playbook', TABS);
@@ -80,6 +84,7 @@ export default function EmailPanel() {
                     { value: 'people', label: 'People' },
                     { value: 'library', label: 'Library' },
                     { value: 'history', label: 'History' },
+                    { value: 'automatic', label: 'Automatic' },
                 ]} />
             </div>
 
@@ -87,9 +92,11 @@ export default function EmailPanel() {
             {tab === 'people' && <PeopleTab onWrite={(filter) => setCompose({ filter })} />}
             {tab === 'library' && <LibraryTab overview={o} onSend={(t) => setCompose({ template: t })} />}
             {tab === 'history' && <HistoryTab overview={o} openId={openCampaign} onOpenId={setOpenCampaign} />}
+            {tab === 'automatic' && <AutomaticTab />}
 
             <ComposeSheet start={compose} overview={o} onClose={() => setCompose(null)} />
-            <SettingsSheet open={settings} onOpenChange={setSettings} overview={o} />
+            <SettingsSheet open={settings} onOpenChange={setSettings} overview={o}
+                onOpenAutomatic={() => { setSettings(false); setTab('automatic'); }} />
         </div>
     );
 }
@@ -135,11 +142,14 @@ function Playbook({ o, loading, error, onSend }: { o?: Overview; loading: boolea
         return counts;
     }, [o, group]);
 
-    const visible = (o?.templates ?? []).filter((t) => {
+    const matching = (o?.templates ?? []).filter((t) => {
         if (t.archived) return false;
         const whos = GROUP_WHOS[group];
         return !whos || t.audiences.length === 0 || t.audiences.some((a) => whos.includes(a));
     });
+    // Reminders are picked by what someone did (exam live 48h, away a week), not by stage.
+    const reminders = matching.filter((t) => t.rule);
+    const visible = matching.filter((t) => !t.rule);
     const single = (s: Stage) => visible.filter((t) => t.stages.length === 1 && t.stages[0] === s);
     const several = visible.filter((t) => t.stages.length !== 1);
 
@@ -207,6 +217,25 @@ function Playbook({ o, loading, error, onSend }: { o?: Overview; loading: boolea
                 </ol>
             </section>
 
+            {/* Reminders the team sends by hand */}
+            {o && reminders.length > 0 && (
+                <section className="scroll-mt-4">
+                    <div className="mb-2 flex items-start gap-2.5 px-1">
+                        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
+                            <BellRing className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                        <div>
+                            <h2 className="!text-[17px] font-semibold tracking-[-0.01em] text-slate-900">Reminders</h2>
+                            <p className="text-[13px] text-slate-500">
+                                {(Object.keys(RULES) as Rule[]).map((r) => `${RULES[r].short}: ${num(o.rules?.[r] ?? 0)} people`).join(' · ')}.
+                                {' '}Same weekly limit as every email; each person gets each reminder once.
+                            </p>
+                        </div>
+                    </div>
+                    <TemplateList items={reminders} onSend={onSend} />
+                </section>
+            )}
+
             {/* Emails by stage */}
             {loading || !o ? (
                 <div className="space-y-3">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-40" />)}</div>
@@ -234,7 +263,7 @@ function Playbook({ o, loading, error, onSend }: { o?: Overview; loading: boolea
                             <TemplateList items={several} onSend={onSend} />
                         </section>
                     )}
-                    {visible.length === 0 && <div className={CARD}><Empty icon={Mail} title="No emails for this group yet">Write one in Library.</Empty></div>}
+                    {visible.length === 0 && reminders.length === 0 && <div className={CARD}><Empty icon={Mail} title="No emails for this group yet">Write one in Library.</Empty></div>}
                 </>
             )}
         </div>

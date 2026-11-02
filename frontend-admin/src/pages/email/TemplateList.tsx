@@ -1,11 +1,11 @@
 /** A list of library emails: number in its series, who it's for, how it's doing, and how many it can go to today. */
-import { ChevronRight, Clock, Send } from 'lucide-react';
+import { BellRing, ChevronRight, Clock, Send } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { istDate, num, relative } from '../analytics/format';
 import { CARD, Chip } from '../analytics/ui';
 import type { TemplateSummary } from './api';
-import { readable, STAGE, WHO, WHO_TONE } from './model';
+import { readable, RULES, STAGE, WHO, WHO_TONE } from './model';
 
 export default function TemplateList({ items, onSend, onOpen }: {
     items: TemplateSummary[];
@@ -27,6 +27,7 @@ export default function TemplateList({ items, onSend, onOpen }: {
                         <span className="min-w-0">
                             <span className="flex flex-wrap items-center gap-1.5">
                                 <span className="truncate text-[15px] font-semibold text-slate-900">{t.name}</span>
+                                {t.rule && RULES[t.rule] && <Chip title={RULES[t.rule].hint}><BellRing className="h-3 w-3" aria-hidden="true" />{RULES[t.rule].short}</Chip>}
                                 {t.audiences.map((a) => <Chip key={a} tone={WHO_TONE[a]}>{WHO[a]?.plural ?? a}</Chip>)}
                                 {t.stages.length > 1 && t.stages.map((s) => <Chip key={s}>{STAGE[s]?.short}</Chip>)}
                             </span>

@@ -23,6 +23,7 @@ import html
 import os
 import re
 import unicodedata
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -44,6 +45,15 @@ VARIABLES: Dict[str, Dict[str, str]] = {
     "top_test_results": {"label": "Answers on that test", "sample": "38"},
     "tests_created": {"label": "Tests made", "sample": "3"},
     "results": {"label": "Answer sheets received", "sample": "64"},
+    # Reminders (20261102120000_email_automatic.sql): the test that has been live 2+ days with
+    # fewer than 5 answers, and the person's last visit.
+    "live_test_title": {"label": "Their live test", "sample": "Weekly Mock 5"},
+    "live_test_link": {"label": "Link to that exam", "sample": f"{APP_ORIGIN}/test/weekly-mock-5-x1y2"},
+    "live_days": {"label": "Days it has been live", "sample": "3"},
+    "live_test_results": {"label": "Answers on that test", "sample": "2"},
+    "last_visit": {"label": "Last visit (\"9 days ago\")", "sample": "9 days ago"},
+    "results_waiting": {"label": "Line about answers since the last visit", "sample":
+                        "While you were away, 12 candidates submitted your tests. Their marks are waiting."},
     "app": {"label": "app.testoza.com", "sample": APP_ORIGIN},
     "site": {"label": "testoza.com", "sample": SITE_ORIGIN},
 }
@@ -51,6 +61,9 @@ VARIABLES: Dict[str, Dict[str, str]] = {
 SAMPLE_PERSON: Dict[str, Any] = {
     "id": None, "email": "asha@example.in", "full_name": "Asha Verma", "tests_created": 3, "results": 64,
     "latest_test_title": "Physics Chapter 3 Test", "top_test_title": "Weekly Mock 4", "top_test_results": 38,
+    "live_test_title": "Weekly Mock 5", "live_test_slug": "weekly-mock-5-x1y2", "live_test_results": 2,
+    "live_since": "2026-10-30T10:00:00+00:00", "last_seen_at": "2026-10-24T10:00:00+00:00", "new_results": 12,
+    "_now": "2026-11-02T10:00:00+00:00",
 }
 
 _PLACEHOLDER = re.compile(r"\{([a-z_]+)(?:\|([^{}]*))?\}")
@@ -71,10 +84,30 @@ def first_name_of(full_name: Optional[str]) -> str:
     return first.capitalize() if first.islower() or first.isupper() else first
 
 
+def _when(v: Any) -> Optional[datetime]:
+    if isinstance(v, datetime):
+        return v if v.tzinfo else v.replace(tzinfo=timezone.utc)
+    try:
+        d = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def _days_ago(days: int) -> str:
+    if days <= 0:
+        return "today"
+    return "yesterday" if days == 1 else f"{days} days ago"
+
+
 def person_vars(p: Dict[str, Any]) -> Dict[str, str]:
     def s(v: Any) -> str:
         return "" if v is None else str(v).strip()
 
+    now = _when(p.get("_now")) or datetime.now(timezone.utc)
+    live_since, seen = _when(p.get("live_since")), _when(p.get("last_seen_at"))
+    slug = s(p.get("live_test_slug"))
+    new_results = int(p.get("new_results") or 0)
     return {
         "first_name": first_name_of(p.get("full_name")),
         "name": s(p.get("full_name")),
@@ -84,6 +117,14 @@ def person_vars(p: Dict[str, Any]) -> Dict[str, str]:
         "top_test_results": s(p.get("top_test_results") or ""),
         "tests_created": s(p.get("tests_created") or 0),
         "results": s(p.get("results") or 0),
+        "live_test_title": s(p.get("live_test_title")),
+        "live_test_link": f"{APP_ORIGIN}/test/{slug}" if slug else "",
+        "live_days": str(max(1, (now - live_since).days)) if live_since else "",
+        "live_test_results": s(p.get("live_test_results")) if p.get("live_test_title") else "",
+        "last_visit": _days_ago((now - seen).days) if seen else "",
+        "results_waiting": (
+            f"While you were away, {new_results} candidate{'s' if new_results != 1 else ''} "
+            f"submitted your tests. Their marks are waiting." if new_results > 0 else ""),
         "app": APP_ORIGIN,
         "site": SITE_ORIGIN,
     }
@@ -120,8 +161,9 @@ def _safe_url(url: str) -> Optional[str]:
     return url
 
 
-def tag_link(url: str, campaign_key: Optional[str], campaign_tag: Optional[str]) -> str:
-    """utm tags on our own links, so a click shows up in analytics (and in History)."""
+def tag_link(url: str, campaign_key: Optional[str], campaign_tag: Optional[str], medium: str = "broadcast") -> str:
+    """utm tags on our own links, so a click shows up in analytics (and in History).
+    medium: "broadcast" for admin sends, "auto" for the automatic emails (services/auto_email.py)."""
     parts = urlsplit(url)
     host = (parts.hostname or "").lower()
     if not campaign_key or not (host == "testoza.com" or host.endswith(".testoza.com")):
@@ -131,7 +173,7 @@ def tag_link(url: str, campaign_key: Optional[str], campaign_tag: Optional[str])
         return url
     query.update({
         "utm_source": "email",
-        "utm_medium": "broadcast",
+        "utm_medium": medium,
         "utm_campaign": re.sub(r"[^a-z0-9-]+", "-", campaign_key.lower())[:60],
     })
     if campaign_tag:
@@ -224,7 +266,10 @@ def body_html(body: str, values: Dict[str, str], link: LinkFn, warnings: List[st
             )
             parts.append(f'<ul style="margin:0 0 18px;padding-left:22px;">{items}</ul>')
         else:
-            parts.append(f'<p style="margin:0 0 16px;">{_inline_html(block, values, link, warnings)}</p>')
+            inner = _inline_html(block, values, link, warnings)
+            # A paragraph that is only an empty detail ({results_waiting|}) disappears.
+            if inner.replace("<br>", "").strip():
+                parts.append(f'<p style="margin:0 0 16px;">{inner}</p>')
     return "\n".join(parts)
 
 
@@ -240,7 +285,8 @@ def body_text(body: str, values: Dict[str, str], link: LinkFn) -> str:
         text = fill(block, values)
         text = _LINK.sub(lambda m: f"{m.group(1)} ({link(_safe_url(m.group(2)) or m.group(2))})", text)
         text = _BOLD.sub(r"\1", text)
-        out.append(text)
+        if text.strip():
+            out.append(text)
     return "\n\n".join(out)
 
 

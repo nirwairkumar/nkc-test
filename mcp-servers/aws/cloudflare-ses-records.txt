@@ -1,0 +1,16 @@
+; Amazon SES (Sydney) sending subdomains for TestoZa - import into the testoza.com zone.
+; Leave 'Proxy imported DNS records' UNTICKED.
+
+; notify.testoza.com
+nuyhp4gjplr2y3lfudsnvmm7i2qjumg3._domainkey.notify.testoza.com.	3600	IN	CNAME	nuyhp4gjplr2y3lfudsnvmm7i2qjumg3.dkim.amazonses.com.
+tg4vgqdurpjikggg4nil6opduhepmkbv._domainkey.notify.testoza.com.	3600	IN	CNAME	tg4vgqdurpjikggg4nil6opduhepmkbv.dkim.amazonses.com.
+bdrj7oy7xwc574gj4sn4dqiuvot3qt7b._domainkey.notify.testoza.com.	3600	IN	CNAME	bdrj7oy7xwc574gj4sn4dqiuvot3qt7b.dkim.amazonses.com.
+bounce.notify.testoza.com.	3600	IN	MX	10 feedback-smtp.ap-southeast-2.amazonses.com.
+bounce.notify.testoza.com.	3600	IN	TXT	"v=spf1 include:amazonses.com ~all"
+
+; news.testoza.com
+ora4x3ufdr2d43jupzz64vjtl35uqcbs._domainkey.news.testoza.com.	3600	IN	CNAME	ora4x3ufdr2d43jupzz64vjtl35uqcbs.dkim.amazonses.com.
+dneik6sv6g526qcvaq3mvujt3pe4rmd3._domainkey.news.testoza.com.	3600	IN	CNAME	dneik6sv6g526qcvaq3mvujt3pe4rmd3.dkim.amazonses.com.
+uedcxhiinfe2xubfto2ilytljysynxg7._domainkey.news.testoza.com.	3600	IN	CNAME	uedcxhiinfe2xubfto2ilytljysynxg7.dkim.amazonses.com.
+bounce.news.testoza.com.	3600	IN	MX	10 feedback-smtp.ap-southeast-2.amazonses.com.
+bounce.news.testoza.com.	3600	IN	TXT	"v=spf1 include:amazonses.com ~all"

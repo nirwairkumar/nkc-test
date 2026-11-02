@@ -105,6 +105,15 @@ class Query:
         self.op, self.payload = "update", payload
         return self
 
+    def upsert(self, payload: Any, on_conflict: str = "id", **_):
+        self.op, self.payload, self._conflict = "upsert", payload, on_conflict
+        return self
+
+    def ilike(self, col, pattern):
+        needle = pattern.strip("%").lower()
+        self.filters.append(lambda r: needle in str(r.get(col) or "").lower())
+        return self
+
     def delete(self):
         self.op = "delete"
         return self
@@ -172,6 +181,19 @@ class Query:
 
     def execute(self):
         rows = self.db.tables.setdefault(self.table, [])
+        if self.op == "upsert":
+            items = self.payload if isinstance(self.payload, list) else [self.payload]
+            out = []
+            for item in items:
+                hit = next((r for r in rows if r.get(self._conflict) == item.get(self._conflict)), None)
+                if hit is not None:
+                    hit.update(copy.deepcopy(item))
+                    out.append(copy.deepcopy(hit))
+                else:
+                    row = {**(DEFAULTS.get(self.table, dict)()), **copy.deepcopy(item)}
+                    rows.append(row)
+                    out.append(copy.deepcopy(row))
+            return SimpleNamespace(data=out, count=None)
         if self.op == "insert":
             items = self.payload if isinstance(self.payload, list) else [self.payload]
             created = []

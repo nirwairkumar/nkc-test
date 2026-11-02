@@ -9,6 +9,8 @@ export type Stage = 'new' | 'drafted' | 'tried' | 'quiet' | 'active';
 export type Who = 'educator' | 'institution' | 'corporate' | 'student' | 'no_role';
 export type Status =
     | 'ready' | 'unsubscribed' | 'bad_email' | 'got_it' | 'earlier_step' | 'too_soon' | 'cooldown' | 'monthly_cap';
+/** Reminders: who the email is for beyond stage and group (SQL 20261102120000_email_automatic.sql). */
+export type Rule = 'live_48h' | 'away_7d';
 
 export class NotInstalledError extends Error {}
 
@@ -33,6 +35,7 @@ export interface TemplateSummary {
     audiences: Who[];
     min_days_joined: number;
     min_days_quiet: number;
+    rule?: Rule | null;
     subject: string;
     preheader: string;
     why: string;
@@ -62,6 +65,8 @@ export interface Overview {
     bad_emails: number;
     unsubscribed: number;
     matrix: { stage: Stage; who: Who; n: number }[];
+    /** How many people each reminder rule fits right now (after the SQL). */
+    rules?: Partial<Record<Rule, number>>;
     templates: TemplateSummary[];
     sent: { hour: number; today: number; day: number; week: number; all: number };
     sending: { id: string; name: string; status: 'sending' | 'paused' }[];
@@ -108,6 +113,12 @@ export interface Person {
     emails_received: number;
     /** In the list only because an admin added them (not by the email's own rules). */
     added?: boolean;
+    /** Their own last visit (candidates answering doesn't count). */
+    last_seen_at?: string | null;
+    new_results?: number;
+    live_test_title?: string | null;
+    live_since?: string | null;
+    live_test_results?: number | null;
 }
 
 export interface Audience {
@@ -193,11 +204,64 @@ export interface SmtpStatus {
     service?: string;
     /** Broadcasts have their own connection (BROADCAST_SMTP_*), apart from the platform's emails. */
     separate?: boolean;
-    /** The connection help replies and submission emails use. */
-    automatic?: { service: string; configured: boolean };
+    /** The connection automatic emails, help replies and referral news use, and its fallback. */
+    automatic?: {
+        service: string;
+        configured: boolean;
+        from_email?: string | null;
+        fallback?: { configured: boolean; service: string | null; from_email: string | null };
+    };
     /** SES bounces and spam reports reach the never-email list. */
     bounce_reports?: boolean;
     available_senders: string[];
+}
+
+// ── Automatic emails (backend: app/routers/email_auto.py) ────────────────────
+export type AutoKind = 'welcome' | 'test_created' | 'test_live' | 'results' | 'test_ended';
+
+export interface AutoEmail {
+    key: AutoKind;
+    label: string;
+    when: string;
+    detail: string;
+    enabled: boolean;
+    today: number;
+    week: number;
+    month: number;
+    total: number;
+    failed: number;
+    skipped: number;
+    clicked: number;
+    last_at: string | null;
+}
+
+export interface AutoOverview {
+    /** False until 20261102120000_email_automatic.sql is applied (emails still go out). */
+    installed: boolean;
+    migration: string;
+    kinds: AutoEmail[];
+    daily: { day: string; n: number }[];
+    transport: {
+        service: string | null;
+        configured: boolean;
+        from_email: string | null;
+        fallback: { configured: boolean; service: string | null; from_email: string | null };
+        bounce_reports: boolean;
+    };
+}
+
+export interface AutoLogRow {
+    id: string;
+    kind: AutoKind;
+    email: string;
+    subject: string;
+    status: 'sent' | 'failed' | 'skipped';
+    error: string | null;
+    provider: string | null;
+    milestone: number | null;
+    test_id: string | null;
+    user_id: string | null;
+    created_at: string;
 }
 
 async function call<T>(p: Promise<{ data: T }>): Promise<T> {
@@ -247,4 +311,16 @@ export const emailApi = {
     smtpStatus: () => call<SmtpStatus>(apiClient.get(`${B}/smtp-status`)),
     saveSmtp: (cfg: { host: string; port: number; user: string; password: string; from_name?: string; use_ssl?: boolean }) =>
         call(apiClient.post(`${B}/smtp-config`, cfg)),
+
+    auto: () => call<AutoOverview>(apiClient.get(`${B}/auto`)),
+    autoLog: (p: { kind?: AutoKind | null; status?: AutoLogRow['status'] | null; q?: string; limit?: number; offset?: number }) =>
+        call<{ rows: AutoLogRow[]; total: number; installed: boolean }>(apiClient.get(`${B}/auto/log`, {
+            params: Object.fromEntries(Object.entries(p).filter(([, v]) => v !== null && v !== undefined && v !== '')),
+        })),
+    setAuto: (kind: AutoKind, enabled: boolean) =>
+        call<{ key: AutoKind; enabled: boolean }>(apiClient.patch(`${B}/auto/${kind}`, { enabled })),
+    autoPreview: (kind: AutoKind) =>
+        call<{ subject: string; preheader: string; html: string; text: string }>(apiClient.post(`${B}/auto/${kind}/preview`)),
+    autoTest: (kind: AutoKind, to: string) =>
+        call<{ sent: boolean; to: string; service: string; fallback: boolean }>(apiClient.post(`${B}/auto/${kind}/test`, { to })),
 };

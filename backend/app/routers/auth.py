@@ -68,6 +68,20 @@ def login(payload: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         raise HTTPException(status_code=400, detail=detail)
 
+def _welcome_after_register(response: Any, metadata: Dict[str, Any]) -> None:
+    """An email sign-up that chose Educator / Institution / Other gets the welcome email
+    (services/auto_email.py; Google sign-ups get it when onboarding saves the role)."""
+    try:
+        user = getattr(response, "user", None)
+        if not user or not getattr(user, "id", None):
+            return
+        from app.services import auto_email
+        auto_email.on_signup(supabase, str(user.id), metadata.get("designation"),
+                             getattr(user, "email", None), metadata.get("full_name"))
+    except Exception as e:
+        logger.warning("Welcome email skipped: %s", e)
+
+
 @router.post("/register", dependencies=[Depends(check_register_rate_limit)])
 def register(payload: RegisterRequest):
     try:
@@ -78,6 +92,7 @@ def register(payload: RegisterRequest):
         if payload.metadata:
             signup_data["options"] = {"data": payload.metadata}
         response = auth_client().sign_up(signup_data)
+        _welcome_after_register(response, payload.metadata or {})
         # Wrap and handle potential AuthResponse object
         if hasattr(response, "user"):
             user_data = jsonable_encoder(response.user)
