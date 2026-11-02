@@ -29,8 +29,12 @@ EDU = ["educator", "institution"]
 EDU_ALL = ["educator", "institution", "corporate"]  # everyone who runs exams
 RULES = ("live_48h", "away_7d")
 
-SIGN = "Nirwair\nTestoZa"
-SIGN_FOUNDER = "Nirwair\nFounder, TestoZa"
+# Signed by the team (owner, 2026-11-02): whoever sends replaces "Team" with their own name,
+# e.g. Priya when the From address is priya@notify.testoza.com.
+SIGN = "Team\nTestoZa"
+SIGN_FOUNDER = SIGN
+# Signatures used before; routers/email_broadcast.ensure_library() swaps them for SIGN in stored emails.
+LEGACY_SIGNS = ("Nirwair\nFounder, TestoZa", "Nirwair\nTestoZa")
 
 LIBRARY: List[Dict[str, Any]] = [
     # ── Signed up, no test yet ──────────────────────────────────────────────

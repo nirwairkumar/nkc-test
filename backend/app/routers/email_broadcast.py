@@ -303,11 +303,19 @@ def ensure_library(db: Client, force: bool = False) -> None:
     if not force and last and _now() - last < timedelta(minutes=10):
         return
     try:
-        have = {r["key"] for r in (_table(db, "email_templates").select("key").execute().data or [])}
+        stored = _table(db, "email_templates").select("key, body, is_builtin").execute().data or []
     except Exception as exc:
         if _missing(str(exc)):
             raise HTTPException(status_code=424, detail=NOT_INSTALLED)
         raise
+    have = {r["key"] for r in stored}
+    # Built-in emails signed with an old signature ("Nirwair") get the team one; nothing else in
+    # the text changes, so edits made in admin are kept.
+    for r in stored:
+        body = (r.get("body") or "").rstrip()
+        old = next((s for s in email_library.LEGACY_SIGNS if body.endswith(s)), None)
+        if r.get("is_builtin") and old:
+            _table(db, "email_templates").update({"body": body[: -len(old)] + email_library.SIGN}).eq("key", r["key"]).execute()
     missing = [email_library.as_row(t) for t in email_library.LIBRARY if t["key"] not in have]
     if missing:
         try:

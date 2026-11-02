@@ -522,3 +522,23 @@ def test_ses_events_endpoint_refuses_other_topics_and_forged_messages(env, sns):
     assert c.post(url, content=json.dumps(off_aws)).status_code == 403
     assert c.post(url, content="not json").status_code == 400
     assert db.tables["email_suppressions"] == []
+
+
+def test_old_nirwair_signatures_become_team(monkeypatch):
+    """Stored built-in emails switch to the team signature; only the last lines change."""
+    db = FakeSupabase()
+    t = email_library.LIBRARY[0]
+    old_body = t["body"].replace(email_library.SIGN, "Nirwair\nFounder, TestoZa")
+    edited = "My own words.\n\nNirwair\nTestoZa"
+    db.tables["email_templates"] = [
+        {**email_library.as_row(t), "body": old_body},
+        {**email_library.as_row(email_library.LIBRARY[1]), "body": edited},
+        {"key": "custom-1", "name": "Mine", "subject": "s", "body": "Hi\n\nNirwair\nTestoZa", "is_builtin": False},
+    ]
+    monkeypatch.setattr(email_broadcast, "_library_checked", {})
+    email_broadcast.ensure_library(db, force=True)
+    rows = {r["key"]: r["body"] for r in db.tables["email_templates"]}
+    assert rows[t["key"]] == t["body"] and rows[t["key"]].endswith("Team\nTestoZa")
+    assert rows[email_library.LIBRARY[1]["key"]] == "My own words.\n\nTeam\nTestoZa"  # edit kept, sign swapped
+    assert rows["custom-1"].endswith("Nirwair\nTestoZa")  # the team's own emails are theirs
+    assert all("Nirwair" not in x["body"] for x in email_library.LIBRARY)
