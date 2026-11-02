@@ -118,6 +118,9 @@ export default function Layout() {
 
     // Hide navbar & sidebar on live test pages
     const isResultsPage = location.pathname.startsWith('/results');
+    // The candidate's result hub has its own top bar (their name, Guest ID, institute):
+    // no site navbar there. /results/analytics is a creator page and keeps it.
+    const isResultHub = isResultsPage && !location.pathname.startsWith('/results/analytics');
     const isCreateTestPage =
         location.pathname.startsWith('/create-test') ||
         location.pathname.startsWith('/edit-test');
@@ -190,7 +193,7 @@ export default function Layout() {
 
     return (
         <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
-            {!isLiveTestPage && !isLandingPage && !isPannaPage && (
+            {!isLiveTestPage && !isLandingPage && !isPannaPage && !isResultHub && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar onToggleSidebar={handleToggleSidebar} />
                 </div>

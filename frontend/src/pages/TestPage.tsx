@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test, rememberAttemptReceipt } from '@/lib/testsApi';
+import { currentGuestUserId } from '@/lib/guestIdentity';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
 import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1554,14 +1555,7 @@ export default function TestPage() {
       return;
     }
 
-    const effectiveUserId = user?.id || (() => {
-      let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
-      if (!anonId) {
-        anonId = crypto.randomUUID();
-        sessionStorage.setItem(`anon_user_id_${test.id}`, anonId);
-      }
-      return anonId;
-    })();
+    const effectiveUserId = user?.id || currentGuestUserId(test.id);
 
     // Also record anonymous analytics session in background if unauthenticated
     if (!user) {
@@ -1763,7 +1757,11 @@ export default function TestPage() {
             questionTimes: finalQuestionTimes,
             timeSpentPerQuestion: finalQuestionTimes,
             metadata: metadata,
-            justSubmitted: true
+            justSubmitted: true,
+            attemptId: savedAttempt?.id,
+            submittedAt: savedAttempt?.created_at || metadata.submittedAt,
+            // Without a login this is the guest account the save created: the hub shows its Guest ID.
+            candidateId: user?.id ? undefined : effectiveUserId,
           },
           replace: true
         });

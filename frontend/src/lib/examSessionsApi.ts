@@ -243,6 +243,18 @@ export interface ResultDetails {
 
 /* ── Errors ────────────────────────────────────────────────────────────────── */
 
+export interface GuestAttempt {
+    attempt_id: string;
+    test_id: string;
+    title: string | null;
+    institution_name: string | null;
+    institution_logo: string | null;
+    submitted_at: string | null;
+    results_visible: boolean;
+    score: number | null;
+    max_marks: number | null;
+}
+
 export interface ApiProblem {
     status: number;
     code: string;
@@ -345,6 +357,11 @@ export const joinApi = {
     resultForm: (code: string) => studentClient.get<ResultForm>(`join/result/${code}`).then(r => r.data),
     lookupResult: (code: string, details: ResultDetails) =>
         studentClient.post<StudentResult>(`join/result/${code}`, details).then(r => r.data),
+    /** Every exam taken without a login under this Guest ID (shown in the result hub). */
+    guestResults: (guestId: string) =>
+        studentClient.get<{ guest_id: string; attempts: GuestAttempt[] }>(`join/guest/${encodeURIComponent(guestId)}`).then(r => r.data),
+    guestAttempt: (guestId: string, attemptId: string) =>
+        studentClient.get<{ attempt: any; test: any }>(`join/guest/${encodeURIComponent(guestId)}/attempt/${attemptId}`).then(r => r.data),
 
     /** Final submission. Retries network/server errors only — never "time over" or "already submitted". */
     async submit(token: string, payload: Record<string, any>, onRetry?: (attempt: number) => void) {

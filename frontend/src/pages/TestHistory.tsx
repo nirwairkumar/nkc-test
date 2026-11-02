@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchUserAttempts, deleteAttempt } from '@/lib/attemptsApi';
-import { fetchUserCombinedAttempts, deleteCombinedAttempt } from '@/lib/combinedSessionsApi';
+import { fetchUserAttempts } from '@/lib/attemptsApi';
+import { fetchUserCombinedAttempts } from '@/lib/combinedSessionsApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, Trash2, RefreshCw, Target, Layers, Timer } from 'lucide-react';
+import { Loader2, Calendar, RefreshCw, Target, Layers, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -247,32 +247,8 @@ export default function TestHistory() {
         }
     };
 
-    const handleDelete = async (attemptId: string) => {
-        if (!confirm('Are you sure you want to delete this test record? This action cannot be undone.')) return;
-
-        try {
-            const { error } = await deleteAttempt(attemptId);
-            if (error) throw error;
-
-            toast.success('Test record deleted successfully');
-            setAttempts(prev => prev.filter(a => a.id !== attemptId));
-            if (expandedAttempt === attemptId) setExpandedAttempt(null);
-        } catch (error: any) {
-            console.error('Error deleting test:', error);
-            toast.error('Failed to delete test record');
-        }
-    };
-
-    const handleDeleteCombined = async (attemptId: string) => {
-        if (!confirm('Delete this combined session record?')) return;
-        try {
-            await deleteCombinedAttempt(attemptId);
-            toast.success('Combined session record deleted');
-            setCombinedAttempts(prev => prev.filter(a => a.id !== attemptId));
-        } catch {
-            toast.error('Failed to delete combined record');
-        }
-    };
+    // No delete here: results are the examiner's record. Only the test's creator (or an
+    // admin) can delete one, from their own results panel.
 
     const handleViewCombinedResult = async (attempt: CombinedAttempt) => {
         const { fetchTestById } = await import('@/lib/testsApi');
@@ -394,9 +370,6 @@ export default function TestHistory() {
                                                         <Button variant="ghost" size="sm" onClick={() => handleViewCombinedResult(attempt)} className="h-8 hover:bg-violet-100/50 hover:text-violet-700">
                                                             <Target className="h-4 w-4 mr-1.5" /> Result
                                                         </Button>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => handleDeleteCombined(attempt.id)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -460,7 +433,9 @@ export default function TestHistory() {
                                                                                     timeSpentPerQuestion: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
                                                                                     metadata: fullAttempt.metadata || attempt.metadata || {},
                                                                                     timeSpent: 0,
-                                                                                    score: attempt.score
+                                                                                    score: attempt.score,
+                                                                                    attemptId: attempt.id,
+                                                                                    submittedAt: fullAttempt.metadata?.submittedAt || attempt.created_at
                                                                                 }
                                                                             });
                                                                         } catch (error) {
@@ -477,18 +452,6 @@ export default function TestHistory() {
                                                                         <Target className="h-4 w-4 mr-1" />
                                                                     )}
                                                                     Result
-                                                                </Button>
-
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-slate-400 hover:text-red-500"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDelete(attempt.id);
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
                                                         </TableCell>
@@ -724,14 +687,6 @@ export default function TestHistory() {
                                         >
                                             View Result
                                         </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8 text-slate-400 hover:text-red-500"
-                                            onClick={() => handleDeleteCombined(attempt.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
                                     </div>
                                 </motion.div>
                         ))}
@@ -785,7 +740,9 @@ export default function TestHistory() {
                                                                 timeSpentPerQuestion: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
                                                                 metadata: fullAttempt.metadata || attempt.metadata || {},
                                                                 timeSpent: 0,
-                                                                score: attempt.score
+                                                                score: attempt.score,
+                                                                attemptId: attempt.id,
+                                                                submittedAt: fullAttempt.metadata?.submittedAt || attempt.created_at
                                                             }
                                                         });
                                                     } catch (error) {
@@ -809,17 +766,6 @@ export default function TestHistory() {
                                                 onClick={(e) => handleToggleExpand(attempt.id, attempt.test_id, e)}
                                             >
                                                 {expandedAttempt === attempt.id ? 'Hide Details' : 'Details'}
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                className="h-8 w-8 text-slate-400 hover:text-red-500"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(attempt.id);
-                                                }}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
                                             </Button>
                                         </div>
                                     </div>

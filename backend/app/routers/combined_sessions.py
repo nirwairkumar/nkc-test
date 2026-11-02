@@ -439,14 +439,11 @@ def delete_combined_attempt(
         if not (attempt.get("user_id") == user_id or is_creator or is_admin):
             raise HTTPException(status_code=403, detail="Not authorized")
 
-        if is_creator or is_admin:
-            supabase.table("combined_attempts").delete().eq("id", attempt_id).execute()
-            return {"success": True, "action": "hard_delete"}
-        else:
-            meta = dict(attempt.get("metadata") or {})
-            meta["deleted_by_user"] = True
-            supabase.table("combined_attempts").update({"metadata": meta}).eq("id", attempt_id).execute()
-            return {"success": True, "action": "soft_delete"}
+        # Only the session's creator or an admin may delete a result (2026-11-02).
+        if not (is_creator or is_admin):
+            raise HTTPException(status_code=403, detail="Only the examiner can delete a result.")
+        supabase.table("combined_attempts").delete().eq("id", attempt_id).execute()
+        return {"success": True, "action": "hard_delete"}
 
     except HTTPException:
         raise

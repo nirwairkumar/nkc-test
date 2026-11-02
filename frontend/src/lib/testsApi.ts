@@ -200,16 +200,16 @@ export function rememberAttemptReceipt(testId: string | undefined, attemptId: st
     try { localStorage.setItem(RECEIPT_KEY(testId), attemptId); } catch { /* private mode */ }
 }
 
-function attemptProof(testId: string | undefined) {
-    if (!testId) return {};
-    let attempt_id: string | undefined;
+function attemptProof(testId: string | undefined, knownAttemptId?: string) {
+    if (!testId) return knownAttemptId ? { attempt_id: knownAttemptId } : {};
+    let attempt_id: string | undefined = knownAttemptId;
     let candidate_id: string | undefined;
-    try { attempt_id = localStorage.getItem(RECEIPT_KEY(testId)) || undefined; } catch { /* blocked */ }
+    try { attempt_id = attempt_id || localStorage.getItem(RECEIPT_KEY(testId)) || undefined; } catch { /* blocked */ }
     try { candidate_id = sessionStorage.getItem(`anon_user_id_${testId}`) || undefined; } catch { /* blocked */ }
     return { attempt_id, candidate_id };
 }
 
-export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>) {
+export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>, attemptId?: string) {
     try {
         const response = await apiClient.post('results/analyze', {
             test,
@@ -218,7 +218,7 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, a
             // C4: the browser no longer receives correctAnswer, so the server reloads
             // the answer key by id and scores the attempt itself.
             test_id: test?.id,
-            ...attemptProof(test?.id),
+            ...attemptProof(test?.id, attemptId),
         });
         return { data: response.data, error: null };
     } catch (error: any) {

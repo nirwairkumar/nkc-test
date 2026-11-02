@@ -10,8 +10,9 @@ import TestoZaLogo from '@/components/TestoZaLogo';
 import DigitBoxes from '@/components/exams/DigitBoxes';
 import { clock, dayTime, timeOnly, topicSplit, usePoll, useServerClock } from '@/components/exams/examFormat';
 import {
-    ApiProblem, MeResponse, PublicSession, ResultDetails, ResultForm, StudentResult, joinApi, joinUrl, problemOf, seatStore,
+    ApiProblem, GuestAttempt, MeResponse, PublicSession, ResultDetails, ResultForm, StudentResult, joinApi, joinUrl, problemOf, seatStore,
 } from '@/lib/examSessionsApi';
+import GuestHistory from '@/components/results/GuestHistory';
 
 /**
  * testoza.com/join — how a candidate gets into an exam session.
@@ -742,7 +743,7 @@ function Compare({ label, value, max, accent }: { label: string; value: number; 
 
 /* ── See your result (/join/result) ─────────────────────────────────────── */
 
-type ResultStage = 'loading' | 'code' | 'details' | 'result';
+type ResultStage = 'loading' | 'code' | 'details' | 'result' | 'guest' | 'guestList';
 
 function ResultFlow() {
     const { code: routeCode } = useParams<{ code?: string }>();
@@ -758,6 +759,26 @@ function ResultFlow() {
     const [result, setResult] = useState<StudentResult | null>(null);
     // What found the result, so "Check again" works without typing the details again.
     const [source, setSource] = useState<{ token: string } | { details: ResultDetails } | null>(null);
+
+    // "Use your Guest ID": every exam taken without a login, from the ID in the result hub.
+    const [guestInput, setGuestInput] = useState('');
+    const [guestError, setGuestError] = useState<string | null>(null);
+    const [guest, setGuest] = useState<{ guest_id: string; attempts: GuestAttempt[] } | null>(null);
+
+    const openGuest = useCallback(async (value: string) => {
+        setBusy(true);
+        setGuestError(null);
+        try {
+            const found = await joinApi.guestResults(value.trim());
+            setGuest(found);
+            setStage('guestList');
+        } catch (err) {
+            setGuestError(problemOf(err).message);
+            setStage('guest');
+        } finally {
+            setBusy(false);
+        }
+    }, []);
 
     const open = useCallback(async (value: string) => {
         setBusy(true);
@@ -811,6 +832,18 @@ function ResultFlow() {
         navigate('/join/result', { replace: true });
     };
 
+    if (stage === 'guestList' && guest) {
+        return (
+            <GuestHistory
+                guestId={guest.guest_id}
+                attempts={guest.attempts}
+                loading={busy}
+                onRefresh={() => openGuest(guest.guest_id)}
+                onBack={() => { setGuest(null); setGuestInput(''); setStage('guest'); }}
+            />
+        );
+    }
+
     return (
         <PageShell title="See your result · TestoZa" footer="Exams on TestoZa">
             <AnimatePresence mode="wait">
@@ -834,14 +867,71 @@ function ResultFlow() {
                             error={codeError}
                             onSubmit={open}
                             footer={
-                                <p className="mt-6 text-[14px] text-slate-500">
-                                    Here to take an exam?{' '}
-                                    <button type="button" onClick={() => navigate('/join')} className="font-semibold text-sky-700 hover:underline cursor-pointer">
-                                        Join it here
-                                    </button>
-                                </p>
+                                <>
+                                    <div className="mt-6 border-t border-slate-900/[0.06] pt-5">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setGuestError(null); setStage('guest'); }}
+                                            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-[15px] font-semibold text-sky-700 ring-1 ring-slate-900/[0.08] shadow-sm hover:bg-sky-50 cursor-pointer"
+                                        >
+                                            <FileText className="h-4 w-4" /> Use your Guest ID
+                                        </button>
+                                        <p className="mx-auto mt-2 max-w-[300px] text-[13px] text-slate-500">
+                                            Took tests without logging in? The Guest ID is at the top of your result page.
+                                        </p>
+                                    </div>
+                                    <p className="mt-5 text-[14px] text-slate-500">
+                                        Here to take an exam?{' '}
+                                        <button type="button" onClick={() => navigate('/join')} className="font-semibold text-sky-700 hover:underline cursor-pointer">
+                                            Join it here
+                                        </button>
+                                    </p>
+                                </>
                             }
                         />
+                    )}
+
+                    {stage === 'guest' && (
+                        <div className="text-center">
+                            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-sky-500 to-sky-700 text-white shadow-[0_14px_30px_-14px_rgba(2,132,199,0.9)]">
+                                <FileText className="h-7 w-7" />
+                            </span>
+                            <h1 className="mt-5 text-[30px] font-bold leading-tight tracking-[-0.025em] text-slate-900">Your Guest ID</h1>
+                            <p className="mx-auto mt-2 max-w-[310px] text-[16px] leading-relaxed text-slate-600">
+                                Every test you took without logging in, in one list.
+                            </p>
+                            <form
+                                className="mt-8"
+                                onSubmit={(e) => { e.preventDefault(); if (guestInput.trim()) openGuest(guestInput); }}
+                            >
+                                <input
+                                    value={guestInput}
+                                    onChange={(e) => { setGuestInput(e.target.value); setGuestError(null); }}
+                                    placeholder="e.g. 6c31689784f4"
+                                    autoFocus
+                                    autoCapitalize="off"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                    aria-label="Guest ID"
+                                    className={`${FIELD} text-center font-mono tracking-wide`}
+                                />
+                                <div className="mt-4 min-h-[44px]" aria-live="polite">
+                                    {guestError && (
+                                        <p className="mx-auto flex max-w-[320px] items-start justify-center gap-1.5 text-[14px] leading-snug text-red-600">
+                                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {guestError}
+                                        </p>
+                                    )}
+                                </div>
+                                <button type="submit" className={PRIMARY} disabled={!guestInput.trim() || busy}>
+                                    {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <>See my results <ArrowRight className="h-5 w-5" /></>}
+                                </button>
+                            </form>
+                            <p className="mt-6 text-[14px] text-slate-500">
+                                <button type="button" onClick={() => setStage('code')} className="inline-flex items-center gap-1 font-semibold text-sky-700 hover:underline cursor-pointer">
+                                    <ChevronLeft className="h-4 w-4" /> Use an exam code instead
+                                </button>
+                            </p>
+                        </div>
                     )}
 
                     {stage === 'details' && form && (

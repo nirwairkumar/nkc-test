@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Target, BookOpen, Menu, Share2, MessageCircle, Download, Facebook, Disc as Reddit, Sparkles, RotateCcw, NotepadText, PanelBottomClose } from 'lucide-react';
+import { Trophy, Target, BookOpen, Menu, Share2, MessageCircle, Download, Facebook, Disc as Reddit, Sparkles, RotateCcw, NotepadText, PanelBottomClose, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { firstCandidateInput, resultGuestId } from '@/lib/resultIdentity';
 import { useTest } from '@/contexts/TestContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -46,14 +48,52 @@ const CustomFeedbackIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
+/**
+ * The Guest ID of a candidate who took the exam without a login, with a copy button.
+ * With it they reopen every such result at /join/result → "Use your Guest ID".
+ */
+function GuestIdChip({ guestId, compact = false }: { guestId: string; compact?: boolean }) {
+    const [copied, setCopied] = useState(false);
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(guestId);
+        } catch {
+            // Older in-app browsers: copy through a hidden field.
+            const field = document.createElement('textarea');
+            field.value = guestId;
+            document.body.appendChild(field);
+            field.select();
+            try { document.execCommand('copy'); } catch { /* nothing more to try */ }
+            field.remove();
+        }
+        setCopied(true);
+        toast.success('Guest ID copied', {
+            description: `To see this result again, open ${window.location.host}/join/result and choose "Use your Guest ID".`,
+        });
+        window.setTimeout(() => setCopied(false), 2000);
+    };
+    return (
+        <button
+            type="button"
+            onClick={copy}
+            title="Your Guest ID: keep it to see this result again later"
+            aria-label={`Copy your Guest ID ${guestId}`}
+            className="shrink-0 inline-flex items-center gap-1.5 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+        >
+            <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">{compact ? 'ID' : 'Guest ID'}</span>
+            <span className={`font-mono font-semibold tracking-tight ${compact ? 'text-[11.5px]' : 'text-[13px]'}`}>{guestId}</span>
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+        </button>
+    );
+}
+
 export default function ResultsLayout() {
     const { testId } = useParams();
     const location = useLocation();
     const { user } = useAuth();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    // Default to 'Guest User' or the metadata name
-    const fullUserName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
-    const userName = fullUserName.split(' ')[0];
+    // A signed-in candidate who filled no candidate input: their account name.
+    const fullUserName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
 
     // Try to extract State Data so we can pass it down through Outlet context or links
     const rawStateData = location.state as any;
@@ -75,6 +115,15 @@ export default function ResultsLayout() {
 
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
+
+    // Top bar: whose result (the first candidate input), the Guest ID, the institute.
+    const identity = firstCandidateInput(stateData);
+    const guestId = resultGuestId(stateData, !!user);
+    const displayName = identity?.value || (user ? fullUserName : '') || 'Your result';
+    const institutionName = String(stateData?.test?.institution_name || '').trim();
+    const institutionLogo = String(stateData?.test?.institution_logo || '').trim();
+    const [logoBroken, setLogoBroken] = useState(false);
+    const showLogo = !!institutionLogo && !logoBroken;
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -338,6 +387,7 @@ export default function ResultsLayout() {
                 <nav className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                     <NavigationLinks />
                 </nav>
+                <PoweredByTestoZa small className="pt-3 pb-0 border-t border-slate-200 dark:border-slate-800" />
             </aside>
 
             {/* Main Content Wrapper */}
@@ -376,15 +426,40 @@ export default function ResultsLayout() {
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                                 <NavigationLinks onItemClick={() => setIsDrawerOpen(false)} />
                             </div>
+                            <PoweredByTestoZa small className="py-2 border-t border-slate-200 dark:border-slate-800" />
                         </SheetContent>
                     </Sheet>
-                    <span className="text-[17px] font-semibold text-slate-700 dark:text-slate-300 ml-3 tracking-normal leading-tight font-sans block truncate max-w-[180px]">
-                        {userName}'s Results
-                    </span>
+                    <div className="ml-3 flex min-w-0 flex-1 items-center gap-2">
+                        {showLogo && (
+                            <img src={institutionLogo} alt="" onError={() => setLogoBroken(true)} className="h-7 w-7 shrink-0 rounded-md object-contain" />
+                        )}
+                        <div className="min-w-0">
+                            <p className="truncate text-[15px] font-semibold leading-tight text-slate-800 dark:text-slate-100">{displayName}</p>
+                            {institutionName && (
+                                <p className="truncate text-[11px] leading-tight text-slate-500 dark:text-slate-400">{institutionName}</p>
+                            )}
+                        </div>
+                    </div>
+                    {guestId && <span className="ml-2"><GuestIdChip guestId={guestId} compact /></span>}
+                </header>
 
-
-
-
+                {/* Desktop top bar: the same identity, with room for the labels */}
+                <header className="hidden lg:flex h-16 items-center gap-4 px-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                        {showLogo && (
+                            <img src={institutionLogo} alt="" onError={() => setLogoBroken(true)} className="h-9 w-9 shrink-0 rounded-lg object-contain" />
+                        )}
+                        <div className="min-w-0">
+                            {institutionName && (
+                                <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-slate-400">{institutionName}</p>
+                            )}
+                            <p className="truncate text-[17px] font-semibold leading-tight text-slate-800 dark:text-slate-100">
+                                {identity && <span className="mr-2 text-[13px] font-medium text-slate-400">{identity.label}</span>}
+                                {displayName}
+                            </p>
+                        </div>
+                    </div>
+                    {guestId && <GuestIdChip guestId={guestId} />}
                 </header>
 
                 {/* Sub-page Injection Point */}

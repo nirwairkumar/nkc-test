@@ -11,6 +11,9 @@ Student side of exam sessions: testoza.com/join.
     GET  /api/join/result/{code}        "See your result": which details to ask for
     POST /api/join/result/{code}        the result for those details, from any device
 
+    GET  /api/join/guest/{guest_id}                    every exam taken under a Guest ID
+    GET  /api/join/guest/{guest_id}/attempt/{attempt}  one of them, to open in the result hub
+
 Submission goes through POST /api/attempts/save with the X-Exam-Token header.
 Students never log in: identity comes from the session's check-in rule, and each device
 holds a random token (only its SHA-256 is stored). Joining again from another device
@@ -699,3 +702,113 @@ def result_lookup(code: str, payload: ResultRequest, request: Request, db: Clien
             # An older exam that used the same code may be the one these details belong to.
             first_error = first_error or err
     raise first_error  # type: ignore[misc]
+
+
+# ── Guest ID: every result of a candidate who took exams without a login ────
+#
+# A candidate without a login gets a hidden account candidate_<12 hex>@guest.testoza.com
+# (attempts.py / exam_session_store.py). The result hub shows those 12 characters as the
+# "Guest ID", so a candidate who closed the result page can open it again from any device.
+# 12 random hex characters (48 bits) are not guessable, and the lookup is rate-limited.
+
+_GUEST_ID = re.compile(r"[0-9a-f]{12}")
+GUEST_ATTEMPTS_MAX = 100
+
+
+def _guest_user_id(db: Client, raw: str) -> Tuple[str, str]:
+    """(guest id, user id) for what the candidate typed: the id, or the whole guest email."""
+    code = re.sub(r"[\s-]+", "", str(raw or "")).lower()
+    code = code.split("@")[0].removeprefix("candidate_")
+    if not _GUEST_ID.fullmatch(code):
+        raise SessionError(400, "bad_guest_id", "A Guest ID has 12 letters and numbers, like 6c31689784f4.")
+    profile = store._first(
+        db.table("profiles").select("id").eq("email", f"candidate_{code}@guest.testoza.com").limit(1).execute()
+    )
+    if not profile:
+        raise SessionError(404, "no_guest", "No results found for this Guest ID. Check it and try again.")
+    return code, str(profile["id"])
+
+
+def _guest_result_visible(test: Dict[str, Any], session: Optional[Dict[str, Any]], in_session: bool) -> bool:
+    """The same rule the candidate met after submitting: the creator decides when results show."""
+    if in_session:
+        return bool(session) and rules.results_released(session)
+    settings = test.get("settings") or {}
+    if settings.get("conduct_exam"):
+        return _link_results_visible(test)
+    return settings.get("show_results_immediate") is not False
+
+
+@router.get("/guest/{guest_id}")
+def guest_results(guest_id: str, request: Request, db: Client = Depends(get_db)):
+    """Every exam taken under this Guest ID, newest first, like a logged-in candidate's history."""
+    enforce_limit(join_result_per_ip, client_ip(request), "Too many tries. Wait a few minutes and try again.")
+    code, user_id = _guest_user_id(db, guest_id)
+    attempts = (
+        db.table("user_tests").select("id, test_id, score, created_at, session_id")
+        .eq("user_id", user_id).order("created_at", desc=True).limit(GUEST_ATTEMPTS_MAX).execute()
+    ).data or []
+    test_ids = sorted({str(a["test_id"]) for a in attempts if a.get("test_id")})
+    tests: Dict[str, Dict[str, Any]] = {}
+    if test_ids:
+        rows = (
+            db.table("tests")
+            .select("id, title, institution_name, institution_logo, total_questions, total_max_marks, settings")
+            .in_("id", test_ids).execute()
+        ).data or []
+        tests = {str(t["id"]): t for t in rows}
+    session_ids = sorted({str(a["session_id"]) for a in attempts if a.get("session_id")})
+    sessions: Dict[str, Dict[str, Any]] = {}
+    if session_ids:
+        rows = db.table("exam_sessions").select(store.SESSION_COLS).in_("id", session_ids).execute().data or []
+        sessions = {str(s["id"]): s for s in rows}
+
+    items = []
+    for a in attempts:
+        test = tests.get(str(a.get("test_id")))
+        if not test:
+            continue  # the creator deleted the test
+        sid = str(a["session_id"]) if a.get("session_id") else None
+        visible = _guest_result_visible(test, sessions.get(sid) if sid else None, bool(sid))
+        items.append({
+            "attempt_id": a["id"],
+            "test_id": test["id"],
+            "title": test.get("title"),
+            "institution_name": test.get("institution_name"),
+            "institution_logo": test.get("institution_logo"),
+            "submitted_at": a.get("created_at"),
+            "results_visible": visible,
+            # Held results stay held: no marks until the creator releases them.
+            "score": a.get("score") if visible else None,
+            "max_marks": test.get("total_max_marks") if visible else None,
+        })
+    return {"guest_id": code, "attempts": items}
+
+
+@router.get("/guest/{guest_id}/attempt/{attempt_id}")
+def guest_attempt(guest_id: str, attempt_id: str, request: Request, db: Client = Depends(get_db)):
+    """One attempt of this Guest ID with its test (answer key removed), to open in the result hub.
+    The hub then sends the attempt id as proof of submission to /results/analyze for the key."""
+    enforce_limit(join_result_per_ip, client_ip(request), "Too many tries. Wait a few minutes and try again.")
+    _, user_id = _guest_user_id(db, guest_id)
+    try:
+        uuid.UUID(str(attempt_id))
+    except ValueError:
+        raise SessionError(404, "not_found", "This result was not found.")
+    attempt = store._first(
+        db.table("user_tests").select("id, test_id, user_id, answers, score, metadata, created_at, session_id")
+        .eq("id", attempt_id).eq("user_id", user_id).limit(1).execute()
+    )
+    if not attempt:
+        raise SessionError(404, "not_found", "This result was not found.")
+    test = store._first(db.table("tests").select("*").eq("id", attempt["test_id"]).limit(1).execute())
+    if not test:
+        raise SessionError(404, "not_found", "The examiner has deleted this test.")
+    session = None
+    if attempt.get("session_id"):
+        session = store._first(
+            db.table("exam_sessions").select(store.SESSION_COLS).eq("id", attempt["session_id"]).limit(1).execute()
+        )
+    if not _guest_result_visible(test, session, bool(attempt.get("session_id"))):
+        raise SessionError(403, "results_hidden", "Results for this exam are not open yet. Your examiner will share them.")
+    return {"attempt": attempt, "test": strip_answer_key(test, False)}

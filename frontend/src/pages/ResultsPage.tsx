@@ -28,6 +28,7 @@ import {
   PanelBottomClose
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
+import { formatSubmitted, submittedAtOf } from '@/lib/resultIdentity';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -433,6 +434,7 @@ const ResultsPage = () => {
   }, []);
 
   const justSubmitted = stateData?.justSubmitted;
+  const submittedAt = submittedAtOf(stateData); // plain call: this sits after an early return
   const testId = selectedTest?.id;
 
   const [rankPrediction, setRankPrediction] = useState<string | null>(null);
@@ -518,7 +520,7 @@ const ResultsPage = () => {
       const loadAnalysis = async () => {
         setLoading(true);
         try {
-          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers, questionTimes);
+          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers, questionTimes, stateData?.attemptId);
           if (error) {
             setError(error);
           } else {
@@ -635,11 +637,14 @@ const ResultsPage = () => {
                 {/* Stats Header Area */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-2">
                   <div>
-                    <div className="flex items-center gap-3 mt-2 text-slate-500 font-medium">
-                      <span className="flex items-center gap-1.5"><Timer className="w-4 h-4" /> Final Submission</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span className="text-indigo-600 dark:text-indigo-400">{new Date().toLocaleDateString()}</span>
-                    </div>
+                    {/* The time the attempt was saved, never "now" (it used to show today's date for old results). */}
+                    {submittedAt && (
+                      <div className="flex items-center gap-3 mt-2 text-slate-500 font-medium">
+                        <span className="flex items-center gap-1.5"><Timer className="w-4 h-4" /> Final Submission</span>
+                        <Separator orientation="vertical" className="h-4" />
+                        <span className="text-indigo-600 dark:text-indigo-400">{formatSubmitted(submittedAt)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {/* Score Card */}

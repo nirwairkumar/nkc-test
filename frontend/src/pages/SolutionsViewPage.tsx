@@ -47,7 +47,7 @@ export default function SolutionsViewPage() {
                     ? testD.sections.flatMap((s: any) => s.questions || [])
                     : testD?.questions || [];
                 if (qs.some((q: any) => q?.correctAnswer == null)) {
-                    const { data: analysis } = await fetchAdvancedAnalysis(testD, answers);
+                    const { data: analysis } = await fetchAdvancedAnalysis(testD, answers, undefined, outletCtx.stateData?.attemptId);
                     const key: Record<string, any> = analysis?.answerKey || {};
                     for (const q of qs) {
                         if (q && q.correctAnswer == null && key[String(q.id)] != null) q.correctAnswer = key[String(q.id)];

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
 import { inputFields, inputsOn } from '@/lib/candidateInputs';
+import { beginGuestAttempt } from '@/lib/guestIdentity';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
@@ -401,14 +402,9 @@ export default function TestIntroPage() {
 
         sessionStorage.setItem(`flexible_timer_${test.id}`, String(isTimerDisabled));
 
-        const effectiveUserId = user?.id || (() => {
-            let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
-            if (!anonId) {
-                anonId = crypto.randomUUID();
-                sessionStorage.setItem(`anon_user_id_${test.id}`, anonId);
-            }
-            return anonId;
-        })();
+        // Without a login: this phone's Guest ID for this candidate name, the same for every
+        // test they take here (lib/guestIdentity.ts).
+        const effectiveUserId = user?.id || beginGuestAttempt(test.id, inputsOn(test.settings) ? startFormValues : null);
 
         // Not awaited: recording the start (so the examiner sees this candidate writing)
         // must never hold up the exam, and the fullscreen request below wants the click.
@@ -621,21 +617,6 @@ export default function TestIntroPage() {
                     })
                 }}
             />
-
-            {/* Back Button */}
-            <Button
-                variant="ghost"
-                className="fixed top-20 left-0 h-10 w-12 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-none rounded-r-lg shadow-md z-50 transition-transform hover:translate-x-1"
-                onClick={() => {
-                    if (flowStep === 'waiting_room') {
-                        setFlowStep('intro');
-                    } else {
-                        navigate(-1);
-                    }
-                }}
-            >
-                <ArrowLeft className="h-6 w-6" />
-            </Button>
 
             {/* ════════════════════════════════════════════════════════════════ */}
             {/* VIEW A: DEDICATED PRE-EXAM WAITING ROOM (FOR SCHEDULED EXAMS)   */}

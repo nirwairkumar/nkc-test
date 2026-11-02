@@ -961,7 +961,6 @@ def delete_attempt(
             raise HTTPException(status_code=404, detail="Attempt not found")
 
         attempt = attempt_res.data[0]
-        attempt_owner = attempt.get("user_id")
         test_id = attempt.get("test_id")
 
         # Check if requesting user is the creator of the test
@@ -979,21 +978,15 @@ def delete_attempt(
             admin_res = supabase.table("admins").select("email").eq("email", user_email).execute()
             is_admin = any(a.get("email") == user_email for a in (admin_res.data or []))
 
-        # Authorization: must be attempt owner, test creator, or admin
-        if not (attempt_owner == requesting_user_id or is_creator or is_admin):
-            raise HTTPException(status_code=403, detail="Not authorized to delete this attempt")
+        # Only the test's creator (who conducted it) or an admin may delete a result.
+        # Candidates used to hide their own attempts from their history; since 2026-11-02
+        # results are the examiner's record, so candidates can't remove them.
+        if not (is_creator or is_admin):
+            raise HTTPException(status_code=403, detail="Only the examiner can delete a result.")
 
-        if is_creator or is_admin:
-            # Creator or Admin deletion -> Hard delete from database (deleted from BOTH creator and candidate ends)
-            supabase.table("user_tests").delete().eq("id", attempt_id).execute()
-            return {"success": True, "action": "hard_delete"}
-        else:
-            # Candidate / User deletion -> Soft delete in metadata
-            # Candidate no longer sees it in test history, but test creator still sees it fully
-            meta = dict(attempt.get("metadata") or {})
-            meta["deleted_by_user"] = True
-            supabase.table("user_tests").update({"metadata": meta}).eq("id", attempt_id).execute()
-            return {"success": True, "action": "soft_delete"}
+        # Hard delete: gone for both the creator and the candidate.
+        supabase.table("user_tests").delete().eq("id", attempt_id).execute()
+        return {"success": True, "action": "hard_delete"}
     except HTTPException:
         raise
     except Exception as e:
