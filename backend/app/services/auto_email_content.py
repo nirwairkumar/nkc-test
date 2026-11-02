@@ -27,11 +27,10 @@ CHANNEL = "https://www.youtube.com/@testozaofficial"
 
 # Tutorials on the TestoZa channel (checked 2026-11-02 with mcp-servers/youtube).
 VIDEOS: Dict[str, Dict[str, str]] = {
-    "create": {"id": "lGjJF5zKLhU", "title": "Create a test: Hindi + English, diagrams, chemistry and maths"},
-    "create_hi": {"id": "INv5Sn2dkyI", "title": "Online test कैसे बनाएँ (Hindi)"},
+    "create": {"id": "lGjJF5zKLhU", "title": "Create a test: two languages, diagrams, chemistry and maths"},
     "conduct": {"id": "rOQ1OGA2lk4", "title": "Run a cheat-proof exam: link, join code and live results"},
     "results": {"id": "RWaYA4YlRYY", "title": "Read the results: rank list, question analysis, weak candidates"},
-    "pdf": {"id": "6uLrstwyL1g", "title": "PDF से online test, 2 मिनट में (Hindi)"},
+    "pdf": {"id": "4xKXBG6W9Ug", "title": "Turn your question paper into an online test in 2 minutes"},
     "top10": {"id": "rY8kNkg8LZ0", "title": "Top 10 TestoZa features for educators"},
 }
 
@@ -163,10 +162,9 @@ class Mail:
         self.text.append("\n".join(f"- {VIDEOS[k]['title']}: {video_url(k)}" for k in keys))
         return self
 
-    def sign(self, name: str = "Nirwair", role: str = "TestoZa") -> "Mail":
-        self.html.append(f'<p style="margin:22px 0 4px;font-size:16px;line-height:1.5;color:#0f172a;">{_e(name)}<br>'
-                         f'<span style="color:#64748b;">{_e(role)}</span></p>')
-        self.text.append(f"{name}\n{role}")
+    def sign(self, name: str = "Team TestoZa") -> "Mail":
+        self.html.append(f'<p style="margin:22px 0 4px;font-size:16px;line-height:1.5;color:#0f172a;">{_e(name)}</p>')
+        self.text.append(name)
         return self
 
     def build(self, subject: str, preheader: str, why: str) -> Dict[str, str]:
@@ -240,15 +238,15 @@ def welcome(full_name: Optional[str], designation: Optional[str] = None) -> Dict
         "Already have the paper? Upload it as a PDF, a Word file or a photo. TestoZa reads the questions and "
         "options for you. You check them, fix anything, and it's ready.")
     m.button(f"{APP_ORIGIN}/generate-with-ai", "Upload a paper")
-    m.p(f"Prefer to type? {m.a(APP_ORIGIN + '/create-test', 'Build it question by question')}, with Hindi, "
-        f"diagrams and equations.",
-        f"Prefer to type? Build it question by question, with Hindi, diagrams and equations: {APP_ORIGIN}/create-test",
+    m.p(f"Prefer to type? {m.a(APP_ORIGIN + '/create-test', 'Build it question by question')}, with "
+        f"diagrams, equations and a second language.",
+        f"Prefer to type? Build it question by question, with diagrams, equations and a second language: "
+        f"{APP_ORIGIN}/create-test",
         size=15)
     m.heading("Watch how it works")
     m.videos(["create", "conduct", "results", "pdf"])
-    m.p(f"Prefer Hindi? {m.a(video_url('create_hi'), 'Watch the full tutorial in Hindi')}. "
-        f"More on {m.a(CHANNEL, 'our YouTube channel')}.",
-        f"Prefer Hindi? Full tutorial in Hindi: {video_url('create_hi')}\nMore videos: {CHANNEL}", size=15)
+    m.p(f"More short tutorials on {m.a(CHANNEL, 'our YouTube channel')}.",
+        f"More short tutorials: {CHANNEL}", size=15)
     m.heading("Good to know")
     m.bullets([
         ("Candidates don't need an app or an account. They open your link on their phone and start.",
@@ -260,7 +258,7 @@ def welcome(full_name: Optional[str], designation: Optional[str] = None) -> Dict
     ])
     m.p("Stuck anywhere? Reply to this email. A real person reads every reply.",
         "Stuck anywhere? Reply to this email. A real person reads every reply.")
-    m.sign("Nirwair", "Founder, TestoZa")
+    m.sign()
     subject = f"Welcome to TestoZa, {first}" if first else "Welcome to TestoZa"
     return m.build(subject, "Your first test in a few minutes, and short videos that show you how.",
                    "You're getting this because you just made a TestoZa account.")
