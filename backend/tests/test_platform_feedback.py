@@ -96,3 +96,64 @@ def test_only_admins_read_feedback_and_mark_it_read(env):
     assert res.status_code == 200
     assert env["client"].get("/api/support/admin/feedback?view=unread", headers=_auth(ADMIN)).json()["rows"] == []
     assert all(n.get("read") for n in env["db"].tables["notifications"])
+
+
+def test_a_face_alone_is_enough_after_an_exam(env):
+    res = env["client"].post(
+        "/api/support/platform-feedback",
+        json={"rating": 2, "source": "exam_ended", "exam_id": EXAM_ID, "exam_title": "JEE Mock 3"},
+        headers=_auth(TEACHER),
+    )
+    assert res.status_code == 200, res.text
+    row = env["db"].tables["platform_feedback"][0]
+    assert row["rating"] == 2 and row["conduct"] is None
+    assert "Not really (2/5)" in env["db"].tables["notifications"][0]["message"]
+
+
+def test_rating_with_a_note(env):
+    res = env["client"].post(
+        "/api/support/platform-feedback",
+        json={"rating": 5, "conduct": "Students loved the timer", "source": "exam_ended"},
+        headers=_auth(TEACHER),
+    )
+    assert res.status_code == 200, res.text
+    row = env["db"].tables["platform_feedback"][0]
+    assert row["rating"] == 5 and row["conduct"] == "Students loved the timer"
+    msg = env["db"].tables["notifications"][0]["message"]
+    assert "Fully (5/5)" in msg and "Online exam: Students loved the timer" in msg
+
+
+@pytest.mark.parametrize("rating", [0, 6, -1])
+def test_out_of_range_rating_is_refused(env, rating):
+    res = env["client"].post("/api/support/platform-feedback", json={"rating": rating}, headers=_auth(TEACHER))
+    assert res.status_code == 400
+    assert env["db"].tables["platform_feedback"] == []
+
+
+def test_rating_still_saved_before_the_rating_column_exists(env, monkeypatch):
+    real_table = env["db"].table
+
+    def table(name):
+        q = real_table(name)
+        if name == "platform_feedback":
+            insert = q.insert
+
+            def insert_without_rating(payload):
+                if "rating" in payload:
+                    raise RuntimeError('column "rating" does not exist')
+                return insert(payload)
+            q.insert = insert_without_rating
+        return q
+
+    monkeypatch.setattr(env["db"], "table", table)
+    res = env["client"].post(
+        "/api/support/platform-feedback",
+        json={"rating": 4, "conduct": "Smooth", "source": "exam_ended"},
+        headers=_auth(TEACHER),
+    )
+    assert res.status_code == 200, res.text
+    row = env["db"].tables["platform_feedback"][0]
+    assert "rating" not in row and row["context"]["rating"] == 4
+    assert row["conduct"] == "Rated 4/5 · Mostly\nSmooth"
+    msg = env["db"].tables["notifications"][0]["message"]
+    assert "Mostly (4/5) · Online exam: Smooth" in msg

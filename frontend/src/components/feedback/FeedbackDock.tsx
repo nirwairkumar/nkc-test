@@ -1,6 +1,8 @@
 /**
  * The feedback pop-up after a creator stops a live exam (askForFeedback in
- * lib/platformFeedback.ts). Mounted once in Layout.
+ * lib/platformFeedback.ts). Mounted once in Layout. It asks "Did it fulfil your
+ * requirements?" with five faces (ExamEndFeedback); the Feedback page keeps the
+ * three-part card (FeedbackCard).
  *
  * There is no close (×). The only way out is minimise ( _ ), a tap outside or Esc, and all
  * three do the same thing: the card shrinks and flies into the menu's Feedback item, the way
@@ -10,7 +12,7 @@
  */
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import FeedbackCard from './FeedbackCard';
+import ExamEndFeedback from './ExamEndFeedback';
 import {
     ASK_FEEDBACK_EVENT, FEEDBACK_LANDED_EVENT, type AskFeedbackDetail,
 } from '@/lib/platformFeedback';
@@ -132,13 +134,9 @@ export default function FeedbackDock() {
                     onEscapeKeyDown={(e) => { e.preventDefault(); minimise(); }}
                     onInteractOutside={(e) => e.preventDefault()}
                     onOpenAutoFocus={(e) => {
-                        // Phones: don't throw the keyboard up before they've read the card.
+                        // Focus the card itself: no ring on a face before they've chosen.
                         e.preventDefault();
-                        if (window.matchMedia?.('(pointer: fine)').matches) {
-                            cardRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
-                        } else {
-                            cardRef.current?.focus();
-                        }
+                        cardRef.current?.focus();
                     }}
                     onCloseAutoFocus={(e) => e.preventDefault()}
                     // A tap on the dimmed space around the card minimises it.
@@ -156,9 +154,7 @@ export default function FeedbackDock() {
                                     Feedback
                                 </Dialog.Title>
                                 <Dialog.Description id="feedback-dock-desc" className="mt-1 text-[13px] leading-snug text-slate-500">
-                                    {ask?.examTitle
-                                        ? <>“{ask.examTitle}” has ended. How did TestoZa do?</>
-                                        : 'Your exam has ended. How did TestoZa do?'}
+                                    {ask?.examTitle ? <>“{ask.examTitle}” has ended.</> : 'Your exam has ended.'}
                                 </Dialog.Description>
                             </div>
                             <button
@@ -172,7 +168,7 @@ export default function FeedbackDock() {
                             </button>
                         </div>
                         {ask && (
-                            <FeedbackCard
+                            <ExamEndFeedback
                                 origin={{ source: 'exam_ended', examId: ask.examId, examTitle: ask.examTitle }}
                                 onSent={fadeAway}
                             />

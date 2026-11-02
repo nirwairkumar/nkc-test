@@ -218,7 +218,7 @@ export default function Layout() {
             {/* Global Popup Authentication & Onboarding Modal */}
             <AuthModal />
 
-            {/* "How did TestoZa do?" after a creator stops an exam; minimises into the menu's Feedback. */}
+            {/* "Did it fulfil your requirements?" after a creator stops an exam; minimises into the menu's Feedback. */}
             {user && <FeedbackDock />}
         </div>
     );

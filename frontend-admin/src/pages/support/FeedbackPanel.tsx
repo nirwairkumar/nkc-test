@@ -15,7 +15,7 @@ import { initials, istDateTime, num, relative } from '../analytics/format';
 import { ErrorState, usePersisted } from '../analytics/shared';
 import { CARD, Chip, Empty, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
 import { roleLabel } from '../users/roles';
-import { FEEDBACK_PART_LABEL, feedbackApi, type FeedbackView, type PlatformFeedback } from './api';
+import { FEEDBACK_PART_LABEL, FEEDBACK_RATING, feedbackApi, type FeedbackView, type PlatformFeedback } from './api';
 
 const VIEWS: readonly FeedbackView[] = ['unread', 'all'];
 const PAGE = 30;
@@ -121,7 +121,14 @@ export function CountLabel({ text, n, accent }: { text: string; n?: number; acce
 function FeedbackRow({ f, focused, onToggleRead }: { f: PlatformFeedback; focused: boolean; onToggleRead: () => void }) {
     const name = f.account?.full_name || f.account?.email?.split('@')[0] || (f.user_id ? 'A creator' : 'Signed out');
     const unread = !f.read_at;
-    const parts = FEEDBACK_PART_LABEL.filter((p) => (f[p.key] || '').trim());
+    const ratingValue = f.rating ?? f.context?.rating ?? null;
+    const rating = ratingValue ? FEEDBACK_RATING[ratingValue] : undefined;
+    // Saved before the rating column existed, the note starts "Rated 4/5 · Mostly": the face says it now.
+    const text = (key: (typeof FEEDBACK_PART_LABEL)[number]['key']) => {
+        const v = (f[key] || '').trim();
+        return rating && key === 'conduct' && v.startsWith('Rated ') ? v.split('\n').slice(1).join('\n').trim() : v;
+    };
+    const parts = FEEDBACK_PART_LABEL.filter((p) => text(p.key));
 
     return (
         <li id={`feedback-${f.id}`} className={cn(CARD, 'overflow-hidden', focused && 'ring-2 ring-sky-500/40')}>
@@ -149,12 +156,24 @@ function FeedbackRow({ f, focused, onToggleRead }: { f: PlatformFeedback; focuse
             </div>
 
             <dl className="mx-4 mb-3 divide-y divide-slate-100 rounded-xl bg-slate-50 ring-1 ring-inset ring-slate-900/[0.04]">
+                {rating && (
+                    <div className="px-3.5 py-2.5">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                            Did it fulfil their requirements?
+                        </dt>
+                        <dd className="mt-1 flex items-center gap-2 text-[14px] font-semibold text-slate-800">
+                            <span className="text-[22px] leading-none" aria-hidden="true">{rating.face}</span>
+                            {rating.label}
+                            <span className="text-[12px] font-medium tabular-nums text-slate-400">{ratingValue}/5</span>
+                        </dd>
+                    </div>
+                )}
                 {parts.map((p) => (
                     <div key={p.key} className="px-3.5 py-2.5">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
                             {p.label}
                         </dt>
-                        <dd className="mt-0.5 whitespace-pre-line text-[14px] leading-relaxed text-slate-800">{f[p.key]}</dd>
+                        <dd className="mt-0.5 whitespace-pre-line text-[14px] leading-relaxed text-slate-800">{text(p.key)}</dd>
                     </div>
                 ))}
             </dl>

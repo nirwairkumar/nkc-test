@@ -485,6 +485,8 @@ def admin_set_support_status(
 # ── Platform feedback (20261024150000_platform_feedback.sql) ──────────────────
 # The sidebar's Feedback page and the card that comes up after a creator stops a live exam
 # both send here: up to three short notes (Online exam, Generate with AI, Other).
+# The after-exam card sends a rating instead ("Did it fulfil your requirements?",
+# 1 = 😞 … 5 = 🤩, 20261102150000_platform_feedback_rating.sql) with an optional Online exam note.
 # Admins read them in admin → Support → Feedback.
 
 FEEDBACK_SOURCES = {"sidebar", "exam_ended"}
@@ -496,6 +498,7 @@ class PlatformFeedback(BaseModel):
     ai: Optional[str] = None
     conduct: Optional[str] = None
     other: Optional[str] = None
+    rating: Optional[int] = None
     source: Optional[str] = None
     exam_id: Optional[str] = None
     exam_title: Optional[str] = None
@@ -510,7 +513,10 @@ def _part(text: Optional[str]) -> Optional[str]:
 @router.post("/platform-feedback", dependencies=[Depends(check_support_rate_limit)])
 def send_platform_feedback(payload: PlatformFeedback, request: Request, db: Client = Depends(get_db)):
     parts = {"ai": _part(payload.ai), "conduct": _part(payload.conduct), "other": _part(payload.other)}
-    if not any(parts.values()):
+    rating = payload.rating if payload.rating in support_mail.RATING_LABELS else None
+    if payload.rating is not None and rating is None:
+        raise HTTPException(status_code=400, detail="Pick one of the five faces.")
+    if not rating and not any(parts.values()):
         raise HTTPException(status_code=400, detail="Write a few words in any part first.")
 
     user_id = get_optional_user_id(request, db)
@@ -527,11 +533,27 @@ def send_platform_feedback(payload: PlatformFeedback, request: Request, db: Clie
         "context": _clean_context(payload.context),
         "user_agent": (request.headers.get("user-agent") or "")[:300] or None,
     }
+    if rating:
+        record["rating"] = rating
     try:
         res = db.table("platform_feedback").insert(record).execute()
     except Exception as err:
-        logger.error("platform feedback not saved (run 20261024150000_platform_feedback.sql?): %s", err)
-        raise HTTPException(status_code=503, detail="We couldn't send your feedback. Please try again.")
+        if not rating:
+            logger.error("platform feedback not saved (run 20261024150000_platform_feedback.sql?): %s", err)
+            raise HTTPException(status_code=503, detail="We couldn't send your feedback. Please try again.")
+        # No rating column yet (20261102150000_platform_feedback_rating.sql not run): keep the
+        # face in context and in words, so the row still passes the old "has text" check.
+        logger.warning("platform feedback: saving rating as text (run 20261102150000_platform_feedback_rating.sql): %s", err)
+        record.pop("rating", None)
+        record["context"] = {**record["context"], "rating": rating}
+        said = f"Rated {rating}/5 · {support_mail.RATING_LABELS[rating]}"
+        record["conduct"] = f"{said}\n{parts['conduct']}" if parts["conduct"] else said
+        try:
+            res = db.table("platform_feedback").insert(record).execute()
+        except Exception as err2:
+            logger.error("platform feedback not saved: %s", err2)
+            raise HTTPException(status_code=503, detail="We couldn't send your feedback. Please try again.")
+        record["rating"] = rating  # for the admin notification
 
     saved = {**record, **((res.data or [{}])[0])}
     who = "Someone signed out"

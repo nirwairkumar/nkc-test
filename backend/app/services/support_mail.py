@@ -223,6 +223,9 @@ def on_user_followup_in_background(db, msg: Dict[str, Any], text: str) -> None:
 # ── Platform feedback (sidebar Feedback page / card after stopping an exam) ─────
 
 FEEDBACK_PARTS = (("conduct", "Online exam"), ("ai", "Generate with AI"), ("other", "Other"))
+# "Did it fulfil your requirements?" on the card after an exam (frontend lib/platformFeedback.ts).
+RATING_LABELS = {1: "Not at all", 2: "Not really", 3: "Partly", 4: "Mostly", 5: "Fully"}
+RATING_FACES = {1: "😞", 2: "😕", 3: "😐", 4: "🙂", 5: "🤩"}
 
 
 def feedback_admin_link(feedback_id: str) -> str:
@@ -240,6 +243,13 @@ def _tell_team_feedback(db, row: Dict[str, Any], who: str) -> None:
         return
     first = next(((label, row[key]) for key, label in FEEDBACK_PARTS if (row.get(key) or "").strip()), None)
     preview = f"{first[0]}: {first[1][:120]}" if first else ""
+    rating = row.get("rating")
+    if rating in RATING_LABELS:
+        said = f"{RATING_FACES[rating]} {RATING_LABELS[rating]} ({rating}/5)"
+        note = first[1] if first else ""
+        if note.startswith("Rated "):  # saved without the rating column: drop the "Rated 4/5 · …" line
+            note = note.partition("\n")[2].strip()
+        preview = f"{said} · {first[0]}: {note[:120]}" if note else said
     try:
         db.table("notifications").insert([
             {

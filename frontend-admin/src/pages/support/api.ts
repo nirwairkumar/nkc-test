@@ -79,10 +79,13 @@ export interface PlatformFeedback {
     ai?: string | null;
     conduct?: string | null;
     other?: string | null;
+    /** "Did it fulfil your requirements?" 1 = 😞 … 5 = 🤩, from the card after an exam. */
+    rating?: number | null;
     source: 'sidebar' | 'exam_ended';
     exam_id?: string | null;
     exam_title?: string | null;
-    context?: { from?: string; viewport?: string } | null;
+    /** context.rating: a rating saved before the rating column existed. */
+    context?: { from?: string; viewport?: string; rating?: number } | null;
     user_agent?: string | null;
     read_at?: string | null;
     account?: { full_name?: string | null; email?: string | null; avatar_url?: string | null; designation?: string | null };
@@ -100,6 +103,15 @@ export const FEEDBACK_PART_LABEL = [
     { key: 'ai', label: 'Generate with AI' },
     { key: 'other', label: 'Other' },
 ] as const;
+
+/** Same faces as the app's after-exam card (frontend lib/platformFeedback.ts FEEDBACK_RATINGS). */
+export const FEEDBACK_RATING: Record<number, { face: string; label: string }> = {
+    1: { face: '😞', label: 'Not at all' },
+    2: { face: '😕', label: 'Not really' },
+    3: { face: '😐', label: 'Partly' },
+    4: { face: '🙂', label: 'Mostly' },
+    5: { face: '🤩', label: 'Fully' },
+};
 
 export const feedbackApi = {
     list: async (p: { view: FeedbackView; limit?: number; offset?: number }): Promise<FeedbackList> =>

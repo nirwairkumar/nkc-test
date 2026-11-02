@@ -19,6 +19,19 @@ export const FEEDBACK_PARTS: { key: FeedbackPart; name: string; placeholder: str
     { key: 'other', name: 'Other', placeholder: 'Anything else' },
 ];
 
+/**
+ * The pop-up after stopping an exam: "Did it fulfil your requirements?", sad → excited.
+ * `value` is what's stored (platform_feedback.rating); its note goes in the Online exam part.
+ */
+export const FEEDBACK_RATINGS = [
+    { value: 1, face: '😞', label: 'Not at all', ask: 'What went wrong?' },
+    { value: 2, face: '😕', label: 'Not really', ask: 'What was missing?' },
+    { value: 3, face: '😐', label: 'Partly', ask: 'What would make it better?' },
+    { value: 4, face: '🙂', label: 'Mostly', ask: 'What would make it perfect?' },
+    { value: 5, face: '🤩', label: 'Fully', ask: 'What did you like most?' },
+] as const;
+export type FeedbackRating = (typeof FEEDBACK_RATINGS)[number]['value'];
+
 /** The pop-up after stopping an exam asks again only after this long once feedback is sent. */
 const ASK_AGAIN_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -72,11 +85,14 @@ export interface FeedbackOrigin {
     examTitle?: string;
 }
 
-export async function sendPlatformFeedback(d: FeedbackDraft, origin: FeedbackOrigin) {
+export async function sendPlatformFeedback(
+    d: Partial<FeedbackDraft>, origin: FeedbackOrigin, rating?: FeedbackRating,
+) {
     await apiClient.post('/support/platform-feedback', {
-        ai: d.ai.trim() || null,
-        conduct: d.conduct.trim() || null,
-        other: d.other.trim() || null,
+        ai: d.ai?.trim() || null,
+        conduct: d.conduct?.trim() || null,
+        other: d.other?.trim() || null,
+        rating: rating ?? null,
         source: origin.source,
         exam_id: origin.examId ?? null,
         exam_title: origin.examTitle ?? null,
