@@ -168,6 +168,33 @@ def senders() -> List[str]:
     out = ([user] if user else []) + [a for a in extra if a != user]
     return out or ["no-reply@testoza.com"]
 
+
+def _domain(addr: str) -> str:
+    return addr.rsplit("@", 1)[-1].strip().lower()
+
+
+def send_only_domains() -> List[str]:
+    """The domains mail goes out from (notify./news.testoza.com). They have no mailbox."""
+    sending = [*senders(), runtime_smtp_config.get("from_email") or ""]
+    return sorted({_domain(s) for s in sending if "@" in s} - {_domain(REPLY_TO)})
+
+
+def reply_address(value: Optional[str]) -> str:
+    """
+    Where replies to a broadcast go. Left empty: the team inbox (EMAIL_REPLY_TO). A sender may
+    name their own inbox (priya@testoza.com), but never a sending-only subdomain: notify./news.
+    have no mailbox, so replies there would bounce.
+    """
+    addr = (value or "").strip().lower()
+    if not addr:
+        return REPLY_TO
+    dom = _domain(addr)
+    if any(dom == d or dom.endswith("." + d) for d in send_only_domains()):
+        raise HTTPException(status_code=400, detail=(
+            f"Nobody reads {dom}: it only sends. Put an inbox someone checks, "
+            f"like {addr.split('@')[0]}@{_domain(REPLY_TO)}."))
+    return addr
+
 STAGES = ("new", "drafted", "tried", "quiet", "active")
 AUDIENCES = ("educator", "institution", "corporate", "student", "no_role")
 NOT_INSTALLED = "email_broadcast_not_installed"
@@ -468,6 +495,7 @@ class TestSendRequest(EmailContent):
     user_id: Optional[str] = None
     from_email: Optional[str] = None
     from_name: Optional[str] = Field(None, max_length=80)
+    reply_to: Optional[EmailStr] = None  # empty = the team inbox (EMAIL_REPLY_TO)
 
 
 class TemplateFields(BaseModel):
@@ -495,6 +523,7 @@ class CampaignCreate(EmailContent):
     audience_label: str = Field("", max_length=200)
     from_email: Optional[str] = None
     from_name: Optional[str] = Field(None, max_length=80)
+    reply_to: Optional[EmailStr] = None  # empty = the team inbox (EMAIL_REPLY_TO)
 
 
 class SendNextRequest(BaseModel):
@@ -586,7 +615,7 @@ def overview(request: Request, db: Client = Depends(get_db)):
         "smtp": {"configured": _smtp_ready(broadcast_smtp()), "user": broadcast_smtp().get("user"),
                  "service": service_name(broadcast_smtp().get("host"))},
         "defaults": {"from_name": DEFAULT_FROM_NAME, "reply_to": REPLY_TO, "senders": senders(),
-                     "from_email": senders()[0]},
+                     "from_email": senders()[0], "send_only_domains": send_only_domains()},
         "variables": email_render.VARIABLES,
     }
 
@@ -695,12 +724,13 @@ def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(g
     from_email = payload.from_email or broadcast_from()
     if not _sender_ok(from_email):
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
+    reply_to = reply_address(payload.reply_to)
     person = _person(db, payload.user_id)
     mail = email_render.render(payload.subject, payload.preheader, payload.body, person,
                                unsubscribe=email_render.unsubscribe_url(str(payload.to)))
     try:
         send_smtp_message(cfg, from_email, payload.from_name or DEFAULT_FROM_NAME, str(payload.to),
-                          f"[Test] {mail['subject']}", mail["html"], reply_to=REPLY_TO, text_body=mail["text"])
+                          f"[Test] {mail['subject']}", mail["html"], reply_to=reply_to, text_body=mail["text"])
     except Exception as exc:
         logger.warning("test email failed: %s", exc)
         # 409, not 5xx: the global handler hides 5xx details, and the admin needs the mail server's words.
@@ -733,6 +763,7 @@ def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depe
     from_email = (payload.from_email or senders()[0]).strip().lower()
     if not _sender_ok(from_email):
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
+    reply_to = reply_address(payload.reply_to)
 
     cid = str(uuid.uuid4())
     filt = payload.filter
@@ -770,7 +801,7 @@ def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depe
         "id": cid, "template_key": key, "name": name[:160], "subject": payload.subject, "preheader": payload.preheader,
         "body": payload.body, "filter": filter_json, "audience_label": payload.audience_label,
         "from_email": from_email, "from_name": (payload.from_name or DEFAULT_FROM_NAME).strip(),
-        "reply_to": REPLY_TO, "status": "sending", "planned": planned, "created_by": admin_id,
+        "reply_to": reply_to, "status": "sending", "planned": planned, "created_by": admin_id,
     }
     _table(db, "email_campaigns").insert(row).execute()
     return row

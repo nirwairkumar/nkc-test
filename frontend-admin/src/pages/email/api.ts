@@ -72,7 +72,8 @@ export interface Overview {
     sending: { id: string; name: string; status: 'sending' | 'paused' }[];
     limits: Limits;
     smtp: { configured: boolean; user: string | null; service?: string };
-    defaults: { from_name: string; reply_to: string; senders: string[]; from_email: string };
+    /** send_only_domains: notify./news. have no mailbox, so they can't take replies (older backends leave it out). */
+    defaults: { from_name: string; reply_to: string; senders: string[]; from_email: string; send_only_domains?: string[] };
     variables: Record<string, Variable>;
 }
 
@@ -292,11 +293,11 @@ export const emailApi = {
         call<Audience>(apiClient.post(`${B}/audience`, { filter, limit, offset })),
     preview: (d: EmailDraft & { user_id?: string | null; template_key?: string | null }) =>
         call<Rendered>(apiClient.post(`${B}/preview`, d)),
-    test: (d: EmailDraft & { to: string; user_id?: string | null; from_email?: string; from_name?: string }) =>
+    test: (d: EmailDraft & { to: string; user_id?: string | null; from_email?: string; from_name?: string; reply_to?: string | null }) =>
         call<{ sent: boolean; to: string }>(apiClient.post(`${B}/test`, d)),
     createCampaign: (d: EmailDraft & {
         template_key?: string | null; name?: string; filter: AudienceFilter; audience_label: string;
-        from_email: string; from_name: string;
+        from_email: string; from_name: string; reply_to: string | null;
     }) => call<{ id: string; planned: number; name: string }>(apiClient.post(`${B}/campaigns`, d)),
     sendNext: (id: string, n = 5) => call<SendStep>(apiClient.post(`${B}/campaigns/${id}/send-next`, { n })),
     setCampaign: (id: string, status: 'sending' | 'paused') =>

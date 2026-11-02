@@ -5,7 +5,7 @@
  */
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Send } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -28,8 +28,23 @@ export interface ComposeStart {
 const EMPTY: EmailDraft = {
     subject: '',
     preheader: '',
-    body: 'Hi {first_name|there},\n\n\n\n[[Open TestoZa]](https://app.testoza.com/dashboard)\n\nNirwair\nTestoZa',
+    body: 'Hi {first_name|there},\n\n\n\n[[Open TestoZa]](https://app.testoza.com/dashboard)\n\nTeam\nTestoZa',
 };
+
+/** Each From address remembers its own reply inbox on this device (Priya's sends reply to Priya). */
+const REPLY_KEY = 'tz_admin_email_reply_to';
+function savedReplies(): Record<string, string> {
+    try {
+        const v = JSON.parse(localStorage.getItem(REPLY_KEY) || '{}');
+        return v && typeof v === 'object' ? v : {};
+    } catch {
+        return {};
+    }
+}
+function rememberReply(from: string, reply: string) {
+    if (!from) return;
+    try { localStorage.setItem(REPLY_KEY, JSON.stringify({ ...savedReplies(), [from]: reply })); } catch { /* storage blocked */ }
+}
 
 export default function ComposeSheet({ start, overview, onClose }: { start: ComposeStart | null; overview?: Overview; onClose: () => void }) {
     const open = !!start;
@@ -41,6 +56,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const [filter, setFilter] = useState<AudienceFilter>({});
     const [fromEmail, setFromEmail] = useState('');
     const [fromName, setFromName] = useState('');
+    const [replyTo, setReplyTo] = useState('');
+    const replyId = useId();
     const [previewAs, setPreviewAs] = useState<string | null>(null);
     // Picked by hand for this send: added by search, and unticked.
     const [addIds, setAddIds] = useState<string[]>([]);
@@ -75,6 +92,22 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
         setFromName((v) => v || overview.defaults.from_name);
     }, [overview]);
     useEffect(() => setTestTo((v) => v || user?.email || ''), [user?.email]);
+
+    // Replies: the team inbox unless this From address was given its own.
+    const teamInbox = overview?.defaults.reply_to ?? 'support@testoza.com';
+    useEffect(() => {
+        if (fromEmail) setReplyTo(savedReplies()[fromEmail] ?? teamInbox);
+    }, [fromEmail, teamInbox]);
+    const replyAddr = replyTo.trim().toLowerCase();
+    const replyDomain = replyAddr.split('@')[1] ?? '';
+    const homeDomain = teamInbox.split('@')[1] ?? '';
+    const replyValid = !replyAddr || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyAddr);
+    const replyBlocked = replyValid && (overview?.defaults.send_only_domains ?? [])
+        .some((d) => replyDomain === d || replyDomain.endsWith(`.${d}`));
+    const replyOk = replyValid && !replyBlocked;
+    const replyOutside = replyOk && !!replyAddr && replyDomain !== homeDomain && !replyDomain.endsWith(`.${homeDomain}`);
+    const replyOwn = !!replyAddr && replyAddr !== teamInbox;
+    const keepReply = () => replyOk && rememberReply(fromEmail, replyAddr || teamInbox);
 
     const baseFilter: AudienceFilter = template ? { template: template.key } : { ...filter };
     // The list shows the unticked too (so they can be ticked again); only the send leaves them out.
@@ -118,7 +151,7 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const sending = sender.state.phase !== 'idle';
     const hint = sendTimeHint();
     const variables = overview?.variables ?? {};
-    const canSend = !!draft.subject.trim() && !!draft.body.trim() && ready > 0 && !!overview?.smtp.configured;
+    const canSend = !!draft.subject.trim() && !!draft.body.trim() && ready > 0 && !!overview?.smtp.configured && replyOk;
 
     const close = () => {
         if (sender.state.phase === 'sending' || sender.state.phase === 'waiting') void sender.pause();
@@ -128,8 +161,9 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const sendTest = async () => {
         setTesting(true);
         try {
-            await emailApi.test({ ...draft, to: testTo.trim(), user_id: previewAs, from_email: fromEmail, from_name: fromName });
-            toast.success(`Test sent to ${testTo.trim()}. Open it on your phone and tap every link.`);
+            await emailApi.test({ ...draft, to: testTo.trim(), user_id: previewAs, from_email: fromEmail, from_name: fromName, reply_to: replyAddr || null });
+            keepReply();
+            toast.success(`Test sent to ${testTo.trim()}. Open it on your phone, tap every link, and reply once to check where replies land.`);
         } catch (e) {
             toast.error(errorText(e));
         } finally {
@@ -144,8 +178,9 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
             const c = await emailApi.createCampaign({
                 ...draft, template_key: template?.key ?? null, name: template?.name,
                 filter: unticked.length ? { ...audFilter, skip_ids: unticked } : audFilter,
-                audience_label: label, from_email: fromEmail, from_name: fromName,
+                audience_label: label, from_email: fromEmail, from_name: fromName, reply_to: replyAddr || null,
             });
+            keepReply();
             setCampaign({ id: c.id, planned: c.planned });
             sender.start(c.id, c.planned);
         } catch (e) {
@@ -168,7 +203,7 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                     <div className="flex items-center gap-2 sm:ml-auto">
                         <input type="email" value={testTo} onChange={(e) => setTestTo(e.target.value)} aria-label="Send a test to"
                             className={cn(INPUT, 'h-11 min-w-0 flex-1 rounded-full sm:w-56')} placeholder="you@testoza.com" />
-                        <button type="button" className={SOFT_BTN} disabled={testing || !testTo.includes('@') || !draft.subject.trim()} onClick={sendTest}>
+                        <button type="button" className={SOFT_BTN} disabled={testing || !testTo.includes('@') || !draft.subject.trim() || !replyOk} onClick={sendTest}>
                             {testing ? 'Sending…' : 'Send me a test'}
                         </button>
                     </div>
@@ -309,7 +344,9 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                         </Group>
 
                         {/* ── From ── */}
-                        <Group title="From" footer={`Replies go to ${overview?.defaults.reply_to ?? 'support@testoza.com'}, where the team reads them.`}>
+                        <Group title="From" footer={!replyOk ? undefined : replyOwn
+                            ? `Replies go to ${replyAddr}. Check that inbox exists, or replies bounce. Saved for ${fromEmail} on this device.`
+                            : `Replies go to ${teamInbox}, where the team reads them.`}>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <Field label="Name people see">
                                     <input className={INPUT} value={fromName} onChange={(e) => setFromName(e.target.value)} />
@@ -319,6 +356,36 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                         {(overview?.defaults.senders ?? []).map((s) => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </Field>
+                                {/* Not <Field>: its <label> would wrap the reset button, and a tap on the label would press it. */}
+                                <div className="sm:col-span-2">
+                                    <div className="mb-1.5 flex items-baseline justify-between gap-2 px-1">
+                                        <label htmlFor={replyId} className="text-[13px] font-medium text-slate-600">Replies go to</label>
+                                        {replyOwn && (
+                                            <button type="button" className="text-[12px] font-semibold text-sky-700 hover:underline"
+                                                onClick={() => { setReplyTo(teamInbox); rememberReply(fromEmail, teamInbox); }}>
+                                                Use team inbox
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input id={replyId} type="email" className={INPUT} value={replyTo} placeholder={teamInbox}
+                                        autoComplete="off" spellCheck={false} inputMode="email"
+                                        aria-invalid={!replyOk || undefined} aria-describedby={`${replyId}-hint`}
+                                        onChange={(e) => setReplyTo(e.target.value)} onBlur={keepReply} />
+                                    <p id={`${replyId}-hint`} className="mt-1 px-1 text-[12px] leading-snug empty:hidden">
+                                        {!replyValid ? (
+                                            <span className="font-medium text-rose-600">That doesn’t look like an email address.</span>
+                                        ) : replyBlocked ? (
+                                            <span className="font-medium text-rose-600">
+                                                Nobody reads {replyDomain}: it only sends, so replies would bounce.
+                                                Use an inbox someone checks, like {replyAddr.split('@')[0]}@{homeDomain}.
+                                            </span>
+                                        ) : replyOutside ? (
+                                            <span className="text-amber-700">
+                                                Spam filters trust a {homeDomain} reply address most. A personal Gmail or Yahoo here can push the email to Spam.
+                                            </span>
+                                        ) : null}
+                                    </p>
+                                </div>
                             </div>
                         </Group>
                     </div>

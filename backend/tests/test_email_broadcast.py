@@ -277,6 +277,31 @@ def test_a_send_keeps_the_people_added_and_unticked_by_hand(env, monkeypatch):
     assert bad.status_code == 422
 
 
+def test_a_sender_can_take_replies_in_their_own_inbox(env, monkeypatch):
+    db, c = env["db"], env["client"]
+    monkeypatch.setenv("EMAIL_SENDERS", "priya@notify.testoza.com")
+    monkeypatch.setitem(email_broadcast.runtime_smtp_config, "from_email", "no-reply@notify.testoza.com")
+    db.rpc = lambda fn, params: SimpleNamespace(execute=lambda: SimpleNamespace(data={"ready": 2, "rows": []}))
+    send = {"subject": "Hi", "body": "Hi {first_name|there}", "from_email": "priya@notify.testoza.com"}
+    auth = {"Authorization": f"Bearer {ADMIN}"}
+
+    r = c.post("/api/email-broadcast/campaigns", headers=auth, json={**send, "reply_to": " Priya@TestoZa.com "})
+    assert r.status_code == 200, r.text
+    assert db.tables["email_campaigns"][-1]["reply_to"] == "priya@testoza.com"
+
+    r = c.post("/api/email-broadcast/campaigns", headers=auth, json={**send, "reply_to": None})
+    assert db.tables["email_campaigns"][-1]["reply_to"] == "support@testoza.com"
+
+    # notify./news. only send: a reply there would bounce, so it is refused before anything goes out.
+    n = len(db.tables["email_campaigns"])
+    r = c.post("/api/email-broadcast/campaigns", headers=auth, json={**send, "reply_to": "priya@notify.testoza.com"})
+    assert r.status_code == 400 and "priya@testoza.com" in r.json()["detail"]
+    assert len(db.tables["email_campaigns"]) == n
+    assert c.post("/api/email-broadcast/campaigns", headers=auth, json={**send, "reply_to": "not-an-email"}).status_code == 422
+    assert "notify.testoza.com" in email_broadcast.send_only_domains()
+    assert "testoza.com" not in email_broadcast.send_only_domains()
+
+
 def test_picking_by_hand_is_refused_until_the_sql_honours_it(env):
     db, c = env["db"], env["client"]
     db.tables["email_templates"] = [{"key": "survey-v1-not-sent", "name": "Survey", "archived": False}]
@@ -377,8 +402,9 @@ def test_broadcasts_go_through_their_own_connection_and_platform_mail_does_not(e
 
     r = env["client"].post("/api/email-broadcast/test", headers={"Authorization": f"Bearer {ADMIN}"},
                            json={"to": "owner@testoza.com", "subject": "Hi", "preheader": "", "body": "Hello",
-                                 "from_email": "nirwair@testoza.com"})
+                                 "from_email": "nirwair@testoza.com", "reply_to": "priya@testoza.com"})
     assert r.status_code == 200, r.text
+    assert "Reply-To: priya@testoza.com" in smtp.sent[0][2]
     from app.services import support_mail
     support_mail._send("asha@coaching.in", "Hi", "<p>Hi</p>")
 
