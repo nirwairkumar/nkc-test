@@ -149,6 +149,7 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
         leftOut ? `${leftOut} unticked` : '',
     ].filter(Boolean).join(' · ');
     const sending = sender.state.phase !== 'idle';
+    const todayRoom = Math.max(0, (overview?.limits.daily_limit ?? 200) - (overview?.limits.sent_last_day ?? 0));
     const hint = sendTimeHint();
     const variables = overview?.variables ?? {};
     const canSend = !!draft.subject.trim() && !!draft.body.trim() && ready > 0 && !!overview?.smtp.configured && replyOk;
@@ -402,7 +403,11 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                 open={confirm}
                 onOpenChange={setConfirm}
                 title={`Send to ${num(ready)} ${ready === 1 ? 'person' : 'people'}?`}
-                message={<>“{draft.subject}” goes out now, at most {overview?.limits.hourly_limit ?? 40} an hour. None of them will get another email from us for {overview?.limits.cooldown_days ?? 7} days.</>}
+                message={<>
+                    “{draft.subject}” goes out now, up to {num(overview?.limits.hourly_limit ?? 40)} an hour.{' '}
+                    {todayRoom < ready && <>{num(todayRoom)} can go today; the rest carry on after that, as long as this window stays open (or Resume from History).{' '}</>}
+                    None of them will get another email from us for {overview?.limits.cooldown_days ?? 7} days.
+                </>}
                 confirm="Send"
                 onConfirm={go}
             />

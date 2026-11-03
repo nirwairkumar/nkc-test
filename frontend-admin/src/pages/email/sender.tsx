@@ -1,7 +1,7 @@
 /**
  * Sends a campaign from the browser, a few emails per request, so nothing depends on a
  * server job surviving. Stops when the tab closes; History → Resume carries on from there.
- * The server enforces the hourly limit; here we only wait it out and show a countdown.
+ * The server enforces the hour's and the day's limit; here we only wait it out and say when it goes on.
  */
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Clock, Loader2, Pause, Play, XCircle } from 'lucide-react';
@@ -22,10 +22,12 @@ export interface SenderState {
     remaining: number | null;
     errors: string[];
     resumeAt: string | null;
+    /** Why it waits: this hour's or today's allowance is used up, and how big it was. */
+    wait: { reason: 'hourly_limit' | 'daily_limit'; limit: number | null } | null;
     message: string | null;
 }
 
-const IDLE: SenderState = { phase: 'idle', sent: 0, failed: 0, remaining: null, errors: [], resumeAt: null, message: null };
+const IDLE: SenderState = { phase: 'idle', sent: 0, failed: 0, remaining: null, errors: [], resumeAt: null, wait: null, message: null };
 
 const sleep = (ms: number, stop: () => boolean) =>
     new Promise<void>((resolve) => {
@@ -53,7 +55,7 @@ export function useSender(campaignId: string | null) {
         setS((p) => ({ ...p, phase: 'sending', message: null, resumeAt: null }));
         try {
             while (!stopRef.current) {
-                const step = await emailApi.sendNext(id, 5);
+                const step = await emailApi.sendNext(id, 10);
                 setS((p) => ({
                     ...p,
                     sent: p.sent + step.sent,
@@ -71,7 +73,10 @@ export function useSender(campaignId: string | null) {
                 }
                 if (step.status === 'waiting') {
                     const until = step.resume_at ? new Date(step.resume_at).getTime() : Date.now() + 60_000;
-                    setS((p) => ({ ...p, phase: 'waiting', resumeAt: step.resume_at ?? null }));
+                    setS((p) => ({
+                        ...p, phase: 'waiting', resumeAt: step.resume_at ?? null,
+                        wait: { reason: step.reason ?? 'hourly_limit', limit: step.limit ?? null },
+                    }));
                     await sleep(Math.max(5_000, until - Date.now() + 2_000), () => stopRef.current);
                     if (!stopRef.current) setS((p) => ({ ...p, phase: 'sending', resumeAt: null }));
                     continue;
@@ -166,7 +171,9 @@ export function SendProgress({
                 </p>
                 {state.phase === 'waiting' && (
                     <p className="mt-1 text-[13px] text-slate-500">
-                        The {num(hourlyLimit)}-an-hour limit is reached, to keep our mailbox in good standing.
+                        {state.wait?.reason === 'daily_limit'
+                            ? `Today’s ${state.wait.limit ? `${num(state.wait.limit)} are` : 'allowance is'} sent. A new sending address earns trust by growing day by day, which keeps these emails out of Spam.`
+                            : `This hour’s ${num(state.wait?.limit ?? hourlyLimit)} are sent. Spreading a send over a few hours keeps it out of Spam.`}
                         {state.resumeAt ? ` Carries on by itself at ${istTime(state.resumeAt)} if this window stays open.` : ''}
                     </p>
                 )}

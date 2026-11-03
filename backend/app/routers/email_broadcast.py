@@ -14,9 +14,12 @@ How a send works:
 Limits (environment, so a new admin can't loosen them):
   EMAIL_COOLDOWN_DAYS=7  · no second broadcast to a person within 7 days
   EMAIL_MONTHLY_CAP=3    · at most 3 broadcasts per person in 30 days
-  EMAIL_HOURLY_LIMIT=40  · a brand-new sending domain should start slow; raise as the
-                           bounce and spam rates stay low (Amazon SES allows far more)
-  EMAIL_DAILY_LIMIT=200
+  Sending pace — Amazon SES: an automatic warm-up (see _warmup): EMAIL_WARMUP_START=500 the
+                           first day, doubling after each day that used it, up to
+                           EMAIL_SES_DAILY_QUOTA=50000; an hour may take half the day's.
+                           Bounces over 4% in a week hold it at the start.
+                         Zoho / Brevo: EMAIL_HOURLY_LIMIT=40, EMAIL_DAILY_LIMIT=200.
+  EMAIL_HOURLY_LIMIT / EMAIL_DAILY_LIMIT set on the server = fixed by the owner, any service.
   EMAIL_REPLY_TO=support@testoza.com · EMAIL_FROM_NAME="TestoZa"
   EMAIL_SENDERS=a@news.testoza.com,… · extra From addresses for broadcasts; each must be
                                          allowed by the broadcast service (SES: a verified domain)
@@ -55,7 +58,7 @@ from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid, parseaddr
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
 import httpx
@@ -129,8 +132,11 @@ def _int_env(name: str, default: int) -> int:
 
 COOLDOWN_DAYS = _int_env("EMAIL_COOLDOWN_DAYS", 7)
 MONTHLY_CAP = _int_env("EMAIL_MONTHLY_CAP", 3)
-HOURLY_LIMIT = _int_env("EMAIL_HOURLY_LIMIT", 40)
+HOURLY_LIMIT = _int_env("EMAIL_HOURLY_LIMIT", 40)  # Zoho / Brevo, or fixed by the owner
 DAILY_LIMIT = _int_env("EMAIL_DAILY_LIMIT", 200)
+WARMUP_START = _int_env("EMAIL_WARMUP_START", 500)  # Amazon SES: the first day's allowance
+SES_DAILY_QUOTA = _int_env("EMAIL_SES_DAILY_QUOTA", 50000)
+BOUNCE_BRAKE = 0.04  # SES reviews an account at 5% bounces; stop growing well before
 REPLY_TO = os.getenv("EMAIL_REPLY_TO", "support@testoza.com")
 DEFAULT_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "TestoZa")
 
@@ -358,34 +364,103 @@ def ensure_library(db: Client, force: bool = False) -> None:
     _library_checked["at"] = _now()
 
 
-def _send_window(db: Client) -> Dict[str, Any]:
-    """How many broadcasts went in the last hour / 24 hours, and when the hour frees up."""
+COUNTED = ["sending", "sent"]  # what uses up the hour / day
+
+
+def _count_sends(db: Client, since: datetime, until: Optional[datetime] = None,
+                 statuses: Optional[List[str]] = None) -> int:
+    # A real count: a plain select stops at PostgREST's 1,000 rows, which SES passes in an hour.
+    q = _table(db, "email_sends").select("id", count="exact").in_("status", statuses or COUNTED) \
+        .gte("sent_at", _iso(since))
+    if until is not None:
+        q = q.lt("sent_at", _iso(until))
+    res = q.limit(1).execute()
+    return int(res.count if res.count is not None else len(res.data or []))
+
+
+def _frees_at(db: Client, since: datetime, used: int, cap: int, span: timedelta) -> Optional[str]:
+    """When the window has room again: the send that must age out is the (used - cap + 1)-th oldest."""
+    if used < cap:
+        return None
+    i = max(0, used - cap)
+    rows = (_table(db, "email_sends").select("sent_at").in_("status", COUNTED).gte("sent_at", _iso(since))
+            .order("sent_at").range(i, i).execute().data or [])
+    if not rows:
+        return None
+    return _iso(datetime.fromisoformat(str(rows[0]["sent_at"]).replace("Z", "+00:00")) + span)
+
+
+_warmup_cache: Dict[str, Any] = {}
+
+
+def _warmup(db: Client) -> Dict[str, Any]:
+    """
+    Amazon SES lets us send 50,000 a day, but Gmail and Outlook judge a new sending domain
+    (news.testoza.com) by how fast its volume grows: a quiet domain that suddenly sends
+    thousands looks like a spammer, and the mail goes to Spam. So the day's allowance starts
+    at WARMUP_START and doubles after each day that used it (twice the busiest of the last six
+    days), up to the SES quota. More than 4% bounces in a week holds it at the start. Cached
+    for five minutes: it only moves once a day.
+    """
     now = _now()
-    rows = (
-        _table(db, "email_sends").select("sent_at").in_("status", ["sending", "sent"])
-        .gt("sent_at", _iso(now - timedelta(hours=24))).execute().data or []
-    )
-    times = sorted(datetime.fromisoformat(str(r["sent_at"]).replace("Z", "+00:00")) for r in rows if r.get("sent_at"))
-    hour = [t for t in times if t > now - timedelta(hours=1)]
+    if _warmup_cache.get("at") and now - _warmup_cache["at"] < timedelta(minutes=5):
+        return _warmup_cache["value"]
+    best = max(_count_sends(db, now - timedelta(days=k + 1), now - timedelta(days=k)) for k in range(1, 7))
+    week = _count_sends(db, now - timedelta(days=7), statuses=["sent", "failed"])
+    bounced = _table(db, "email_suppressions").select("email", count="exact").eq("reason", "bounced") \
+        .gte("created_at", _iso(now - timedelta(days=7))).limit(1).execute()
+    bounces = int(bounced.count if bounced.count is not None else len(bounced.data or []))
+    rate = bounces / week if week >= 100 else 0.0  # too few sends to judge
+    held = rate > BOUNCE_BRAKE
+    daily = min(SES_DAILY_QUOTA, WARMUP_START if held else max(WARMUP_START, 2 * best))
+    value = {
+        "daily": daily,
+        "hourly": max(100, daily // 2),
+        "next": daily if held else min(SES_DAILY_QUOTA, 2 * daily),
+        "quota": SES_DAILY_QUOTA,
+        "bounce_rate": round(rate, 4),
+        "held": held,
+    }
+    _warmup_cache.update(at=now, value=value)
+    return value
+
+
+def _caps(db: Client) -> Tuple[int, int, Optional[Dict[str, Any]]]:
+    """(hourly, daily, warm-up). Fixed numbers when the owner set them or the service isn't SES."""
+    fixed = os.getenv("EMAIL_HOURLY_LIMIT", "").strip() or os.getenv("EMAIL_DAILY_LIMIT", "").strip()
+    if fixed or "amazonaws" not in (broadcast_smtp().get("host") or "").lower():
+        return HOURLY_LIMIT, DAILY_LIMIT, None
+    w = _warmup(db)
+    return w["hourly"], w["daily"], w
+
+
+def _send_window(db: Client, hourly: int, daily: int) -> Dict[str, Any]:
+    """How many broadcasts went in the last hour / 24 hours, and when each frees up."""
+    now = _now()
+    hour_since, day_since = now - timedelta(hours=1), now - timedelta(hours=24)
+    hour = _count_sends(db, hour_since)
+    day = _count_sends(db, day_since)
     return {
-        "hour": len(hour),
-        "day": len(times),
-        "hour_free_at": _iso(hour[0] + timedelta(hours=1)) if len(hour) >= HOURLY_LIMIT and hour else None,
-        "day_free_at": _iso(times[0] + timedelta(hours=24)) if len(times) >= DAILY_LIMIT and times else None,
+        "hour": hour,
+        "day": day,
+        "hour_free_at": _frees_at(db, hour_since, hour, hourly, timedelta(hours=1)),
+        "day_free_at": _frees_at(db, day_since, day, daily, timedelta(hours=24)),
     }
 
 
 def _limits(db: Client) -> Dict[str, Any]:
-    w = _send_window(db)
+    hourly, daily, warmup = _caps(db)
+    w = _send_window(db, hourly, daily)
     return {
         "cooldown_days": COOLDOWN_DAYS,
         "monthly_cap": MONTHLY_CAP,
-        "hourly_limit": HOURLY_LIMIT,
-        "daily_limit": DAILY_LIMIT,
+        "hourly_limit": hourly,
+        "daily_limit": daily,
         "sent_last_hour": w["hour"],
         "sent_last_day": w["day"],
         "hour_free_at": w["hour_free_at"],
         "day_free_at": w["day_free_at"],
+        "warmup": warmup,
     }
 
 
@@ -856,13 +931,16 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
     if not _smtp_ready(cfg):
         raise HTTPException(status_code=400, detail=NOT_CONNECTED)
 
-    w = _send_window(db)
-    room = min(payload.n, HOURLY_LIMIT - w["hour"], DAILY_LIMIT - w["day"])
+    hourly, daily, _ = _caps(db)
+    w = _send_window(db, hourly, daily)
+    room = min(payload.n, hourly - w["hour"], daily - w["day"])
     if room <= 0:
+        by_day = w["day"] >= daily
         return {
             "status": "waiting", "sent": 0, "failed": 0, "remaining": _remaining(db, camp),
-            "reason": "hourly_limit" if w["hour"] >= HOURLY_LIMIT else "daily_limit",
-            "resume_at": w["hour_free_at"] if w["hour"] >= HOURLY_LIMIT else w["day_free_at"],
+            "reason": "daily_limit" if by_day else "hourly_limit",
+            "resume_at": w["day_free_at"] if by_day else w["hour_free_at"],
+            "limit": daily if by_day else hourly,
         }
 
     rows = _rpc(db, "email_claim_batch", {"p_campaign": cid_s, "p_limit": room, **_guard_params()}) or []

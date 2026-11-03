@@ -429,6 +429,62 @@ def test_one_ses_connection_two_subdomains(monkeypatch):
     assert email_broadcast.envelope_sender(brevo, "nirwair@news.testoza.com") == "no-reply@updates.testoza.com"
 
 
+def test_ses_warms_up_instead_of_the_old_40_an_hour(env, monkeypatch):
+    db, c = env["db"], env["client"]
+    monkeypatch.setitem(email_broadcast.broadcast_smtp_config, "password", "")
+    for k, v in SES.items():
+        monkeypatch.setitem(email_broadcast.runtime_smtp_config, k, v)
+    monkeypatch.delenv("EMAIL_HOURLY_LIMIT", raising=False)
+    monkeypatch.delenv("EMAIL_DAILY_LIMIT", raising=False)
+    now = datetime.now(timezone.utc)
+
+    def sends(n, hours_ago, status="sent", tag="x"):
+        return [{"id": f"{tag}{i}", "user_id": f"u{i}", "email": f"{tag}{i}@x.in", "template_key": "k", "status": status,
+                 "sent_at": (now - timedelta(hours=hours_ago, seconds=i)).isoformat()} for i in range(n)]
+
+    def limits():
+        email_broadcast._warmup_cache.clear()
+        return email_broadcast._limits(db)
+
+    # Day one on SES: 500 a day, 250 an hour (not Brevo's 40 / 200).
+    db.tables["email_sends"] = []
+    first = limits()
+    assert (first["daily_limit"], first["hourly_limit"], first["warmup"]["next"]) == (500, 250, 1000)
+
+    # A day that used its 500 doubles the next day: 1,000, and 2,000 after that.
+    db.tables["email_sends"] = sends(500, 30)
+    grown = limits()
+    assert (grown["daily_limit"], grown["hourly_limit"], grown["warmup"]["next"]) == (1000, 500, 2000)
+    assert grown["sent_last_day"] == 0  # 30 hours ago is yesterday
+
+    # Over 1,000 in the last hour is still counted right (a plain select stops at 1,000 rows).
+    db.tables["email_sends"] = sends(500, 30) + sends(1200, 0.2, tag="h")
+    assert limits()["sent_last_hour"] == 1200
+
+    # More than 4% bounces in a week: the growth stops at the start.
+    db.tables["email_sends"] = sends(500, 30)
+    db.tables["email_suppressions"] = [{"email": f"b{i}@x.in", "reason": "bounced", "created_at": now.isoformat()}
+                                       for i in range(25)]
+    held = limits()
+    assert held["daily_limit"] == 500 and held["warmup"]["held"] and held["warmup"]["next"] == 500
+    db.tables["email_suppressions"] = []
+
+    # The day is used up: the send waits for the day, not the hour, and says which.
+    cid = _campaign(db)
+    db.tables["email_sends"] = sends(500, 30) + sends(1000, 5, tag="d")
+    db.rpc = lambda fn, params: SimpleNamespace(execute=lambda: SimpleNamespace(data={"ready": 9, "rows": []}))
+    email_broadcast._warmup_cache.clear()
+    body = c.post(f"/api/email-broadcast/campaigns/{cid}/send-next", headers={"Authorization": f"Bearer {ADMIN}"}, json={}).json()
+    assert (body["status"], body["reason"], body["limit"]) == ("waiting", "daily_limit", 1000)
+    assert body["resume_at"] > now.isoformat()
+
+    # Numbers the owner sets on the server win, on any service.
+    monkeypatch.setenv("EMAIL_DAILY_LIMIT", "200")
+    fixed = limits()
+    assert (fixed["hourly_limit"], fixed["daily_limit"], fixed["warmup"]) == (email_broadcast.HOURLY_LIMIT, email_broadcast.DAILY_LIMIT, None)
+    email_broadcast._warmup_cache.clear()
+
+
 def test_without_a_broadcast_connection_broadcasts_use_the_platform_one(monkeypatch):
     monkeypatch.setitem(email_broadcast.broadcast_smtp_config, "password", "")
     assert email_broadcast.broadcast_smtp() is email_broadcast.runtime_smtp_config

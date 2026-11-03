@@ -9,7 +9,7 @@
  *   Automatic — the emails TestoZa sends by itself (welcome, test created, live, submissions,
  *              exam ended): on/off, counts, preview, test, and the latest sends.
  * The rules (one email a week per person, three a month, never the same email twice,
- * unsubscribes, 40 an hour) are enforced by the server; this page explains them.
+ * unsubscribes, the SES warm-up pace) are enforced by the server; this page explains them.
  * Manual for new team members: "TestoZa Email Broadcasting Manual" (Claude Docs).
  */
 import { useQuery } from '@tanstack/react-query';
@@ -167,7 +167,7 @@ function Playbook({ o, loading, error, onSend }: { o?: Overview; loading: boolea
                             info={`Real accounts only. Hidden from every audience: ${num(o.takers)} people who signed in only to sit an educator’s exam, exam candidates without an account, demo accounts and the team.`} />
                         <Tile label="Ready for an email today" value={num(o.ready_people)} accent
                             info="People who can get at least one email right now. After one email they wait a week for the next." />
-                        <Tile label="Sent this week" value={num(o.sent.week)} sub={`${num(o.limits.sent_last_hour)} of ${num(o.limits.hourly_limit)} this hour`} />
+                        <Tile label="Sent this week" value={num(o.sent.week)} sub={`${num(o.limits.sent_last_day)} of ${num(o.limits.daily_limit)} in 24 hours`} />
                         <Tile label="Unsubscribed" value={num(o.unsubscribed)} sub={o.people ? `${((o.unsubscribed / Math.max(1, o.people + o.unsubscribed)) * 100).toFixed(1)}% of the list` : undefined} />
                     </>
                 )}

@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ChevronRight, ShieldCheck, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { istDate } from '../analytics/format';
+import { istDate, num } from '../analytics/format';
 import { Chip } from '../analytics/ui';
 import { emailApi, errorText, type Overview, type Suppression } from './api';
 import { Confirm, Field, Group, INPUT, PRIMARY_BTN, SOFT_BTN, WideSheet } from './parts';
@@ -55,6 +55,7 @@ export default function SettingsSheet({ open, onOpenChange, overview, onOpenAuto
     });
 
     const l = overview?.limits;
+    const w = l?.warmup ?? null;
     const s = smtp.data;
     const configured = s?.configured ?? overview?.smtp.configured;
     const service = s?.service ?? overview?.smtp.service;
@@ -113,13 +114,20 @@ export default function SettingsSheet({ open, onOpenChange, overview, onOpenAuto
                     </Group>
                 )}
 
-                <Group title="Limits" footer="Set on the server by the owner (EMAIL_COOLDOWN_DAYS, EMAIL_MONTHLY_CAP, EMAIL_HOURLY_LIMIT, EMAIL_DAILY_LIMIT). They protect our name with Gmail and Outlook.">
+                <Group title="Limits" footer={w
+                    ? 'These are TestoZa’s rules, not Amazon’s. Amazon SES allows 50,000 a day; Gmail and Outlook decide Inbox or Spam by how a new address behaves. Fixed numbers: set EMAIL_HOURLY_LIMIT and EMAIL_DAILY_LIMIT on the server.'
+                    : 'Set on the server by the owner (EMAIL_COOLDOWN_DAYS, EMAIL_MONTHLY_CAP, EMAIL_HOURLY_LIMIT, EMAIL_DAILY_LIMIT). They protect our name with Gmail and Outlook.'}>
                     <ul className="space-y-2.5 text-[14px]">
                         {[
                             [`One email per person every ${l?.cooldown_days ?? 7} days`, 'Nobody hears from us twice in a week.'],
                             [`At most ${l?.monthly_cap ?? 3} per person in 30 days`, 'Even if they move through stages quickly.'],
                             ['Never the same email twice', 'Checked for every person, forever.'],
-                            [`${l?.hourly_limit ?? 40} an hour, ${l?.daily_limit ?? 200} a day`, `${l?.sent_last_hour ?? 0} sent in the last hour, ${l?.sent_last_day ?? 0} in the last 24 hours.`],
+                            w
+                                ? [`Warming up: ${num(w.daily)} today, ${num(w.hourly)} an hour`,
+                                    w.held
+                                        ? `Held here: ${(w.bounce_rate * 100).toFixed(1)}% of last week’s emails bounced. It grows again once bounces fall under 4%.`
+                                        : `If today’s ${num(w.daily)} go out, tomorrow allows ${num(w.next)}, and it keeps doubling up to Amazon’s ${num(w.quota)}. ${num(l?.sent_last_day ?? 0)} sent in the last 24 hours.`]
+                                : [`${l?.hourly_limit ?? 40} an hour, ${l?.daily_limit ?? 200} a day`, `${l?.sent_last_hour ?? 0} sent in the last hour, ${l?.sent_last_day ?? 0} in the last 24 hours.`],
                         ].map(([a, b]) => (
                             <li key={a} className="flex gap-3">
                                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />

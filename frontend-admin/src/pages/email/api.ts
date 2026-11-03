@@ -23,6 +23,8 @@ export interface Limits {
     sent_last_day: number;
     hour_free_at: string | null;
     day_free_at: string | null;
+    /** Amazon SES: the day's allowance grows by itself. null = fixed numbers (owner-set, or not SES). */
+    warmup?: { daily: number; hourly: number; next: number; quota: number; bounce_rate: number; held: boolean } | null;
 }
 
 export interface TemplateSummary {
@@ -184,6 +186,8 @@ export interface SendStep {
     errors?: string[];
     reason?: 'hourly_limit' | 'daily_limit';
     resume_at?: string | null;
+    /** The hour's or the day's cap that was reached (older backends leave it out). */
+    limit?: number;
 }
 
 export interface Suppression {

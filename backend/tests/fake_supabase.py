@@ -228,7 +228,8 @@ class Query:
             found = found[: self._limit]
         if self._single:
             return SimpleNamespace(data=copy.deepcopy(found[0]) if found else None, count=None)
-        return SimpleNamespace(data=copy.deepcopy(found), count=len(found) if self._count else None)
+        # Like PostgREST: count is every match, not the page the limit cut.
+        return SimpleNamespace(data=copy.deepcopy(found), count=total if self._count else None)
 
 
 class FakeAuthAdmin:
