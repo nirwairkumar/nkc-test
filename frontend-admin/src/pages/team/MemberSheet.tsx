@@ -235,7 +235,22 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
         setRole(preset ? preset.label : 'Custom');
     };
 
-    const canSave = fullName.trim().length > 0 && (editing || /^[a-z][a-z0-9._-]{2,31}$/.test(loginId.trim().toLowerCase()));
+    // Say exactly what's missing instead of silently greying out the button.
+    const id = loginId.trim().toLowerCase();
+    const blocker = !fullName.trim()
+        ? 'Type their name.'
+        : editing
+            ? null
+            : !id
+                ? 'Choose a login ID.'
+                : !/^[a-z]/.test(id)
+                    ? 'The login ID must start with a letter (a–z).'
+                    : /[^a-z0-9._-]/.test(id)
+                        ? 'The login ID can only use letters, numbers, dot (.), underscore (_) and dash (-). No @ or spaces.'
+                        : id.length < 3
+                            ? 'The login ID needs at least 3 characters.'
+                            : null;
+    const canSave = !blocker;
     const live = sessions.data?.rows.filter((s) => s.live) ?? [];
 
     return (
@@ -251,7 +266,7 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
                 <div className="space-y-5 pb-6">
                     <section className={cn(CARD, 'space-y-4 p-4')}>
                         <Field label="Name">
-                            <input className={INPUT} value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} placeholder="Priya Sharma" />
+                            <input className={INPUT} value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} placeholder="e.g. Priya Sharma" />
                         </Field>
                         <Field
                             label="Login ID"
@@ -263,14 +278,14 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
                                 disabled={editing}
                                 onChange={(e) => setLoginId(e.target.value.toLowerCase().replace(/\s/g, ''))}
                                 maxLength={32}
-                                placeholder="priya.s"
+                                placeholder="e.g. priya.s"
                                 autoCapitalize="none"
                                 autoCorrect="off"
                                 spellCheck={false}
                             />
                         </Field>
                         <Field label="Contact email (optional)" hint="For your records only. It is not used to sign in.">
-                            <input className={INPUT} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="priya@gmail.com" />
+                            <input className={INPUT} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. priya@gmail.com" />
                         </Field>
                         <Field label="Access ends (optional)" hint="The account switches itself off at the end of this day (India time). Use it for interns.">
                             <input className={INPUT} type="date" value={ends} onChange={(e) => setEnds(e.target.value)} />
@@ -337,6 +352,9 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
                         {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                         {editing ? 'Save changes' : 'Add member and show password'}
                     </button>
+                    {blocker && (
+                        <p className="-mt-3 text-center text-[13px] font-medium text-amber-700" role="status">{blocker}</p>
+                    )}
 
                     {editing && member && (
                         <>
