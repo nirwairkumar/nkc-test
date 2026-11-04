@@ -48,7 +48,7 @@ unknown_id_failures = RateLimiter(requests=LOCK_AFTER, window=LOCK_MINUTES * 60,
 
 
 class LoginBody(BaseModel):
-    login_id: str = Field(min_length=1, max_length=64)
+    login_id: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=MAX_PASSWORD_CHARS)
 
 

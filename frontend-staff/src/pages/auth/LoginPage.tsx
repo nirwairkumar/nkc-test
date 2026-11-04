@@ -54,8 +54,8 @@ export default function LoginPage() {
                         autoCapitalize="none"
                         autoCorrect="off"
                         spellCheck={false}
-                        maxLength={64}
-                        placeholder="priya.s"
+                        maxLength={100}
+                        placeholder="e.g. priya@gmail.com"
                         autoFocus
                     />
                 </Field>

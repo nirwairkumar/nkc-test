@@ -242,14 +242,20 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
         : editing
             ? null
             : !id
-                ? 'Choose a login ID.'
-                : !/^[a-z]/.test(id)
-                    ? 'The login ID must start with a letter (a–z).'
-                    : /[^a-z0-9._-]/.test(id)
-                        ? 'The login ID can only use letters, numbers, dot (.), underscore (_) and dash (-). No @ or spaces.'
-                        : id.length < 3
-                            ? 'The login ID needs at least 3 characters.'
-                            : null;
+                ? 'Choose a login ID (their email is fine).'
+                : id.includes('@')
+                    ? (/^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(id) && id.length <= 100
+                        ? null
+                        : 'That email doesn’t look complete, e.g. priya@gmail.com.')
+                    : !/^[a-z]/.test(id)
+                        ? 'The login ID must start with a letter (a–z).'
+                        : /[^a-z0-9._-]/.test(id)
+                            ? 'Use an email, or only letters, numbers, dot (.), underscore (_) and dash (-).'
+                            : id.length < 3
+                                ? 'The login ID needs at least 3 characters.'
+                                : id.length > 32
+                                    ? 'Keep a non-email login ID to 32 characters.'
+                                    : null;
     const canSave = !blocker;
     const live = sessions.data?.rows.filter((s) => s.live) ?? [];
 
@@ -270,15 +276,15 @@ export default function MemberSheet({ open, onOpenChange, catalog, member }: {
                         </Field>
                         <Field
                             label="Login ID"
-                            hint={editing ? 'Login IDs can’t be changed.' : '3–32 characters: letters, numbers, . _ - (starts with a letter). Not their email.'}
+                            hint={editing ? 'Login IDs can’t be changed.' : 'Their email address, or a short ID like priya.s. This is what they type to sign in.'}
                         >
                             <input
                                 className={INPUT}
                                 value={loginId}
                                 disabled={editing}
                                 onChange={(e) => setLoginId(e.target.value.toLowerCase().replace(/\s/g, ''))}
-                                maxLength={32}
-                                placeholder="e.g. priya.s"
+                                maxLength={100}
+                                placeholder="e.g. priya@gmail.com or priya.s"
                                 autoCapitalize="none"
                                 autoCorrect="off"
                                 spellCheck={false}

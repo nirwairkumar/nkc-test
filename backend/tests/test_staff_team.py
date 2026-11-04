@@ -352,3 +352,13 @@ def test_reset_password_and_two_step(env):
     assert row["totp_secret"] is None and row["totp_enabled_at"] is None
     audit = env["admin"].get(f"/api/staff-admin/audit?staff_id={acc['id']}").json()["rows"]
     assert {"staff.reset_password", "staff.reset_2fa", "auth.login"} <= {r["action"] for r in audit}
+
+
+def test_email_works_as_a_login_id(env):
+    c, acc, _ = sign_in_fully(env, login_id="priya.sharma@gmail.com")
+    assert acc["login_id"] == "priya.sharma@gmail.com"
+    c.post("/api/staff/auth/logout")
+    r = staff_client().post("/api/staff/auth/login", json={"login_id": "Priya.Sharma@Gmail.com ", "password": NEW_PASSWORD})
+    assert r.status_code == 200 and r.json()["next"] == "verify_2fa"
+    for bad in ("priya@", "@gmail.com", "priya sharma@gmail.com", "a@b"):
+        assert env["admin"].post("/api/staff-admin/accounts", json={"login_id": bad, "full_name": "X"}).status_code in (400, 422), bad

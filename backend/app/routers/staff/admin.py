@@ -34,7 +34,14 @@ from .deps import (
 
 router = APIRouter()
 
+# A short ID (`priya.s`) or an email address; same rule as the DB check in
+# 20261105150000_staff_login_email.sql.
 LOGIN_ID_RE = re.compile(r"^[a-z][a-z0-9._-]{2,31}$")
+LOGIN_EMAIL_RE = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$")
+
+
+def valid_login_id(login_id: str) -> bool:
+    return len(login_id) <= 100 and bool(LOGIN_ID_RE.match(login_id) or LOGIN_EMAIL_RE.match(login_id))
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,}$")
 STATUSES = ("active", "suspended", "removed")
 SAFE_FIELDS = (
@@ -142,7 +149,7 @@ def list_accounts(request: Request, db: Client = Depends(get_db)):
 
 
 class CreateBody(BaseModel):
-    login_id: str = Field(min_length=3, max_length=32)
+    login_id: str = Field(min_length=3, max_length=100)
     full_name: str = Field(min_length=1, max_length=80)
     contact_email: Optional[str] = Field(default=None, max_length=254)
     role_label: str = Field(default="Custom", max_length=40)
@@ -154,8 +161,8 @@ class CreateBody(BaseModel):
 def create_account(body: CreateBody, request: Request, db: Client = Depends(get_db)):
     admin = _admin(request, db)
     login_id = body.login_id.strip().lower()
-    if not LOGIN_ID_RE.match(login_id):
-        raise HTTPException(status_code=400, detail="Login ID: 3–32 characters, start with a letter, then letters, numbers, . _ or -.")
+    if not valid_login_id(login_id):
+        raise HTTPException(status_code=400, detail="Login ID: an email address, or 3–32 characters starting with a letter (letters, numbers, . _ -).")
     if db.table("staff_accounts").select("id").eq("login_id", login_id).limit(1).execute().data:
         raise HTTPException(status_code=409, detail="That login ID is taken (removed accounts keep theirs). Pick another.")
 
