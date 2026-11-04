@@ -96,11 +96,21 @@ ALLOWED_ORIGINS = [
     "https://news.testoza.com",
     "https://testing.testoza.com",
     "https://pdf.testoza.com",
+    "https://team.testoza.com",
     "http://localhost:5173",  # Local dev (frontend)
     "http://localhost:8081",  # Local dev (frontend-admin)
     "http://localhost:8095",  # Local dev (pdf tools)
     "http://localhost:8096",  # Local preview (pdf tools)
+    "http://localhost:8097",  # Local dev (frontend-staff, team dashboard)
 ]
+
+# The team dashboard's routes (/api/staff/*) answer ONLY these origins, even though the
+# CORS list above admits our other sites: a script on any other testoza.com subdomain
+# must not be able to drive an employee's session (app/routers/staff/deps.py).
+STAFF_ORIGINS = (
+    "https://team.testoza.com",
+    "http://localhost:8097",
+)
 
 
 def safe_origin(candidate: Optional[str], default: str = "https://testoza.com") -> str:

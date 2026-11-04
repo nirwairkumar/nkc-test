@@ -407,7 +407,47 @@ def admin_reply_support_message(
     message_id: str, payload: SupportReply, request: Request, db: Client = Depends(get_db),
 ):
     admin_id = verify_is_admin(request, db)
-    text = (payload.reply or "").strip()
+    return team_reply(db, message_id, payload.reply, payload.resolve, admin_id=admin_id)
+
+
+def _team_turn(db: Client, message_id: str, text: str, admin_id: Optional[str], staff_id: Optional[str]) -> Dict[str, Any]:
+    """Our side of the conversation. Employees (team.testoza.com) are recorded in staff_id."""
+    if not staff_id:
+        return _add_reply(db, message_id, "team", admin_id, text)
+    row = {"message_id": message_id, "author": "team", "author_id": None, "body": text, "staff_id": staff_id}
+    try:
+        res = db.table("support_replies").insert(row).execute()
+    except Exception as err:
+        if not _missing_column(err):  # before 20261105120000_staff_team.sql
+            raise
+        res = db.table("support_replies").insert({k: v for k, v in row.items() if k != "staff_id"}).execute()
+    saved = (res.data or [{}])[0]
+    return {k: saved.get(k) for k in ("id", "author", "body", "created_at")}
+
+
+def _resolver(admin_id: Optional[str], staff_id: Optional[str]) -> Dict[str, Any]:
+    """resolved_by points at auth.users; an employee goes in resolved_by_staff instead."""
+    return {"resolved_by_staff": staff_id} if staff_id else {"resolved_by": admin_id}
+
+
+def _update_with_staff_fallback(db: Client, message_id: str, update: Dict[str, Any], touch: bool):
+    def run(values: Dict[str, Any]):
+        if touch:
+            _touch(db, message_id, values)
+            return None
+        return db.table("support_messages").update(values).eq("id", message_id).execute()
+    try:
+        return run(update)
+    except Exception as err:
+        if "resolved_by_staff" not in update or not _missing_column(err):
+            raise
+        return run({k: v for k, v in update.items() if k != "resolved_by_staff"})
+
+
+def team_reply(db: Client, message_id: str, reply: str, resolve: bool, *,
+               admin_id: Optional[str] = None, staff_id: Optional[str] = None) -> Dict[str, Any]:
+    """Answer a help message as the team: from admin → Support or from team.testoza.com."""
+    text = (reply or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="Write a reply first.")
     if len(text) > 5000:
@@ -420,18 +460,18 @@ def admin_reply_support_message(
 
     now = datetime.now(timezone.utc).isoformat()
     try:
-        turn = _add_reply(db, message_id, "team", admin_id, text)
+        turn = _team_turn(db, message_id, text, admin_id, staff_id)
     except Exception as err:
         # Before 20261018170000_support_threads.sql the reply column below is the record.
         logger.warning("support_replies insert failed: %s", err)
         turn = {"id": f"{message_id}-reply", "author": "team", "body": text, "created_at": now}
 
     # `reply` keeps the latest answer for anything that still reads the single column.
-    update: Dict[str, Any] = {"reply": text, "replied_at": now, "status": "resolved" if payload.resolve else "replied"}
-    if payload.resolve:
-        update.update({"resolved_at": now, "resolved_by": admin_id})
+    update: Dict[str, Any] = {"reply": text, "replied_at": now, "status": "resolved" if resolve else "replied"}
+    if resolve:
+        update.update({"resolved_at": now, **_resolver(admin_id, staff_id)})
     try:
-        _touch(db, message_id, update)
+        _update_with_staff_fallback(db, message_id, update, touch=True)
     except Exception as err:
         if _missing_column(err):
             raise HTTPException(status_code=409, detail="Run supabase/migrations/20261018150000_support_help.sql first.")
@@ -467,20 +507,29 @@ def admin_set_support_status(
     message_id: str, payload: SupportStatus, request: Request, db: Client = Depends(get_db),
 ):
     admin_id = verify_is_admin(request, db)
-    if payload.status not in ("pending", "resolved"):
+    return team_set_status(db, message_id, payload.status, admin_id=admin_id)
+
+
+def team_set_status(db: Client, message_id: str, status: str, *,
+                    admin_id: Optional[str] = None, staff_id: Optional[str] = None) -> Dict[str, Any]:
+    if status not in ("pending", "resolved"):
         raise HTTPException(status_code=400, detail="Status must be pending or resolved.")
-    resolved = payload.status == "resolved"
-    update = {
-        "status": payload.status,
+    resolved = status == "resolved"
+    update: Dict[str, Any] = {
+        "status": status,
         "resolved_at": datetime.now(timezone.utc).isoformat() if resolved else None,
-        "resolved_by": admin_id if resolved else None,
+        "resolved_by": None,
     }
-    res = db.table("support_messages").update(update).eq("id", message_id).execute()
+    if resolved:
+        update.update(_resolver(admin_id, staff_id))
+    else:
+        update["resolved_by_staff"] = None
+    res = _update_with_staff_fallback(db, message_id, update, touch=False)
     if not res.data:
         raise HTTPException(status_code=404, detail="Message not found.")
     if resolved:
         _mark_team_notifications_read(db, message_id)
-    return {"success": True, "status": payload.status}
+    return {"success": True, "status": status}
 
 # ── Platform feedback (20261024150000_platform_feedback.sql) ──────────────────
 # The sidebar's Feedback page and the card that comes up after a creator stops a live exam

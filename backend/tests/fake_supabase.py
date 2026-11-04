@@ -8,6 +8,7 @@ code paths that rely on a 23505 (duplicate key) error are exercised for real.
 """
 
 import copy
+import itertools
 import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -42,7 +43,14 @@ DEFAULTS: Dict[str, Callable[[], Dict[str, Any]]] = {
     "referral_codes": lambda: {"created_at": _now()},
     "referral_visits": lambda: {"created_at": _now()},
     "referrals": lambda: {"created_at": _now()},
+    # 20261105120000_staff_team.sql: the activity log has a bigint identity id.
+    "staff_audit_log": lambda: {"id": next(_AUDIT_IDS), "created_at": _now(), "detail": {}},
+    "staff_accounts": lambda: {"created_at": _now(), "failed_attempts": 0, "locked_until": None,
+                               "totp_secret": None, "totp_pending": None, "totp_enabled_at": None,
+                               "totp_last_step": None, "expires_at": None},
+    "staff_sessions": lambda: {"created_at": _now(), "mfa_attempts": 0, "revoked_at": None},
 }
+_AUDIT_IDS = itertools.count(1)
 
 # (table, constraint name, columns, condition on the row)
 UNIQUES = [
@@ -56,6 +64,9 @@ UNIQUES = [
     ("referral_codes", "referral_codes_code_key", ("code",), lambda r: True),
     ("referral_visits", "referral_visits_pkey", ("referrer_id", "visitor_id"), lambda r: True),
     ("referrals", "referrals_referred_id_key", ("referred_id",), lambda r: True),
+    # 20261105120000_staff_team.sql
+    ("staff_accounts", "staff_accounts_login_id_key", ("login_id",), lambda r: True),
+    ("staff_sessions", "staff_sessions_token_hash_key", ("token_hash",), lambda r: True),
 ]
 
 
@@ -172,6 +183,20 @@ class Query:
 
     def single(self):
         self._single = True
+        return self
+
+    def or_(self, expr: str):
+        # PostgREST "a.is.null,b.eq.x": a row matches when any part does.
+        parts = []
+        for part in expr.split(","):
+            col, op, val = part.split(".", 2)
+            if op == "is" and val == "null":
+                parts.append(lambda r, c=col: r.get(c) is None)
+            elif op == "eq":
+                parts.append(lambda r, c=col, v=val: str(r.get(c)) == v)
+            else:
+                raise NotImplementedError(f"or_ operator {op}")
+        self.filters.append(lambda r: any(p(r) for p in parts))
         return self
 
     # run

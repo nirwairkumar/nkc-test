@@ -287,6 +287,12 @@ app.include_router(batches.router, prefix="/api/batches", tags=["Batches"])
 from app.routers import referrals
 app.include_router(referrals.router, prefix="/api/referrals", tags=["Referrals"])
 
+# Team dashboard (team.testoza.com): employees with scoped permissions, and the owner's
+# admin → Team management (TestoZa/Team-Dashboard/TEAM_DASHBOARD_PLAN.md)
+from app.routers import staff
+app.include_router(staff.router, prefix="/api/staff", tags=["Team"])
+app.include_router(staff.admin_router, prefix="/api/staff-admin", tags=["Team admin"])
+
 # Visitor's country/state for the test builder's typing-language menu
 from app.routers import locale
 app.include_router(locale.router, prefix="/api/locale", tags=["Locale"])

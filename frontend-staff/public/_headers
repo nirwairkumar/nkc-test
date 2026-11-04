@@ -1,0 +1,22 @@
+# Cloudflare Pages response headers for team.testoza.com.
+# Plan: TestoZa/Team-Dashboard/TEAM_DASHBOARD_PLAN.md (section 6).
+#
+# CSP: scripts and styles from this origin only (no inline, no third parties), API calls
+# to apigcp.testoza.com only, help-message screenshots from Supabase storage, and
+# Trusted Types so a stray innerHTML can't run script.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://ajxtouqthtdenhqcvdft.supabase.co; font-src 'self'; connect-src https://apigcp.testoza.com; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), display-capture=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
+
+# Hashed build files never change, so they may be cached.
+/assets/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable

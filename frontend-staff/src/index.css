@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+/* Long words and links in help messages must wrap instead of widening the page. */
+.prose-text {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy, Gift
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical, LifeBuoy, Gift, UserCog
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -29,13 +29,14 @@ import EmailPanel from './email/EmailPanel';
 import AdminNotificationsPanel from './AdminNotificationsPanel';
 import AdminTestingToolsPanel from './AdminTestingToolsPanel';
 import SupportPanel from './support/SupportPanel';
+import TeamPanel from './team/TeamPanel';
 import { supportApi } from './support/api';
 import { useNotifications } from '@/hooks/useNotifications';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'support' |'tests' | 'categories' | 'users' | 'referrals' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
+type TabId = 'analytics' | 'notifications' | 'support' | 'team' | 'tests' | 'categories' | 'users' | 'referrals' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
@@ -127,6 +128,8 @@ export default function AdminDashboard() {
         {
             title: "System & Pricing",
             items: [
+                // Employees on team.testoza.com: who, what they may open, activity log.
+                { id: 'team' as const, label: 'Team', icon: UserCog },
                 { id: 'features' as const, label: 'Feature Control', icon: Wrench },
                 { id: 'pricing' as const, label: 'Pricing Plans', icon: CreditCard },
                 { id: 'promos' as const, label: 'Promo Codes', icon: Ticket },
@@ -283,6 +286,7 @@ export default function AdminDashboard() {
                     {activeTab === 'referrals' && <ReferralsPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
                     {activeTab === 'support' && <SupportPanel />}
+                    {activeTab === 'team' && <TeamPanel />}
                     {activeTab === 'activity' && <ExamOpsPanel />}
                     {activeTab === 'tests' && <TestsPanel />}
                     {['categories', 'verified_creators', 'combined'].includes(activeTab) && (
