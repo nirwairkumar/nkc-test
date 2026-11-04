@@ -58,3 +58,7 @@ recycle/
 
 # Demo account passwords - local only
 TestoZa/sample-credentials.md
+
+# Third-party clones kept locally; never commit them (Cloudflare Pages build fails on submodule links without .gitmodules)
+mcp-servers/google_ads_mcp/
+videos/shared/sadtalker/
