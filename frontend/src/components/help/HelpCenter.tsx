@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Book, ChevronRight, MessageSquareText } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { fetchMySupportMessages } from '@/lib/supportApi';
+import { fetchMySupportMessages, isOpenConversation } from '@/lib/supportApi';
 import { YOUTUBE_CHANNEL_URL } from '@/lib/helpContact';
 import HelpMessageForm from './HelpMessageForm';
 import SupportConversations from './SupportConversations';
@@ -67,6 +67,7 @@ export default function HelpCenter({ accountEmail, cameFrom }: Props) {
                     <HelpMessageForm
                         accountEmail={accountEmail}
                         cameFrom={cameFrom}
+                        hasOpenConversation={messages.some(isOpenConversation)}
                         onSent={() => qc.invalidateQueries({ queryKey: ['support', 'mine'] })}
                     />
                 </section>

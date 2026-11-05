@@ -129,6 +129,36 @@ def _missing_column(err: Exception) -> bool:
     return "PGRST204" in text or "42703" in text or ("column" in text.lower() and "does not exist" in text.lower())
 
 
+def _first_working(*attempts):
+    """Run the first query whose columns exist: newest SQL first, older fallbacks after."""
+    for i, attempt in enumerate(attempts):
+        try:
+            return attempt()
+        except Exception as err:
+            if i == len(attempts) - 1 or not _missing_column(err):
+                raise
+
+
+# Not resolved = still open. A writer's delete also resolves it (20261105180000_support_user_delete.sql).
+_OPEN_STATUSES = "status.is.null,status.eq.pending,status.eq.replied"
+
+
+def _open_conversation(db: Client, user_id: str, exclude_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """The writer's conversation that is still open. One at a time: a new one starts only after it's resolved."""
+    def query(hide_deleted: bool):
+        q = db.table("support_messages").select("id, status, created_at").eq("user_id", user_id).or_(_OPEN_STATUSES)
+        if hide_deleted:
+            q = q.is_("user_deleted_at", "null")
+        return q.order("created_at", desc=True).limit(5).execute()
+    try:
+        res = _first_working(lambda: query(True), lambda: query(False))
+    except Exception as err:
+        # Never lose a message over this check.
+        logger.warning("support: open-conversation check failed: %s", err)
+        return None
+    return next((r for r in (res.data or []) if r.get("id") != exclude_id), None)
+
+
 def _signed_url(db: Client, path: Optional[str]) -> Optional[str]:
     if not path:
         return None
@@ -164,6 +194,11 @@ def send_support_message(payload: SupportMessage, request: Request, db: Client =
     if not _EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail="Please add your email so we can reply.")
     name = name or email.split("@")[0]
+    if user_id and _open_conversation(db, user_id):
+        raise HTTPException(
+            status_code=409,
+            detail="You already have an open conversation with us. Please reply there; you can start a new one once it's resolved.",
+        )
 
     record: Dict[str, Any] = {
         "name": name,
@@ -267,20 +302,63 @@ def _mark_team_notifications_read(db: Client, message_id: str) -> None:
 
 @router.get("/mine")
 def my_support_messages(request: Request, db: Client = Depends(get_db)):
-    """The signed-in user's own conversations, newest first."""
+    """The signed-in user's own conversations, newest first. Ones they deleted are left out."""
     user_id = verify_auth_token(request, db)
-    table = db.table("support_messages")
+
+    def mine(cols: str, hide_deleted: bool):
+        q = db.table("support_messages").select(cols).eq("user_id", user_id)
+        if hide_deleted:
+            q = q.is_("user_deleted_at", "null")
+        return q.order("created_at", desc=True).limit(20).execute()
+
+    full = "id, created_at, topic, message, status, reply, replied_at, resolved_at"
     try:
-        res = (table.select("id, created_at, topic, message, status, reply, replied_at")
-               .eq("user_id", user_id).order("created_at", desc=True).limit(20).execute())
+        res = _first_working(
+            lambda: mine(full, True),
+            lambda: mine(full, False),  # before 20261105180000_support_user_delete.sql
+            lambda: mine("id, created_at, message, status", False),  # before 20261018150000_support_help.sql
+        )
     except Exception as err:
-        if not _missing_column(err):
-            raise HTTPException(status_code=500, detail="Couldn't load your messages.")
-        res = (table.select("id, created_at, message, status")
-               .eq("user_id", user_id).order("created_at", desc=True).limit(20).execute())
+        logger.error("support/mine failed: %s", err)
+        raise HTTPException(status_code=500, detail="Couldn't load your messages.")
     rows = res.data or []
     _attach_threads(db, rows)
     return {"messages": rows}
+
+
+def _own_message(db: Client, message_id: str, user_id: str) -> Dict[str, Any]:
+    """The writer's own conversation that is still on their Help page, or 404."""
+    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
+    msg = (found.data or [None])[0]
+    if not msg or msg.get("user_id") != user_id or msg.get("user_deleted_at"):
+        raise HTTPException(status_code=404, detail="Message not found.")
+    return msg
+
+
+@router.delete("/messages/{message_id}")
+def user_delete_message(message_id: str, request: Request, db: Client = Depends(get_db)):
+    """
+    The writer removes a conversation from their Help page. The team keeps it as read-only
+    history (admin → Support, team.testoza.com); an open one is closed so nobody waits on it.
+    """
+    user_id = verify_auth_token(request, db)
+    msg = _own_message(db, message_id, user_id)
+    now = datetime.now(timezone.utc).isoformat()
+    update: Dict[str, Any] = {"user_deleted_at": now}
+    closing = msg.get("status") != "resolved"
+    if closing:
+        update.update({"status": "resolved", "resolved_at": now})
+    try:
+        db.table("support_messages").update(update).eq("id", message_id).execute()
+    except Exception as err:
+        if _missing_column(err):
+            logger.warning("support delete: run 20261105180000_support_user_delete.sql")
+            raise HTTPException(status_code=503, detail="Deleting isn't switched on yet. Please try again later.")
+        logger.error("support delete failed: %s", err)
+        raise HTTPException(status_code=500, detail="Couldn't delete that. Please try again.")
+    if closing:
+        _mark_team_notifications_read(db, message_id)
+    return {"success": True}
 
 
 class SupportFollowup(BaseModel):
@@ -298,10 +376,13 @@ def user_followup(message_id: str, payload: SupportFollowup, request: Request, d
     if len(text) > 5000:
         raise HTTPException(status_code=400, detail="Please keep it under 5,000 characters.")
 
-    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
-    msg = (found.data or [None])[0]
-    if not msg or msg.get("user_id") != user_id:
-        raise HTTPException(status_code=404, detail="Message not found.")
+    msg = _own_message(db, message_id, user_id)
+    if msg.get("status") == "resolved":
+        # A resolved conversation is closed; anything new is a new message.
+        raise HTTPException(
+            status_code=409,
+            detail="This conversation is resolved, so it's closed for replies. Write a new message if you need more help.",
+        )
 
     try:
         turn = _add_reply(db, message_id, "user", user_id, text)
@@ -365,7 +446,84 @@ def admin_support_message(message_id: str, request: Request, db: Client = Depend
         raise HTTPException(status_code=404, detail="Message not found.")
     rows = [found.data[0]]
     _enrich(db, rows)
+    rows[0]["history"] = writer_history(db, rows[0])
     return {**rows[0], "emails_on": support_mail.smtp_configured()}
+
+
+HISTORY_LIMIT = 20
+_HISTORY_KEYS = ("id", "created_at", "last_activity_at", "topic", "message", "status", "resolved_at", "user_deleted_at")
+
+
+def writer_history(db: Client, msg: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    The same writer's other conversations, oldest first, so the team reads one timeline:
+    earlier ones (including ones they deleted) above, a newer one below. No contact details.
+    """
+    uid = msg.get("user_id")
+    if not uid:
+        return []
+    try:
+        res = (db.table("support_messages").select("*").eq("user_id", uid).neq("id", msg.get("id"))
+               .order("created_at", desc=True).limit(HISTORY_LIMIT).execute())
+    except Exception as err:
+        logger.warning("support history for %s failed: %s", msg.get("id"), err)
+        return []
+    rows = list(reversed(res.data or []))
+    _attach_threads(db, rows)
+    return [{**{k: r.get(k) for k in _HISTORY_KEYS}, "thread": r["thread"],
+             "screenshot_url": _signed_url(db, r.get("screenshot_path"))} for r in rows]
+
+
+def _guard_team_write(db: Client, msg: Dict[str, Any], reopening: bool) -> None:
+    """A conversation the writer deleted is history: read it, never answer or reopen it."""
+    if msg.get("user_deleted_at"):
+        raise HTTPException(
+            status_code=409,
+            detail="They deleted this conversation from their Help page. It's kept as history and can't be answered or reopened.",
+        )
+    if reopening and msg.get("user_id") and _open_conversation(db, msg["user_id"], exclude_id=msg.get("id")):
+        raise HTTPException(
+            status_code=409,
+            detail="They have started a new conversation since this one was resolved. Reply there instead.",
+        )
+
+
+@router.delete("/admin/messages/{message_id}")
+def admin_delete_support_message(message_id: str, request: Request, db: Client = Depends(get_db)):
+    """Gone for good: the message, its replies (ON DELETE CASCADE), screenshot and notifications."""
+    verify_is_admin(request, db)
+    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
+    if not found.data:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    msg = found.data[0]
+    team_said: List[str] = []
+    try:
+        turns = (db.table("support_replies").select("author, body").eq("message_id", message_id).execute().data or [])
+        team_said = [(t.get("body") or "")[:160] for t in turns if t.get("author") == "team"]
+    except Exception as err:
+        logger.debug("support delete: replies unavailable: %s", err)
+
+    try:
+        db.table("support_messages").delete().eq("id", message_id).execute()
+    except Exception as err:
+        logger.error("support delete %s failed: %s", message_id, err)
+        raise HTTPException(status_code=500, detail="Couldn't delete it. Try again.")
+
+    if msg.get("screenshot_path"):
+        try:
+            db.storage.from_(SUPPORT_BUCKET).remove([msg["screenshot_path"]])
+        except Exception as err:
+            logger.warning("support delete: screenshot %s not removed: %s", msg["screenshot_path"], err)
+    try:
+        # The team's alerts link ?tab=support&id=<id>.
+        db.table("notifications").delete().like("link", f"%id={message_id}%").execute()
+        if msg.get("user_id") and team_said:
+            # The writer's "TestoZa replied" notifications carry the reply text.
+            (db.table("notifications").delete().eq("user_id", msg["user_id"]).eq("link", "/help")
+             .in_("message", team_said).execute())
+    except Exception as err:
+        logger.warning("support delete: notifications not removed: %s", err)
+    return {"success": True}
 
 
 def _enrich(db: Client, rows: List[Dict[str, Any]]) -> None:
@@ -457,6 +615,7 @@ def team_reply(db: Client, message_id: str, reply: str, resolve: bool, *,
     if not found.data:
         raise HTTPException(status_code=404, detail="Message not found.")
     msg = found.data[0]
+    _guard_team_write(db, msg, reopening=not resolve and msg.get("status") == "resolved")
 
     now = datetime.now(timezone.utc).isoformat()
     try:
@@ -514,6 +673,11 @@ def team_set_status(db: Client, message_id: str, status: str, *,
                     admin_id: Optional[str] = None, staff_id: Optional[str] = None) -> Dict[str, Any]:
     if status not in ("pending", "resolved"):
         raise HTTPException(status_code=400, detail="Status must be pending or resolved.")
+    found = db.table("support_messages").select("*").eq("id", message_id).limit(1).execute()
+    if not found.data:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    msg = found.data[0]
+    _guard_team_write(db, msg, reopening=status == "pending" and msg.get("status") == "resolved")
     resolved = status == "resolved"
     update: Dict[str, Any] = {
         "status": status,

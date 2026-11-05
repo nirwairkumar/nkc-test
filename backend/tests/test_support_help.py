@@ -29,6 +29,10 @@ class FakeBucket:
     def upload(self, path, raw, file_options=None):
         self.store[path] = raw
 
+    def remove(self, paths):
+        for p in paths:
+            self.store.pop(p, None)
+
     def create_signed_url(self, path, _expires):
         return {"signedURL": f"https://signed/{path}"}
 
@@ -188,6 +192,14 @@ def test_conversation_back_and_forth(env):
     stranger = client.post(f"/api/support/messages/{msg_id}/reply", json={"message": "me too"}, headers=_auth("other-token"))
     assert stranger.status_code == 404
 
+    # Resolved = closed: the writer can't answer in it any more.
+    closed = client.post(f"/api/support/messages/{msg_id}/reply", json={"message": "Where is New exam?"}, headers=_auth(TEACHER))
+    assert closed.status_code == 409
+    assert "new message" in closed.json()["detail"]
+
+    # Reopened, the writer answers and it goes back to waiting.
+    client.patch(f"/api/support/admin/messages/{msg_id}", json={"status": "pending"}, headers=_auth(ADMIN))
+    db.tables["notifications"].clear()
     res = client.post(f"/api/support/messages/{msg_id}/reply", json={"message": "Where is New exam?"}, headers=_auth(TEACHER))
     assert res.status_code == 200, res.text
     saved = db.tables["support_messages"][0]
@@ -200,6 +212,103 @@ def test_conversation_back_and_forth(env):
     one = client.get(f"/api/support/admin/messages/{msg_id}", headers=_auth(ADMIN)).json()
     assert [t["author"] for t in one["thread"]] == ["team", "user"]
     assert client.get(f"/api/support/admin/messages/{msg_id}", headers=_auth(TEACHER)).status_code == 403
+
+
+def _send(env, text, token=TEACHER):
+    return env["client"].post("/api/support/message", json={"message": text}, headers=_auth(token))
+
+
+def test_one_open_conversation_at_a_time(env):
+    client, db = env["client"], env["db"]
+    assert _send(env, "First problem").status_code == 200
+    second = _send(env, "Second problem")
+    assert second.status_code == 409
+    assert "open conversation" in second.json()["detail"]
+    assert len(db.tables["support_messages"]) == 1
+
+    # Replied is still open.
+    msg_id = db.tables["support_messages"][0]["id"]
+    client.post(f"/api/support/admin/messages/{msg_id}/reply", json={"reply": "Looking"}, headers=_auth(ADMIN))
+    assert _send(env, "Second problem").status_code == 409
+
+    # Resolved: a new conversation can start.
+    client.patch(f"/api/support/admin/messages/{msg_id}", json={"status": "resolved"}, headers=_auth(ADMIN))
+    assert _send(env, "Second problem").status_code == 200
+
+    # The public page has no account to check, so it is never blocked.
+    for _ in range(2):
+        assert client.post("/api/support/message", json={"name": "P", "email": "p@x.in", "message": "hello"}).status_code == 200
+
+
+def test_writer_deletes_and_team_keeps_read_only_history(env):
+    client, db = env["client"], env["db"]
+    _send(env, "Results not showing")
+    old_id = db.tables["support_messages"][0]["id"]
+    client.post(f"/api/support/admin/messages/{old_id}/reply", json={"reply": "Which test?"}, headers=_auth(ADMIN))
+
+    db.add_user("other-token", email="x@y.in")
+    assert client.delete(f"/api/support/messages/{old_id}", headers=_auth("other-token")).status_code == 404
+
+    res = client.delete(f"/api/support/messages/{old_id}", headers=_auth(TEACHER))
+    assert res.status_code == 200, res.text
+    saved = db.tables["support_messages"][0]
+    assert saved["user_deleted_at"] and saved["status"] == "resolved"  # closed, never left "Waiting"
+
+    # Gone from the writer's Help page; they can't answer it; a second delete is a 404.
+    assert client.get("/api/support/mine", headers=_auth(TEACHER)).json()["messages"] == []
+    assert client.post(f"/api/support/messages/{old_id}/reply", json={"message": "hi"}, headers=_auth(TEACHER)).status_code == 404
+    assert client.delete(f"/api/support/messages/{old_id}", headers=_auth(TEACHER)).status_code == 404
+
+    # The team still reads it, but can't answer or reopen it.
+    one = client.get(f"/api/support/admin/messages/{old_id}", headers=_auth(ADMIN)).json()
+    assert one["user_deleted_at"] and [t["body"] for t in one["thread"]] == ["Which test?"]
+    for call in (
+        lambda: client.post(f"/api/support/admin/messages/{old_id}/reply", json={"reply": "Hello?"}, headers=_auth(ADMIN)),
+        lambda: client.patch(f"/api/support/admin/messages/{old_id}", json={"status": "pending"}, headers=_auth(ADMIN)),
+    ):
+        blocked = call()
+        assert blocked.status_code == 409 and "deleted" in blocked.json()["detail"]
+
+    # Deleting closed it, so a new conversation can start; the team sees the old one above it.
+    assert _send(env, "Now the PDF won't upload").status_code == 200
+    new_id = next(m["id"] for m in db.tables["support_messages"] if m["id"] != old_id)
+    new = client.get(f"/api/support/admin/messages/{new_id}", headers=_auth(ADMIN)).json()
+    assert [(h["id"], bool(h["user_deleted_at"])) for h in new["history"]] == [(old_id, True)]
+    assert [t["body"] for t in new["history"][0]["thread"]] == ["Which test?"]
+    assert "email" not in new["history"][0] and "phone" not in new["history"][0]
+    assert client.get(f"/api/support/admin/messages/{old_id}", headers=_auth(ADMIN)).json()["history"][0]["id"] == new_id
+
+
+def test_reopen_is_refused_when_a_newer_conversation_is_open(env):
+    client, db = env["client"], env["db"]
+    _send(env, "Old")
+    old_id = db.tables["support_messages"][0]["id"]
+    client.patch(f"/api/support/admin/messages/{old_id}", json={"status": "resolved"}, headers=_auth(ADMIN))
+    _send(env, "New")
+    res = client.patch(f"/api/support/admin/messages/{old_id}", json={"status": "pending"}, headers=_auth(ADMIN))
+    assert res.status_code == 409 and "new conversation" in res.json()["detail"]
+    again = client.post(f"/api/support/admin/messages/{old_id}/reply", json={"reply": "x", "resolve": False}, headers=_auth(ADMIN))
+    assert again.status_code == 409
+    # A closing note on the old one is fine: it stays resolved.
+    ok = client.post(f"/api/support/admin/messages/{old_id}/reply", json={"reply": "Closing note", "resolve": True}, headers=_auth(ADMIN))
+    assert ok.status_code == 200 and ok.json()["status"] == "resolved"
+
+
+def test_admin_delete_is_permanent(env):
+    client, db = env["client"], env["db"]
+    client.post("/api/support/message", json={"message": "See the picture", "screenshot": PNG_1PX}, headers=_auth(TEACHER))
+    msg = db.tables["support_messages"][0]
+    client.post(f"/api/support/admin/messages/{msg['id']}/reply", json={"reply": "Fixed now"}, headers=_auth(ADMIN))
+    assert db.tables["support_replies"] and env["uploads"]
+    assert any(n["link"].endswith(f"id={msg['id']}") for n in db.tables["notifications"])
+
+    assert client.delete(f"/api/support/admin/messages/{msg['id']}", headers=_auth(TEACHER)).status_code == 403
+    res = client.delete(f"/api/support/admin/messages/{msg['id']}", headers=_auth(ADMIN))
+    assert res.status_code == 200, res.text
+    assert db.tables["support_messages"] == [] and db.tables["support_replies"] == []
+    assert env["uploads"] == {}
+    assert db.tables["notifications"] == []  # team alert and the writer's "TestoZa replied"
+    assert client.delete(f"/api/support/admin/messages/{msg['id']}", headers=_auth(ADMIN)).status_code == 404
 
 
 def test_emails_never_print_the_whatsapp_number():

@@ -66,10 +66,6 @@ def _snippet(text: Optional[str]) -> str:
     return text if len(text) <= SNIPPET else text[:SNIPPET - 1] + "…"
 
 
-def _missing(err: Exception) -> bool:
-    return support_core._missing_column(err)
-
-
 # ── inbox ───────────────────────────────────────────────────────────────────────
 def _count(db: Client, table: str, build) -> int:
     try:
@@ -95,16 +91,20 @@ def inbox(request: Request, ctx: StaffContext = Depends(require_staff("inbox.vie
     unread_feedback = _count(db, "platform_feedback", lambda q: q.is_("read_at", "null"))
 
     events: List[Dict[str, Any]] = []
+    cols = "id, created_at, last_activity_at, name, topic, message, status"
     try:
-        msgs = (db.table("support_messages").select("id, created_at, last_activity_at, name, topic, message, status")
-                .order("created_at", desc=True).limit(25).execute().data or [])
+        msgs = support_core._first_working(
+            lambda: db.table("support_messages").select(cols + ", user_deleted_at")
+            .order("created_at", desc=True).limit(25).execute(),
+            lambda: db.table("support_messages").select(cols).order("created_at", desc=True).limit(25).execute(),
+        ).data or []
     except Exception:
         msgs = []
     for m in msgs:
         events.append({
             "kind": "support", "id": m["id"], "at": m.get("last_activity_at") or m.get("created_at"),
             "title": m.get("name") or "Someone", "topic": m.get("topic"), "text": _snippet(m.get("message")),
-            "status": m.get("status") or "pending",
+            "status": m.get("status") or "pending", "deleted": bool(m.get("user_deleted_at")),
         })
     try:
         fb = (db.table("platform_feedback").select("id, created_at, user_id, rating, source, exam_title, ai, conduct, other, read_at")
@@ -133,16 +133,15 @@ VIEWS = ("open", "replied", "resolved", "all")
 
 
 def _support_page(db: Client, view: str, limit: int, offset: int):
-    def run(order_col: str):
-        q = db.table("support_messages").select(SUPPORT_LIST_COLS, count="exact")
+    def run(cols: str, order_col: str):
+        q = db.table("support_messages").select(cols, count="exact")
         q = support_core._apply_view(q, view)
         return q.order(order_col, desc=True).range(offset, offset + limit - 1).execute()
-    try:
-        return run("last_activity_at")
-    except Exception as err:
-        if not _missing(err):
-            raise
-        return run("created_at")
+    return support_core._first_working(
+        lambda: run(SUPPORT_LIST_COLS + ", user_deleted_at", "last_activity_at"),
+        lambda: run(SUPPORT_LIST_COLS, "last_activity_at"),  # before 20261105180000_support_user_delete.sql
+        lambda: run(SUPPORT_LIST_COLS, "created_at"),
+    )
 
 
 @router.get("/support/messages")
@@ -173,6 +172,8 @@ def _support_one(db: Client, message_id: str) -> Dict[str, Any]:
     rows = [found.data[0]]
     support_core._enrich(db, rows)
     row = rows[0]
+    # The writer's other conversations: messages and dates only, no contact details.
+    row["history"] = support_core.writer_history(db, row)
     row.pop("screenshot_path", None)
     row.pop("resolved_by", None)
     return row

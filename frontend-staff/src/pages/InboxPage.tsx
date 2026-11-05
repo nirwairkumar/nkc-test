@@ -54,7 +54,7 @@ export default function InboxPage() {
                                         <span className="min-w-0 flex-1">
                                             <span className="flex flex-wrap items-center gap-1.5">
                                                 <span className="text-[14px] font-semibold text-slate-900">{e.title}</span>
-                                                {status && <Chip tone={status.tone}>{status.label}</Chip>}
+                                                {e.deleted ? <Chip tone="rose">Deleted by user</Chip> : status && <Chip tone={status.tone}>{status.label}</Chip>}
                                                 {e.kind === 'feedback' && e.rating ? <span className="text-[16px]" aria-label={`Rating ${e.rating} of 5`}>{RATING_FACE[e.rating]}</span> : null}
                                                 {e.kind === 'feedback' && e.source && <Chip>{SOURCE_LABEL[e.source] ?? e.source}</Chip>}
                                                 {e.unread && <Chip tone="indigo">new</Chip>}

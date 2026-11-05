@@ -5,13 +5,17 @@
  *
  * Signed in, the reply goes to the account email; on the public /support page we ask for
  * name and email.
+ *
+ * One open conversation at a time: while a signed-in writer has one, the form gives way to
+ * "reply there" until the team resolves it (or the writer deletes it).
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ImagePlus, Loader2, Send, X } from 'lucide-react';
+import { CheckCircle2, ImagePlus, Loader2, MessagesSquare, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { sendSupportMessage } from '@/lib/supportApi';
 import { HELP_TOPICS, REPLY_PROMISE, type HelpTopic } from '@/lib/helpContact';
 import PhoneField from './PhoneField';
+import { OPEN_CONVERSATION_ID, scrollToHelp } from './SupportConversations';
 
 const MAX_SIDE = 1600;
 
@@ -50,10 +54,15 @@ interface Props {
     accountEmail?: string | null;
     /** Where the person was before opening Help (path), sent as context. */
     cameFrom?: string | null;
+    /** Signed in with a conversation still open (waiting or replied): reply there instead. */
+    hasOpenConversation?: boolean;
     onSent?: () => void;
 }
 
-export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Props) {
+const SOFT_BTN =
+    'inline-flex h-9 items-center rounded-full bg-slate-100 px-4 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-200/80 cursor-pointer';
+
+export default function HelpMessageForm({ accountEmail, cameFrom, hasOpenConversation, onSent }: Props) {
     const signedIn = !!accountEmail;
     const [topic, setTopic] = useState<HelpTopic | null>(null);
     const [message, setMessage] = useState('');
@@ -78,6 +87,11 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
             toast.error("That image couldn't be read. Try another screenshot.");
         }
     };
+
+    // The conversation they just started was resolved or deleted: offer the form again.
+    useEffect(() => {
+        if (signedIn && hasOpenConversation === false) setSentTo(null);
+    }, [signedIn, hasOpenConversation]);
 
     // Ctrl+V / ⌘V a screenshot anywhere on the page while the form is showing.
     useEffect(() => {
@@ -119,6 +133,8 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
         setSending(false);
         if (error) {
             toast.error(error?.response?.data?.detail || "We couldn't send your message. Please try again, or WhatsApp us.");
+            // 409: a conversation is already open (another tab, say). Refresh so it shows.
+            if (error?.response?.status === 409) onSent?.();
             return;
         }
         setSentTo(data?.email || accountEmail || email.trim());
@@ -140,12 +156,31 @@ export default function HelpMessageForm({ accountEmail, cameFrom, onSent }: Prop
                     We'll reply to <span className="font-medium text-slate-800">{sentTo}</span>. {REPLY_PROMISE}
                     {signedIn && ' The reply also shows below, where you can write back.'}
                 </p>
-                <button
-                    type="button"
-                    onClick={() => setSentTo(null)}
-                    className="mt-4 inline-flex h-9 items-center rounded-full bg-slate-100 px-4 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-200/80 cursor-pointer"
-                >
-                    Write another message
+                {signedIn ? (
+                    <button type="button" onClick={() => scrollToHelp(OPEN_CONVERSATION_ID)} className={`mt-4 ${SOFT_BTN}`}>
+                        See your conversation
+                    </button>
+                ) : (
+                    <button type="button" onClick={() => setSentTo(null)} className={`mt-4 ${SOFT_BTN}`}>
+                        Write another message
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    if (signedIn && hasOpenConversation) {
+        return (
+            <div className="flex flex-col items-center px-4 py-8 text-center" role="status">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-sky-600 ring-1 ring-sky-600/15">
+                    <MessagesSquare className="h-6 w-6" />
+                </span>
+                <p className="mt-3 text-[17px] font-semibold tracking-[-0.01em] text-slate-900">You have an open conversation</p>
+                <p className="mt-1 max-w-sm text-[14px] leading-relaxed text-slate-600">
+                    Please add anything new there, so it all stays in one place. Once it's resolved, you can start a new one here.
+                </p>
+                <button type="button" onClick={() => scrollToHelp(OPEN_CONVERSATION_ID)} className={`mt-4 ${SOFT_BTN}`}>
+                    Go to your conversation
                 </button>
             </div>
         );

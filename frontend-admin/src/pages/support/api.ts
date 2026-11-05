@@ -41,7 +41,24 @@ export interface SupportMessage {
     replied_at?: string | null;
     resolved_at?: string | null;
     last_activity_at?: string | null;
+    /** The writer deleted it from their Help page: read-only history from then on. */
+    user_deleted_at?: string | null;
     account?: SupportAccount;
+    thread: SupportTurn[];
+    /** Only on the single-message read: the writer's other conversations, oldest first. */
+    history?: SupportHistoryItem[];
+}
+
+export interface SupportHistoryItem {
+    id: string;
+    created_at: string;
+    last_activity_at?: string | null;
+    topic?: string | null;
+    message: string;
+    status?: SupportStatus | null;
+    resolved_at?: string | null;
+    user_deleted_at?: string | null;
+    screenshot_url?: string | null;
     thread: SupportTurn[];
 }
 
@@ -64,6 +81,8 @@ export const supportApi = {
         },
     setStatus: async (id: string, status: 'pending' | 'resolved') =>
         (await apiClient.patch(`/support/admin/messages/${id}`, { status })).data,
+    /** Permanent: the message, its replies, screenshot and notifications. */
+    remove: async (id: string) => (await apiClient.delete(`/support/admin/messages/${id}`)).data,
 };
 
 // ── Platform feedback (sidebar Feedback page + the card after stopping an exam) ──

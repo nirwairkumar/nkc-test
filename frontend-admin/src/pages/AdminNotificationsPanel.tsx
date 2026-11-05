@@ -447,7 +447,13 @@ export default function AdminNotificationsPanel() {
                         const cat = getNotificationCategory(n);
                         const messageId = supportMessageId(n);
                         const ticket = messageId ? supportById.get(messageId) : undefined;
-                        const ticketChip = ticket ? STATUS_CHIP[ticket.status || 'pending'] || STATUS_CHIP.pending : null;
+                        // A conversation the writer deleted is read-only history: "View", not "Reply".
+                        const ticketDeleted = !!ticket?.user_deleted_at;
+                        const ticketChip = ticket
+                            ? ticketDeleted
+                                ? { label: 'Deleted by user', tone: 'rose' as const }
+                                : STATUS_CHIP[ticket.status || 'pending'] || STATUS_CHIP.pending
+                            : null;
                         const readStatus = messageId
                             ? (supportGroups.get(messageId) || [n]).every(isRead)
                             : isRead(n);
@@ -497,7 +503,8 @@ export default function AdminNotificationsPanel() {
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset ${
                                                     ticketChip.tone === 'amber' ? 'bg-amber-50 text-amber-800 ring-amber-600/20'
                                                         : ticketChip.tone === 'sky' ? 'bg-sky-50 text-sky-700 ring-sky-600/15'
-                                                            : 'bg-emerald-50 text-emerald-700 ring-emerald-600/15'
+                                                            : ticketChip.tone === 'rose' ? 'bg-rose-50 text-rose-700 ring-rose-600/15'
+                                                                : 'bg-emerald-50 text-emerald-700 ring-emerald-600/15'
                                                 }`}>
                                                     {ticketChip.label}
                                                 </span>
@@ -551,7 +558,7 @@ export default function AdminNotificationsPanel() {
                                             onClick={() => openConversation(messageId)}
                                             className="h-8 rounded-full bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700"
                                         >
-                                            <Reply className="mr-1 h-3.5 w-3.5" /> Reply
+                                            {ticketDeleted ? 'View' : <><Reply className="mr-1 h-3.5 w-3.5" /> Reply</>}
                                         </Button>
                                     )}
                                     {!readStatus && (

@@ -34,6 +34,8 @@ export interface InboxEvent {
     text: string;
     topic?: string | null;
     status?: string;
+    /** Support only: the writer deleted it from their Help page. */
+    deleted?: boolean;
     rating?: number | null;
     source?: string | null;
     exam_title?: string | null;
@@ -61,7 +63,23 @@ export interface SupportRow {
     source?: string | null;
     replied_at?: string | null;
     resolved_at?: string | null;
+    /** The writer deleted it from their Help page: read-only history. */
+    user_deleted_at?: string | null;
     contact_masked?: boolean;
+}
+
+/** The writer's other conversations (no contact details), oldest first. */
+export interface SupportHistoryItem {
+    id: string;
+    created_at: string;
+    last_activity_at?: string | null;
+    topic?: string | null;
+    message: string;
+    status?: 'pending' | 'replied' | 'resolved' | null;
+    resolved_at?: string | null;
+    user_deleted_at?: string | null;
+    screenshot_url?: string | null;
+    thread: SupportTurn[];
 }
 
 export interface SupportTurn {
@@ -77,6 +95,7 @@ export interface SupportMessage extends SupportRow {
     screenshot_url?: string | null;
     account?: { full_name?: string | null; designation?: string | null; joined_at?: string | null; tests: number };
     thread: SupportTurn[];
+    history?: SupportHistoryItem[];
     can_reply: boolean;
     emails_on: boolean;
 }

@@ -220,6 +220,28 @@ function Avatar({ m }: { m: SupportMessage }) {
 function Row({ m, onOpen }: { m: SupportMessage; onOpen: () => void }) {
     const s = STATUS_CHIP[m.status || 'pending'] || STATUS_CHIP.pending;
     const last = m.thread?.[m.thread.length - 1];
+    if (m.user_deleted_at) {
+        // The writer deleted it: read-only history, folded to one line.
+        return (
+            <li>
+                <button type="button" onClick={onOpen}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left opacity-70 transition-[background-color,opacity] hover:bg-slate-50 hover:opacity-100 focus-visible:bg-slate-50 focus-visible:opacity-100 focus-visible:outline-none">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500">
+                        {initials(m.account?.full_name || m.name)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                            <span className="truncate text-[13px] font-semibold text-slate-700">{m.account?.full_name || m.name}</span>
+                            <Chip tone="rose">Deleted by user</Chip>
+                        </span>
+                        <span className="block truncate text-[12px] text-slate-500">{m.message}</span>
+                    </span>
+                    <span className="shrink-0 text-[12px] text-slate-400">{relative(m.last_activity_at || m.created_at)}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+                </button>
+            </li>
+        );
+    }
     return (
         <li>
             <button type="button" onClick={onOpen}

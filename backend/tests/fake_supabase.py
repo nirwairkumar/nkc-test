@@ -333,6 +333,8 @@ class FakeSupabase:
 
     def _cascade(self, table: str, gone: List[Dict[str, Any]]):
         ids = {r["id"] for r in gone}
+        if table == "support_messages":  # support_replies.message_id ON DELETE CASCADE
+            self.tables["support_replies"] = [t for t in self.tables.get("support_replies", []) if t.get("message_id") not in ids]
         if table == "exam_sessions":
             self.tables["session_participants"] = [p for p in self.tables.get("session_participants", []) if p["session_id"] not in ids]
             for a in self.tables.get("user_tests", []):

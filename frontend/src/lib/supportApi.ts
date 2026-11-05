@@ -48,8 +48,12 @@ export interface MySupportMessage {
     status?: string | null;
     reply?: string | null;
     replied_at?: string | null;
+    resolved_at?: string | null;
     thread: SupportTurn[];
 }
+
+/** Resolved = closed: no more replies, and a new message can start. One open at a time. */
+export const isOpenConversation = (m: Pick<MySupportMessage, 'status'>) => m.status !== 'resolved';
 
 export async function fetchMySupportMessages(): Promise<MySupportMessage[]> {
     const response = await apiClient.get('/support/mine');
@@ -60,6 +64,11 @@ export async function fetchMySupportMessages(): Promise<MySupportMessage[]> {
 export async function replyToSupportMessage(id: string, message: string): Promise<SupportTurn> {
     const response = await apiClient.post(`/support/messages/${id}/reply`, { message });
     return response.data.reply;
+}
+
+/** Remove a conversation from your Help page. The team keeps it as history. */
+export async function deleteMySupportMessage(id: string): Promise<void> {
+    await apiClient.delete(`/support/messages/${id}`);
 }
 
 export async function submitExitFeedback(data: { test_id: string; experience: string; user_id?: string }) {
