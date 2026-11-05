@@ -17,7 +17,7 @@ import { SessionProvider, useSession } from '@/lib/session';
 import type { Permission } from '@/lib/types';
 import AccountPage from '@/pages/AccountPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
-import EmailPage from '@/pages/EmailPage';
+import EmailPanel from '@/pages/email/EmailPanel';
 import FeedbackPage from '@/pages/FeedbackPage';
 import HomePage from '@/pages/HomePage';
 import InboxPage from '@/pages/InboxPage';
@@ -62,7 +62,7 @@ function Screens() {
                 <Route path="/support/:id" element={<Guard needs="support.view"><SupportPage /></Guard>} />
                 <Route path="/feedback" element={<Guard needs="feedback.view"><FeedbackPage /></Guard>} />
                 <Route path="/analytics" element={<Guard needs="analytics.view"><AnalyticsPage /></Guard>} />
-                <Route path="/email" element={<Guard needs="email.view"><EmailPage /></Guard>} />
+                <Route path="/email" element={<Guard needs="email.view"><EmailPanel /></Guard>} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -18,6 +18,9 @@ export function relative(iso: string | null | undefined): string {
 export const dateOnly = (iso: string) =>
     new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: IST });
 
+export const timeOnly = (iso: string) =>
+    new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: IST });
+
 export const dateTime = (iso: string) =>
     new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: IST });
 

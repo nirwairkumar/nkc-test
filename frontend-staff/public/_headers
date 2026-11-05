@@ -1,11 +1,14 @@
 # Cloudflare Pages response headers for team.testoza.com.
 # Plan: TestoZa/Team-Dashboard/TEAM_DASHBOARD_PLAN.md (section 6).
 #
-# CSP: scripts and styles from this origin only (no inline, no third parties), API calls
-# to apigcp.testoza.com only, help-message screenshots from Supabase storage, and
+# CSP: scripts and styles from this origin only (no inline scripts, no third parties), API
+# calls to apigcp.testoza.com only, help-message screenshots from Supabase storage, and
 # Trusted Types so a stray innerHTML can't run script.
+# Email previews: the server's email HTML is shown in a sandboxed iframe (no scripts) loaded
+# from a blob: URL, which inherits this policy. Hence frame-src blob: and style-src-attr
+# 'unsafe-inline' (an email's own style="" attributes; style attributes can't run code).
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://ajxtouqthtdenhqcvdft.supabase.co; font-src 'self'; connect-src https://apigcp.testoza.com; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; frame-src blob:; img-src 'self' data: https://ajxtouqthtdenhqcvdft.supabase.co; font-src 'self'; connect-src https://apigcp.testoza.com; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer

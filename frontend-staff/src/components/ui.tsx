@@ -68,13 +68,17 @@ export function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>
     );
 }
 
-export function Chip({ children, tone = 'slate', className }: {
+export type ChipTone = 'slate' | 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky' | 'violet';
+
+export function Chip({ children, tone = 'slate', className, title }: {
     children: React.ReactNode;
-    tone?: 'slate' | 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky';
+    tone?: ChipTone;
     className?: string;
+    title?: string;
 }) {
     const tones = {
         slate: 'bg-slate-100 text-slate-600',
+        violet: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/15',
         indigo: 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/15',
         emerald: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15',
         amber: 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20',
@@ -82,7 +86,7 @@ export function Chip({ children, tone = 'slate', className }: {
         sky: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/15',
     };
     return (
-        <span className={cx('inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', tones[tone], className)}>
+        <span title={title} className={cx('inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', tones[tone], className)}>
             {children}
         </span>
     );

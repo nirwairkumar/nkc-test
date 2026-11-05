@@ -48,7 +48,7 @@ Employees **cannot** sign up and **cannot** use Google sign-in. Only you can cre
 | **Short sessions, instant revoke** | Stolen sessions expire fast, and a fired employee is cut off immediately. | Signs out after 30 minutes idle and after 12 hours in total. Suspending an employee ends their sessions within seconds. |
 | **Separate internal app** | Internal tools live on their own domain, are not indexed, and load nothing from third parties. | team.testoza.com is its own Cloudflare Pages project. It sets a strict security policy for the browser, loads no outside scripts and has no Supabase key. |
 | **Data minimisation** | Staff see the least personal data needed for the task. | Support shows the writer's name and message. Email and phone are masked (`ra•••@gmail.com`) unless you tick "See contact details". |
-| **Maker–checker (four-eyes rule)** | Risky actions need a second person. | Phase 2: email campaigns and user notifications that staff prepare go out only after you approve them. In phase 1 these are view-only. |
+| **Maker–checker (four-eyes rule)** | Risky actions need a second person. | Not used for email yet: on 5 Nov 2026 you chose "same as admin" so the work can be handed over now. Instead, team sends have hard limits (links only to testoza.com or YouTube, tests only to their own address, 10 sends a day) and admin → History names the sender. Approval before sending can be added later if a send ever goes wrong. User notifications are still phase 2. |
 | **Joiner–Mover–Leaver process** | A checklist for hiring, role changes and exits. | See section 9. Access end dates switch accounts off automatically. |
 | **Zero-trust access** (Google's BeyondCorp approach) | The login page itself is hidden from the internet. | Optional extra layer (section 10): Cloudflare Access in front of team.testoza.com, free for up to 50 people. |
 
@@ -93,9 +93,12 @@ Employees **cannot** sign up and **cannot** use Google sign-in. Only you can cre
 | `support.contact` | See the writer's full email address and phone number | — |
 | `feedback.view` | Read platform feedback and after-exam emoji ratings | — |
 | `analytics.view` | Visitors, sign-ups, traffic sources and growth: numbers only, no personal data | See the people list, sessions or anyone's identity |
-| `email.view` | Past email sends: subject, audience, sent, came back, unsubscribed | See recipient lists, compose, send, or open Email Settings |
+| `email.view` | **See emails and results**: the Playbook, the email library, past sends with their results, the automatic emails | See people lists, compose, send, or open Email Settings |
+| `email.send` | **Write and send emails**: everything in admin → Email except Settings. Pick people, write, preview, send a test, send, pause and resume, edit the library, add an address to the never-email list | See full email addresses (masked like `as•••@gmail.com`; a full address typed into search still finds the person). Link anywhere except testoza.com and YouTube. Send a test anywhere except their own login email or an @testoza.com address. More than 20 tests an hour or 10 sends a day. Open Settings, take an address off the never-email list, switch automatic emails on or off |
 
-`support.reply` and `support.contact` include `support.view` automatically.
+`support.reply` and `support.contact` include `support.view` automatically. `email.send` includes `email.view`.
+
+Every email send from the team site goes through the same server code as admin, so the one-email-a-week rule, the monthly cap, the SES warm-up and unsubscribes apply unchanged. The send loop runs in the browser, as in admin: if the team site signs the person out while a send waits for the next hour, they sign in again and press Resume in History.
 
 ### Role presets (shortcuts in the admin panel)
 
@@ -103,6 +106,7 @@ Employees **cannot** sign up and **cannot** use Google sign-in. Only you can cre
 |---|---|
 | Support agent | inbox, support.view, support.reply, feedback |
 | Growth assistant | inbox, analytics, email.view, feedback |
+| Email sender | inbox, analytics, email.view, email.send, feedback |
 | Analyst | analytics, email.view |
 | Custom | whatever you tick |
 
@@ -224,7 +228,9 @@ app/routers/staff/inbox.py       /api/staff/inbox                       inbox.vi
 app/routers/staff/support.py     /api/staff/support/messages[/{id}[/reply]]   support.*
 app/routers/staff/feedback.py    /api/staff/feedback                    feedback.view
 app/routers/staff/analytics.py   /api/staff/analytics/{overview,growth} analytics.view
-app/routers/staff/email.py       /api/staff/email/campaigns             email.view
+app/routers/staff/email.py       /api/staff/email/*  (same functions as admin email_broadcast.py / email_auto.py)
+                                 email.view: overview, templates, preview, campaigns, auto
+                                 email.send: audience, test, templates edit, campaigns send/pause, suppressions
 app/routers/staff/admin.py       /api/staff-admin/*  (owner): catalog, accounts CRUD, reset password,
                                  reset 2-step, sign out everywhere, sessions, activity log
 app/core/config.py               + https://team.testoza.com in ALLOWED_ORIGINS, STAFF_ORIGINS
@@ -297,7 +303,7 @@ Zero Trust → Access → Applications → add `team.testoza.com` → allow only
 
 | Item | Why |
 |---|---|
-| **Email drafts with your approval** | Employee writes the email and picks the audience; it sends only after you click Approve in the admin panel (maker–checker) |
+| **Email approval (optional)** | Sending is live for `email.send` since 5 Nov 2026. If you ever want a second pair of eyes: sends above N people wait for your Approve in admin (maker–checker) |
 | **Send in-app notifications to users, with approval** | You chose "Both": the inbox now, sending later |
 | **Educator Success list** | New educators with no exam yet, plus a call/WhatsApp button (needs `people.contact`). This is where an intern's time is actually worth most (see the note below) |
 | **2-step for your own admin account** | admin.testoza.com is still password-only. It is now the biggest single risk: one admin password opens everything |

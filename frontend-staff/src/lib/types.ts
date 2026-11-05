@@ -7,7 +7,8 @@ export type Permission =
     | 'support.contact'
     | 'feedback.view'
     | 'analytics.view'
-    | 'email.view';
+    | 'email.view'
+    | 'email.send';
 
 export interface Me {
     stage: 'mfa' | 'full';
@@ -177,21 +178,4 @@ export interface GrowthReport {
     growth: Growth;
     previous: Growth;
     north_star: SeriesPoint[];
-}
-
-export interface CampaignRow {
-    id: string;
-    name: string;
-    subject: string;
-    audience_label: string;
-    status: 'sending' | 'paused' | 'done';
-    planned: number;
-    from_name: string;
-    created_at: string;
-    finished_at: string | null;
-    sent: number;
-    failed: number;
-    came_back: number;
-    made_test?: number;
-    unsubscribed: number;
 }

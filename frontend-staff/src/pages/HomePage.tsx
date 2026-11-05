@@ -10,7 +10,7 @@ const BLURB: Record<string, string> = {
     '/support': 'Read and answer help messages from educators.',
     '/feedback': 'What educators say about TestoZa, and their after-exam ratings.',
     '/analytics': 'Visitors, sign-ups and growth. Numbers only.',
-    '/email': 'Past email sends and how people responded.',
+    '/email': 'Who to email this week, the email library, and how past sends did.',
     '/account': 'Your details and password.',
 };
 

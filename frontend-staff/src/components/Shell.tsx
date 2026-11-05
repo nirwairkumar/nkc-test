@@ -21,7 +21,7 @@ export const NAV: NavItem[] = [
     { to: '/support', label: 'Support', icon: LifeBuoy, needs: 'support.view', badge: 'support' },
     { to: '/feedback', label: 'Feedback', icon: MessageSquareHeart, needs: 'feedback.view' },
     { to: '/analytics', label: 'Analytics', icon: BarChart3, needs: 'analytics.view' },
-    { to: '/email', label: 'Email history', icon: Mail, needs: 'email.view' },
+    { to: '/email', label: 'Email', icon: Mail, needs: 'email.view' },
     { to: '/account', label: 'My account', icon: UserRound },
 ];
 
