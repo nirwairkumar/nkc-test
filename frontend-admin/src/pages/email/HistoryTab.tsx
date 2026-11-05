@@ -64,7 +64,9 @@ export default function HistoryTab({ overview, openId, onOpenId }: { overview?: 
                                         <Chip tone={STATUS_CHIP[c.status].tone}>{STATUS_CHIP[c.status].label}</Chip>
                                     </span>
                                     <span className="mt-0.5 block truncate text-[13px] text-slate-600">{readable(c.subject)}</span>
-                                    <span className="mt-0.5 block truncate text-[12px] text-slate-500">{c.audience_label} · {istDateTime(c.created_at)}</span>
+                                    <span className="mt-0.5 block truncate text-[12px] text-slate-500">
+                                        {c.audience_label} · {istDateTime(c.created_at)}{c.sent_by ? ` · by ${c.sent_by.name} (team)` : ''}
+                                    </span>
                                 </span>
                                 <span className="grid shrink-0 grid-cols-2 gap-x-4 gap-y-0.5 text-right text-[12px] sm:grid-cols-4">
                                     <Num label="sent" v={c.sent} />
@@ -154,6 +156,7 @@ function CampaignSheet({ id, hourlyLimit, onClose }: { id: string | null; hourly
                         <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">Subject</p>
                         <p className="mt-0.5 text-[15px] font-medium text-slate-900">{readable(c.subject)}</p>
                         <p className="mt-2 text-[12px] text-slate-500">From {c.from_name} &lt;{c.from_email}&gt; · replies to {c.reply_to ?? 'support@testoza.com'}</p>
+                        {c.sent_by && <p className="mt-1 text-[12px] text-slate-500">Sent by {c.sent_by.name} from team.testoza.com</p>}
                     </div>
 
                     <section>

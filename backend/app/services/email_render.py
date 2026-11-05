@@ -370,6 +370,37 @@ def render(
     }
 
 
+_BARE_URL = re.compile(r"(?:https?://|www\.)[^\s<>()\[\]\"'{}|]+", re.I)
+
+
+def link_hosts(subject: str, body: str) -> List[str]:
+    """
+    Every web address an email points to (links, buttons, and bare addresses, which Gmail turns
+    into links by itself), details filled with the sample person. Hosts only, lowercase.
+    Used to keep emails sent from team.testoza.com on our own sites.
+    The unfilled text is scanned too: a detail's fallback ({first_name|https://…}) is what
+    people without that detail receive.
+    """
+    raw = f"{subject}\n\n{body}"
+    text = fill(raw, person_vars(SAMPLE_PERSON))
+    urls = [m.group(2) for m in _LINK.finditer(text)]
+    urls += [m.group(2) for block in _blocks(text) if (m := _BUTTON.match(block.strip()))]
+    urls += _BARE_URL.findall(text) + _BARE_URL.findall(raw)
+    hosts: List[str] = []
+    for u in urls:
+        u = u.strip()
+        if u.lower().startswith("www."):
+            u = "https://" + u
+        try:
+            host = (urlsplit(u).hostname or "").lower()
+        except ValueError:
+            host = ""
+        host = host or u[:60].lower()  # mailto:, javascript: and the like: name them as written
+        if host not in hosts:
+            hosts.append(host)
+    return hosts
+
+
 def check_template(subject: str, body: str) -> Tuple[bool, List[str]]:
     """Render with the sample person: (ok, warnings). Used before saving an edit."""
     out = render(subject, "", body, SAMPLE_PERSON)

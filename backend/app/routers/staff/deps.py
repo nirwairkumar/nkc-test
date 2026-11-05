@@ -69,19 +69,28 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "description": "Visitors, sign-ups, traffic sources and growth. Numbers only, no personal data.",
     },
     "email.view": {
-        "group": "Email", "label": "Email history",
-        "description": "Past sends with their results. No recipient lists, no composing or sending.",
+        "group": "Email", "label": "See emails and results",
+        "description": "The playbook, the email library, past sends with their results and the automatic emails. "
+                       "Read only: no people lists, no sending.",
+    },
+    "email.send": {
+        "group": "Email", "label": "Write and send emails",
+        "description": "Everything in admin → Email except Settings: pick people, write, test, send, pause, "
+                       "edit the library, stop an address. Email addresses stay masked; links only to "
+                       "testoza.com or YouTube; tests only to their own or a testoza.com address.",
     },
 }
 
 IMPLIES: Dict[str, List[str]] = {
     "support.reply": ["support.view"],
     "support.contact": ["support.view"],
+    "email.send": ["email.view"],
 }
 
 PRESETS: List[Dict[str, Any]] = [
     {"label": "Support agent", "permissions": ["inbox.view", "support.view", "support.reply", "feedback.view"]},
     {"label": "Growth assistant", "permissions": ["inbox.view", "analytics.view", "email.view", "feedback.view"]},
+    {"label": "Email sender", "permissions": ["inbox.view", "analytics.view", "email.view", "email.send", "feedback.view"]},
     {"label": "Analyst", "permissions": ["analytics.view", "email.view"]},
 ]
 

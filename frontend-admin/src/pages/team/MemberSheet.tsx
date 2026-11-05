@@ -15,7 +15,9 @@ import { CARD, Chip, IosSheet, PILL_BTN } from '../analytics/ui';
 import ActivityLog, { deviceLabel } from './ActivityLog';
 import { errorText, TEAM_URL, teamApi, type Catalog, type StaffAccount } from './api';
 
-const IMPLIES: Record<string, string[]> = { 'support.reply': ['support.view'], 'support.contact': ['support.view'] };
+const IMPLIES: Record<string, string[]> = {
+    'support.reply': ['support.view'], 'support.contact': ['support.view'], 'email.send': ['email.view'],
+};
 
 const INPUT =
     'h-10 w-full rounded-xl bg-white px-3 text-[14px] text-slate-900 ring-1 ring-slate-900/[0.1] placeholder:text-slate-400 ' +

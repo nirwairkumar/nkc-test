@@ -51,9 +51,8 @@ def _missing(exc: Exception) -> bool:
     return any(s in str(exc) for s in ("PGRST202", "PGRST205", "Could not find the function", "does not exist"))
 
 
-@router.get("/auto")
-def overview(request: Request, db: Client = Depends(get_db)):
-    verify_is_admin(request, db)
+# Plain functions behind the admin routes, shared with team.testoza.com (routers/staff/email.py).
+def auto_report(db: Client) -> Dict[str, Any]:
     installed = True
     report: Dict[str, Any] = {}
     try:
@@ -81,11 +80,14 @@ def overview(request: Request, db: Client = Depends(get_db)):
     }
 
 
-@router.get("/auto/log")
-def log(request: Request, kind: Optional[str] = None, status: Optional[Literal["sent", "failed", "skipped"]] = None,
-        q: Optional[str] = Query(None, max_length=120), limit: int = 50, offset: int = 0,
-        db: Client = Depends(get_db)):
+@router.get("/auto")
+def overview(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
+    return auto_report(db)
+
+
+def auto_log(db: Client, kind: Optional[str], status: Optional[str], q: Optional[str],
+             limit: int = 50, offset: int = 0) -> Dict[str, Any]:
     try:
         query = db.table("email_auto_log").select(
             "id, kind, email, subject, status, error, provider, milestone, test_id, user_id, created_at", count="exact")
@@ -108,6 +110,14 @@ def log(request: Request, kind: Optional[str] = None, status: Optional[Literal["
     return {"rows": res.data or [], "total": int(res.count or 0), "installed": True}
 
 
+@router.get("/auto/log")
+def log(request: Request, kind: Optional[str] = None, status: Optional[Literal["sent", "failed", "skipped"]] = None,
+        q: Optional[str] = Query(None, max_length=120), limit: int = 50, offset: int = 0,
+        db: Client = Depends(get_db)):
+    verify_is_admin(request, db)
+    return auto_log(db, kind, status, q, limit, offset)
+
+
 @router.patch("/auto/{kind}")
 def toggle(kind: str, payload: Toggle, request: Request, db: Client = Depends(get_db)):
     admin_id = verify_is_admin(request, db)
@@ -121,11 +131,15 @@ def toggle(kind: str, payload: Toggle, request: Request, db: Client = Depends(ge
     return {"key": kind, "enabled": payload.enabled}
 
 
+def auto_preview(kind: str) -> Dict[str, Any]:
+    mail = auto_email_content.sample(_kind(kind))
+    return {"subject": mail["subject"], "preheader": mail["preheader"], "html": mail["html"], "text": mail["text"]}
+
+
 @router.post("/auto/{kind}/preview")
 def preview(kind: str, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
-    mail = auto_email_content.sample(_kind(kind))
-    return {"subject": mail["subject"], "preheader": mail["preheader"], "html": mail["html"], "text": mail["text"]}
+    return auto_preview(kind)
 
 
 @router.post("/auto/{kind}/test")

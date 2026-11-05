@@ -165,11 +165,15 @@ export interface Campaign {
     made_test: number;
     clicked: number;
     unsubscribed: number;
+    /** Sent by a team member on team.testoza.com (null = from admin). */
+    sent_by?: SentBy | null;
 }
+
+export interface SentBy { kind: 'team'; staff_id: string | null; name: string }
 
 export interface CampaignDetail {
     campaign: Omit<Campaign, 'sent' | 'failed' | 'came_back' | 'made_test' | 'clicked' | 'unsubscribed'> & {
-        preheader: string; body: string; filter: AudienceFilter; reply_to: string | null;
+        preheader: string; body: string; filter: AudienceFilter; reply_to: string | null; sent_by?: SentBy | null;
     };
     recipients: {
         id: string; user_id: string; email: string; full_name: string | null; designation: string | null;

@@ -58,7 +58,7 @@ from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid, parseaddr
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
 import httpx
@@ -679,9 +679,10 @@ def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: Client 
     return {"success": True, "smtp_user": broadcast_smtp_config["user"]}
 
 
-@router.get("/overview")
-def overview(request: Request, db: Client = Depends(get_db)):
-    verify_is_admin(request, db)
+# Each route below is a thin admin wrapper around a plain function, so team.testoza.com
+# (routers/staff/email.py) runs exactly the same code with its own permission checks.
+
+def overview_report(db: Client) -> Dict[str, Any]:
     ensure_library(db)
     data = _rpc(db, "email_report_overview", _guard_params()) or {}
     return {
@@ -695,9 +696,13 @@ def overview(request: Request, db: Client = Depends(get_db)):
     }
 
 
-@router.get("/templates")
-def list_templates(request: Request, db: Client = Depends(get_db)):
+@router.get("/overview")
+def overview(request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
+    return overview_report(db)
+
+
+def templates_report(db: Client) -> Dict[str, Any]:
     ensure_library(db)
     rows = _table(db, "email_templates").select("*").order("sort").execute().data or []
     for r in rows:
@@ -707,9 +712,18 @@ def list_templates(request: Request, db: Client = Depends(get_db)):
     return {"templates": rows, "variables": email_render.VARIABLES}
 
 
+@router.get("/templates")
+def list_templates(request: Request, db: Client = Depends(get_db)):
+    verify_is_admin(request, db)
+    return templates_report(db)
+
+
 @router.post("/templates")
 def create_template(payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
-    admin_id = verify_is_admin(request, db)
+    return template_create(db, payload, verify_is_admin(request, db))
+
+
+def template_create(db: Client, payload: TemplateFields, admin_id: Optional[str] = None) -> Dict[str, Any]:
     v = _template_values(payload, creating=True)
     _check_content(v["subject"], v["body"])
     row = {
@@ -724,7 +738,10 @@ def create_template(payload: TemplateFields, request: Request, db: Client = Depe
 
 @router.patch("/templates/{key}")
 def update_template(key: str, payload: TemplateFields, request: Request, db: Client = Depends(get_db)):
-    admin_id = verify_is_admin(request, db)
+    return template_update(db, key, payload, verify_is_admin(request, db))
+
+
+def template_update(db: Client, key: str, payload: TemplateFields, admin_id: Optional[str] = None) -> Dict[str, Any]:
     cur = _table(db, "email_templates").select("*").eq("key", key).limit(1).execute().data
     if not cur:
         raise HTTPException(status_code=404, detail="Email not found")
@@ -737,8 +754,11 @@ def update_template(key: str, payload: TemplateFields, request: Request, db: Cli
 
 @router.post("/templates/{key}/duplicate")
 def duplicate_template(key: str, request: Request, db: Client = Depends(get_db)):
+    return template_duplicate(db, key, verify_is_admin(request, db))
+
+
+def template_duplicate(db: Client, key: str, admin_id: Optional[str] = None) -> Dict[str, Any]:
     """A copy is a one-off (no track), so it can never become a second step of the same track by accident."""
-    admin_id = verify_is_admin(request, db)
     cur = _table(db, "email_templates").select("*").eq("key", key).limit(1).execute().data
     if not cur:
         raise HTTPException(status_code=404, detail="Email not found")
@@ -760,7 +780,10 @@ def duplicate_template(key: str, request: Request, db: Client = Depends(get_db))
 
 @router.post("/templates/{key}/restore")
 def restore_template(key: str, request: Request, db: Client = Depends(get_db)):
-    admin_id = verify_is_admin(request, db)
+    return template_restore(db, key, verify_is_admin(request, db))
+
+
+def template_restore(db: Client, key: str, admin_id: Optional[str] = None) -> Dict[str, Any]:
     orig = email_library.BY_KEY.get(key)
     if not orig:
         raise HTTPException(status_code=400, detail="Only ready-made emails can be restored")
@@ -772,27 +795,45 @@ def restore_template(key: str, request: Request, db: Client = Depends(get_db)):
     return (res.data or [{"key": key, **v}])[0]
 
 
-@router.post("/audience")
-def audience(payload: AudienceRequest, request: Request, db: Client = Depends(get_db)):
-    verify_is_admin(request, db)
+def audience_report(db: Client, payload: AudienceRequest) -> Dict[str, Any]:
     return _rpc(db, "email_report_audience", {
         "p_filter": payload.filter.as_json(), "p_limit": payload.limit, "p_offset": payload.offset, **_guard_params(),
     })
 
 
-@router.post("/preview")
-def preview(payload: PreviewRequest, request: Request, db: Client = Depends(get_db)):
+@router.post("/audience")
+def audience(payload: AudienceRequest, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
+    return audience_report(db, payload)
+
+
+PersonFilter = Optional[Callable[[Dict[str, Any]], Dict[str, Any]]]
+
+
+def preview_email(db: Client, payload: PreviewRequest, person_filter: PersonFilter = None) -> Dict[str, Any]:
+    """`person_filter` lets the team site hide the person's address before anything is drawn."""
     person = _person(db, payload.user_id)
+    if person_filter:
+        person = person_filter(person)
     out = email_render.render(payload.subject, payload.preheader, payload.body, person,
                               campaign_key=payload.template_key or "custom", unsubscribe="#")
     return {**out, "person": {"id": person.get("id"), "email": person.get("email"), "full_name": person.get("full_name")}}
 
 
+@router.post("/preview")
+def preview(payload: PreviewRequest, request: Request, db: Client = Depends(get_db)):
+    verify_is_admin(request, db)
+    return preview_email(db, payload)
+
+
 @router.post("/test")
 def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(get_db)):
-    """Send the email to one address (yours), filled in with a real person's details if given."""
     verify_is_admin(request, db)
+    return send_test_email(db, payload)
+
+
+def send_test_email(db: Client, payload: TestSendRequest, person_filter: PersonFilter = None) -> Dict[str, Any]:
+    """Send the email to one address (yours), filled in with a real person's details if given."""
     cfg = broadcast_smtp()
     if not _smtp_ready(cfg):
         raise HTTPException(status_code=400, detail=NOT_CONNECTED)
@@ -801,6 +842,8 @@ def send_test(payload: TestSendRequest, request: Request, db: Client = Depends(g
         raise HTTPException(status_code=400, detail="Pick a From address from the list")
     reply_to = reply_address(payload.reply_to)
     person = _person(db, payload.user_id)
+    if person_filter:
+        person = person_filter(person)
     mail = email_render.render(payload.subject, payload.preheader, payload.body, person,
                                unsubscribe=email_render.unsubscribe_url(str(payload.to)))
     try:
@@ -833,7 +876,12 @@ def _remaining(db: Client, camp: Dict[str, Any]) -> int:
 
 @router.post("/campaigns")
 def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depends(get_db)):
-    admin_id = verify_is_admin(request, db)
+    return campaign_create(db, payload, verify_is_admin(request, db))
+
+
+def campaign_create(db: Client, payload: CampaignCreate, admin_id: Optional[str] = None) -> Dict[str, Any]:
+    """Freeze the email and its audience. admin_id is None when a team member sends it
+    (they're named in staff_audit_log as 'email.campaign.create', see sent_by())."""
     _check_content(payload.subject, payload.body)
     from_email = (payload.from_email or senders()[0]).strip().lower()
     if not _sender_ok(from_email):
@@ -882,29 +930,69 @@ def create_campaign(payload: CampaignCreate, request: Request, db: Client = Depe
     return row
 
 
+def sent_by(db: Client, campaign_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    """Sends made on team.testoza.com → who made them, from the append-only staff activity log.
+    Admin sends aren't in it (their campaign row has created_by instead)."""
+    ids = [str(i) for i in campaign_ids if i]
+    if not ids:
+        return {}
+    try:
+        logs = (_table(db, "staff_audit_log").select("target_id, actor_id, actor_label")
+                .eq("action", "email.campaign.create").in_("target_id", ids).execute().data or [])
+        staff_ids = list({r["actor_id"] for r in logs if r.get("actor_id")})
+        names = {s["id"]: s.get("full_name") for s in (
+            _table(db, "staff_accounts").select("id, full_name").in_("id", staff_ids).execute().data or [])} \
+            if staff_ids else {}
+    except Exception as exc:  # before the team dashboard's SQL
+        logger.info("email sent_by lookup skipped: %s", str(exc)[:200])
+        return {}
+    return {r["target_id"]: {"kind": "team", "staff_id": r.get("actor_id"),
+                             "name": names.get(r.get("actor_id")) or r.get("actor_label") or "A team member"}
+            for r in logs}
+
+
+def campaigns_report(db: Client, limit: int = 30, offset: int = 0) -> Dict[str, Any]:
+    data = _rpc(db, "email_report_campaigns", {"p_limit": max(1, min(limit, 100)), "p_offset": max(0, offset)}) or {}
+    rows = data.get("rows") or []
+    who = sent_by(db, [r.get("id") for r in rows])
+    for r in rows:
+        r["sent_by"] = who.get(str(r.get("id")))
+    return data
+
+
 @router.get("/campaigns")
 def list_campaigns(request: Request, limit: int = 30, offset: int = 0, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
-    return _rpc(db, "email_report_campaigns", {"p_limit": max(1, min(limit, 100)), "p_offset": max(0, offset)})
+    return campaigns_report(db, limit, offset)
+
+
+def campaign_report(db: Client, cid: str) -> Dict[str, Any]:
+    data = _rpc(db, "email_report_campaign", {"p_id": str(cid)})
+    if not data:
+        raise HTTPException(status_code=404, detail="Send not found")
+    if isinstance(data.get("campaign"), dict):
+        data["campaign"]["sent_by"] = sent_by(db, [str(cid)]).get(str(cid))
+    return data
 
 
 @router.get("/campaigns/{cid}")
 def get_campaign(cid: uuid.UUID, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
-    data = _rpc(db, "email_report_campaign", {"p_id": str(cid)})
-    if not data:
-        raise HTTPException(status_code=404, detail="Send not found")
-    return data
+    return campaign_report(db, str(cid))
+
+
+def campaign_set_status(db: Client, cid: str, status: str) -> Dict[str, Any]:
+    camp = _campaign(db, cid)
+    if camp["status"] == "done":
+        raise HTTPException(status_code=400, detail="This send has finished")
+    _table(db, "email_campaigns").update({"status": status}).eq("id", cid).execute()
+    return {"id": cid, "status": status}
 
 
 @router.patch("/campaigns/{cid}")
 def set_campaign_status(cid: uuid.UUID, payload: CampaignPatch, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
-    camp = _campaign(db, str(cid))
-    if camp["status"] == "done":
-        raise HTTPException(status_code=400, detail="This send has finished")
-    _table(db, "email_campaigns").update({"status": payload.status}).eq("id", str(cid)).execute()
-    return {"id": str(cid), "status": payload.status}
+    return campaign_set_status(db, str(cid), payload.status)
 
 
 def _is_bounce(exc: Exception, recipient: str) -> bool:
@@ -923,7 +1011,10 @@ def _finish(db: Client, cid: str) -> None:
 def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Client = Depends(get_db)):
     """Send the next few emails of a campaign. The admin page calls this until `status` is done."""
     verify_is_admin(request, db)
-    cid_s = str(cid)
+    return campaign_send_next(db, str(cid), payload.n)
+
+
+def campaign_send_next(db: Client, cid_s: str, n: int) -> Dict[str, Any]:
     camp = _campaign(db, cid_s)
     if camp["status"] != "sending":
         return {"status": camp["status"], "sent": 0, "failed": 0, "remaining": None}
@@ -933,7 +1024,7 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
 
     hourly, daily, _ = _caps(db)
     w = _send_window(db, hourly, daily)
-    room = min(payload.n, hourly - w["hour"], daily - w["day"])
+    room = min(n, hourly - w["hour"], daily - w["day"])
     if room <= 0:
         by_day = w["day"] >= daily
         return {
@@ -1028,9 +1119,7 @@ def send_next(cid: uuid.UUID, payload: SendNextRequest, request: Request, db: Cl
 
 # ── Admin: addresses we never email ───────────────────────────────────────────
 
-@router.get("/suppressions")
-def list_suppressions(request: Request, q: Optional[str] = None, db: Client = Depends(get_db)):
-    verify_is_admin(request, db)
+def suppressions_report(db: Client, q: Optional[str] = None) -> Dict[str, Any]:
     rows = _table(db, "email_suppressions").select("*").order("created_at", desc=True).limit(500).execute().data or []
     if q and q.strip():
         s = q.strip().lower()
@@ -1038,11 +1127,21 @@ def list_suppressions(request: Request, q: Optional[str] = None, db: Client = De
     return {"rows": rows[:200], "total": len(rows)}
 
 
+@router.get("/suppressions")
+def list_suppressions(request: Request, q: Optional[str] = None, db: Client = Depends(get_db)):
+    verify_is_admin(request, db)
+    return suppressions_report(db, q)
+
+
+def suppression_add(db: Client, email: str, note: Optional[str] = None) -> Dict[str, Any]:
+    _suppress(db, email, "stopped", note=note or "Stopped by the team")
+    return {"email": email.lower(), "reason": "stopped"}
+
+
 @router.post("/suppressions")
 def add_suppression(payload: SuppressRequest, request: Request, db: Client = Depends(get_db)):
     verify_is_admin(request, db)
-    _suppress(db, str(payload.email), "stopped", note=payload.note or "Stopped by the team")
-    return {"email": str(payload.email).lower(), "reason": "stopped"}
+    return suppression_add(db, str(payload.email), payload.note)
 
 
 @router.delete("/suppressions/{email}")

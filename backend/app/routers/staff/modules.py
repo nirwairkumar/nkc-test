@@ -8,15 +8,13 @@ What employees can open on team.testoza.com: one route group per permission.
   PATCH /api/staff/support/messages/{id}               support.reply
   GET   /api/staff/feedback                            feedback.view
   GET   /api/staff/analytics/overview | /growth        analytics.view
-  GET   /api/staff/email/campaigns                     email.view
+  /api/staff/email/*                                   email.view / email.send (staff/email.py)
 
 Data minimisation: help writers' email and phone are masked unless support.contact is
 ticked; feedback and the inbox carry names, never contact details; analytics are the
-same aggregate reports admin sees (no people list, no sessions); email history has no
-recipient lists.
+same aggregate reports admin sees (no people list, no sessions).
 """
 
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -260,19 +258,3 @@ def analytics_growth(request: Request, period: str = "30d",
     period = _period(period, "30d")
     staff_audit(db, request, ctx, "analytics.view", detail={"report": "growth", "period": period})
     return insights.growth(period=period, start=None, end=None)
-
-
-# ── email history (read-only) ───────────────────────────────────────────────────
-@router.get("/email/campaigns")
-def email_campaigns(request: Request, limit: int = Query(30, ge=1, le=100), offset: int = Query(0, ge=0),
-                    ctx: StaffContext = Depends(require_staff("email.view")), db: Client = Depends(get_db)):
-    try:
-        data = db.rpc("email_report_campaigns", {"p_limit": limit, "p_offset": offset}).execute().data or {}
-    except Exception as err:
-        raise HTTPException(status_code=503, detail="Email history isn't available right now.") from err
-    staff_audit(db, request, ctx, "email.view", detail={"offset": offset})
-    keep = ("id", "name", "subject", "audience_label", "status", "planned", "from_name", "created_at",
-            "finished_at", "sent", "failed", "came_back", "made_test", "unsubscribed", "clicked")
-    rows = [{k: r.get(k) for k in keep if k in r} for r in (data.get("rows") or [])]
-    return {"rows": rows, "total": data.get("total") or 0,
-            "as_of": datetime.now(timezone.utc).isoformat()}

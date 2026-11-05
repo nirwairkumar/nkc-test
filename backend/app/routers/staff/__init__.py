@@ -7,10 +7,11 @@ Team dashboard API (team.testoza.com). Plan: TestoZa/Team-Dashboard/TEAM_DASHBOA
 
 from fastapi import APIRouter
 
-from . import admin, auth, modules
+from . import admin, auth, email, modules
 
 router = APIRouter()
 router.include_router(auth.router, prefix="/auth")
 router.include_router(modules.router)
+router.include_router(email.router)
 
 admin_router = admin.router
