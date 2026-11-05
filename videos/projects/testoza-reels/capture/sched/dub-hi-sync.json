@@ -1,0 +1,122 @@
+{
+  "lines": [
+    {
+      "id": "L01",
+      "tempo": 1,
+      "start": 0.33,
+      "end": 8.06,
+      "pauses": [
+        0.06
+      ]
+    },
+    {
+      "id": "L02",
+      "tempo": 1,
+      "start": 9.11,
+      "end": 16.27,
+      "pauses": [
+        1.49
+      ]
+    },
+    {
+      "id": "L03",
+      "tempo": 1,
+      "start": 17.52,
+      "end": 20.94,
+      "pauses": []
+    },
+    {
+      "id": "L04",
+      "tempo": 1.12,
+      "start": 22.35,
+      "end": 26.13,
+      "pauses": []
+    }
+  ],
+  "cues": [
+    {
+      "line": "L01",
+      "cue": "wait",
+      "action": 0.31,
+      "word": 0.41,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "zero",
+      "action": 3.51,
+      "word": 3.88,
+      "lag": 0.37
+    },
+    {
+      "line": "L01",
+      "cue": "enter",
+      "action": 4.96,
+      "word": 5.06,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "opens",
+      "action": 5.67,
+      "word": 5.77,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "settings",
+      "action": 10.55,
+      "word": 10.65,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "access",
+      "action": 11.23,
+      "word": 11.35,
+      "lag": 0.12
+    },
+    {
+      "line": "L02",
+      "cue": "sched",
+      "action": 11.98,
+      "word": 12.45,
+      "lag": 0.47
+    },
+    {
+      "line": "L02",
+      "cue": "start",
+      "action": 12.92,
+      "word": 13.45,
+      "lag": 0.53
+    },
+    {
+      "line": "L02",
+      "cue": "end",
+      "action": 13.81,
+      "word": 14.1,
+      "lag": 0.29
+    },
+    {
+      "line": "L02",
+      "cue": "save",
+      "action": 15.95,
+      "word": 16.05,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "closed",
+      "action": 17.44,
+      "word": 17.54,
+      "lag": 0.1
+    },
+    {
+      "line": "L04",
+      "cue": "endurl",
+      "action": 24,
+      "word": 24.95,
+      "lag": 0.95
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+HTTP 429: {"error":{"code":429,"message":"Quota exceeded for aiplatform.googleapis.com/long_running_online_prediction_requests_per_base_model with base model: veo-3.1-generate-001. Please submit a quota increase request. https://cloud.google.com/vertex-ai/docs/generative-ai/quotas-genai.","status":"RESOURCE_E
+FAILED laptop: laptop: no video (filtered 1: ["1 videos were filtered out because they violated Vertex AI's usage guidelines. You will not be charged for blocked videos. Try rephrasing the prompt. If you think this was an error, send feedback. Support codes: 29310472"])
+gen\veo\paper-class-v2.mp4  (paper-class-v1.png, 8s, 120 s)

@@ -1,0 +1,51 @@
+{
+ "request": {
+  "model_id": "music_v2_5",
+  "store_for_inpainting": true,
+  "composition_plan": {
+   "chunks": [
+    {
+     "text": "[Sonic logo]\n{soft felt piano and celesta play three bright rising notes: G, then C, then E}\n{a warm, soft female voice sings one syllable on each note}\nTes - to - za\n{the last syllable is held and blooms into a warm C major chord with lush strings}\n{gentle reverb tail into silence}",
+     "duration_ms": 6000,
+     "positive_styles": [
+      "premium brand sonic logo",
+      "audio mnemonic",
+      "warm soft female vocal",
+      "felt piano",
+      "celesta",
+      "lush cinematic strings",
+      "C major",
+      "84 BPM",
+      "hopeful",
+      "clean modern production"
+     ],
+     "negative_styles": [
+      "drums",
+      "EDM",
+      "rap",
+      "harsh synths"
+     ],
+     "context_adherence": "high"
+    }
+   ]
+  },
+  "seed": 2
+ },
+ "headers": {
+  "access-control-allow-headers": "*",
+  "access-control-allow-methods": "POST, PATCH, OPTIONS, DELETE, GET, PUT",
+  "access-control-allow-origin": "*",
+  "access-control-max-age": "600",
+  "alt-svc": "h3=\":443\"; ma=2592000",
+  "content-length": "144866",
+  "content-type": "audio/mpeg",
+  "date": "Fri, 30 Oct 2026 19:11:07 GMT",
+  "server": "uvicorn",
+  "song-id": "VnHlWX796WJ3aO6tzRei",
+  "strict-transport-security": "max-age=1800;",
+  "vary": "Accept-Language",
+  "via": "1.1 google",
+  "x-region": "us-central1",
+  "x-trace-id": "44d6a76ca8fb8f8739447c9e7abb8cd4"
+ }
+}

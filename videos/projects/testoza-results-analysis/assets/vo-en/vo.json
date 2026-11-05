@@ -1,0 +1,219 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-en/L01.wav",
+    "duration": 8.179917,
+    "text": "Sunday night. Forty-eight answer sheets from this morning's mock test. One red pen. And a cup of chai that went cold an hour ago.",
+    "raw": "{lamp}Sunday night. {stack}Forty-eight answer sheets from this morning's mock test. {pen}One red pen. {chai}And a cup of chai that went cold an hour ago."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-en/L02.wav",
+    "duration": 8.67625,
+    "text": "You know how this goes. Tick, cross, tick… total. Every mark into the register, then the rank list. And somewhere around Tuesday, it's finally done.",
+    "raw": "{tick}You know how this goes. Tick, cross, tick… total. {register}Every mark into the register, {notice}then the rank list. {tuesday}And somewhere around Tuesday, it's finally done."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-en/L03.wav",
+    "duration": 13.324583,
+    "text": "But the one question that really matters — which questions did my batch get wrong, and why? — never gets answered. To know that, you'd have to count nine hundred and sixty answers by hand. Nobody has that kind of Sunday.",
+    "raw": "{why}But the one question that really matters — which questions did my batch get wrong, and why? — {count}never gets answered. To know that, you'd have to count nine hundred and sixty answers by hand. {laugh}Nobody has that kind of Sunday."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-en/L04.wav",
+    "duration": 14.361104,
+    "text": "On TestoZa, the checking is done the second they press Submit. But then you open the results, and it's a screen full of numbers. So today, let's read them together. Both result pages, every number, and exactly what to do with them on Monday morning.",
+    "raw": "{online}On TestoZa, the checking is done the second they press Submit. {wall}But then you open the results, and it's a screen full of numbers. {title}So today, let's read them together. Both result pages, every number, and exactly what to do with them on Monday morning."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-en/L05.wav",
+    "duration": 20.18325,
+    "text": "First, a promise, because I know this is the worry. Your marks register? That's the Excel file. The rank list for the notice board? One tap, and it's on WhatsApp. Opening one student's copy to see where they went wrong? You can open every single answer sheet. And your discussion class stays. It just gets shorter, and a lot sharper.",
+    "raw": "{promise}First, a promise, because I know this is the worry. {reg}Your marks register? That's the Excel file. {board}The rank list for the notice board? One tap, and it's on WhatsApp. {copy}Opening one student's copy to see where they went wrong? You can open every single answer sheet. {discuss}And your discussion class stays. It just gets shorter, and a lot sharper."
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-en/L06.wav",
+    "duration": 4.788042,
+    "text": "And then there are a few things paper simply can't tell you. Let's go find them.",
+    "raw": "{plus}And then there are a few things paper simply can't tell you. Let's go find them."
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-en/L07.wav",
+    "duration": 12.4715,
+    "text": "Your results live in two places. On My Tests, every exam you've run has a Results button. And in the sidebar, All Submissions keeps every exam your candidates have ever written. Let's start with the quick view.",
+    "raw": "{mytests}Your results live in two places. {ended}On My Tests, every exam you've run has a Results button. {sidebar}And in the sidebar, All Submissions keeps every exam your candidates have ever written. {start}Let's start with the quick view."
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-en/L08.wav",
+    "duration": 8.544583,
+    "text": "Click Results. Up top: the exam, its status — this one has ended — twenty questions, forty marks, twenty minutes.",
+    "raw": "{results}Click Results. {header}Up top: the exam, its status — this one has ended — {facts}twenty questions, forty marks, twenty minutes."
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-en/L09.wav",
+    "duration": 15.879292,
+    "text": "These four boxes are your attendance register. Fifty-two candidates started. Writing now shows who's still writing, live, during the exam. It's over, so, zero. Forty-eight submitted. And four dropped: they started, but never handed in.",
+    "raw": "{tiles}These four boxes are your attendance register. {started}Fifty-two candidates started. {writing}Writing now shows who's still writing, live, during the exam. It's over, so, zero. {submitted}Forty-eight submitted. {dropped}And four dropped: they started, but never handed in."
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-en/L10.wav",
+    "duration": 20.946229,
+    "text": "Tap Dropped, and you can see exactly when each one left, and how much they'd answered. Akash answered two questions and went quiet at three minutes past ten. Sonal answered fourteen. That's a different story. One quick call tells you if it was the network, the phone, or something else. On paper, both of them were just… absent.",
+    "raw": "{droptab}Tap Dropped, and you can see exactly when each one left, {answered}and how much they'd answered. {akash}Akash answered two questions and went quiet at three minutes past ten. {sonal}Sonal answered fourteen. That's a different story. {call}One quick call tells you if it was the network, the phone, or something else. {paper}On paper, both of them were just… absent."
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-en/L11.wav",
+    "duration": 16.420917,
+    "text": "Now Submitted, everyone who finished. Average, highest and lowest, right at the top. Then every score, with the percentage under it: blue means forty percent or more, red means below. A tick for right, a cross for wrong, a dash for left blank. Time taken, and when they submitted.",
+    "raw": "{subtab}Now Submitted, everyone who finished. {avgline}Average, highest and lowest, right at the top. {score}Then every score, with the percentage under it: {colour}blue means forty percent or more, red means below. {answers}A tick for right, a cross for wrong, a dash for left blank. {time}Time taken, and when they submitted."
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-en/L12.wav",
+    "duration": 20.012104,
+    "text": "Want ranks? Switch on Rank. Hover the little i for the tie-breakers. Same as the real exam: higher marks first, then fewer wrong answers, then fewer left blank, then whoever submitted first. Look at Sneha and Rahul: both thirty-three, both two wrong, both one blank. Sneha submitted four minutes earlier, so Sneha is second.",
+    "raw": "{rank}Want ranks? Switch on Rank. {info}Hover the little i for the tie-breakers. Same as the real exam: {rules}higher marks first, then fewer wrong answers, then fewer left blank, then whoever submitted first. {tie}Look at Sneha and Rahul: both thirty-three, both two wrong, both one blank. {sneha}Sneha submitted four minutes earlier, so Sneha is second."
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-en/L13.wav",
+    "duration": 14.582021,
+    "text": "This Submitted heading is a filter too. If one test was written on two days, pick a day, and the ranks follow. Excel downloads the whole list: names, roll numbers, marks, ranks. That's your register. Done. And search finds anyone in a second.",
+    "raw": "{filter}This Submitted heading is a filter too. If one test was written on two days, pick a day, and the ranks follow. {excel}Excel downloads the whole list: names, roll numbers, marks, ranks. {reg2}That's your register. Done. {search}And search finds anyone in a second."
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-en/L14.wav",
+    "duration": 33.343896,
+    "text": "Now click this, on any row, and you get that candidate's whole answer sheet. Jyoti: eighteen out of forty. Not great, on paper. But look at it subject by subject. English: ten out of ten. Full marks. And Quant… minus two. She isn't a weak student. She's guessing in Maths, and the negative marking is eating her score. Topic Performance breaks it down even further, and Questions breakdown shows every answer she gave, even the seconds she spent on each one. It's exactly like opening her copy. Except you never had to check it.",
+    "raw": "{open}Now click this, on any row, and you get that candidate's whole answer sheet. {jyoti}Jyoti: eighteen out of forty. Not great, on paper. {subjects}But look at it subject by subject. {english}English: ten out of ten. Full marks. {quant}And Quant… minus two. {guessing}She isn't a weak student. She's guessing in Maths, and the negative marking is eating her score. {topics}Topic Performance breaks it down even further, {qb}and Questions breakdown shows every answer she gave, {secs}even the seconds she spent on each one. {likecopy}It's exactly like opening her copy. Except you never had to check it."
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-en/L15.wav",
+    "duration": 5.359292,
+    "text": "This list tells you who scored what. It doesn't tell you why. For that: Full report.",
+    "raw": "{who}This list tells you who scored what. {whyq}It doesn't tell you why. {full}For that: Full report."
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-en/L16.wav",
+    "duration": 6.756063,
+    "text": "This is the page to open the morning after. Forty-eight candidates, the day it was written, twenty questions, forty marks.",
+    "raw": "{report}This is the page to open the morning after. {meta}Forty-eight candidates, the day it was written, twenty questions, forty marks."
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-en/L17.wav",
+    "duration": 14.846792,
+    "text": "How the class did. The average: fifty-four percent, about twenty-two out of forty. Highest, Aditi, ninety-four. Lowest, eight. And eleven candidates need help: they're below forty percent.",
+    "raw": "{class}How the class did. {avg}The average: fifty-four percent, about twenty-two out of forty. {high}Highest, Aditi, ninety-four. {low}Lowest, eight. {help}And eleven candidates need help: they're below forty percent."
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-en/L18.wav",
+    "duration": 12.990896,
+    "text": "Now this chart, how the marks spread. Most people skip it. Please don't. Each bar is a group of students: zero to nineteen percent, twenty to thirty-nine, and so on. Red is trouble, amber is getting there, green is strong.",
+    "raw": "{spread}Now this chart, how the marks spread. Most people skip it. Please don't. {bars}Each bar is a group of students: zero to nineteen percent, twenty to thirty-nine, and so on. {colours}Red is trouble, amber is getting there, green is strong."
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-en/L19.wav",
+    "duration": 25.054125,
+    "text": "And the shape tells you something. If everything piles up on the right, the paper was too easy. Make the next one tougher. A pile on the left? Either the paper was too hard, or the chapter didn't land. And two humps, one at each end, means your batch has split into two groups. That's when a separate doubt class for the lower group really pays off. Ours is a healthy middle, with a tail that needs attention.",
+    "raw": "{shape}And the shape tells you something. {easy}If everything piles up on the right, the paper was too easy. Make the next one tougher. {hard}A pile on the left? Either the paper was too hard, or the chapter didn't land. {split}And two humps, one at each end, means your batch has split into two groups. {doubt}That's when a separate doubt class for the lower group really pays off. {ours}Ours is a healthy middle, with a tail that needs attention."
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-en/L20.wav",
+    "duration": 2.647042,
+    "text": "And next to it, the same story in plain words.",
+    "raw": "{plain}And next to it, the same story in plain words."
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-en/L21.wav",
+    "duration": 14.257042,
+    "text": "Below that, the rank list, medals for the top three. Tap Below forty percent, and there are your eleven. These are the students to call this week, or whose parents to message. Search works with roll numbers too, and any name opens the same answer sheet.",
+    "raw": "{ranklist}Below that, the rank list, medals for the top three. {below}Tap Below forty percent, and there are your eleven. {callthem}These are the students to call this week, or whose parents to message. {roll}Search works with roll numbers too, {tap}and any name opens the same answer sheet."
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-en/L22.wav",
+    "duration": 15.261417,
+    "text": "Now, honestly, the most useful card on the whole page: Teach these again. Every question fewer than half your batch got right, hardest first. So Monday's discussion class doesn't start from question one. It starts here. Five questions, not twenty.",
+    "raw": "{teach}Now, honestly, the most useful card on the whole page: {again}Teach these again. Every question fewer than half your batch got right, hardest first. {monday}So Monday's discussion class doesn't start from question one. {five}It starts here. Five questions, not twenty."
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-en/L23.wav",
+    "duration": 17.319563,
+    "text": "Click Q13. Two successive discounts, twenty and ten percent. The answer is twenty-eight. But look: fifty-four percent picked thirty. They simply added the two discounts. That's not a silly mistake. That's a concept the batch has wrong, and one example on the board fixes it for everyone.",
+    "raw": "{q13}Click Q13. Two successive discounts, twenty and ten percent. {answer}The answer is twenty-eight. {trap}But look: fifty-four percent picked thirty. {added}They simply added the two discounts. {concept}That's not a silly mistake. That's a concept the batch has wrong, {example}and one example on the board fixes it for everyone."
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-en/L24.wav",
+    "duration": 17.739438,
+    "text": "Now Q15, time and work. Only twenty-one percent got it right. But look at the grey: almost half left it blank. They didn't get it wrong. They never tried it. So either time ran out, or the chapter isn't done yet. Two completely different fixes, and on paper you'd never have seen the difference.",
+    "raw": "{q15}Now Q15, time and work. Only twenty-one percent got it right. {grey}But look at the grey: almost half left it blank. {never}They didn't get it wrong. They never tried it. {two}So either time ran out, or the chapter isn't done yet. {diff}Two completely different fixes, and on paper you'd never have seen the difference."
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-en/L25.wav",
+    "duration": 10.763208,
+    "text": "And Q9, Loktak Lake. The answers are spread almost evenly across all four options. That's what guessing looks like. Nobody really knew it, so it goes on the revision list, not into a whole new lesson.",
+    "raw": "{q9}And Q9, Loktak Lake. {even}The answers are spread almost evenly across all four options. {guess}That's what guessing looks like. {revise}Nobody really knew it, so it goes on the revision list, not into a whole new lesson."
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-en/L26.wav",
+    "duration": 11.464188,
+    "text": "So: one wrong option standing tall is a trap, reteach the concept. A lot of grey means time, or an unfinished chapter. And everything flat? Guessing. Revise it.",
+    "raw": "{three}So: one wrong option standing tall is a trap, reteach the concept. {grey2}A lot of grey means time, or an unfinished chapter. {flat}And everything flat? Guessing. Revise it."
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-en/L27.wav",
+    "duration": 14.4955,
+    "text": "Flip to Hardest first to see the whole paper by difficulty. And By section shows your batch subject by subject. Reasoning, seventy-five. English, seventy. General Awareness, fifty-seven. And Quant, forty-four. So now you know exactly where next week's extra class goes.",
+    "raw": "{hardest}Flip to Hardest first to see the whole paper by difficulty. {section}And By section shows your batch subject by subject. {reasoning}Reasoning, seventy-five. {eng2}English, seventy. {ga}General Awareness, fifty-seven. {quant2}And Quant, forty-four. {extra}So now you know exactly where next week's extra class goes."
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-en/L28.wav",
+    "duration": 18.539396,
+    "text": "Finally, sending it out. Send rank list opens WhatsApp with the whole list already typed, and you choose who gets it. Copy, if you'd rather paste it somewhere else. Excel gives you two sheets: the rank list, and every question with its most-picked wrong option. And Print, for your file or the parents' meeting.",
+    "raw": "{share}Finally, sending it out. {send}Send rank list opens WhatsApp with the whole list already typed, {choose}and you choose who gets it. {copyb}Copy, if you'd rather paste it somewhere else. {excel2}Excel gives you two sheets: the rank list, and every question with its most-picked wrong option. {print}And Print, for your file or the parents' meeting."
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-en/L29.wav",
+    "duration": 22.392625,
+    "text": "One last place: All Submissions. Every exam your candidates wrote, newest first. The badge is the class average, and the coloured bar is strong, average and weak. Now read it from the bottom up: forty-six, forty-eight, fifty, fifty-four. Week by week, your batch is climbing, and that's something you can actually show a parent. Next week's mock is waiting right there, one tap from going live.",
+    "raw": "{allsub}One last place: All Submissions. {list}Every exam your candidates wrote, newest first. {badge}The badge is the class average, {bar}and the coloured bar is strong, average and weak. {trend}Now read it from the bottom up: {t46}forty-six, {t48}forty-eight, {t50}fifty, {t54}fifty-four. {up}Week by week, your batch is climbing, {proof}and that's something you can actually show a parent. {next}Next week's mock is waiting right there, one tap from going live."
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-en/L30.wav",
+    "duration": 20.545521,
+    "text": "So here's your five-minute routine, every Monday morning. One: look at the average and the spread. Two: send the rank list. Three: open Teach these again. That's your discussion class. Four: filter below forty percent, and call those students. Five: download the Excel for your register. Five minutes. Not a whole Sunday.",
+    "raw": "{routine}So here's your five-minute routine, every Monday morning. {r1}One: look at the average and the spread. {r2}Two: send the rank list. {r3}Three: open Teach these again. That's your discussion class. {r4}Four: filter below forty percent, and call those students. {r5}Five: download the Excel for your register. {done}Five minutes. Not a whole Sunday."
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-en/L31.wav",
+    "duration": 9.736708,
+    "text": "Paper tests gave you marks. TestoZa gives you the reasons behind them. Try it on your next mock, and if this helped, you know where the subscribe button is. See you in the next one.",
+    "raw": "{close}Paper tests gave you marks. {reasons}TestoZa gives you the reasons behind them. {try}Try it on your next mock, {sub}and if this helped, you know where the subscribe button is. {bye}See you in the next one."
+  }
+]

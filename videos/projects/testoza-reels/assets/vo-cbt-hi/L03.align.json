@@ -1,0 +1,156 @@
+[
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 0.04,
+  "end": 0.321,
+  "score": 0.534
+ },
+ {
+  "w": "किया,",
+  "r": "kiyaa",
+  "start": 0.361,
+  "end": 0.601,
+  "score": 0.956
+ },
+ {
+  "w": "save",
+  "r": "save",
+  "start": 0.721,
+  "end": 0.962,
+  "score": 0.567
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 0.982,
+  "end": 1.042,
+  "score": 0.251
+ },
+ {
+  "w": "next",
+  "r": "next",
+  "start": 1.082,
+  "end": 1.342,
+  "score": 0.696
+ },
+ {
+  "w": "green।",
+  "r": "green",
+  "start": 1.443,
+  "end": 1.703,
+  "score": 0.654
+ },
+ {
+  "w": "Doubt",
+  "r": "doubt",
+  "start": 2.484,
+  "end": 2.785,
+  "score": 0.564
+ },
+ {
+  "w": "है?",
+  "r": "hai",
+  "start": 2.825,
+  "end": 2.945,
+  "score": 0.913
+ },
+ {
+  "w": "Answer",
+  "r": "answer",
+  "start": 3.105,
+  "end": 3.406,
+  "score": 0.606
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 3.446,
+  "end": 3.546,
+  "score": 0.601
+ },
+ {
+  "w": "review।",
+  "r": "review",
+  "start": 3.586,
+  "end": 3.827,
+  "score": 0.372
+ },
+ {
+  "w": "सिर्फ़",
+  "r": "sirfa",
+  "start": 4.568,
+  "end": 4.869,
+  "score": 0.77
+ },
+ {
+  "w": "review",
+  "r": "review",
+  "start": 4.909,
+  "end": 5.149,
+  "score": 0.379
+ },
+ {
+  "w": "purple।",
+  "r": "purple",
+  "start": 5.51,
+  "end": 5.91,
+  "score": 0.499
+ },
+ {
+  "w": "Skip",
+  "r": "skip",
+  "start": 6.491,
+  "end": 6.792,
+  "score": 0.878
+ },
+ {
+  "w": "किया",
+  "r": "kiyaa",
+  "start": 6.852,
+  "end": 7.113,
+  "score": 0.875
+ },
+ {
+  "w": "red।",
+  "r": "red",
+  "start": 7.393,
+  "end": 7.633,
+  "score": 0.799
+ },
+ {
+  "w": "बिल्कुल",
+  "r": "bilkul",
+  "start": 8.295,
+  "end": 8.635,
+  "score": 0.988
+ },
+ {
+  "w": "असली",
+  "r": "asalii",
+  "start": 8.755,
+  "end": 9.056,
+  "score": 0.776
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 9.056,
+  "end": 9.296,
+  "score": 0.582
+ },
+ {
+  "w": "वाले",
+  "r": "vaale",
+  "start": 9.356,
+  "end": 9.517,
+  "score": 0.971
+ },
+ {
+  "w": "colours।",
+  "r": "colours",
+  "start": 9.577,
+  "end": 9.877,
+  "score": 0.401
+ }
+]

@@ -1,0 +1,121 @@
+{
+  "total": 36.35,
+  "voice": [
+    {
+      "id": "L01",
+      "start": 0.3,
+      "end": 5.53
+    },
+    {
+      "id": "L02",
+      "start": 6.13,
+      "end": 14.11
+    },
+    {
+      "id": "L03",
+      "start": 14.83,
+      "end": 24.75
+    },
+    {
+      "id": "L04",
+      "start": 25,
+      "end": 29.53
+    },
+    {
+      "id": "L05",
+      "start": 30.18,
+      "end": 34.75
+    }
+  ],
+  "sections": [
+    {
+      "take": "cbt",
+      "lines": [
+        "L01"
+      ],
+      "start": 0,
+      "end": 5.83
+    },
+    {
+      "take": "teacher",
+      "lines": [
+        "L02"
+      ],
+      "start": 5.83,
+      "end": 14.4
+    },
+    {
+      "take": "cbt",
+      "lines": [
+        "L03",
+        "L04"
+      ],
+      "start": 14.4,
+      "end": 29.83
+    },
+    {
+      "lines": [
+        "L05"
+      ],
+      "start": 29.83,
+      "end": 36.35
+    }
+  ],
+  "cues": {
+    "L01": {
+      "exam": 0.78,
+      "timer": 2.62,
+      "palette": 3.82
+    },
+    "L02": {
+      "results": 8.13,
+      "std": 9.57,
+      "strictt": 12.45,
+      "save": 13.65
+    },
+    "L03": {
+      "ans1": 14.83,
+      "next1": 15.47,
+      "ans2": 17.31,
+      "ansrev": 18.19,
+      "rev3": 19.55,
+      "skip4": 21.31,
+      "legend": 22.83
+    },
+    "L04": {
+      "jump": 25,
+      "submitbtn": 26.28,
+      "summary": 27.4
+    },
+    "L05": {
+      "endurl": 32.9
+    }
+  },
+  "events": {
+    "L01": {
+      "exam": 0.66,
+      "timer": 2.5,
+      "palette": 3.7
+    },
+    "L02": {
+      "results": 7.36,
+      "std": 9.45,
+      "strictt": 12.33,
+      "save": 13.53
+    },
+    "L03": {
+      "ans1": 14.71,
+      "next1": 15.35,
+      "ans2": 17.19,
+      "ansrev": 18.07,
+      "rev3": 19.43,
+      "skip4": 21.19,
+      "legend": 22.71
+    },
+    "L04": {
+      "jump": 24.88,
+      "submitbtn": 26.16,
+      "summary": 27.28
+    }
+  }
+}

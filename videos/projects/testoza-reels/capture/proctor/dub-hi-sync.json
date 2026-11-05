@@ -1,0 +1,179 @@
+{
+  "lines": [
+    {
+      "id": "L01",
+      "tempo": 1.12,
+      "start": 0.37,
+      "end": 6.31,
+      "pauses": []
+    },
+    {
+      "id": "L02",
+      "tempo": 1,
+      "start": 6.53,
+      "end": 18.55,
+      "pauses": [
+        0.59,
+        0.06,
+        0.07,
+        0.34
+      ]
+    },
+    {
+      "id": "L03",
+      "tempo": 1,
+      "start": 19.56,
+      "end": 25.96,
+      "pauses": []
+    },
+    {
+      "id": "L04",
+      "tempo": 1,
+      "start": 26.64,
+      "end": 36.12,
+      "pauses": []
+    },
+    {
+      "id": "L05",
+      "tempo": 1,
+      "start": 36.34,
+      "end": 39,
+      "pauses": []
+    }
+  ],
+  "cues": [
+    {
+      "line": "L01",
+      "cue": "leave1",
+      "action": 0.31,
+      "word": 0.41,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "warn1",
+      "action": 1.35,
+      "word": 1.93,
+      "lag": 0.58
+    },
+    {
+      "line": "L02",
+      "cue": "fs",
+      "action": 6.48,
+      "word": 6.73,
+      "lag": 0.25
+    },
+    {
+      "line": "L02",
+      "cue": "tab",
+      "action": 7.85,
+      "word": 7.95,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "strict",
+      "action": 10.01,
+      "word": 10.11,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "count",
+      "action": 11.36,
+      "word": 11.73,
+      "lag": 0.37
+    },
+    {
+      "line": "L02",
+      "cue": "threepick",
+      "action": 13.4,
+      "word": 13.5,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "copy",
+      "action": 14.41,
+      "word": 14.52,
+      "lag": 0.11
+    },
+    {
+      "line": "L02",
+      "cue": "right",
+      "action": 15.52,
+      "word": 15.62,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "back",
+      "action": 16.57,
+      "word": 16.67,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "exit",
+      "action": 17.53,
+      "word": 17.63,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "fsexit",
+      "action": 19.48,
+      "word": 19.58,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "warn2",
+      "action": 19.53,
+      "word": 20.78,
+      "lag": 1.25
+    },
+    {
+      "line": "L03",
+      "cue": "leave3",
+      "action": 20.81,
+      "word": 21.74,
+      "lag": 0.93
+    },
+    {
+      "line": "L03",
+      "cue": "warn3",
+      "action": 21.06,
+      "word": 22.51,
+      "lag": 1.45
+    },
+    {
+      "line": "L03",
+      "cue": "leave4",
+      "action": 22.24,
+      "word": 23.37,
+      "lag": 1.13
+    },
+    {
+      "line": "L03",
+      "cue": "auto",
+      "action": 23.49,
+      "word": 23.87,
+      "lag": 0.38
+    },
+    {
+      "line": "L04",
+      "cue": "aitab",
+      "action": 27.82,
+      "word": 27.92,
+      "lag": 0.1
+    },
+    {
+      "line": "L05",
+      "cue": "endurl",
+      "action": 37.74,
+      "word": 38.15,
+      "lag": 0.41
+    }
+  ]
+}

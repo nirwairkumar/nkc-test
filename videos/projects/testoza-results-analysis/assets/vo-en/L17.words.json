@@ -1,0 +1,164 @@
+[
+ {
+  "id": "w0",
+  "text": "How",
+  "start": 0,
+  "end": 0.29
+ },
+ {
+  "id": "w1",
+  "text": "the",
+  "start": 0.36,
+  "end": 0.441
+ },
+ {
+  "id": "w2",
+  "text": "class",
+  "start": 0.488,
+  "end": 0.778
+ },
+ {
+  "id": "w3",
+  "text": "did.",
+  "start": 0.836,
+  "end": 1.242
+ },
+ {
+  "id": "w4",
+  "text": "The",
+  "start": 1.881,
+  "end": 2.009
+ },
+ {
+  "id": "w5",
+  "text": "average:",
+  "start": 2.067,
+  "end": 2.81
+ },
+ {
+  "id": "w6",
+  "text": "fifty-four",
+  "start": 3.68,
+  "end": 4.168
+ },
+ {
+  "id": "w7",
+  "text": "percent,",
+  "start": 4.214,
+  "end": 4.818
+ },
+ {
+  "id": "w8",
+  "text": "about",
+  "start": 5.283,
+  "end": 5.561
+ },
+ {
+  "id": "w9",
+  "text": "twenty-two",
+  "start": 5.596,
+  "end": 6.072
+ },
+ {
+  "id": "w10",
+  "text": "out",
+  "start": 6.13,
+  "end": 6.281
+ },
+ {
+  "id": "w11",
+  "text": "of",
+  "start": 6.339,
+  "end": 6.409
+ },
+ {
+  "id": "w12",
+  "text": "forty.",
+  "start": 6.455,
+  "end": 6.954
+ },
+ {
+  "id": "w13",
+  "text": "Highest,",
+  "start": 7.5,
+  "end": 8.081
+ },
+ {
+  "id": "w14",
+  "text": "Aditi,",
+  "start": 8.139,
+  "end": 8.545
+ },
+ {
+  "id": "w15",
+  "text": "ninety-four.",
+  "start": 8.58,
+  "end": 9.334
+ },
+ {
+  "id": "w16",
+  "text": "Lowest,",
+  "start": 9.88,
+  "end": 10.403
+ },
+ {
+  "id": "w17",
+  "text": "eight.",
+  "start": 10.484,
+  "end": 11.029
+ },
+ {
+  "id": "w18",
+  "text": "And",
+  "start": 11.668,
+  "end": 11.819
+ },
+ {
+  "id": "w19",
+  "text": "eleven",
+  "start": 11.877,
+  "end": 12.19
+ },
+ {
+  "id": "w20",
+  "text": "candidates",
+  "start": 12.249,
+  "end": 12.69
+ },
+ {
+  "id": "w21",
+  "text": "need",
+  "start": 12.736,
+  "end": 12.899
+ },
+ {
+  "id": "w22",
+  "text": "help:",
+  "start": 12.957,
+  "end": 13.41
+ },
+ {
+  "id": "w23",
+  "text": "they're",
+  "start": 13.7,
+  "end": 13.909
+ },
+ {
+  "id": "w24",
+  "text": "below",
+  "start": 13.932,
+  "end": 14.141
+ },
+ {
+  "id": "w25",
+  "text": "forty",
+  "start": 14.199,
+  "end": 14.431
+ },
+ {
+  "id": "w26",
+  "text": "percent.",
+  "start": 14.466,
+  "end": 14.847
+ }
+]

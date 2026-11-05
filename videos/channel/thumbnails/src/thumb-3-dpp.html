@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-base.css">
+<style>
+  .paper-card {
+    position: absolute;
+    left: 640px;
+    top: 90px;
+    width: 320px;
+    height: 450px;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    transform: rotate(-6deg);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 0 2px rgba(255,255,255,0.2);
+    z-index: 10;
+  }
+  .paper-card img {
+    width: 320px;
+    display: block;
+  }
+  .paper-label {
+    position: absolute;
+    left: 650px;
+    top: 50px;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 24px;
+    padding: 8px 18px;
+    border-radius: 12px;
+    transform: rotate(-6deg);
+    z-index: 25;
+    box-shadow: 0 10px 24px rgba(239, 68, 68, 0.5);
+  }
+  .arrow-connector {
+    position: absolute;
+    left: 920px;
+    top: 270px;
+    font-size: 80px;
+    color: #facc15;
+    font-weight: 900;
+    text-shadow: 0 0 30px rgba(250, 204, 21, 0.8);
+    z-index: 30;
+    transform: rotate(-5deg);
+  }
+  .result-phone {
+    left: 990px;
+    top: 70px;
+    width: 260px;
+    transform: rotate(5deg);
+    z-index: 20;
+    border: 3px solid rgba(56, 189, 248, 0.5);
+  }
+  .result-phone img {
+    width: 260px;
+    display: block;
+  }
+  .result-label {
+    position: absolute;
+    left: 1020px;
+    top: 35px;
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 24px;
+    padding: 8px 20px;
+    border-radius: 12px;
+    transform: rotate(5deg);
+    z-index: 25;
+    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.5);
+  }
+  .marking-pill {
+    position: absolute;
+    left: 710px;
+    top: 570px;
+    background: #0f172a;
+    border: 2px solid #facc15;
+    color: #facc15;
+    font-weight: 800;
+    font-size: 26px;
+    padding: 10px 26px;
+    border-radius: 30px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .marking-pill span.green { color: #34d399; }
+  .marking-pill span.red { color: #f87171; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="copy-box">
+    <div class="kicker amber">📱 NEET · JEE · SSC · BOARDS</div>
+    <h1 class="headline">
+      DPP ➔ TEST<br>
+      <span class="gold">2 मिनट में! ⚡</span>
+    </h1>
+    <div class="pill-action">Paper Se Online Exam 🎯</div>
+    
+    <div class="sub-features">
+      <div class="feat-item"><span class="icon">✓</span> DPP Page + Answer Key ki Photo लो</div>
+      <div class="feat-item"><span class="icon">✓</span> Real Exam Timer & Question Palette</div>
+      <div class="feat-item"><span class="icon">✓</span> Instant Result: Score, Negative & Analysis</div>
+    </div>
+  </div>
+
+  <div class="paper-label">📄 PAPER DPP</div>
+  <div class="paper-card">
+    <img src="../assets/page-1.png" alt="DPP Sheet">
+  </div>
+  
+  <div class="arrow-connector">➔</div>
+  
+  <div class="result-label">📱 ONLINE TEST</div>
+  <div class="phone-shell result-phone">
+    <img src="../assets/dump-b-result.png" alt="Online Result">
+  </div>
+  
+  <div class="marking-pill">
+    MARKING: <span class="green">+4</span> / <span class="red">−1</span> · INSTANT RANK
+  </div>
+</div>
+</body>
+</html>
+

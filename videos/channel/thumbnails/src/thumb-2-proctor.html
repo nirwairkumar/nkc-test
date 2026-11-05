@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-base.css">
+<style>
+  .warn-bg-glow {
+    position: absolute;
+    right: 80px;
+    top: 100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.35) 0%, transparent 70%);
+    filter: blur(50px);
+    pointer-events: none;
+  }
+  .phone-proctor {
+    left: 880px;
+    top: 90px;
+    width: 290px;
+    transform: rotate(5deg);
+    z-index: 20;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.9), 0 0 50px rgba(239, 68, 68, 0.4);
+    border: 3px solid rgba(239, 68, 68, 0.6);
+  }
+  .phone-proctor img {
+    width: 290px;
+    display: block;
+  }
+  .warn-modal-card {
+    position: absolute;
+    left: 640px;
+    top: 140px;
+    width: 440px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #0f172a;
+    border: 3px solid #ef4444;
+    box-shadow: 0 35px 80px rgba(0,0,0,0.9), 0 0 50px rgba(239, 68, 68, 0.5);
+    transform: rotate(-5deg);
+    z-index: 15;
+  }
+  .warn-modal-card img {
+    width: 440px;
+    display: block;
+  }
+  .caught-burst {
+    position: absolute;
+    left: 690px;
+    top: 480px;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 32px;
+    padding: 16px 30px;
+    border-radius: 18px;
+    transform: rotate(-3deg);
+    box-shadow: 0 20px 40px rgba(239, 68, 68, 0.7);
+    z-index: 25;
+    border: 3px solid #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .limit-badge {
+    position: absolute;
+    left: 880px;
+    top: 40px;
+    background: #facc15;
+    color: #0b1120;
+    font-weight: 900;
+    font-size: 24px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    transform: rotate(4deg);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    z-index: 25;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <div class="warn-bg-glow"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="copy-box">
+    <div class="kicker red">🚨 ANTI-CHEAT PROCTORING</div>
+    <h1 class="headline">
+      CHEATING<br>
+      <span class="red-fire">CAUGHT! 🚫</span>
+    </h1>
+    <div class="pill-action red">Tab Switch Blocked! ⚡</div>
+    
+    <div class="sub-features">
+      <div class="feat-item"><span class="icon">✓</span> Tab & App Switch Detection</div>
+      <div class="feat-item"><span class="icon">✓</span> Copy-Paste & Right-Click Locked</div>
+      <div class="feat-item"><span class="icon">✓</span> 3 Warnings ke baad Auto Submit</div>
+    </div>
+  </div>
+
+  <div class="limit-badge">3 WARNINGS LIMIT ⚠️</div>
+  
+  <div class="ui-card warn-modal-card">
+    <img src="../assets/cbt-warn2.png" alt="Tab switch alert">
+  </div>
+  
+  <div class="phone-shell phone-proctor">
+    <img src="../assets/phone-warning.png" alt="Student warning screen">
+  </div>
+  
+  <div class="caught-burst">
+    <span>⚠️</span> EXAM AUTO SUBMITTED!
+  </div>
+</div>
+</body>
+</html>
+

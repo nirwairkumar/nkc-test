@@ -1,0 +1,107 @@
+[
+ {
+  "w": "असली",
+  "r": "asalii",
+  "start": 0.04,
+  "end": 0.341,
+  "score": 0.69
+ },
+ {
+  "w": "exam",
+  "r": "exam",
+  "start": 0.381,
+  "end": 0.682,
+  "score": 0.727
+ },
+ {
+  "w": "की",
+  "r": "kii",
+  "start": 0.743,
+  "end": 0.843,
+  "score": 0.925
+ },
+ {
+  "w": "practice,",
+  "r": "practice",
+  "start": 0.863,
+  "end": 1.325,
+  "score": 0.622
+ },
+ {
+  "w": "आपके",
+  "r": "aapake",
+  "start": 1.546,
+  "end": 1.806,
+  "score": 0.81
+ },
+ {
+  "w": "अपने",
+  "r": "apane",
+  "start": 1.867,
+  "end": 2.067,
+  "score": 0.845
+ },
+ {
+  "w": "questions",
+  "r": "questions",
+  "start": 2.087,
+  "end": 2.469,
+  "score": 0.363
+ },
+ {
+  "w": "के",
+  "r": "ke",
+  "start": 2.509,
+  "end": 2.589,
+  "score": 0.84
+ },
+ {
+  "w": "साथ।",
+  "r": "saath",
+  "start": 2.629,
+  "end": 2.89,
+  "score": 0.94
+ },
+ {
+  "w": "Try",
+  "r": "try",
+  "start": 3.171,
+  "end": 3.352,
+  "score": 0.715
+ },
+ {
+  "w": "कीजिए",
+  "r": "kiijie",
+  "start": 3.392,
+  "end": 3.713,
+  "score": 0.746
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 3.954,
+  "end": 4.336,
+  "score": 0.82
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 4.416,
+  "end": 4.576,
+  "score": 0.738
+ },
+ {
+  "w": "com",
+  "r": "com",
+  "start": 4.597,
+  "end": 4.757,
+  "score": 0.5
+ },
+ {
+  "w": "पर।",
+  "r": "par",
+  "start": 4.797,
+  "end": 4.938,
+  "score": 0.98
+ }
+]

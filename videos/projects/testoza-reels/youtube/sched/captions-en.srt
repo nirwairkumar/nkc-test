@@ -1,0 +1,51 @@
+1
+00:00:00,430 --> 00:00:01,310
+Joined early?
+
+2
+00:00:01,310 --> 00:00:03,630
+Wait right here — the countdown's running.
+
+3
+00:00:03,630 --> 00:00:05,790
+The moment it hits zero, tap in,
+
+4
+00:00:05,790 --> 00:00:07,070
+and the exam opens.
+
+5
+00:00:07,070 --> 00:00:08,503
+Not a second before.
+
+6
+00:00:08,900 --> 00:00:10,900
+Setting it up takes ten seconds:
+
+7
+00:00:10,900 --> 00:00:13,060
+Settings, Access and Control,
+
+8
+00:00:13,060 --> 00:00:15,140
+Scheduled Access, a start time,
+
+9
+00:00:15,140 --> 00:00:16,649
+an end time, save.
+
+10
+00:00:17,563 --> 00:00:18,843
+And after the end time?
+
+11
+00:00:18,843 --> 00:00:22,005
+The exam closes by itself — no late entries.
+
+12
+00:00:22,550 --> 00:00:24,123
+Exams that keep their own time.
+
+13
+00:00:24,123 --> 00:00:25,863
+testoza dot com.

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "w0",
+    "text": "Proctoring",
+    "start": 0.08,
+    "end": 0.72
+  },
+  {
+    "id": "w1",
+    "text": "that",
+    "start": 0.72,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "tells",
+    "start": 0.88,
+    "end": 1.12
+  },
+  {
+    "id": "w3",
+    "text": "you",
+    "start": 1.12,
+    "end": 1.2
+  },
+  {
+    "id": "w4",
+    "text": "the",
+    "start": 1.2,
+    "end": 1.28
+  },
+  {
+    "id": "w5",
+    "text": "truth.",
+    "start": 1.28,
+    "end": 1.68
+  },
+  {
+    "id": "w6",
+    "text": "Test",
+    "start": 1.68,
+    "end": 2
+  },
+  {
+    "id": "w7",
+    "text": "Uzza.com",
+    "start": 2,
+    "end": 2.64
+  }
+]

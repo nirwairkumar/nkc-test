@@ -1,0 +1,566 @@
+[
+ {
+  "id": "w0",
+  "text": "Now",
+  "start": 0,
+  "end": 0.209
+ },
+ {
+  "id": "w1",
+  "text": "click",
+  "start": 0.279,
+  "end": 0.511
+ },
+ {
+  "id": "w2",
+  "text": "this,",
+  "start": 0.569,
+  "end": 0.906
+ },
+ {
+  "id": "w3",
+  "text": "on",
+  "start": 1.01,
+  "end": 1.173
+ },
+ {
+  "id": "w4",
+  "text": "any",
+  "start": 1.231,
+  "end": 1.405
+ },
+ {
+  "id": "w5",
+  "text": "row,",
+  "start": 1.463,
+  "end": 1.8
+ },
+ {
+  "id": "w6",
+  "text": "and",
+  "start": 1.962,
+  "end": 2.101
+ },
+ {
+  "id": "w7",
+  "text": "you",
+  "start": 2.136,
+  "end": 2.206
+ },
+ {
+  "id": "w8",
+  "text": "get",
+  "start": 2.264,
+  "end": 2.392
+ },
+ {
+  "id": "w9",
+  "text": "that",
+  "start": 2.438,
+  "end": 2.589
+ },
+ {
+  "id": "w10",
+  "text": "candidate's",
+  "start": 2.635,
+  "end": 3.17
+ },
+ {
+  "id": "w11",
+  "text": "whole",
+  "start": 3.216,
+  "end": 3.564
+ },
+ {
+  "id": "w12",
+  "text": "answer",
+  "start": 3.622,
+  "end": 3.971
+ },
+ {
+  "id": "w13",
+  "text": "sheet.",
+  "start": 4.005,
+  "end": 4.342
+ },
+ {
+  "id": "w14",
+  "text": "Jyoti:",
+  "start": 4.807,
+  "end": 5.352
+ },
+ {
+  "id": "w15",
+  "text": "eighteen",
+  "start": 5.759,
+  "end": 6.107
+ },
+ {
+  "id": "w16",
+  "text": "out",
+  "start": 6.142,
+  "end": 6.293
+ },
+ {
+  "id": "w17",
+  "text": "of",
+  "start": 6.351,
+  "end": 6.42
+ },
+ {
+  "id": "w18",
+  "text": "forty.",
+  "start": 6.478,
+  "end": 6.943
+ },
+ {
+  "id": "w19",
+  "text": "Not",
+  "start": 7.163,
+  "end": 7.338
+ },
+ {
+  "id": "w20",
+  "text": "great,",
+  "start": 7.396,
+  "end": 7.605
+ },
+ {
+  "id": "w21",
+  "text": "on",
+  "start": 7.639,
+  "end": 7.721
+ },
+ {
+  "id": "w22",
+  "text": "paper.",
+  "start": 7.779,
+  "end": 8.197
+ },
+ {
+  "id": "w23",
+  "text": "But",
+  "start": 8.661,
+  "end": 8.8
+ },
+ {
+  "id": "w24",
+  "text": "look",
+  "start": 8.858,
+  "end": 8.986
+ },
+ {
+  "id": "w25",
+  "text": "at",
+  "start": 9.033,
+  "end": 9.091
+ },
+ {
+  "id": "w26",
+  "text": "it",
+  "start": 9.149,
+  "end": 9.218
+ },
+ {
+  "id": "w27",
+  "text": "subject",
+  "start": 9.265,
+  "end": 9.59
+ },
+ {
+  "id": "w28",
+  "text": "by",
+  "start": 9.625,
+  "end": 9.706
+ },
+ {
+  "id": "w29",
+  "text": "subject.",
+  "start": 9.764,
+  "end": 10.217
+ },
+ {
+  "id": "w30",
+  "text": "English:",
+  "start": 10.472,
+  "end": 11.076
+ },
+ {
+  "id": "w31",
+  "text": "ten",
+  "start": 11.424,
+  "end": 11.575
+ },
+ {
+  "id": "w32",
+  "text": "out",
+  "start": 11.633,
+  "end": 11.738
+ },
+ {
+  "id": "w33",
+  "text": "of",
+  "start": 11.784,
+  "end": 11.842
+ },
+ {
+  "id": "w34",
+  "text": "ten.",
+  "start": 11.9,
+  "end": 12.248
+ },
+ {
+  "id": "w35",
+  "text": "Full",
+  "start": 12.655,
+  "end": 12.875
+ },
+ {
+  "id": "w36",
+  "text": "marks.",
+  "start": 12.933,
+  "end": 13.433
+ },
+ {
+  "id": "w37",
+  "text": "And",
+  "start": 13.781,
+  "end": 13.932
+ },
+ {
+  "id": "w38",
+  "text": "Quant…",
+  "start": 14.001,
+  "end": 14.605
+ },
+ {
+  "id": "w39",
+  "text": "minus",
+  "start": 15.151,
+  "end": 15.441
+ },
+ {
+  "id": "w40",
+  "text": "two.",
+  "start": 15.499,
+  "end": 15.847
+ },
+ {
+  "id": "w41",
+  "text": "She",
+  "start": 16.033,
+  "end": 16.184
+ },
+ {
+  "id": "w42",
+  "text": "isn't",
+  "start": 16.231,
+  "end": 16.428
+ },
+ {
+  "id": "w43",
+  "text": "a",
+  "start": 16.451,
+  "end": 16.474
+ },
+ {
+  "id": "w44",
+  "text": "weak",
+  "start": 16.521,
+  "end": 16.695
+ },
+ {
+  "id": "w45",
+  "text": "student.",
+  "start": 16.741,
+  "end": 17.136
+ },
+ {
+  "id": "w46",
+  "text": "She's",
+  "start": 17.183,
+  "end": 17.38
+ },
+ {
+  "id": "w47",
+  "text": "guessing",
+  "start": 17.438,
+  "end": 17.74
+ },
+ {
+  "id": "w48",
+  "text": "in",
+  "start": 17.786,
+  "end": 17.844
+ },
+ {
+  "id": "w49",
+  "text": "Maths,",
+  "start": 17.914,
+  "end": 18.251
+ },
+ {
+  "id": "w50",
+  "text": "and",
+  "start": 18.274,
+  "end": 18.402
+ },
+ {
+  "id": "w51",
+  "text": "the",
+  "start": 18.448,
+  "end": 18.529
+ },
+ {
+  "id": "w52",
+  "text": "negative",
+  "start": 18.587,
+  "end": 19.017
+ },
+ {
+  "id": "w53",
+  "text": "marking",
+  "start": 19.063,
+  "end": 19.423
+ },
+ {
+  "id": "w54",
+  "text": "is",
+  "start": 19.772,
+  "end": 19.911
+ },
+ {
+  "id": "w55",
+  "text": "eating",
+  "start": 19.969,
+  "end": 20.178
+ },
+ {
+  "id": "w56",
+  "text": "her",
+  "start": 20.224,
+  "end": 20.306
+ },
+ {
+  "id": "w57",
+  "text": "score.",
+  "start": 20.352,
+  "end": 20.851
+ },
+ {
+  "id": "w58",
+  "text": "Topic",
+  "start": 21.49,
+  "end": 21.885
+ },
+ {
+  "id": "w59",
+  "text": "Performance",
+  "start": 21.943,
+  "end": 22.442
+ },
+ {
+  "id": "w60",
+  "text": "breaks",
+  "start": 22.477,
+  "end": 22.732
+ },
+ {
+  "id": "w61",
+  "text": "it",
+  "start": 22.779,
+  "end": 22.848
+ },
+ {
+  "id": "w62",
+  "text": "down",
+  "start": 22.895,
+  "end": 23.08
+ },
+ {
+  "id": "w63",
+  "text": "even",
+  "start": 23.138,
+  "end": 23.324
+ },
+ {
+  "id": "w64",
+  "text": "further,",
+  "start": 23.371,
+  "end": 23.87
+ },
+ {
+  "id": "w65",
+  "text": "and",
+  "start": 24.091,
+  "end": 24.23
+ },
+ {
+  "id": "w66",
+  "text": "Questions",
+  "start": 24.288,
+  "end": 24.694
+ },
+ {
+  "id": "w67",
+  "text": "breakdown",
+  "start": 24.752,
+  "end": 25.17
+ },
+ {
+  "id": "w68",
+  "text": "shows",
+  "start": 25.228,
+  "end": 25.611
+ },
+ {
+  "id": "w69",
+  "text": "every",
+  "start": 26.018,
+  "end": 26.262
+ },
+ {
+  "id": "w70",
+  "text": "answer",
+  "start": 26.32,
+  "end": 26.563
+ },
+ {
+  "id": "w71",
+  "text": "she",
+  "start": 26.609,
+  "end": 26.714
+ },
+ {
+  "id": "w72",
+  "text": "gave,",
+  "start": 26.772,
+  "end": 27.178
+ },
+ {
+  "id": "w73",
+  "text": "even",
+  "start": 27.364,
+  "end": 27.631
+ },
+ {
+  "id": "w74",
+  "text": "the",
+  "start": 27.689,
+  "end": 27.759
+ },
+ {
+  "id": "w75",
+  "text": "seconds",
+  "start": 27.817,
+  "end": 28.304
+ },
+ {
+  "id": "w76",
+  "text": "she",
+  "start": 28.374,
+  "end": 28.525
+ },
+ {
+  "id": "w77",
+  "text": "spent",
+  "start": 28.572,
+  "end": 28.839
+ },
+ {
+  "id": "w78",
+  "text": "on",
+  "start": 28.885,
+  "end": 28.966
+ },
+ {
+  "id": "w79",
+  "text": "each",
+  "start": 29.013,
+  "end": 29.175
+ },
+ {
+  "id": "w80",
+  "text": "one.",
+  "start": 29.233,
+  "end": 29.512
+ },
+ {
+  "id": "w81",
+  "text": "It's",
+  "start": 29.698,
+  "end": 29.872
+ },
+ {
+  "id": "w82",
+  "text": "exactly",
+  "start": 29.918,
+  "end": 30.313
+ },
+ {
+  "id": "w83",
+  "text": "like",
+  "start": 30.371,
+  "end": 30.545
+ },
+ {
+  "id": "w84",
+  "text": "opening",
+  "start": 30.592,
+  "end": 30.882
+ },
+ {
+  "id": "w85",
+  "text": "her",
+  "start": 30.94,
+  "end": 31.01
+ },
+ {
+  "id": "w86",
+  "text": "copy.",
+  "start": 31.056,
+  "end": 31.579
+ },
+ {
+  "id": "w87",
+  "text": "Except",
+  "start": 31.985,
+  "end": 32.229
+ },
+ {
+  "id": "w88",
+  "text": "you",
+  "start": 32.252,
+  "end": 32.322
+ },
+ {
+  "id": "w89",
+  "text": "never",
+  "start": 32.38,
+  "end": 32.565
+ },
+ {
+  "id": "w90",
+  "text": "had",
+  "start": 32.623,
+  "end": 32.751
+ },
+ {
+  "id": "w91",
+  "text": "to",
+  "start": 32.798,
+  "end": 32.856
+ },
+ {
+  "id": "w92",
+  "text": "check",
+  "start": 32.914,
+  "end": 33.111
+ },
+ {
+  "id": "w93",
+  "text": "it.",
+  "start": 33.169,
+  "end": 33.343
+ }
+]

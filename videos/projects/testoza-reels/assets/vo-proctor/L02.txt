@@ -1,0 +1,1 @@
+Force full screen. Catch every tab or app switch — submit at the very first one, or allow a few warnings, say three. Block copy-paste, right-click, the back button, and the exit button.

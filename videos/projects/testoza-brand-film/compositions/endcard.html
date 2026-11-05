@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: 'Outfit'; src: url('assets/fonts/Outfit-500.woff2') format('woff2'); font-weight: 500; }
+        @font-face { font-family: 'Outfit'; src: url('assets/fonts/Outfit-600.woff2') format('woff2'); font-weight: 600; }
+        @font-face { font-family: 'Outfit'; src: url('assets/fonts/Outfit-700.woff2') format('woff2'); font-weight: 700; }
+        @font-face { font-family: 'Outfit'; src: url('assets/fonts/Outfit-900.woff2') format('woff2'); font-weight: 900; }
+        #root {
+          position: absolute;
+          inset: 0;
+          background: #ffffff;
+          font-family: 'Outfit', sans-serif;
+        }
+        #ec-stack {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding-bottom: 40px;
+        }
+        /* the wordmark, as TestoZaLogo.tsx draws it (light mode) */
+        #ec-lockup {
+          display: flex;
+          align-items: baseline;
+          font-size: 150px;
+          font-weight: 700;
+          line-height: 1;
+          letter-spacing: -0.025em;
+        }
+        .ec-blue { color: #056eab; display: inline-block; }
+        #ec-z {
+          position: relative;
+          display: inline-block;
+          font-size: 1.26em;
+          font-weight: 900;
+          margin: 0 0.02em;
+        }
+        .ec-zg {
+          display: block;
+          background: linear-gradient(to bottom, #ffe885, #f4b838 50%, #9e6400);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 10px rgba(244, 184, 56, 0.4));
+        }
+        #ec-z-ghost { visibility: hidden; filter: none; }
+        .ec-zs { position: absolute; left: 0; top: 0; }
+        #ec-tagline {
+          margin-top: 58px;
+          font-size: 48px;
+          font-weight: 500;
+          color: #1c2430;
+          letter-spacing: -0.01em;
+        }
+        #ec-url {
+          margin-top: 26px;
+          font-size: 34px;
+          font-weight: 600;
+          color: #056eab;
+          letter-spacing: 0.02em;
+        }
+        /* hidden states live here so the card's first frame is plain white */
+        #ec-z1 { clip-path: polygon(0% 0%, 0% 0%, 0% 31%, 0% 31%); }
+        #ec-z2 { clip-path: polygon(0% 24%, 100% 24%, 100% 24%, 0% 24%); }
+        #ec-z3 { clip-path: polygon(0% 72%, 0% 72%, 0% 100%, 0% 100%); }
+        #ec-testo { clip-path: inset(-10% 0% -20% 100%); }
+        #ec-a { clip-path: inset(-10% 100% -20% 0%); }
+        #ec-tagline { clip-path: inset(-20% 100% -30% 0%); }
+        #ec-url { opacity: 0; }
+      </style>
+
+      <div id="root" data-composition-id="endcard" data-width="1920" data-height="1080">
+        <div id="ec-stack">
+          <div id="ec-lockup">
+            <span id="ec-testo" class="ec-blue">Testo</span>
+            <span id="ec-z">
+              <span id="ec-z-ghost" class="ec-zg">Z</span>
+              <span id="ec-z1" class="ec-zg ec-zs">Z</span>
+              <span id="ec-z2" class="ec-zg ec-zs">Z</span>
+              <span id="ec-z3" class="ec-zg ec-zs">Z</span>
+            </span>
+            <span id="ec-a" class="ec-blue">a</span>
+          </div>
+          <div id="ec-tagline">Practise the way they’ll be tested.</div>
+          <div id="ec-url">testoza.com</div>
+        </div>
+      </div>
+
+      <script>
+        // Times are the sonic logo's own onsets inside the score (score starts at film 0,
+        // this card at 83.0): first shimmer 83.59, then the three rising notes
+        // 85.71, 86.06, 86.42 = Tes - to - Za. The Z is drawn in three strokes, one per note.
+        const tl = gsap.timeline({ paused: true });
+        const HIT = 0.59, N1 = 2.71, N2 = 3.06, N3 = 3.42;
+        // the name opens outward from the gap where the Z will land
+        tl.fromTo('#ec-testo', { clipPath: 'inset(-10% 0% -20% 100%)', x: 26 }, { clipPath: 'inset(-10% 0% -20% 0%)', x: 0, duration: 1.0, ease: 'power3.out' }, HIT)
+          .fromTo('#ec-a', { clipPath: 'inset(-10% 100% -20% 0%)', x: -26 }, { clipPath: 'inset(-10% 0% -20% 0%)', x: 0, duration: 1.0, ease: 'power3.out' }, HIT);
+
+        // Tes: top bar, left to right · to: the diagonal, top down · Za: bottom bar
+        tl.fromTo('#ec-z1', { clipPath: 'polygon(0% 0%, 0% 0%, 0% 31%, 0% 31%)' }, { clipPath: 'polygon(0% 0%, 100% 0%, 100% 31%, 0% 31%)', duration: 0.24, ease: 'power2.out' }, N1 - 0.03)
+          .fromTo('#ec-z2', { clipPath: 'polygon(0% 24%, 100% 24%, 100% 24%, 0% 24%)' }, { clipPath: 'polygon(0% 24%, 100% 24%, 100% 80%, 0% 80%)', duration: 0.26, ease: 'power2.inOut' }, N2 - 0.03)
+          .fromTo('#ec-z3', { clipPath: 'polygon(0% 72%, 0% 72%, 0% 100%, 0% 100%)' }, { clipPath: 'polygon(0% 72%, 100% 72%, 100% 100%, 0% 100%)', duration: 0.24, ease: 'power2.out' }, N3 - 0.03);
+
+        // the strongest note lands the mark with a little weight
+        tl.fromTo('#ec-lockup', { scale: 1.0 }, { scale: 1.035, duration: 0.12, ease: 'power2.out' }, N3)
+          .to('#ec-lockup', { scale: 1.0, duration: 0.7, ease: 'power3.out' }, N3 + 0.12);
+
+        tl.fromTo('#ec-tagline', { clipPath: 'inset(-20% 100% -30% 0%)' }, { clipPath: 'inset(-20% 0% -30% 0%)', duration: 0.8, ease: 'power2.inOut' }, 4.0)
+          .fromTo('#ec-url', { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power1.out' }, 4.75);
+
+        window.__timelines['endcard'] = tl;
+      </script>
+    </template>
+  </body>
+</html>

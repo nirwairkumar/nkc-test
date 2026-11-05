@@ -1,0 +1,98 @@
+[
+ {
+  "id": "w0",
+  "text": "This",
+  "start": 0,
+  "end": 0.267
+ },
+ {
+  "id": "w1",
+  "text": "list",
+  "start": 0.348,
+  "end": 0.534
+ },
+ {
+  "id": "w2",
+  "text": "tells",
+  "start": 0.58,
+  "end": 0.836
+ },
+ {
+  "id": "w3",
+  "text": "you",
+  "start": 0.882,
+  "end": 0.964
+ },
+ {
+  "id": "w4",
+  "text": "who",
+  "start": 1.01,
+  "end": 1.161
+ },
+ {
+  "id": "w5",
+  "text": "scored",
+  "start": 1.219,
+  "end": 1.591
+ },
+ {
+  "id": "w6",
+  "text": "what.",
+  "start": 1.649,
+  "end": 2.02
+ },
+ {
+  "id": "w7",
+  "text": "It",
+  "start": 2.31,
+  "end": 2.438
+ },
+ {
+  "id": "w8",
+  "text": "doesn't",
+  "start": 2.485,
+  "end": 2.752
+ },
+ {
+  "id": "w9",
+  "text": "tell",
+  "start": 2.775,
+  "end": 2.914
+ },
+ {
+  "id": "w10",
+  "text": "you",
+  "start": 2.961,
+  "end": 3.042
+ },
+ {
+  "id": "w11",
+  "text": "why.",
+  "start": 3.088,
+  "end": 3.437
+ },
+ {
+  "id": "w12",
+  "text": "For",
+  "start": 3.727,
+  "end": 3.913
+ },
+ {
+  "id": "w13",
+  "text": "that:",
+  "start": 3.971,
+  "end": 4.377
+ },
+ {
+  "id": "w14",
+  "text": "Full",
+  "start": 4.667,
+  "end": 4.899
+ },
+ {
+  "id": "w15",
+  "text": "report.",
+  "start": 4.957,
+  "end": 5.359
+ }
+]

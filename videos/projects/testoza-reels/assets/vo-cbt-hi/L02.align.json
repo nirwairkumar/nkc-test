@@ -1,0 +1,149 @@
+[
+ {
+  "w": "TestoZa",
+  "r": "testoza",
+  "start": 0.02,
+  "end": 0.48,
+  "score": 0.803
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 0.58,
+  "end": 0.701,
+  "score": 0.802
+ },
+ {
+  "w": "बस",
+  "r": "bas",
+  "start": 0.801,
+  "end": 0.941,
+  "score": 0.991
+ },
+ {
+  "w": "एक",
+  "r": "ek",
+  "start": 1.181,
+  "end": 1.301,
+  "score": 0.991
+ },
+ {
+  "w": "setting",
+  "r": "setting",
+  "start": 1.381,
+  "end": 1.681,
+  "score": 0.823
+ },
+ {
+  "w": "है:",
+  "r": "hai",
+  "start": 1.701,
+  "end": 1.801,
+  "score": 0.967
+ },
+ {
+  "w": "Results",
+  "r": "results",
+  "start": 2.042,
+  "end": 2.482,
+  "score": 0.619
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 2.622,
+  "end": 2.742,
+  "score": 0.929
+ },
+ {
+  "w": "Timing,",
+  "r": "timing",
+  "start": 2.802,
+  "end": 3.162,
+  "score": 0.903
+ },
+ {
+  "w": "Standard",
+  "r": "standard",
+  "start": 3.343,
+  "end": 3.763,
+  "score": 0.963
+ },
+ {
+  "w": "Mode",
+  "r": "mode",
+  "start": 3.783,
+  "end": 4.043,
+  "score": 0.72
+ },
+ {
+  "w": "यही",
+  "r": "yahii",
+  "start": 4.403,
+  "end": 4.704,
+  "score": 0.772
+ },
+ {
+  "w": "है",
+  "r": "hai",
+  "start": 4.744,
+  "end": 4.844,
+  "score": 0.92
+ },
+ {
+  "w": "NTA-style",
+  "r": "ntastyle",
+  "start": 5.064,
+  "end": 5.684,
+  "score": 0.631
+ },
+ {
+  "w": "CBT",
+  "r": "cbt",
+  "start": 5.764,
+  "end": 6.125,
+  "score": 0.714
+ },
+ {
+  "w": "screen।",
+  "r": "screen",
+  "start": 6.225,
+  "end": 6.505,
+  "score": 0.719
+ },
+ {
+  "w": "Strict",
+  "r": "strict",
+  "start": 6.865,
+  "end": 7.226,
+  "score": 0.818
+ },
+ {
+  "w": "timer",
+  "r": "timer",
+  "start": 7.306,
+  "end": 7.586,
+  "score": 0.76
+ },
+ {
+  "w": "on,",
+  "r": "on",
+  "start": 7.666,
+  "end": 7.806,
+  "score": 0.965
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 8.026,
+  "end": 8.126,
+  "score": 0.959
+ },
+ {
+  "w": "save।",
+  "r": "save",
+  "start": 8.206,
+  "end": 8.446,
+  "score": 0.348
+ }
+]

@@ -1,0 +1,164 @@
+{
+ "request": {
+  "model_id": "music_v2_5",
+  "store_for_inpainting": true,
+  "composition_plan": {
+   "chunks": [
+    {
+     "text": "[Intro]\n{near-silent and suspended: a low sustained cello note}\n{sparse soft felt piano notes, far apart}\n{faint clock-like ticking texture, intimate and tense, lots of space}",
+     "duration_ms": 13400,
+     "positive_styles": [
+      "cinematic TV commercial score",
+      "A minor",
+      "84 BPM",
+      "felt piano",
+      "solo cello",
+      "minimal",
+      "intimate",
+      "premium brand film music"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "text": "[Verse]\n{a tender, slightly weary solo felt piano motif, a gentle repeating pattern}\n{soft cello sustains underneath}\n{restrained and human, leaves room for a narrator}",
+     "duration_ms": 20000,
+     "positive_styles": [
+      "felt piano",
+      "solo cello",
+      "A minor",
+      "84 BPM",
+      "melancholic",
+      "tender",
+      "sparse"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "text": "[Break]\n{the music almost stops: one held high violin note and a single soft piano note}\n{a breath of silence}\n{then a gentle rising swell}",
+     "duration_ms": 5800,
+     "positive_styles": [
+      "suspended",
+      "held violin note",
+      "soft piano",
+      "anticipation",
+      "rising swell"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "text": "[Build]\n{hopeful and bright: a warm piano ostinato in eighth notes}\n{pizzicato strings and a soft modern pulse with light claps and shaker}\n{steadily building, optimistic, stays under the narrator}",
+     "duration_ms": 20800,
+     "positive_styles": [
+      "C major",
+      "84 BPM",
+      "hopeful",
+      "piano ostinato",
+      "pizzicato strings",
+      "soft modern pulse",
+      "light claps"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "text": "[Lift]\n{the emotional peak: full warm strings swell over piano}\n{gentle live drums, a soaring but tender melody, uplifting and grateful}\n{softening toward the end}",
+     "duration_ms": 15000,
+     "positive_styles": [
+      "C major",
+      "84 BPM",
+      "uplifting",
+      "lush strings",
+      "piano",
+      "gentle live drums",
+      "emotional"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "text": "[Outro]\n{pulls back to soft piano and sustained strings}\n{intimate and resolved, a sense of anticipation leading into the signature tune}",
+     "duration_ms": 8000,
+     "positive_styles": [
+      "C major",
+      "soft piano",
+      "sustained strings",
+      "resolved",
+      "tender"
+     ],
+     "negative_styles": [
+      "vocals",
+      "singing",
+      "lyrics",
+      "EDM drop",
+      "heavy bass",
+      "aggressive drums"
+     ],
+     "context_adherence": "high"
+    },
+    {
+     "song_id": "5fmV7ADAkkXXQ1MGtLFw",
+     "range": {
+      "start_ms": 0,
+      "end_ms": 6800
+     }
+    }
+   ]
+  },
+  "seed": 21
+ },
+ "headers": {
+  "access-control-allow-headers": "*",
+  "access-control-allow-methods": "POST, PATCH, OPTIONS, DELETE, GET, PUT",
+  "access-control-allow-origin": "*",
+  "access-control-max-age": "600",
+  "alt-svc": "h3=\":443\"; ma=2592000",
+  "content-length": "2156086",
+  "content-type": "audio/mpeg",
+  "date": "Fri, 30 Oct 2026 19:15:40 GMT",
+  "server": "uvicorn",
+  "song-id": "XI4IYAb3hxweKst6ITis",
+  "strict-transport-security": "max-age=1800;",
+  "vary": "Accept-Language",
+  "via": "1.1 google",
+  "x-region": "us-central1",
+  "x-trace-id": "452461d4ca3a4cec5ee24dba2a0c5f28"
+ }
+}

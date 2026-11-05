@@ -1,0 +1,37 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-cbt-hi/L01.wav",
+    "duration": 4.766083,
+    "text": "JEE, NEET, CUET — सब इसी screen पर होते हैं. तो practice भी इसी पर कराइए.",
+    "raw": "{exam}JEE, NEET, CUET — {timer}सब इसी screen पर होते हैं। {palette}तो practice भी इसी पर कराइए।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-cbt-hi/L02.wav",
+    "duration": 8.4865,
+    "text": "Testoza में बस एक setting है: Results and Timing, Standard Mode — यही है NTA-style CBT screen. Strict timer on, और save.",
+    "raw": "TestoZa में बस एक setting है: {results}Results and Timing, {std}Standard Mode — यही है NTA-style CBT screen। {strictt}Strict timer on, {save}और save।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-cbt-hi/L03.wav",
+    "duration": 9.9375,
+    "text": "Answer किया, save and next — green. Doubt है? Answer and review. सिर्फ़ review — purple. Skip किया — red. बिल्कुल असली exam वाले colours.",
+    "raw": "{ans1}Answer किया, {next1}save and next — green। {ans2}Doubt है? {ansrev}Answer and review। {rev3}सिर्फ़ review — purple। {skip4}Skip किया — red। {legend}बिल्कुल असली exam वाले colours।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-cbt-hi/L04.wav",
+    "duration": 5.007292,
+    "text": "Palette से कहीं भी jump कीजिए, और submit से पहले पूरा summary — बिल्कुल NTA जैसा.",
+    "raw": "{jump}Palette से कहीं भी jump कीजिए, {submitbtn}और submit से पहले {summary}पूरा summary — बिल्कुल NTA जैसा।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-cbt-hi/L05.wav",
+    "duration": 4.977833,
+    "text": "असली exam की practice, आपके अपने questions के साथ. Try कीजिए testoza dot com पर.",
+    "raw": "असली exam की practice, आपके अपने questions के साथ। {endurl}Try कीजिए testoza dot com पर।"
+  }
+]

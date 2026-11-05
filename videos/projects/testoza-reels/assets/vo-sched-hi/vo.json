@@ -1,0 +1,30 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-sched-hi/L01.wav",
+    "duration": 7.622833,
+    "text": "जल्दी आ गए? यहीं wait कीजिए — countdown चल रहा है. जैसे ही zero हुआ, tap कीजिए, और exam खुल गया. एक second भी पहले नहीं.",
+    "raw": "{wait}जल्दी आ गए? यहीं wait कीजिए — countdown चल रहा है। {zero}जैसे ही zero हुआ, {enter}tap कीजिए, {opens}और exam खुल गया। एक second भी पहले नहीं।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-sched-hi/L02.wav",
+    "duration": 5.670958,
+    "text": "Setup में बस दस second: Settings, Access and Control, Scheduled Access, start time, end time, save.",
+    "raw": "Setup में बस दस second: {settings}Settings, {access}Access and Control, {sched}Scheduled Access, {start}start time, {end}end time, {save}save।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-sched-hi/L03.wav",
+    "duration": 3.422292,
+    "text": "और end time के बाद? Exam अपने-आप बंद — कोई late entry नहीं.",
+    "raw": "{closed}और end time के बाद? Exam अपने-आप बंद — कोई late entry नहीं।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-sched-hi/L04.wav",
+    "duration": 4.231875,
+    "text": "Exams, जो अपना time ख़ुद रखते हैं. Testo-zaa dot com.",
+    "raw": "Exams, जो अपना time ख़ुद रखते हैं। {endurl}Testo-zaa dot com।"
+  }
+]

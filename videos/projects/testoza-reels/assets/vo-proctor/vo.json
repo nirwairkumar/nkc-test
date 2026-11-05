@@ -1,0 +1,37 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-proctor/L01.wav",
+    "duration": 5.421833,
+    "text": "She switched tabs — and the exam caught it. Here's what Testoza's proctoring stops… and what it can't.",
+    "raw": "{leave1}She switched tabs — {warn1}and the exam caught it. Here's what TestoZa's proctoring stops… and what it can't."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-proctor/L02.wav",
+    "duration": 12.16525,
+    "text": "Force full screen. Catch every tab or app switch — submit at the very first one, or allow a few warnings, say three. Block copy-paste, right-click, the back button, and the exit button.",
+    "raw": "{fs}Force full screen. {tab}Catch every tab or app switch — {strict}submit at the very first one, {count}or allow a few warnings, {threepick}say three. {copy}Block copy-paste, {right}right-click, {back}the back button, {exit}and the exit button."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-proctor/L03.wav",
+    "duration": 6.058083,
+    "text": "Leave full screen — warning two. Switch again — three. One more… and the test is submitted. Automatically.",
+    "raw": "{fsexit}Leave full screen — {warn2}warning two. {leave3}Switch again — {warn3}three. {leave4}One more… {auto}and the test is submitted. Automatically."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-proctor/L04.wav",
+    "duration": 9.027125,
+    "text": "Now the honest part. There's no webcam watching — so it can't see a second phone, or a friend in the room. For big exams, add an invigilator, or a computer lab.",
+    "raw": "Now the honest part. {aitab}There's no webcam watching — so it can't see a second phone, or a friend in the room. For big exams, add an invigilator, or a computer lab."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-proctor/L05.wav",
+    "duration": 2.766792,
+    "text": "Proctoring that tells you the truth. testoza dot com.",
+    "raw": "Proctoring that tells you the truth. {endurl}testoza dot com."
+  }
+]

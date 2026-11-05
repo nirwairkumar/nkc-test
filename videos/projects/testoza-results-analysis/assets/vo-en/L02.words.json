@@ -1,0 +1,152 @@
+[
+ {
+  "id": "w0",
+  "text": "You",
+  "start": 0,
+  "end": 0.128
+ },
+ {
+  "id": "w1",
+  "text": "know",
+  "start": 0.163,
+  "end": 0.255
+ },
+ {
+  "id": "w2",
+  "text": "how",
+  "start": 0.29,
+  "end": 0.372
+ },
+ {
+  "id": "w3",
+  "text": "this",
+  "start": 0.418,
+  "end": 0.546
+ },
+ {
+  "id": "w4",
+  "text": "goes.",
+  "start": 0.604,
+  "end": 1.068
+ },
+ {
+  "id": "w5",
+  "text": "Tick,",
+  "start": 1.533,
+  "end": 1.916
+ },
+ {
+  "id": "w6",
+  "text": "cross,",
+  "start": 1.95,
+  "end": 2.299
+ },
+ {
+  "id": "w7",
+  "text": "tick…",
+  "start": 2.345,
+  "end": 2.833
+ },
+ {
+  "id": "w8",
+  "text": "total.",
+  "start": 3.123,
+  "end": 3.646
+ },
+ {
+  "id": "w9",
+  "text": "Every",
+  "start": 3.936,
+  "end": 4.203
+ },
+ {
+  "id": "w10",
+  "text": "mark",
+  "start": 4.261,
+  "end": 4.481
+ },
+ {
+  "id": "w11",
+  "text": "into",
+  "start": 4.54,
+  "end": 4.725
+ },
+ {
+  "id": "w12",
+  "text": "the",
+  "start": 4.783,
+  "end": 4.853
+ },
+ {
+  "id": "w13",
+  "text": "register,",
+  "start": 4.899,
+  "end": 5.422
+ },
+ {
+  "id": "w14",
+  "text": "then",
+  "start": 5.468,
+  "end": 5.654
+ },
+ {
+  "id": "w15",
+  "text": "the",
+  "start": 5.7,
+  "end": 5.793
+ },
+ {
+  "id": "w16",
+  "text": "rank",
+  "start": 5.863,
+  "end": 6.06
+ },
+ {
+  "id": "w17",
+  "text": "list.",
+  "start": 6.118,
+  "end": 6.432
+ },
+ {
+  "id": "w18",
+  "text": "And",
+  "start": 6.653,
+  "end": 6.792
+ },
+ {
+  "id": "w19",
+  "text": "somewhere",
+  "start": 6.85,
+  "end": 7.163
+ },
+ {
+  "id": "w20",
+  "text": "around",
+  "start": 7.187,
+  "end": 7.407
+ },
+ {
+  "id": "w21",
+  "text": "Tuesday,",
+  "start": 7.442,
+  "end": 7.779
+ },
+ {
+  "id": "w22",
+  "text": "it's",
+  "start": 7.802,
+  "end": 7.953
+ },
+ {
+  "id": "w23",
+  "text": "finally",
+  "start": 7.988,
+  "end": 8.336
+ },
+ {
+  "id": "w24",
+  "text": "done.",
+  "start": 8.382,
+  "end": 8.676
+ }
+]

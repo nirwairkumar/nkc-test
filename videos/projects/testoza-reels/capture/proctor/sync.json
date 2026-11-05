@@ -1,0 +1,128 @@
+[
+  {
+    "line": "L01",
+    "cue": "leave1",
+    "click": 0.31,
+    "word": 0.43,
+    "lead": 0.12
+  },
+  {
+    "line": "L01",
+    "cue": "warn1",
+    "click": 1.35,
+    "word": 1.47,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "fs",
+    "click": 6.48,
+    "word": 6.61,
+    "lead": 0.13
+  },
+  {
+    "line": "L02",
+    "cue": "tab",
+    "click": 7.85,
+    "word": 7.97,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "strict",
+    "click": 10.01,
+    "word": 10.13,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "count",
+    "click": 11.36,
+    "word": 12.13,
+    "lead": 0.77
+  },
+  {
+    "line": "L02",
+    "cue": "threepick",
+    "click": 13.4,
+    "word": 13.73,
+    "lead": 0.33
+  },
+  {
+    "line": "L02",
+    "cue": "copy",
+    "click": 14.41,
+    "word": 14.53,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "right",
+    "click": 15.52,
+    "word": 15.89,
+    "lead": 0.37
+  },
+  {
+    "line": "L02",
+    "cue": "back",
+    "click": 16.57,
+    "word": 16.69,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "exit",
+    "click": 17.53,
+    "word": 17.65,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "fsexit",
+    "click": 19.48,
+    "word": 19.85,
+    "lead": 0.37
+  },
+  {
+    "line": "L03",
+    "cue": "warn2",
+    "click": 19.53,
+    "word": 20.57,
+    "lead": 1.04
+  },
+  {
+    "line": "L03",
+    "cue": "leave3",
+    "click": 20.81,
+    "word": 21.45,
+    "lead": 0.64
+  },
+  {
+    "line": "L03",
+    "cue": "warn3",
+    "click": 21.06,
+    "word": 22.41,
+    "lead": 1.35
+  },
+  {
+    "line": "L03",
+    "cue": "leave4",
+    "click": 22.24,
+    "word": 22.97,
+    "lead": 0.73
+  },
+  {
+    "line": "L03",
+    "cue": "auto",
+    "click": 23.49,
+    "word": 23.61,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "aitab",
+    "click": 27.82,
+    "word": 27.94,
+    "lead": 0.12
+  }
+]

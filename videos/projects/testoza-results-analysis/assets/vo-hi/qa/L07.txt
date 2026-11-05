@@ -1,0 +1,1 @@
+आपके results दो जगह रहते हैं। My Tests पर हर exam के साथ एक results button है और sidebar में All Submissions, जहां हर वह exam है जो आपके candidates ने कभी लिखा। चलिए Quick View से शुरू करते हैं।

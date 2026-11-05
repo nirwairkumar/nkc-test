@@ -94,8 +94,9 @@ export default function ExamEndFeedback({ origin, onSent }: {
             setPart('conduct', '');
             setSent(true);
             onSent?.();
-        } catch (err: any) {
-            toast.error(err?.response?.data?.detail || 'Couldn’t send your feedback. Please try again.');
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { detail?: string } } };
+            toast.error(errorObj?.response?.data?.detail || 'Couldn’t send your feedback. Please try again.');
         } finally {
             setSending(false);
         }
@@ -181,7 +182,7 @@ export default function ExamEndFeedback({ origin, onSent }: {
                     <div className="ml-4 h-px bg-slate-200/80 dark:bg-white/10" aria-hidden="true" />
                     <div className="px-4 py-3">
                         <label htmlFor="exam-end-feedback-note" className="sr-only">
-                            {chosen?.ask ?? 'Tell us more'} (optional)
+                            {chosen?.ask ?? 'Tell us more'}
                         </label>
                         <textarea
                             id="exam-end-feedback-note"
@@ -190,7 +191,7 @@ export default function ExamEndFeedback({ origin, onSent }: {
                             value={draft.conduct}
                             maxLength={2000}
                             onChange={(e) => setPart('conduct', e.target.value)}
-                            placeholder={`${chosen?.ask ?? 'Tell us more'} (optional)`}
+                            placeholder={chosen?.ask ?? 'Tell us more'}
                             className="block h-[72px] w-full resize-none bg-transparent text-[15px] leading-6 tracking-[-0.01em] text-slate-900 placeholder:text-slate-300 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-600"
                         />
                     </div>

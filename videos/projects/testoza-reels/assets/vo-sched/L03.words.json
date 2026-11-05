@@ -1,0 +1,80 @@
+[
+  {
+    "id": "w0",
+    "text": "And",
+    "start": 0,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "after",
+    "start": 0.24,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "the",
+    "start": 0.48,
+    "end": 0.64
+  },
+  {
+    "id": "w3",
+    "text": "end",
+    "start": 0.64,
+    "end": 0.88
+  },
+  {
+    "id": "w4",
+    "text": "time,",
+    "start": 0.88,
+    "end": 1.28
+  },
+  {
+    "id": "w5",
+    "text": "the",
+    "start": 1.28,
+    "end": 1.44
+  },
+  {
+    "id": "w6",
+    "text": "exam",
+    "start": 1.44,
+    "end": 1.84
+  },
+  {
+    "id": "w7",
+    "text": "closes",
+    "start": 1.84,
+    "end": 2.32
+  },
+  {
+    "id": "w8",
+    "text": "by",
+    "start": 2.32,
+    "end": 2.48
+  },
+  {
+    "id": "w9",
+    "text": "itself,",
+    "start": 2.48,
+    "end": 3.04
+  },
+  {
+    "id": "w10",
+    "text": "no",
+    "start": 3.04,
+    "end": 3.36
+  },
+  {
+    "id": "w11",
+    "text": "late",
+    "start": 3.36,
+    "end": 3.68
+  },
+  {
+    "id": "w12",
+    "text": "entries.",
+    "start": 3.68,
+    "end": 4.16
+  }
+]

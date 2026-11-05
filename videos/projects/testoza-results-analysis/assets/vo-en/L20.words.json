@@ -1,0 +1,62 @@
+[
+ {
+  "id": "w0",
+  "text": "And",
+  "start": 0,
+  "end": 0.116
+ },
+ {
+  "id": "w1",
+  "text": "next",
+  "start": 0.174,
+  "end": 0.395
+ },
+ {
+  "id": "w2",
+  "text": "to",
+  "start": 0.418,
+  "end": 0.511
+ },
+ {
+  "id": "w3",
+  "text": "it,",
+  "start": 0.615,
+  "end": 0.836
+ },
+ {
+  "id": "w4",
+  "text": "the",
+  "start": 1.126,
+  "end": 1.231
+ },
+ {
+  "id": "w5",
+  "text": "same",
+  "start": 1.277,
+  "end": 1.474
+ },
+ {
+  "id": "w6",
+  "text": "story",
+  "start": 1.509,
+  "end": 1.776
+ },
+ {
+  "id": "w7",
+  "text": "in",
+  "start": 1.823,
+  "end": 1.869
+ },
+ {
+  "id": "w8",
+  "text": "plain",
+  "start": 1.927,
+  "end": 2.171
+ },
+ {
+  "id": "w9",
+  "text": "words.",
+  "start": 2.229,
+  "end": 2.647
+ }
+]

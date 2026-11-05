@@ -1,0 +1,879 @@
+1
+00:00:00,522 --> 00:00:01,521
+Sunday night.
+
+2
+00:00:01,521 --> 00:00:03,540
+Forty-eight answer sheets from this morning's mock
+
+3
+00:00:03,540 --> 00:00:04,368
+test.
+
+4
+00:00:04,368 --> 00:00:05,539
+One red pen.
+
+5
+00:00:05,539 --> 00:00:07,809
+And a cup of chai that went cold an hour ago.
+
+6
+00:00:07,939 --> 00:00:09,272
+You know how this goes.
+
+7
+00:00:09,272 --> 00:00:10,655
+Tick, cross, tick…
+
+8
+00:00:10,655 --> 00:00:11,362
+total.
+
+9
+00:00:11,362 --> 00:00:13,724
+Every mark into the register, then the rank list.
+
+10
+00:00:13,724 --> 00:00:15,657
+And somewhere around Tuesday, it's finally done.
+
+11
+00:00:15,788 --> 00:00:18,261
+But the one question that really matters —
+
+12
+00:00:18,261 --> 00:00:20,330
+which questions did my batch get wrong,
+
+13
+00:00:20,330 --> 00:00:20,962
+and why?
+
+14
+00:00:20,962 --> 00:00:22,290
+never gets answered.
+
+15
+00:00:22,290 --> 00:00:24,430
+To know that, you'd have to count nine hundred and
+
+16
+00:00:24,430 --> 00:00:26,065
+sixty answers by hand.
+
+17
+00:00:26,065 --> 00:00:27,549
+Nobody has that kind of Sunday.
+
+18
+00:00:27,679 --> 00:00:30,375
+On TestoZa, the checking is done the second they press
+
+19
+00:00:30,375 --> 00:00:30,970
+Submit.
+
+20
+00:00:30,970 --> 00:00:33,454
+But then you open the results, and it's a screen full
+
+21
+00:00:33,454 --> 00:00:34,413
+of numbers.
+
+22
+00:00:34,413 --> 00:00:36,200
+So today, let's read them together.
+
+23
+00:00:36,200 --> 00:00:38,643
+Both result pages, every number, and exactly what
+
+24
+00:00:38,643 --> 00:00:40,341
+to do with them on Monday morning.
+
+25
+00:00:41,341 --> 00:00:43,855
+First, a promise, because I know this is the worry.
+
+26
+00:00:43,855 --> 00:00:45,258
+Your marks register?
+
+27
+00:00:45,258 --> 00:00:46,671
+That's the Excel file.
+
+28
+00:00:46,671 --> 00:00:48,539
+The rank list for the notice board?
+
+29
+00:00:48,539 --> 00:00:50,821
+One tap, and it's on WhatsApp.
+
+30
+00:00:50,821 --> 00:00:53,223
+Opening one student's copy to see where they went
+
+31
+00:00:53,223 --> 00:00:53,769
+wrong?
+
+32
+00:00:53,769 --> 00:00:55,536
+You can open every single answer sheet.
+
+33
+00:00:55,536 --> 00:00:57,151
+And your discussion class stays.
+
+34
+00:00:57,151 --> 00:00:59,065
+It just gets shorter, and a lot sharper.
+
+35
+00:00:59,196 --> 00:01:01,649
+And then there are a few things paper simply can't
+
+36
+00:01:01,649 --> 00:01:02,618
+tell you.
+
+37
+00:01:02,618 --> 00:01:03,533
+Let's go find them.
+
+38
+00:01:04,646 --> 00:01:06,403
+Your results live in two places.
+
+39
+00:01:06,403 --> 00:01:09,280
+On My Tests, every exam you've run has a Results button.
+
+40
+00:01:09,280 --> 00:01:12,309
+And in the sidebar, All Submissions keeps every exam
+
+41
+00:01:12,309 --> 00:01:14,186
+your candidates have ever written.
+
+42
+00:01:14,186 --> 00:01:15,665
+Let's start with the quick view.
+
+43
+00:01:15,752 --> 00:01:17,257
+Click Results.
+
+44
+00:01:17,257 --> 00:01:20,548
+Up top: the exam, its status — this one has ended
+
+45
+00:01:20,548 --> 00:01:23,356
+twenty questions, forty marks, twenty minutes.
+
+46
+00:01:23,443 --> 00:01:26,259
+These four boxes are your attendance register.
+
+47
+00:01:26,259 --> 00:01:27,864
+Fifty-two candidates started.
+
+48
+00:01:27,864 --> 00:01:29,803
+Writing now shows who's still writing,
+
+49
+00:01:29,803 --> 00:01:31,388
+live, during the exam.
+
+50
+00:01:31,388 --> 00:01:33,367
+It's over, so, zero.
+
+51
+00:01:33,367 --> 00:01:34,800
+Forty-eight submitted.
+
+52
+00:01:34,800 --> 00:01:37,425
+And four dropped: they started, but never handed in.
+
+53
+00:01:37,512 --> 00:01:40,390
+Tap Dropped, and you can see exactly when each one
+
+54
+00:01:40,390 --> 00:01:42,630
+left, and how much they'd answered.
+
+55
+00:01:42,630 --> 00:01:45,326
+Akash answered two questions and went quiet at three
+
+56
+00:01:45,326 --> 00:01:46,447
+minutes past ten.
+
+57
+00:01:46,447 --> 00:01:48,153
+Sonal answered fourteen.
+
+58
+00:01:48,153 --> 00:01:49,425
+That's a different story.
+
+59
+00:01:49,425 --> 00:01:51,333
+One quick call tells you if it was the network,
+
+60
+00:01:51,333 --> 00:01:52,909
+the phone, or something else.
+
+61
+00:01:52,909 --> 00:01:55,301
+On paper, both of them were just…
+
+62
+00:01:55,301 --> 00:01:55,900
+absent.
+
+63
+00:01:55,987 --> 00:01:57,996
+Now Submitted, everyone who finished.
+
+64
+00:01:57,996 --> 00:02:00,550
+Average, highest and lowest, right at the top.
+
+65
+00:02:00,550 --> 00:02:02,761
+Then every score, with the percentage under it:
+
+66
+00:02:02,761 --> 00:02:05,477
+blue means forty percent or more, red means below.
+
+67
+00:02:05,477 --> 00:02:07,092
+A tick for right, a cross for wrong,
+
+68
+00:02:07,092 --> 00:02:08,485
+a dash for left blank.
+
+69
+00:02:08,485 --> 00:02:10,440
+Time taken, and when they submitted.
+
+70
+00:02:10,527 --> 00:02:11,385
+Want ranks?
+
+71
+00:02:11,385 --> 00:02:12,546
+Switch on Rank.
+
+72
+00:02:12,546 --> 00:02:15,191
+Hover the little i for the tie-breakers.
+
+73
+00:02:15,191 --> 00:02:17,331
+Same as the real exam: higher marks first,
+
+74
+00:02:17,331 --> 00:02:19,199
+then fewer wrong answers, then fewer left blank,
+
+75
+00:02:19,199 --> 00:02:20,844
+then whoever submitted first.
+
+76
+00:02:20,844 --> 00:02:22,843
+Look at Sneha and Rahul: both thirty-three,
+
+77
+00:02:22,843 --> 00:02:24,903
+both two wrong, both one blank.
+
+78
+00:02:24,903 --> 00:02:26,902
+Sneha submitted four minutes earlier,
+
+79
+00:02:26,902 --> 00:02:28,103
+so Sneha is second.
+
+80
+00:02:28,190 --> 00:02:30,219
+This Submitted heading is a filter too.
+
+81
+00:02:30,219 --> 00:02:32,107
+If one test was written on two days,
+
+82
+00:02:32,107 --> 00:02:34,085
+pick a day, and the ranks follow.
+
+83
+00:02:34,085 --> 00:02:36,327
+Excel downloads the whole list: names,
+
+84
+00:02:36,327 --> 00:02:38,114
+roll numbers, marks, ranks.
+
+85
+00:02:38,114 --> 00:02:38,910
+That's your register.
+
+86
+00:02:38,910 --> 00:02:39,527
+Done.
+
+87
+00:02:39,527 --> 00:02:41,043
+And search finds anyone in a second.
+
+88
+00:02:41,379 --> 00:02:44,176
+Now click this, on any row, and you get that candidate's
+
+89
+00:02:44,176 --> 00:02:45,559
+whole answer sheet.
+
+90
+00:02:45,559 --> 00:02:47,608
+Jyoti: eighteen out of forty.
+
+91
+00:02:47,608 --> 00:02:48,910
+Not great, on paper.
+
+92
+00:02:48,910 --> 00:02:50,485
+But look at it subject by subject.
+
+93
+00:02:50,485 --> 00:02:52,383
+English: ten out of ten.
+
+94
+00:02:52,383 --> 00:02:53,363
+Full marks.
+
+95
+00:02:53,363 --> 00:02:54,554
+And Quant…
+
+96
+00:02:54,554 --> 00:02:55,321
+minus two.
+
+97
+00:02:55,321 --> 00:02:56,321
+She isn't a weak student.
+
+98
+00:02:56,321 --> 00:02:58,572
+She's guessing in Maths, and the negative marking
+
+99
+00:02:58,572 --> 00:03:00,066
+is eating her score.
+
+100
+00:03:00,066 --> 00:03:02,328
+Topic Performance breaks it down even further,
+
+101
+00:03:02,328 --> 00:03:05,174
+and Questions breakdown shows every answer she gave,
+
+102
+00:03:05,174 --> 00:03:07,203
+even the seconds she spent on each one.
+
+103
+00:03:07,203 --> 00:03:09,192
+It's exactly like opening her copy.
+
+104
+00:03:09,192 --> 00:03:10,548
+Except you never had to check it.
+
+105
+00:03:10,635 --> 00:03:12,643
+This list tells you who scored what.
+
+106
+00:03:12,643 --> 00:03:13,876
+It doesn't tell you why.
+
+107
+00:03:13,876 --> 00:03:15,469
+For that: Full report.
+
+108
+00:03:16,096 --> 00:03:18,408
+This is the page to open the morning after.
+
+109
+00:03:18,408 --> 00:03:20,638
+Forty-eight candidates, the day it was written,
+
+110
+00:03:20,638 --> 00:03:22,144
+twenty questions, forty marks.
+
+111
+00:03:22,231 --> 00:03:23,867
+How the class did.
+
+112
+00:03:23,867 --> 00:03:27,562
+The average: fifty-four percent, about twenty-two
+
+113
+00:03:27,562 --> 00:03:28,753
+out of forty.
+
+114
+00:03:28,753 --> 00:03:30,823
+Highest, Aditi, ninety-four.
+
+115
+00:03:30,823 --> 00:03:32,377
+Lowest, eight.
+
+116
+00:03:32,377 --> 00:03:34,810
+And eleven candidates need help: they're below forty
+
+117
+00:03:34,810 --> 00:03:35,316
+percent.
+
+118
+00:03:35,403 --> 00:03:37,200
+Now this chart, how the marks spread.
+
+119
+00:03:37,200 --> 00:03:38,057
+Most people skip it.
+
+120
+00:03:38,057 --> 00:03:39,017
+Please don't.
+
+121
+00:03:39,017 --> 00:03:41,450
+Each bar is a group of students: zero to nineteen
+
+122
+00:03:41,450 --> 00:03:44,217
+percent, twenty to thirty-nine, and so on.
+
+123
+00:03:44,217 --> 00:03:45,963
+Red is trouble, amber is getting there,
+
+124
+00:03:45,963 --> 00:03:46,873
+green is strong.
+
+125
+00:03:47,490 --> 00:03:49,084
+And the shape tells you something.
+
+126
+00:03:49,084 --> 00:03:51,366
+If everything piles up on the right,
+
+127
+00:03:51,366 --> 00:03:53,617
+the paper was too easy.
+
+128
+00:03:53,617 --> 00:03:54,981
+Make the next one tougher.
+
+129
+00:03:54,981 --> 00:03:56,162
+A pile on the left?
+
+130
+00:03:56,162 --> 00:03:58,211
+Either the paper was too hard, or the chapter didn't
+
+131
+00:03:58,211 --> 00:03:58,817
+land.
+
+132
+00:03:58,817 --> 00:04:01,452
+And two humps, one at each end, means your batch has
+
+133
+00:04:01,452 --> 00:04:02,896
+split into two groups.
+
+134
+00:04:02,896 --> 00:04:05,329
+That's when a separate doubt class for the lower group
+
+135
+00:04:05,329 --> 00:04:06,349
+really pays off.
+
+136
+00:04:06,349 --> 00:04:09,450
+Ours is a healthy middle, with a tail that needs attention.
+
+137
+00:04:10,302 --> 00:04:12,777
+And next to it, the same story in plain words.
+
+138
+00:04:12,864 --> 00:04:15,903
+Below that, the rank list, medals for the top three.
+
+139
+00:04:15,903 --> 00:04:18,508
+Tap Below forty percent, and there are your eleven.
+
+140
+00:04:18,508 --> 00:04:19,982
+These are the students to call this week,
+
+141
+00:04:19,982 --> 00:04:21,537
+or whose parents to message.
+
+142
+00:04:21,537 --> 00:04:23,333
+Search works with roll numbers too,
+
+143
+00:04:23,333 --> 00:04:25,436
+and any name opens the same answer sheet.
+
+144
+00:04:25,523 --> 00:04:28,117
+Now, honestly, the most useful card on the whole page:
+
+145
+00:04:28,117 --> 00:04:29,541
+Teach these again.
+
+146
+00:04:29,541 --> 00:04:32,176
+Every question fewer than half your batch got right,
+
+147
+00:04:32,176 --> 00:04:33,216
+hardest first.
+
+148
+00:04:33,216 --> 00:04:35,588
+So Monday's discussion class doesn't start from question
+
+149
+00:04:35,588 --> 00:04:36,234
+one.
+
+150
+00:04:36,234 --> 00:04:37,647
+It starts here.
+
+151
+00:04:37,647 --> 00:04:38,968
+Five questions, not twenty.
+
+152
+00:04:39,055 --> 00:04:40,428
+Click Q13.
+
+153
+00:04:40,428 --> 00:04:42,911
+Two successive discounts, twenty and ten percent.
+
+154
+00:04:42,911 --> 00:04:44,052
+The answer is twenty-eight.
+
+155
+00:04:44,052 --> 00:04:46,203
+But look: fifty-four percent picked thirty.
+
+156
+00:04:46,203 --> 00:04:48,130
+They simply added the two discounts.
+
+157
+00:04:48,130 --> 00:04:49,100
+That's not a silly mistake.
+
+158
+00:04:49,100 --> 00:04:51,250
+That's a concept the batch has wrong,
+
+159
+00:04:51,250 --> 00:04:54,289
+and one example on the board fixes it for everyone.
+
+160
+00:04:54,376 --> 00:04:56,485
+Now Q15, time and work.
+
+161
+00:04:56,485 --> 00:04:58,484
+Only twenty-one percent got it right.
+
+162
+00:04:58,484 --> 00:05:01,241
+But look at the grey: almost half left it blank.
+
+163
+00:05:01,241 --> 00:05:02,290
+They didn't get it wrong.
+
+164
+00:05:02,290 --> 00:05:03,109
+They never tried it.
+
+165
+00:05:03,109 --> 00:05:05,430
+So either time ran out, or the chapter isn't done
+
+166
+00:05:05,430 --> 00:05:06,087
+yet.
+
+167
+00:05:06,087 --> 00:05:08,621
+Two completely different fixes, and on paper you'd
+
+168
+00:05:08,621 --> 00:05:09,976
+never have seen the difference.
+
+169
+00:05:10,063 --> 00:05:11,729
+And Q9, Loktak Lake.
+
+170
+00:05:11,729 --> 00:05:13,869
+The answers are spread almost evenly across all four
+
+171
+00:05:13,869 --> 00:05:14,636
+options.
+
+172
+00:05:14,636 --> 00:05:15,717
+That's what guessing looks like.
+
+173
+00:05:15,717 --> 00:05:17,715
+Nobody really knew it, so it goes on the revision
+
+174
+00:05:17,715 --> 00:05:19,596
+list, not into a whole new lesson.
+
+175
+00:05:20,218 --> 00:05:22,964
+So: one wrong option standing tall is a trap,
+
+176
+00:05:22,964 --> 00:05:24,115
+reteach the concept.
+
+177
+00:05:24,115 --> 00:05:27,437
+A lot of grey means time, or an unfinished chapter.
+
+178
+00:05:27,437 --> 00:05:28,840
+And everything flat?
+
+179
+00:05:28,840 --> 00:05:29,627
+Guessing.
+
+180
+00:05:29,627 --> 00:05:30,361
+Revise it.
+
+181
+00:05:31,474 --> 00:05:34,503
+Flip to Hardest first to see the whole paper by difficulty.
+
+182
+00:05:34,503 --> 00:05:36,986
+And By section shows your batch subject by subject.
+
+183
+00:05:36,986 --> 00:05:38,238
+Reasoning, seventy-five.
+
+184
+00:05:38,238 --> 00:05:39,197
+English, seventy.
+
+185
+00:05:39,197 --> 00:05:40,429
+General Awareness, fifty-seven.
+
+186
+00:05:40,429 --> 00:05:41,751
+And Quant, forty-four.
+
+187
+00:05:41,751 --> 00:05:43,801
+So now you know exactly where next week's extra class
+
+188
+00:05:43,801 --> 00:05:44,252
+goes.
+
+189
+00:05:44,339 --> 00:05:46,177
+Finally, sending it out.
+
+190
+00:05:46,177 --> 00:05:48,448
+Send rank list opens WhatsApp with the whole list
+
+191
+00:05:48,448 --> 00:05:51,063
+already typed, and you choose who gets it.
+
+192
+00:05:51,063 --> 00:05:53,173
+Copy, if you'd rather paste it somewhere else.
+
+193
+00:05:53,173 --> 00:05:55,616
+Excel gives you two sheets: the rank list,
+
+194
+00:05:55,616 --> 00:05:57,978
+and every question with its most-picked wrong option.
+
+195
+00:05:57,978 --> 00:06:00,635
+And Print, for your file or the parents' meeting.
+
+196
+00:06:01,270 --> 00:06:03,209
+One last place: All Submissions.
+
+197
+00:06:03,209 --> 00:06:05,823
+Every exam your candidates wrote, newest first.
+
+198
+00:06:05,823 --> 00:06:08,479
+The badge is the class average, and the coloured bar
+
+199
+00:06:08,479 --> 00:06:10,013
+is strong, average and weak.
+
+200
+00:06:10,013 --> 00:06:12,073
+Now read it from the bottom up: forty-six,
+
+201
+00:06:12,073 --> 00:06:13,759
+forty-eight, fifty, fifty-four.
+
+202
+00:06:13,759 --> 00:06:15,525
+Week by week, your batch is climbing,
+
+203
+00:06:15,525 --> 00:06:17,757
+and that's something you can actually show a parent.
+
+204
+00:06:17,757 --> 00:06:19,644
+Next week's mock is waiting right there,
+
+205
+00:06:19,644 --> 00:06:20,917
+one tap from going live.
+
+206
+00:06:21,535 --> 00:06:23,130
+So here's your five-minute routine,
+
+207
+00:06:23,130 --> 00:06:24,452
+every Monday morning.
+
+208
+00:06:24,452 --> 00:06:26,673
+One: look at the average and the spread.
+
+209
+00:06:26,673 --> 00:06:28,410
+Two: send the rank list.
+
+210
+00:06:28,410 --> 00:06:30,772
+Three: open Teach these again.
+
+211
+00:06:30,772 --> 00:06:32,458
+That's your discussion class.
+
+212
+00:06:32,458 --> 00:06:36,052
+Four: filter below forty percent, and call those students.
+
+213
+00:06:36,052 --> 00:06:38,122
+Five: download the Excel for your register.
+
+214
+00:06:38,122 --> 00:06:38,627
+Five minutes.
+
+215
+00:06:38,627 --> 00:06:39,574
+Not a whole Sunday.
+
+216
+00:06:40,661 --> 00:06:42,095
+Paper tests gave you marks.
+
+217
+00:06:42,095 --> 00:06:44,316
+TestoZa gives you the reasons behind them.
+
+218
+00:06:44,316 --> 00:06:46,517
+Try it on your next mock, and if this helped,
+
+219
+00:06:46,517 --> 00:06:48,283
+you know where the subscribe button is.
+
+220
+00:06:48,283 --> 00:06:49,302
+See you in the next one.

@@ -1,0 +1,1 @@
+Question 13 पर click कीजिए। दो successive discounts 20 और 10%। सही जवाब 28। लेकिन देखिए 54% ने 30 चुना। उन्होंने बस दोनों discounts जोड़ दिए। यह छोटी गलती नहीं पूरे batch का concept गलत है और board पर एक example सबका ठीक कर देता है।

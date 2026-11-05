@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-base.css">
+<style>
+  .sched-card {
+    position: absolute;
+    left: 640px;
+    top: 70px;
+    width: 610px;
+    border-radius: 20px;
+    background: #0f172a;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 35px 80px rgba(0,0,0,0.9), 0 0 50px rgba(56, 189, 248, 0.4);
+    transform: perspective(1000px) rotateY(-6deg) rotateX(4deg) rotateZ(-2deg);
+    overflow: hidden;
+    z-index: 15;
+  }
+  .sched-card img {
+    width: 610px;
+    display: block;
+  }
+  .countdown-card {
+    position: absolute;
+    left: 810px;
+    top: 310px;
+    width: 440px;
+    border-radius: 20px;
+    background: #080d1a;
+    border: 3px solid #facc15;
+    box-shadow: 0 35px 70px rgba(0,0,0,0.9), 0 0 45px rgba(250, 204, 21, 0.4);
+    transform: rotate(4deg);
+    overflow: hidden;
+    z-index: 20;
+    padding: 24px;
+    text-align: center;
+    color: #fff;
+  }
+  .countdown-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .countdown-digits {
+    font-size: 64px;
+    font-weight: 900;
+    color: #facc15;
+    font-family: monospace;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+  }
+  .time-badge {
+    position: absolute;
+    left: 740px;
+    top: 30px;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 26px;
+    padding: 10px 22px;
+    border-radius: 14px;
+    transform: rotate(-3deg);
+    z-index: 25;
+    box-shadow: 0 12px 28px rgba(239, 68, 68, 0.5);
+  }
+  .lock-pill {
+    position: absolute;
+    left: 770px;
+    top: 610px;
+    background: #0f172a;
+    border: 2px solid #ef4444;
+    color: #f87171;
+    font-weight: 900;
+    font-size: 26px;
+    padding: 10px 24px;
+    border-radius: 30px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="copy-box">
+    <div class="kicker amber">⏳ SCHEDULED ACCESS</div>
+    <h1 class="headline">
+      AUTO OPEN &amp;<br>
+      <span class="gold">CLOSE TIME ⏱️</span>
+    </h1>
+    <div class="pill-action">No Late Entries! 🔒</div>
+    
+    <div class="sub-features">
+      <div class="feat-item"><span class="icon">✓</span> Start &amp; End Date/Time set karo</div>
+      <div class="feat-item"><span class="icon">✓</span> Early students ko Live Countdown Waiting Room</div>
+      <div class="feat-item"><span class="icon">✓</span> End Time hote hi Exam Apne-Aap Close!</div>
+    </div>
+  </div>
+
+  <div class="time-badge">🔒 AUTO LOCK ACCESS</div>
+  
+  <div class="ui-card sched-card">
+    <img src="../assets/cbt-exam.png" alt="Exam schedule">
+  </div>
+  
+  <div class="countdown-card">
+    <div class="countdown-title">Exam Starts In</div>
+    <div class="countdown-digits">05 : 00</div>
+    <div style="font-size: 16px; color: #94a3b8; margin-top: 6px;">Waiting Room Active</div>
+  </div>
+  
+  <div class="lock-pill">
+    <span>🚫</span> NO LATE ENTRIES ALLOWED
+  </div>
+</div>
+</body>
+</html>
+

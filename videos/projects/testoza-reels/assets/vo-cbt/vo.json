@@ -1,0 +1,37 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-cbt/L01.wav",
+    "duration": 5.233292,
+    "text": "JEE, NEET, CUET — they're all on this screen. So let your students practise on it.",
+    "raw": "{exam}JEE, NEET, CUET — {timer}they're all on this screen. {palette}So let your students practise on it."
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-cbt/L02.wav",
+    "duration": 7.976958,
+    "text": "In Testoza it's one setting: Results and Timing, Standard Mode — the NTA-style CBT screen. Add a strict timer, save.",
+    "raw": "In TestoZa it's one setting: {results}Results and Timing, {std}Standard Mode — the NTA-style CBT screen. {strictt}Add a strict timer, {save}save."
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-cbt/L03.wav",
+    "duration": 9.918667,
+    "text": "Answer, save and next — green. Not sure? Answer and review. Just review — purple. Skip it — red. The same colours as the real exam.",
+    "raw": "{ans1}Answer, {next1}save and next — green. {ans2}Not sure? {ansrev}Answer and review. {rev3}Just review — purple. {skip4}Skip it — red. {legend}The same colours as the real exam."
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-cbt/L04.wav",
+    "duration": 4.529708,
+    "text": "Jump from the palette, and before submitting, a full summary — just like NTA.",
+    "raw": "{jump}Jump from the palette, {submitbtn}and before submitting, {summary}a full summary — just like NTA."
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-cbt/L05.wav",
+    "duration": 4.570083,
+    "text": "Real exam practice, with your own questions. Try it on testoza dot com.",
+    "raw": "Real exam practice, with your own questions. {endurl}Try it on testoza dot com."
+  }
+]

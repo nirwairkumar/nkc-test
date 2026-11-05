@@ -1,0 +1,11 @@
+{
+  "chunks": [
+    {
+      "text": "[Sonic logo]\n{warm acoustic guitar pluck and soft felt piano play three rising notes: short, short, long}\n{a soft female voice hums along on the same three notes, no words}\nOoh - ooh - aah\n{the long third note blooms into a warm major chord with strings and a low piano note}\n{short clean tail into silence}",
+      "duration_ms": 6000,
+      "positive_styles": ["brand sonic logo", "audio mnemonic", "soft wordless female hum", "acoustic guitar pluck", "felt piano", "warm strings", "C major", "hopeful and trustworthy", "modern premium production"],
+      "negative_styles": ["lyrics", "operatic vocal", "drums", "EDM"],
+      "context_adherence": "high"
+    }
+  ]
+}

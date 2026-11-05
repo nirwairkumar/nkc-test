@@ -1,0 +1,350 @@
+[
+ {
+  "id": "w0",
+  "text": "Tap",
+  "start": 0,
+  "end": 0.348
+ },
+ {
+  "id": "w1",
+  "text": "Dropped,",
+  "start": 0.406,
+  "end": 1.103
+ },
+ {
+  "id": "w2",
+  "text": "and",
+  "start": 1.324,
+  "end": 1.474
+ },
+ {
+  "id": "w3",
+  "text": "you",
+  "start": 1.533,
+  "end": 1.602
+ },
+ {
+  "id": "w4",
+  "text": "can",
+  "start": 1.649,
+  "end": 1.8
+ },
+ {
+  "id": "w5",
+  "text": "see",
+  "start": 1.881,
+  "end": 2.055
+ },
+ {
+  "id": "w6",
+  "text": "exactly",
+  "start": 2.113,
+  "end": 2.589
+ },
+ {
+  "id": "w7",
+  "text": "when",
+  "start": 2.635,
+  "end": 2.763
+ },
+ {
+  "id": "w8",
+  "text": "each",
+  "start": 2.844,
+  "end": 3.053
+ },
+ {
+  "id": "w9",
+  "text": "one",
+  "start": 3.111,
+  "end": 3.262
+ },
+ {
+  "id": "w10",
+  "text": "left,",
+  "start": 3.309,
+  "end": 3.727
+ },
+ {
+  "id": "w11",
+  "text": "and",
+  "start": 3.982,
+  "end": 4.133
+ },
+ {
+  "id": "w12",
+  "text": "how",
+  "start": 4.203,
+  "end": 4.342
+ },
+ {
+  "id": "w13",
+  "text": "much",
+  "start": 4.4,
+  "end": 4.586
+ },
+ {
+  "id": "w14",
+  "text": "they'd",
+  "start": 4.621,
+  "end": 4.818
+ },
+ {
+  "id": "w15",
+  "text": "answered.",
+  "start": 4.876,
+  "end": 5.48
+ },
+ {
+  "id": "w16",
+  "text": "Akash",
+  "start": 5.886,
+  "end": 6.281
+ },
+ {
+  "id": "w17",
+  "text": "answered",
+  "start": 6.327,
+  "end": 6.676
+ },
+ {
+  "id": "w18",
+  "text": "two",
+  "start": 6.711,
+  "end": 6.885
+ },
+ {
+  "id": "w19",
+  "text": "questions",
+  "start": 6.943,
+  "end": 7.523
+ },
+ {
+  "id": "w20",
+  "text": "and",
+  "start": 7.605,
+  "end": 7.802
+ },
+ {
+  "id": "w21",
+  "text": "went",
+  "start": 7.86,
+  "end": 8.034
+ },
+ {
+  "id": "w22",
+  "text": "quiet",
+  "start": 8.081,
+  "end": 8.417
+ },
+ {
+  "id": "w23",
+  "text": "at",
+  "start": 8.499,
+  "end": 8.673
+ },
+ {
+  "id": "w24",
+  "text": "three",
+  "start": 8.742,
+  "end": 8.951
+ },
+ {
+  "id": "w25",
+  "text": "minutes",
+  "start": 8.986,
+  "end": 9.242
+ },
+ {
+  "id": "w26",
+  "text": "past",
+  "start": 9.276,
+  "end": 9.497
+ },
+ {
+  "id": "w27",
+  "text": "ten.",
+  "start": 9.532,
+  "end": 9.927
+ },
+ {
+  "id": "w28",
+  "text": "Sonal",
+  "start": 10.275,
+  "end": 10.658
+ },
+ {
+  "id": "w29",
+  "text": "answered",
+  "start": 10.728,
+  "end": 11.169
+ },
+ {
+  "id": "w30",
+  "text": "fourteen.",
+  "start": 11.25,
+  "end": 11.889
+ },
+ {
+  "id": "w31",
+  "text": "That's",
+  "start": 12.237,
+  "end": 12.469
+ },
+ {
+  "id": "w32",
+  "text": "a",
+  "start": 12.493,
+  "end": 12.516
+ },
+ {
+  "id": "w33",
+  "text": "different",
+  "start": 12.551,
+  "end": 12.829
+ },
+ {
+  "id": "w34",
+  "text": "story.",
+  "start": 12.864,
+  "end": 13.352
+ },
+ {
+  "id": "w35",
+  "text": "One",
+  "start": 13.7,
+  "end": 13.909
+ },
+ {
+  "id": "w36",
+  "text": "quick",
+  "start": 13.956,
+  "end": 14.141
+ },
+ {
+  "id": "w37",
+  "text": "call",
+  "start": 14.188,
+  "end": 14.35
+ },
+ {
+  "id": "w38",
+  "text": "tells",
+  "start": 14.397,
+  "end": 14.606
+ },
+ {
+  "id": "w39",
+  "text": "you",
+  "start": 14.641,
+  "end": 14.722
+ },
+ {
+  "id": "w40",
+  "text": "if",
+  "start": 14.768,
+  "end": 14.838
+ },
+ {
+  "id": "w41",
+  "text": "it",
+  "start": 14.896,
+  "end": 14.989
+ },
+ {
+  "id": "w42",
+  "text": "was",
+  "start": 15.047,
+  "end": 15.186
+ },
+ {
+  "id": "w43",
+  "text": "the",
+  "start": 15.244,
+  "end": 15.314
+ },
+ {
+  "id": "w44",
+  "text": "network,",
+  "start": 15.384,
+  "end": 15.86
+ },
+ {
+  "id": "w45",
+  "text": "the",
+  "start": 15.894,
+  "end": 15.976
+ },
+ {
+  "id": "w46",
+  "text": "phone,",
+  "start": 16.034,
+  "end": 16.405
+ },
+ {
+  "id": "w47",
+  "text": "or",
+  "start": 16.44,
+  "end": 16.568
+ },
+ {
+  "id": "w48",
+  "text": "something",
+  "start": 16.626,
+  "end": 16.963
+ },
+ {
+  "id": "w49",
+  "text": "else.",
+  "start": 17.021,
+  "end": 17.415
+ },
+ {
+  "id": "w50",
+  "text": "On",
+  "start": 17.706,
+  "end": 17.868
+ },
+ {
+  "id": "w51",
+  "text": "paper,",
+  "start": 17.926,
+  "end": 18.449
+ },
+ {
+  "id": "w52",
+  "text": "both",
+  "start": 18.588,
+  "end": 18.82
+ },
+ {
+  "id": "w53",
+  "text": "of",
+  "start": 18.867,
+  "end": 18.936
+ },
+ {
+  "id": "w54",
+  "text": "them",
+  "start": 19.006,
+  "end": 19.145
+ },
+ {
+  "id": "w55",
+  "text": "were",
+  "start": 19.192,
+  "end": 19.343
+ },
+ {
+  "id": "w56",
+  "text": "just…",
+  "start": 19.401,
+  "end": 19.911
+ },
+ {
+  "id": "w57",
+  "text": "absent.",
+  "start": 20.457,
+  "end": 20.946
+ }
+]

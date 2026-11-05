@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-vertical-base.css">
+<style>
+  .upload-box {
+    left: 140px;
+    top: 720px;
+    width: 800px;
+    transform: rotate(-4deg);
+    border: 3.5px solid rgba(239, 68, 68, 0.6);
+    box-shadow: 0 40px 90px rgba(0,0,0,0.9);
+    z-index: 10;
+  }
+  .pdf-lbl {
+    left: 140px;
+    top: 650px;
+    background: #ef4444;
+    color: #ffffff;
+    transform: rotate(-5deg);
+    box-shadow: 0 16px 36px rgba(239, 68, 68, 0.6);
+  }
+  .ai-extract-card {
+    left: 110px;
+    top: 1120px;
+    width: 860px;
+    border-radius: 32px;
+    background: #090f22;
+    border: 4px solid #38bdf8;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.95), 0 0 60px rgba(56, 189, 248, 0.5);
+    transform: rotate(3deg);
+    overflow: hidden;
+    z-index: 20;
+  }
+  .ai-extract-card img {
+    width: 860px;
+    display: block;
+  }
+  .ai-badge {
+    left: 110px;
+    top: 1050px;
+    background: #10b981;
+    color: #ffffff;
+    transform: rotate(3deg);
+    box-shadow: 0 16px 36px rgba(16, 185, 129, 0.6);
+  }
+  .no-typing-pill {
+    left: 150px;
+    top: 1650px;
+    background: #facc15;
+    color: #0b1220;
+    font-weight: 900;
+    font-size: 38px;
+    padding: 18px 44px;
+    border-radius: 40px;
+    box-shadow: 0 18px 45px rgba(250, 204, 21, 0.65);
+    z-index: 25;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="header-box">
+    <div class="kicker">🤖 AI TEST MAKER</div>
+    <h1 class="h-main"><span class="grad">PDF ➔ TEST</span></h1>
+    <h2 class="h-sub" style="font-family: 'Mukta', sans-serif;"><span class="gold">सिर्फ़ 2 MIN! ⚡</span></h2>
+    <div class="pill-action">Typing Ki Zaroorat Nahi! 🚫</div>
+  </div>
+
+  <div class="floating-badge pdf-lbl">📄 QUESTION PAPER.PDF</div>
+  <div class="ui-card-vertical upload-box">
+    <img src="../assets/upload-1.png" alt="PDF Upload">
+  </div>
+
+  <div class="floating-badge ai-badge">✨ AI EXTRACT READY</div>
+  <div class="ui-card-vertical ai-extract-card">
+    <img src="../assets/card-done.png" alt="Questions extracted">
+  </div>
+  
+  <div class="floating-badge no-typing-pill">
+    <span>✨</span> ZERO TYPING · 100% AUTOMATIC
+  </div>
+</div>
+</body>
+</html>
+

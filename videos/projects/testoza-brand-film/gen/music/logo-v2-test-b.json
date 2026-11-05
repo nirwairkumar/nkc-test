@@ -1,0 +1,52 @@
+{
+ "request": {
+  "model_id": "music_v2_5",
+  "store_for_inpainting": true,
+  "composition_plan": {
+   "chunks": [
+    {
+     "text": "[Sonic logo]\n{warm acoustic guitar pluck and soft felt piano under three rising notes}\n{a clear, close-mic female voice sings the brand name with crisp, distinct consonants}\nTest - o - zaa\n{the last syllable is held and blooms into a warm major chord, low piano note underneath}\n{short clean tail into silence}",
+     "duration_ms": 6000,
+     "positive_styles": [
+      "brand sonic logo",
+      "jingle",
+      "clear close-mic female vocal",
+      "crisp diction",
+      "dry vocal, little reverb",
+      "acoustic guitar pluck",
+      "felt piano",
+      "C major",
+      "warm and hopeful",
+      "modern premium production"
+     ],
+     "negative_styles": [
+      "operatic vocal",
+      "heavy reverb",
+      "whispered",
+      "drums",
+      "EDM"
+     ],
+     "context_adherence": "high"
+    }
+   ]
+  },
+  "seed": 5
+ },
+ "headers": {
+  "access-control-allow-headers": "*",
+  "access-control-allow-methods": "POST, PATCH, OPTIONS, DELETE, GET, PUT",
+  "access-control-allow-origin": "*",
+  "access-control-max-age": "600",
+  "alt-svc": "h3=\":443\"; ma=2592000",
+  "content-length": "144866",
+  "content-type": "audio/mpeg",
+  "date": "Fri, 30 Oct 2026 19:12:51 GMT",
+  "server": "uvicorn",
+  "song-id": "Q2O8z9bY2nBm3tnPcPDi",
+  "strict-transport-security": "max-age=1800;",
+  "vary": "Accept-Language",
+  "via": "1.1 google",
+  "x-region": "us-central1",
+  "x-trace-id": "c9bacabbf76230ff4d25c3d41bf78cdb"
+ }
+}

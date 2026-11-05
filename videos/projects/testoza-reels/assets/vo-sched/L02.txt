@@ -1,0 +1,1 @@
+Setting it up takes ten seconds: Settings, Access and Control, Scheduled Access, a start time, an end time, save.

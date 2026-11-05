@@ -1,0 +1,53 @@
+{
+  "L01": {
+    "duration": 7.953458,
+    "cues": {
+      "wait": 0.08,
+      "zero": 3.28,
+      "enter": 4.8,
+      "opens": 5.44
+    },
+    "dist": 0,
+    "words": 23,
+    "missing": []
+  },
+  "L02": {
+    "duration": 7.548583,
+    "cues": {
+      "settings": 2,
+      "access": 2.8,
+      "sched": 4.16,
+      "start": 5.36,
+      "end": 6.24,
+      "save": 7.549
+    },
+    "dist": 2,
+    "words": 19,
+    "missing": [
+      "an",
+      "save"
+    ]
+  },
+  "L03": {
+    "duration": 4.242125,
+    "cues": {
+      "closed": 0
+    },
+    "dist": 0,
+    "words": 13,
+    "missing": []
+  },
+  "L04": {
+    "duration": 3.112625,
+    "cues": {
+      "endurl": 1.84
+    },
+    "dist": 3,
+    "words": 9,
+    "missing": [
+      "testoza",
+      "dot",
+      "com"
+    ]
+  }
+}

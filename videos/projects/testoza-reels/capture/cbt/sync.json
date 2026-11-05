@@ -1,0 +1,121 @@
+[
+  {
+    "line": "L01",
+    "cue": "exam",
+    "click": 0.66,
+    "word": 0.78,
+    "lead": 0.12
+  },
+  {
+    "line": "L01",
+    "cue": "timer",
+    "click": 2.5,
+    "word": 2.62,
+    "lead": 0.12
+  },
+  {
+    "line": "L01",
+    "cue": "palette",
+    "click": 3.7,
+    "word": 3.82,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "results",
+    "click": 7.36,
+    "word": 8.13,
+    "lead": 0.78
+  },
+  {
+    "line": "L02",
+    "cue": "std",
+    "click": 9.45,
+    "word": 9.57,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "strictt",
+    "click": 12.33,
+    "word": 12.45,
+    "lead": 0.12
+  },
+  {
+    "line": "L02",
+    "cue": "save",
+    "click": 13.53,
+    "word": 13.65,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "ans1",
+    "click": 14.71,
+    "word": 14.83,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "next1",
+    "click": 15.35,
+    "word": 15.47,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "ans2",
+    "click": 17.19,
+    "word": 17.31,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "ansrev",
+    "click": 18.07,
+    "word": 18.19,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "rev3",
+    "click": 19.43,
+    "word": 19.55,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "skip4",
+    "click": 21.19,
+    "word": 21.31,
+    "lead": 0.12
+  },
+  {
+    "line": "L03",
+    "cue": "legend",
+    "click": 22.71,
+    "word": 22.83,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "jump",
+    "click": 24.88,
+    "word": 25,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "submitbtn",
+    "click": 26.16,
+    "word": 26.28,
+    "lead": 0.12
+  },
+  {
+    "line": "L04",
+    "cue": "summary",
+    "click": 27.28,
+    "word": 27.4,
+    "lead": 0.12
+  }
+]

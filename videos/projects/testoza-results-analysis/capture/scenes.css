@@ -1,0 +1,101 @@
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:400 600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Backdrop for the whole film (brand sky + indigo, faint grid) */
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 760px at 28% 62%,rgba(14,165,233,.26),rgba(2,6,23,0) 70%),radial-gradient(1000px 640px at 80% 20%,rgba(99,102,241,.26),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);background-size:64px 64px}
+.card{position:absolute;inset:0;overflow:hidden}
+
+/* Desktop footage: a full-frame window (it scales up into place when its section starts).
+   2304x1296 frames shown at 1536x864 CSS px; GSAP scales the cam (1.25 = full frame) and pans. */
+.win{position:absolute;inset:0;overflow:hidden;transform-origin:50% 50%;background:#fff}
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+
+/* Phone (the candidate take): 646x1398 footage at 0.7 inside a frame, centred */
+.phonescene{position:absolute;inset:0}
+.phonescene .glow{position:absolute;left:560px;top:90px;width:800px;height:900px;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),rgba(56,189,248,0));filter:blur(10px)}
+.pcam{position:absolute;inset:0;transform-origin:0 0}
+.phone{position:absolute;padding:14px;border-radius:64px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 60px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;border-radius:50px;overflow:hidden;background:#fff}
+.pv{position:absolute;left:0;top:0;width:100%;height:100%}
+.pvid{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.chrome{position:absolute;left:0;right:0;top:0;height:140px;background:#f8fafc;border-bottom:1px solid #e2e8f0;z-index:3;opacity:0}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:62px;background:#f8fafc;border-top:1px solid #e2e8f0;z-index:3;display:flex;justify-content:space-around;align-items:center;padding:0 26px 10px;opacity:0}
+.tbar i{width:22px;height:22px;border-radius:6px;border:2.5px solid #64748b;display:block}
+.tbar i:nth-child(3){border-radius:50%}
+.sbar{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 38px 0 44px;font:700 17px 'Outfit';color:#0f172a}
+.isl{position:absolute;left:50%;top:13px;width:122px;height:34px;margin-left:-61px;border-radius:20px;background:#000;display:block}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:16px;height:6px;background:currentColor;border-radius:1px}
+.purl{position:absolute;left:18px;right:18px;top:70px;height:48px;border-radius:24px;background:#e9eef5;display:flex;align-items:center;justify-content:center;gap:8px;font:600 18px 'Outfit';color:#1e293b}
+.purl .lk{width:15px;height:15px;color:#475569;display:block}
+.purl .lk svg{width:15px;height:15px;display:block}
+.purl .u2{display:none}
+
+/* Number sting: the feature number and ten progress dots (no words) */
+.sting{background:transparent}
+.sting .num{position:absolute;left:0;right:0;top:200px;text-align:center;font:900 420px/1 'Outfit';letter-spacing:-.04em}
+.sting .num span{display:inline-block;background:linear-gradient(135deg,#7dd3fc 0%,#38bdf8 35%,#818cf8 70%,#facc15 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 30px 60px rgba(56,189,248,.35))}
+.dots{position:absolute;left:0;right:0;top:760px;display:flex;justify-content:center;gap:26px}
+.dots i{width:22px;height:22px;border-radius:50%;background:rgba(148,163,184,.25);display:block;box-shadow:inset 0 0 0 2px rgba(148,163,184,.35)}
+.dots i.done{background:#38bdf8;box-shadow:none}
+.dots i.on{background:#facc15;box-shadow:0 0 0 6px rgba(250,204,21,.22),0 0 30px 6px rgba(250,204,21,.45)}
+
+/* Title card: the logo and a big 10 */
+.titlecard{background:radial-gradient(900px 600px at 50% 55%,rgba(56,189,248,.18),rgba(2,6,23,0) 70%)}
+.titlecard .wm{position:absolute;left:0;right:0;margin:0 auto;top:150px;height:120px}
+.ten{position:absolute;left:0;right:0;top:300px;text-align:center;font:900 380px/1 'Outfit';letter-spacing:-.05em}
+.ten span{display:inline-block;background:linear-gradient(135deg,#7dd3fc,#38bdf8 40%,#818cf8 75%,#facc15);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 30px 70px rgba(56,189,248,.4))}
+.titlecard .dots{top:800px}
+
+/* Fast-forward pill (a wait shown faster): an icon and the speed, no words */
+.speed{position:absolute;right:64px;top:64px;height:64px;display:flex;align-items:center;gap:12px;padding:0 26px 0 22px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 2px rgba(250,204,21,.7);color:#facc15;z-index:9}
+.speed i{width:30px;height:30px;display:block}
+.speed i svg{width:30px;height:30px;display:block}
+.speed b{font:800 30px 'Outfit'}
+
+/* File dialog (Windows-style Open box; not TestoZa UI) */
+.fdlg{position:absolute;inset:0;z-index:7;opacity:0}
+.fdlg .scrim{position:absolute;inset:0;background:rgba(2,6,23,.35)}
+.fwin{position:absolute;left:410px;top:170px;width:1100px;height:690px;border-radius:12px;background:#f3f3f3;box-shadow:0 40px 100px -30px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.12);overflow:hidden;font-family:'Segoe UI','Outfit',sans-serif;color:#1f2937}
+.fwin .bar{height:46px;display:flex;align-items:center;padding:0 18px;font:600 16px 'Outfit';background:#eeeeee}
+.fwin .bar i{margin-left:auto;font-style:normal;color:#64748b;letter-spacing:22px}
+.fwin .path{height:52px;margin:6px 16px 10px;border-radius:8px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;font:500 16px 'Outfit';color:#334155;box-shadow:0 0 0 1px #e2e8f0}
+.fwin .path b{color:#94a3b8;font-weight:500}
+.fwin .body{position:absolute;left:0;right:0;top:114px;bottom:86px;display:flex}
+.fwin .nav{width:220px;padding:10px 12px;border-right:1px solid #e5e5e5}
+.fwin .nav p{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:6px;font:500 16px 'Outfit';color:#334155}
+.fwin .nav p.on{background:#dbeafe}
+.fwin .nav s{width:18px;height:14px;border-radius:3px;background:#fbbf24;display:block}
+.fwin .files{flex:1;padding:22px 26px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:22px;background:#fff}
+.tile{width:190px;padding:10px;border-radius:8px;text-align:center;font:500 14px/1.3 'Outfit';color:#1f2937;word-break:break-all}
+.tile .th{height:140px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:4px;box-shadow:0 0 0 1px #e5e7eb;margin-bottom:8px;overflow:hidden}
+.tile .pdf{width:72px;height:92px;border-radius:6px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(#e11d48,#be123c) border-box;border:3px solid transparent;position:relative;display:block}
+.tile .pdf::after{content:'';position:absolute;left:10px;right:10px;bottom:12px;height:18px;border-radius:3px;background:#e11d48}
+.tile.sel{background:#cce4ff;box-shadow:0 0 0 1px #99c9ff}
+.fwin .foot2{position:absolute;left:0;right:0;bottom:0;height:86px;display:flex;align-items:center;gap:14px;padding:0 22px;background:#f3f3f3;border-top:1px solid #e5e5e5}
+.fwin .fname{flex:1;height:40px;border-radius:6px;background:#fff;box-shadow:0 0 0 1px #d4d4d4;display:flex;align-items:center;padding:0 14px;font:500 16px 'Outfit';color:#111827;white-space:nowrap;overflow:hidden}
+.fwin .fname em{font-style:normal}
+.fwin .btn{height:40px;min-width:120px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:600 16px 'Outfit';box-shadow:0 0 0 1px #d4d4d4;background:#fff}
+.fwin .btn.open{background:#0067c0;color:#fff;box-shadow:none}
+.fcur{position:absolute;left:0;top:0;width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* End card: logo, testoza.com, a bell (no words) */
+.endcard{background:radial-gradient(900px 600px at 50% 50%,rgba(56,189,248,.18),rgba(2,6,23,0) 70%)}
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:300px;height:170px}
+.pills{position:absolute;left:0;right:0;top:560px;display:flex;justify-content:center;gap:28px}
+.pill{height:92px;padding:0 48px;border-radius:999px;display:flex;align-items:center;gap:14px;font:700 42px 'Outfit'}
+.pill.url{color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 2px rgba(56,189,248,.65)}
+.pill.subs{padding:0 34px;color:#fff;background:#dc2626;box-shadow:0 20px 40px -14px rgba(220,38,38,.7)}
+.bell{width:30px;height:30px;border-radius:15px 15px 5px 5px;background:#fff;display:block;position:relative}
+.bell::after{content:'';position:absolute;left:11px;bottom:-7px;width:8px;height:7px;border-radius:0 0 4px 4px;background:#fff}

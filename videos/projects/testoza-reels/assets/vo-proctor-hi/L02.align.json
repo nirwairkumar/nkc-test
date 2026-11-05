@@ -1,0 +1,233 @@
+[
+ {
+  "w": "Full",
+  "r": "full",
+  "start": 0.2,
+  "end": 0.381,
+  "score": 0.499
+ },
+ {
+  "w": "screen",
+  "r": "screen",
+  "start": 0.421,
+  "end": 0.681,
+  "score": 0.496
+ },
+ {
+  "w": "ज़रूरी।",
+  "r": "zaruurii",
+  "start": 0.741,
+  "end": 1.082,
+  "score": 0.841
+ },
+ {
+  "w": "हर",
+  "r": "har",
+  "start": 1.402,
+  "end": 1.583,
+  "score": 0.996
+ },
+ {
+  "w": "tab",
+  "r": "tab",
+  "start": 1.703,
+  "end": 1.903,
+  "score": 0.968
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 1.983,
+  "end": 2.083,
+  "score": 0.871
+ },
+ {
+  "w": "app",
+  "r": "app",
+  "start": 2.164,
+  "end": 2.284,
+  "score": 0.663
+ },
+ {
+  "w": "switch",
+  "r": "switch",
+  "start": 2.324,
+  "end": 2.564,
+  "score": 0.471
+ },
+ {
+  "w": "पकड़ा",
+  "r": "pakaddaa",
+  "start": 2.624,
+  "end": 2.925,
+  "score": 0.995
+ },
+ {
+  "w": "जाएगा",
+  "r": "jaaegaa",
+  "start": 2.945,
+  "end": 3.245,
+  "score": 0.947
+ },
+ {
+  "w": "चाहें",
+  "r": "caahem",
+  "start": 3.526,
+  "end": 3.766,
+  "score": 0.978
+ },
+ {
+  "w": "तो",
+  "r": "to",
+  "start": 3.786,
+  "end": 3.846,
+  "score": 0.997
+ },
+ {
+  "w": "पहली",
+  "r": "pahalii",
+  "start": 3.926,
+  "end": 4.187,
+  "score": 0.986
+ },
+ {
+  "w": "बार",
+  "r": "baar",
+  "start": 4.207,
+  "end": 4.347,
+  "score": 0.996
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 4.387,
+  "end": 4.467,
+  "score": 0.872
+ },
+ {
+  "w": "ही",
+  "r": "hii",
+  "start": 4.467,
+  "end": 4.547,
+  "score": 0.981
+ },
+ {
+  "w": "submit,",
+  "r": "submit",
+  "start": 4.587,
+  "end": 4.908,
+  "score": 0.661
+ },
+ {
+  "w": "या",
+  "r": "yaa",
+  "start": 5.148,
+  "end": 5.269,
+  "score": 0.924
+ },
+ {
+  "w": "कुछ",
+  "r": "kuch",
+  "start": 5.349,
+  "end": 5.509,
+  "score": 0.923
+ },
+ {
+  "w": "warnings",
+  "r": "warnings",
+  "start": 5.549,
+  "end": 5.87,
+  "score": 0.381
+ },
+ {
+  "w": "दीजिए,",
+  "r": "diijie",
+  "start": 5.91,
+  "end": 6.11,
+  "score": 0.768
+ },
+ {
+  "w": "जैसे",
+  "r": "jaise",
+  "start": 6.33,
+  "end": 6.551,
+  "score": 0.979
+ },
+ {
+  "w": "तीन।",
+  "r": "tiin",
+  "start": 6.651,
+  "end": 6.871,
+  "score": 0.9
+ },
+ {
+  "w": "Copy-paste",
+  "r": "copypaste",
+  "start": 7.352,
+  "end": 7.893,
+  "score": 0.51
+ },
+ {
+  "w": "बंद,",
+  "r": "bamd",
+  "start": 7.893,
+  "end": 8.073,
+  "score": 0.801
+ },
+ {
+  "w": "right-click",
+  "r": "rightclick",
+  "start": 8.394,
+  "end": 8.834,
+  "score": 0.477
+ },
+ {
+  "w": "बंद,",
+  "r": "bamd",
+  "start": 8.894,
+  "end": 9.055,
+  "score": 0.802
+ },
+ {
+  "w": "back",
+  "r": "back",
+  "start": 9.375,
+  "end": 9.576,
+  "score": 0.719
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 9.656,
+  "end": 9.916,
+  "score": 0.704
+ },
+ {
+  "w": "और",
+  "r": "aur",
+  "start": 9.996,
+  "end": 10.096,
+  "score": 0.996
+ },
+ {
+  "w": "exit",
+  "r": "exit",
+  "start": 10.217,
+  "end": 10.497,
+  "score": 0.486
+ },
+ {
+  "w": "button",
+  "r": "button",
+  "start": 10.517,
+  "end": 10.757,
+  "score": 0.689
+ },
+ {
+  "w": "भी।",
+  "r": "bhii",
+  "start": 10.798,
+  "end": 10.898,
+  "score": 0.985
+ }
+]

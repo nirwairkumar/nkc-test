@@ -1,0 +1,37 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-proctor-hi/L01.wav",
+    "duration": 6.651292,
+    "text": "उसने tab switch किया — और exam ने तुरंत पकड़ लिया. देखिए Testoza की proctoring क्या रोकती है… और क्या नहीं.",
+    "raw": "{leave1}उसने tab switch किया — {warn1}और exam ने तुरंत पकड़ लिया। देखिए TestoZa की proctoring क्या रोकती है… और क्या नहीं।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-proctor-hi/L02.wav",
+    "duration": 10.91775,
+    "text": "Full screen ज़रूरी. हर tab या app switch पकड़ा जाएगा — चाहें तो पहली बार में ही submit, या कुछ warnings दीजिए, जैसे तीन. Copy-paste बंद, right-click बंद, back button और exit button भी.",
+    "raw": "{fs}Full screen ज़रूरी। {tab}हर tab या app switch पकड़ा जाएगा — {strict}चाहें तो पहली बार में ही submit, {count}या कुछ warnings दीजिए, {threepick}जैसे तीन। {copy}Copy-paste बंद, {right}right-click बंद, {back}back button {exit}और exit button भी।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-proctor-hi/L03.wav",
+    "duration": 6.923375,
+    "text": "Full screen छोड़ा — warning दो. फिर switch — तीन. एक बार और… और test अपने-आप submit.",
+    "raw": "{fsexit}Full screen छोड़ा — {warn2}warning दो। {leave3}फिर switch — {warn3}तीन। {leave4}एक बार और… {auto}और test अपने-आप submit।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-proctor-hi/L04.wav",
+    "duration": 9.484625,
+    "text": "अब सच्ची बात. कोई webcam नहीं देख रहा — तो दूसरा phone, या बगल में बैठा दोस्त, ये नहीं पकड़ सकता. बड़े exams के लिए invigilator रखिए, या computer lab में कराइए.",
+    "raw": "अब सच्ची बात। {aitab}कोई webcam नहीं देख रहा — तो दूसरा phone, या बगल में बैठा दोस्त, ये नहीं पकड़ सकता। बड़े exams के लिए invigilator रखिए, या computer lab में कराइए।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-proctor-hi/L05.wav",
+    "duration": 2.657458,
+    "text": "Proctoring, जो सच बताती है. testoza dot com.",
+    "raw": "Proctoring, जो सच बताती है। {endurl}testoza dot com।"
+  }
+]

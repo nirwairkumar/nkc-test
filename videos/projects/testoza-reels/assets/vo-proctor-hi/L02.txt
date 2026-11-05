@@ -1,0 +1,1 @@
+Full screen ज़रूरी. हर tab या app switch पकड़ा जाएगा — चाहें तो पहली बार में ही submit, या कुछ warnings दीजिए, जैसे तीन. Copy-paste बंद, right-click बंद, back button और exit button भी.

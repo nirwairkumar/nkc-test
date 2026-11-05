@@ -1,0 +1,290 @@
+[
+ {
+  "id": "w0",
+  "text": "Click",
+  "start": 0,
+  "end": 0.325
+ },
+ {
+  "id": "w1",
+  "text": "Q",
+  "start": 0.43,
+  "end": 0.569
+ },
+ {
+  "id": "w2",
+  "text": "13.",
+  "start": 0.708,
+  "end": 1.289
+ },
+ {
+  "id": "w3",
+  "text": "Two",
+  "start": 1.579,
+  "end": 1.753
+ },
+ {
+  "id": "w4",
+  "text": "successive",
+  "start": 1.811,
+  "end": 2.31
+ },
+ {
+  "id": "w5",
+  "text": "discounts,",
+  "start": 2.345,
+  "end": 3.1
+ },
+ {
+  "id": "w6",
+  "text": "twenty",
+  "start": 3.355,
+  "end": 3.68
+ },
+ {
+  "id": "w7",
+  "text": "and",
+  "start": 3.715,
+  "end": 3.785
+ },
+ {
+  "id": "w8",
+  "text": "ten",
+  "start": 3.831,
+  "end": 3.971
+ },
+ {
+  "id": "w9",
+  "text": "percent.",
+  "start": 4.029,
+  "end": 4.412
+ },
+ {
+  "id": "w10",
+  "text": "The",
+  "start": 4.435,
+  "end": 4.551
+ },
+ {
+  "id": "w11",
+  "text": "answer",
+  "start": 4.609,
+  "end": 4.946
+ },
+ {
+  "id": "w12",
+  "text": "is",
+  "start": 5.016,
+  "end": 5.132
+ },
+ {
+  "id": "w13",
+  "text": "twenty-eight.",
+  "start": 5.19,
+  "end": 5.724
+ },
+ {
+  "id": "w14",
+  "text": "But",
+  "start": 5.747,
+  "end": 5.875
+ },
+ {
+  "id": "w15",
+  "text": "look:",
+  "start": 5.933,
+  "end": 6.293
+ },
+ {
+  "id": "w16",
+  "text": "fifty-four",
+  "start": 6.548,
+  "end": 6.989
+ },
+ {
+  "id": "w17",
+  "text": "percent",
+  "start": 7.024,
+  "end": 7.268
+ },
+ {
+  "id": "w18",
+  "text": "picked",
+  "start": 7.314,
+  "end": 7.523
+ },
+ {
+  "id": "w19",
+  "text": "thirty.",
+  "start": 7.546,
+  "end": 7.999
+ },
+ {
+  "id": "w20",
+  "text": "They",
+  "start": 8.22,
+  "end": 8.394
+ },
+ {
+  "id": "w21",
+  "text": "simply",
+  "start": 8.452,
+  "end": 8.766
+ },
+ {
+  "id": "w22",
+  "text": "added",
+  "start": 8.812,
+  "end": 9.056
+ },
+ {
+  "id": "w23",
+  "text": "the",
+  "start": 9.079,
+  "end": 9.149
+ },
+ {
+  "id": "w24",
+  "text": "two",
+  "start": 9.195,
+  "end": 9.323
+ },
+ {
+  "id": "w25",
+  "text": "discounts.",
+  "start": 9.381,
+  "end": 9.973
+ },
+ {
+  "id": "w26",
+  "text": "That's",
+  "start": 10.437,
+  "end": 10.67
+ },
+ {
+  "id": "w27",
+  "text": "not",
+  "start": 10.704,
+  "end": 10.809
+ },
+ {
+  "id": "w28",
+  "text": "a",
+  "start": 10.855,
+  "end": 10.878
+ },
+ {
+  "id": "w29",
+  "text": "silly",
+  "start": 10.925,
+  "end": 11.122
+ },
+ {
+  "id": "w30",
+  "text": "mistake.",
+  "start": 11.18,
+  "end": 11.528
+ },
+ {
+  "id": "w31",
+  "text": "That's",
+  "start": 11.552,
+  "end": 11.784
+ },
+ {
+  "id": "w32",
+  "text": "a",
+  "start": 11.842,
+  "end": 11.865
+ },
+ {
+  "id": "w33",
+  "text": "concept",
+  "start": 11.923,
+  "end": 12.399
+ },
+ {
+  "id": "w34",
+  "text": "the",
+  "start": 12.434,
+  "end": 12.527
+ },
+ {
+  "id": "w35",
+  "text": "batch",
+  "start": 12.596,
+  "end": 12.864
+ },
+ {
+  "id": "w36",
+  "text": "has",
+  "start": 12.898,
+  "end": 13.073
+ },
+ {
+  "id": "w37",
+  "text": "wrong,",
+  "start": 13.131,
+  "end": 13.56
+ },
+ {
+  "id": "w38",
+  "text": "and",
+  "start": 14.025,
+  "end": 14.303
+ },
+ {
+  "id": "w39",
+  "text": "one",
+  "start": 14.373,
+  "end": 14.524
+ },
+ {
+  "id": "w40",
+  "text": "example",
+  "start": 14.559,
+  "end": 14.942
+ },
+ {
+  "id": "w41",
+  "text": "on",
+  "start": 14.977,
+  "end": 15.058
+ },
+ {
+  "id": "w42",
+  "text": "the",
+  "start": 15.093,
+  "end": 15.162
+ },
+ {
+  "id": "w43",
+  "text": "board",
+  "start": 15.22,
+  "end": 15.557
+ },
+ {
+  "id": "w44",
+  "text": "fixes",
+  "start": 15.963,
+  "end": 16.358
+ },
+ {
+  "id": "w45",
+  "text": "it",
+  "start": 16.416,
+  "end": 16.521
+ },
+ {
+  "id": "w46",
+  "text": "for",
+  "start": 16.579,
+  "end": 16.73
+ },
+ {
+  "id": "w47",
+  "text": "everyone.",
+  "start": 16.799,
+  "end": 17.32
+ }
+]

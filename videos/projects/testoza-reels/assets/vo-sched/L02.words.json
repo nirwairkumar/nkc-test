@@ -1,0 +1,110 @@
+[
+  {
+    "id": "w0",
+    "text": "Setting",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "it",
+    "start": 0.4,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "up",
+    "start": 0.56,
+    "end": 0.64
+  },
+  {
+    "id": "w3",
+    "text": "takes",
+    "start": 0.8,
+    "end": 1.04
+  },
+  {
+    "id": "w4",
+    "text": "ten",
+    "start": 1.04,
+    "end": 1.2
+  },
+  {
+    "id": "w5",
+    "text": "seconds.",
+    "start": 1.36,
+    "end": 2
+  },
+  {
+    "id": "w6",
+    "text": "Settings,",
+    "start": 2,
+    "end": 2.64
+  },
+  {
+    "id": "w7",
+    "text": "access",
+    "start": 2.8,
+    "end": 3.28
+  },
+  {
+    "id": "w8",
+    "text": "and",
+    "start": 3.28,
+    "end": 3.44
+  },
+  {
+    "id": "w9",
+    "text": "control,",
+    "start": 3.44,
+    "end": 4.16
+  },
+  {
+    "id": "w10",
+    "text": "scheduled",
+    "start": 4.16,
+    "end": 4.8
+  },
+  {
+    "id": "w11",
+    "text": "access,",
+    "start": 4.8,
+    "end": 5.36
+  },
+  {
+    "id": "w12",
+    "text": "a",
+    "start": 5.36,
+    "end": 5.52
+  },
+  {
+    "id": "w13",
+    "text": "start",
+    "start": 5.52,
+    "end": 5.84
+  },
+  {
+    "id": "w14",
+    "text": "time,",
+    "start": 5.84,
+    "end": 6.24
+  },
+  {
+    "id": "w15",
+    "text": "and",
+    "start": 6.24,
+    "end": 6.4
+  },
+  {
+    "id": "w16",
+    "text": "end",
+    "start": 6.4,
+    "end": 6.56
+  },
+  {
+    "id": "w17",
+    "text": "time.",
+    "start": 6.72,
+    "end": 7.04
+  }
+]

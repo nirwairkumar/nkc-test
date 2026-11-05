@@ -1,0 +1,122 @@
+[
+  {
+    "id": "w0",
+    "text": "In",
+    "start": 0,
+    "end": 0.16
+  },
+  {
+    "id": "w1",
+    "text": "Testosa,",
+    "start": 0.16,
+    "end": 0.96
+  },
+  {
+    "id": "w2",
+    "text": "it's",
+    "start": 0.96,
+    "end": 1.12
+  },
+  {
+    "id": "w3",
+    "text": "one",
+    "start": 1.12,
+    "end": 1.28
+  },
+  {
+    "id": "w4",
+    "text": "setting.",
+    "start": 1.44,
+    "end": 2
+  },
+  {
+    "id": "w5",
+    "text": "Results",
+    "start": 2,
+    "end": 2.48
+  },
+  {
+    "id": "w6",
+    "text": "and",
+    "start": 2.56,
+    "end": 2.72
+  },
+  {
+    "id": "w7",
+    "text": "timing",
+    "start": 2.72,
+    "end": 3.2
+  },
+  {
+    "id": "w8",
+    "text": "standard",
+    "start": 3.44,
+    "end": 3.84
+  },
+  {
+    "id": "w9",
+    "text": "mode.",
+    "start": 3.84,
+    "end": 4.32
+  },
+  {
+    "id": "w10",
+    "text": "The",
+    "start": 4.32,
+    "end": 4.48
+  },
+  {
+    "id": "w11",
+    "text": "NTA",
+    "start": 4.48,
+    "end": 5.04
+  },
+  {
+    "id": "w12",
+    "text": "style",
+    "start": 5.12,
+    "end": 5.44
+  },
+  {
+    "id": "w13",
+    "text": "CBT",
+    "start": 5.44,
+    "end": 5.92
+  },
+  {
+    "id": "w14",
+    "text": "screen.",
+    "start": 5.92,
+    "end": 6.32
+  },
+  {
+    "id": "w15",
+    "text": "Add",
+    "start": 6.32,
+    "end": 6.56
+  },
+  {
+    "id": "w16",
+    "text": "a",
+    "start": 6.56,
+    "end": 6.64
+  },
+  {
+    "id": "w17",
+    "text": "strict",
+    "start": 6.64,
+    "end": 7.04
+  },
+  {
+    "id": "w18",
+    "text": "timer.",
+    "start": 7.04,
+    "end": 7.52
+  },
+  {
+    "id": "w19",
+    "text": "Save.",
+    "start": 7.52,
+    "end": 7.84
+  }
+]

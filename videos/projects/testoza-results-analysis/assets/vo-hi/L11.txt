@@ -1,0 +1,1 @@
+अब Submitted, यानी जिन्होंने पूरा किया। सबसे ऊपर average, highest और lowest। फिर हर score, नीचे percentage के साथ: blue मतलब चालीस percent या ज़्यादा, red मतलब उससे कम। Tick सही के लिए, cross गलत के लिए, dash छोड़े गए के लिए। कितना time लगा, और कब submit किया।

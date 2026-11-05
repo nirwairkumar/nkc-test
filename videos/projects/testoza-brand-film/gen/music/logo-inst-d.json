@@ -1,0 +1,26 @@
+{
+ "request": {
+  "model_id": "music_v2_5",
+  "store_for_inpainting": true,
+  "prompt": "A brand sonic logo (audio mnemonic) for the end card of a premium Indian TV commercial, simple enough to hum after one listen. D major. Three rising notes in a short-short-long rhythm on a warm acoustic guitar pluck doubled by felt piano, with a soft bansuri flute breathing the same three notes; the long third note blooms into a warm D major chord with strings and a low piano note; short clean tail into silence. Hopeful, human, trustworthy, premium. Instrumental only. No drums.",
+  "music_length_ms": 6000,
+  "force_instrumental": true
+ },
+ "headers": {
+  "access-control-allow-headers": "*",
+  "access-control-allow-methods": "POST, PATCH, OPTIONS, DELETE, GET, PUT",
+  "access-control-allow-origin": "*",
+  "access-control-max-age": "600",
+  "alt-svc": "h3=\":443\"; ma=2592000",
+  "content-length": "157405",
+  "content-type": "audio/mpeg",
+  "date": "Fri, 30 Oct 2026 19:14:15 GMT",
+  "server": "uvicorn",
+  "song-id": "piZHuUF7qbtcgX5jFERO",
+  "strict-transport-security": "max-age=1800;",
+  "vary": "Accept-Language",
+  "via": "1.1 google",
+  "x-region": "us-central1",
+  "x-trace-id": "d0cce043c6569c221d76f9358d45b4f9"
+ }
+}

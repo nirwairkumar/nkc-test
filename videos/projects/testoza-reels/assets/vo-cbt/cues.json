@@ -1,0 +1,72 @@
+{
+  "L01": {
+    "duration": 5.233292,
+    "cues": {
+      "exam": 0.48,
+      "timer": 2.32,
+      "palette": 3.52
+    },
+    "dist": 7,
+    "words": 15,
+    "missing": [
+      "jee",
+      "cuet",
+      "practise"
+    ]
+  },
+  "L02": {
+    "duration": 7.976958,
+    "cues": {
+      "results": 2,
+      "std": 3.44,
+      "strictt": 6.32,
+      "save": 7.52
+    },
+    "dist": 1,
+    "words": 20,
+    "missing": [
+      "testoza"
+    ]
+  },
+  "L03": {
+    "duration": 9.918667,
+    "cues": {
+      "ans1": 0,
+      "next1": 0.64,
+      "ans2": 2.48,
+      "ansrev": 3.36,
+      "rev3": 4.72,
+      "skip4": 6.48,
+      "legend": 8
+    },
+    "dist": 1,
+    "words": 23,
+    "missing": [
+      "and"
+    ]
+  },
+  "L04": {
+    "duration": 4.529708,
+    "cues": {
+      "jump": 0,
+      "submitbtn": 1.28,
+      "summary": 2.4
+    },
+    "dist": 0,
+    "words": 13,
+    "missing": []
+  },
+  "L05": {
+    "duration": 4.570083,
+    "cues": {
+      "endurl": 2.72
+    },
+    "dist": 3,
+    "words": 13,
+    "missing": [
+      "testoza",
+      "dot",
+      "com"
+    ]
+  }
+}

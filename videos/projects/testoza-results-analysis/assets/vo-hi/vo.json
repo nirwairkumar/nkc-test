@@ -1,0 +1,219 @@
+[
+  {
+    "id": "L01",
+    "file": "assets/vo-hi/L01.wav",
+    "duration": 8.591021,
+    "text": "रविवार की रात। सुबह के mock test की अड़तालीस answer sheets। एक लाल पेन। और एक कप चाय, जो घंटे भर पहले ठंडी हो गई।",
+    "raw": "{lamp}रविवार की रात। {stack}सुबह के mock test की अड़तालीस answer sheets। {pen}एक लाल पेन। {chai}और एक कप चाय, जो घंटे भर पहले ठंडी हो गई।"
+  },
+  {
+    "id": "L02",
+    "file": "assets/vo-hi/L02.wav",
+    "duration": 9.541188,
+    "text": "आप जानते हैं ये कैसे चलता है। सही, गलत, सही… total। हर नंबर register में, फिर rank list। और मंगलवार तक जाकर, काम पूरा।",
+    "raw": "{tick}आप जानते हैं ये कैसे चलता है। सही, गलत, सही… total। {register}हर नंबर register में, {notice}फिर rank list। {tuesday}और मंगलवार तक जाकर, काम पूरा।"
+  },
+  {
+    "id": "L03",
+    "file": "assets/vo-hi/L03.wav",
+    "duration": 13.512792,
+    "text": "लेकिन जो सवाल सच में मायने रखता है — मेरे batch ने कौन-से questions गलत किए, और आखिर क्यों? — उसका जवाब कभी मिलता ही नहीं। उसके लिए नौ सौ साठ answers हाथ से गिनने पड़ेंगे। इतना लंबा रविवार किसी के पास नहीं होता।",
+    "raw": "{why}लेकिन जो सवाल सच में मायने रखता है — मेरे batch ने कौन-से questions गलत किए, और आखिर क्यों? — {count}उसका जवाब कभी मिलता ही नहीं। उसके लिए नौ सौ साठ answers हाथ से गिनने पड़ेंगे। {laugh}इतना लंबा रविवार किसी के पास नहीं होता।"
+  },
+  {
+    "id": "L04",
+    "file": "assets/vo-hi/L04.wav",
+    "duration": 13.090958,
+    "text": "TestoZa पर, Submit दबाते ही checking हो जाती है। लेकिन फिर results खोलते ही, screen नंबरों से भरी होती है। तो आज, इन्हें साथ में पढ़ते हैं। दोनों result pages, हर नंबर, और सोमवार सुबह इनका क्या करना है।",
+    "raw": "{online}TestoZa पर, Submit दबाते ही checking हो जाती है। {wall}लेकिन फिर results खोलते ही, screen नंबरों से भरी होती है। {title}तो आज, इन्हें साथ में पढ़ते हैं। दोनों result pages, हर नंबर, और सोमवार सुबह इनका क्या करना है।"
+  },
+  {
+    "id": "L05",
+    "file": "assets/vo-hi/L05.wav",
+    "duration": 20.357479,
+    "text": "पहले एक वादा, क्योंकि मुझे पता है यही चिंता है। आपका marks register? वो है Excel file। Notice board वाली rank list? बस एक tap, और सीधे WhatsApp पर। किसी student की copy खोलकर देखना कि गलती कहाँ हुई? आप हर एक answer sheet खोल सकते हैं। और आपकी discussion class वैसी ही रहती है। बस छोटी हो जाती है, और कहीं ज़्यादा sharp।",
+    "raw": "{promise}पहले एक वादा, क्योंकि मुझे पता है यही चिंता है। {reg}आपका marks register? वो है Excel file। {board}Notice board वाली rank list? बस एक tap, और सीधे WhatsApp पर। {copy}किसी student की copy खोलकर देखना कि गलती कहाँ हुई? आप हर एक answer sheet खोल सकते हैं। {discuss}और आपकी discussion class वैसी ही रहती है। बस छोटी हो जाती है, और कहीं ज़्यादा sharp।"
+  },
+  {
+    "id": "L06",
+    "file": "assets/vo-hi/L06.wav",
+    "duration": 5.201021,
+    "text": "और कुछ बातें ऐसी भी हैं, जो paper आपको कभी नहीं बता सकता। चलिए उन्हें ढूँढते हैं।",
+    "raw": "{plus}और कुछ बातें ऐसी भी हैं, जो paper आपको कभी नहीं बता सकता। चलिए उन्हें ढूँढते हैं।"
+  },
+  {
+    "id": "L07",
+    "file": "assets/vo-hi/L07.wav",
+    "duration": 13.149979,
+    "text": "आपके results दो जगह रहते हैं। My Tests पर, हर exam के साथ एक Results button है। और sidebar में All Submissions, जहाँ हर वो exam है जो आपके candidates ने कभी लिखा। चलिए quick view से शुरू करते हैं।",
+    "raw": "{mytests}आपके results दो जगह रहते हैं। {ended}My Tests पर, हर exam के साथ एक Results button है। {sidebar}और sidebar में All Submissions, जहाँ हर वो exam है जो आपके candidates ने कभी लिखा। {start}चलिए quick view से शुरू करते हैं।"
+  },
+  {
+    "id": "L08",
+    "file": "assets/vo-hi/L08.wav",
+    "duration": 10.524542,
+    "text": "Results पर click कीजिए। ऊपर: exam, उसका status — ये खत्म हो चुका है — बीस questions, चालीस marks, बीस मिनट।",
+    "raw": "{results}Results पर click कीजिए। {header}ऊपर: exam, उसका status — ये खत्म हो चुका है — {facts}बीस questions, चालीस marks, बीस मिनट।"
+  },
+  {
+    "id": "L09",
+    "file": "assets/vo-hi/L09.wav",
+    "duration": 16.215688,
+    "text": "ये चार boxes आपका attendance register हैं। बावन candidates ने शुरू किया। Writing now बताता है कि exam के दौरान अभी कौन लिख रहा है, live। Exam खत्म हो गया, तो zero। अड़तालीस ने submit किया। और चार dropped: शुरू तो किया, पर submit नहीं किया।",
+    "raw": "{tiles}ये चार boxes आपका attendance register हैं। {started}बावन candidates ने शुरू किया। {writing}Writing now बताता है कि exam के दौरान अभी कौन लिख रहा है, live। Exam खत्म हो गया, तो zero। {submitted}अड़तालीस ने submit किया। {dropped}और चार dropped: शुरू तो किया, पर submit नहीं किया।"
+  },
+  {
+    "id": "L10",
+    "file": "assets/vo-hi/L10.wav",
+    "duration": 19.988042,
+    "text": "Dropped पर tap कीजिए, और दिखेगा कि हर कोई ठीक कब निकला, और कितने answers कर चुका था। आकाश ने सिर्फ़ दो questions किए, और दस बजकर तीन मिनट पर रुक गया। सोनल ने चौदह किए। ये बिल्कुल अलग कहानी है। एक छोटी-सी call से पता चल जाएगा कि network था, phone था, या कुछ और। Paper पर, दोनों बस… absent होते।",
+    "raw": "{droptab}Dropped पर tap कीजिए, और दिखेगा कि हर कोई ठीक कब निकला, {answered}और कितने answers कर चुका था। {akash}आकाश ने सिर्फ़ दो questions किए, और दस बजकर तीन मिनट पर रुक गया। {sonal}सोनल ने चौदह किए। ये बिल्कुल अलग कहानी है। {call}एक छोटी-सी call से पता चल जाएगा कि network था, phone था, या कुछ और। {paper}Paper पर, दोनों बस… absent होते।"
+  },
+  {
+    "id": "L11",
+    "file": "assets/vo-hi/L11.wav",
+    "duration": 17.136042,
+    "text": "अब Submitted, यानी जिन्होंने पूरा किया। सबसे ऊपर average, highest और lowest। फिर हर score, नीचे percentage के साथ: blue मतलब चालीस percent या ज़्यादा, red मतलब उससे कम। Tick सही के लिए, cross गलत के लिए, dash छोड़े गए के लिए। कितना time लगा, और कब submit किया।",
+    "raw": "{subtab}अब Submitted, यानी जिन्होंने पूरा किया। {avgline}सबसे ऊपर average, highest और lowest। {score}फिर हर score, नीचे percentage के साथ: {colour}blue मतलब चालीस percent या ज़्यादा, red मतलब उससे कम। {answers}Tick सही के लिए, cross गलत के लिए, dash छोड़े गए के लिए। {time}कितना time लगा, और कब submit किया।"
+  },
+  {
+    "id": "L12",
+    "file": "assets/vo-hi/L12.wav",
+    "duration": 22.802021,
+    "text": "Ranks चाहिए? Rank on कीजिए। छोटे से i पर hover कीजिए, tie-breakers के लिए। बिल्कुल असली exam जैसे: पहले ज़्यादा marks, फिर कम गलत answers, फिर कम छोड़े गए, फिर जिसने पहले submit किया। स्नेहा और राहुल को देखिए: दोनों के तैंतीस, दोनों के दो गलत, दोनों का एक छोड़ा हुआ। स्नेहा ने चार मिनट पहले submit किया, इसलिए स्नेहा दूसरे नंबर पर है।",
+    "raw": "{rank}Ranks चाहिए? Rank on कीजिए। {info}छोटे से i पर hover कीजिए, tie-breakers के लिए। बिल्कुल असली exam जैसे: {rules}पहले ज़्यादा marks, फिर कम गलत answers, फिर कम छोड़े गए, फिर जिसने पहले submit किया। {tie}स्नेहा और राहुल को देखिए: दोनों के तैंतीस, दोनों के दो गलत, दोनों का एक छोड़ा हुआ। {sneha}स्नेहा ने चार मिनट पहले submit किया, इसलिए स्नेहा दूसरे नंबर पर है।"
+  },
+  {
+    "id": "L13",
+    "file": "assets/vo-hi/L13.wav",
+    "duration": 14.344125,
+    "text": "ये Submitted heading एक filter भी है। Test दो दिन में लिखा गया हो, तो एक दिन चुनिए, ranks उसी हिसाब से। Excel पूरी list download करता है: नाम, roll numbers, marks, ranks। यही आपका register है। और search से कोई भी तुरंत मिल जाता है।",
+    "raw": "{filter}ये Submitted heading एक filter भी है। Test दो दिन में लिखा गया हो, तो एक दिन चुनिए, ranks उसी हिसाब से। {excel}Excel पूरी list download करता है: नाम, roll numbers, marks, ranks। {reg2}यही आपका register है। {search}और search से कोई भी तुरंत मिल जाता है।"
+  },
+  {
+    "id": "L14",
+    "file": "assets/vo-hi/L14.wav",
+    "duration": 33.390042,
+    "text": "अब किसी भी row पर ये click कीजिए, और उस candidate की पूरी answer sheet खुल जाती है। ज्योति: चालीस में से अठारह। Paper पर, कुछ खास नहीं। लेकिन subject-wise देखिए। English: दस में से दस। पूरे marks। और Quant… माइनस दो। वो कमज़ोर student नहीं है। Maths में guess कर रही है, और negative marking उसका score खा रही है। Topic Performance इसे और बारीकी से दिखाता है, और Questions breakdown में उसका हर answer है, यहाँ तक कि हर question पर लगे seconds भी। बिल्कुल उसकी copy खोलने जैसा। बस आपको check नहीं करना पड़ा।",
+    "raw": "{open}अब किसी भी row पर ये click कीजिए, और उस candidate की पूरी answer sheet खुल जाती है। {jyoti}ज्योति: चालीस में से अठारह। Paper पर, कुछ खास नहीं। {subjects}लेकिन subject-wise देखिए। {english}English: दस में से दस। पूरे marks। {quant}और Quant… माइनस दो। {guessing}वो कमज़ोर student नहीं है। Maths में guess कर रही है, और negative marking उसका score खा रही है। {topics}Topic Performance इसे और बारीकी से दिखाता है, {qb}और Questions breakdown में उसका हर answer है, {secs}यहाँ तक कि हर question पर लगे seconds भी। {likecopy}बिल्कुल उसकी copy खोलने जैसा। बस आपको check नहीं करना पड़ा।"
+  },
+  {
+    "id": "L15",
+    "file": "assets/vo-hi/L15.wav",
+    "duration": 5.712021,
+    "text": "ये list बताती है किसने कितने marks लिए। ये नहीं बताती कि क्यों। उसके लिए: Full report।",
+    "raw": "{who}ये list बताती है किसने कितने marks लिए। {whyq}ये नहीं बताती कि क्यों। {full}उसके लिए: Full report।"
+  },
+  {
+    "id": "L16",
+    "file": "assets/vo-hi/L16.wav",
+    "duration": 6.279458,
+    "text": "ये वो page है जो अगली सुबह खोलना है। अड़तालीस candidates, किस दिन लिखा गया, बीस questions, चालीस marks।",
+    "raw": "{report}ये वो page है जो अगली सुबह खोलना है। {meta}अड़तालीस candidates, किस दिन लिखा गया, बीस questions, चालीस marks।"
+  },
+  {
+    "id": "L17",
+    "file": "assets/vo-hi/L17.wav",
+    "duration": 14.67025,
+    "text": "Class कैसी रही। Average: चौवन percent, यानी चालीस में से करीब बाईस marks। ठीक-ठाक है। Highest, अदिति, चौरानवे। Lowest, आठ। और ग्यारह candidates को help चाहिए: वो चालीस percent से नीचे हैं।",
+    "raw": "{class}Class कैसी रही। {avg}Average: चौवन percent, यानी चालीस में से करीब बाईस marks। ठीक-ठाक है। {high}Highest, अदिति, चौरानवे। {low}Lowest, आठ। {help}और ग्यारह candidates को help चाहिए: वो चालीस percent से नीचे हैं।"
+  },
+  {
+    "id": "L18",
+    "file": "assets/vo-hi/L18.wav",
+    "duration": 14.24775,
+    "text": "अब ये chart: marks कैसे फैले हैं। लोग इसे skip करते हैं। मत कीजिए। हर bar students का एक group है: शून्य से उन्नीस percent, बीस से उनतालीस, ऐसे ही आगे। Red मतलब मुश्किल, amber मतलब ठीक-ठाक, green मतलब मज़बूत।",
+    "raw": "{spread}अब ये chart: marks कैसे फैले हैं। लोग इसे skip करते हैं। मत कीजिए। {bars}हर bar students का एक group है: शून्य से उन्नीस percent, बीस से उनतालीस, ऐसे ही आगे। {colours}Red मतलब मुश्किल, amber मतलब ठीक-ठाक, green मतलब मज़बूत।"
+  },
+  {
+    "id": "L19",
+    "file": "assets/vo-hi/L19.wav",
+    "duration": 23.374229,
+    "text": "और इसका shape भी कुछ बताता है। अगर सब कुछ दाईं तरफ़ इकट्ठा है, तो paper बहुत आसान था। अगला paper थोड़ा कठिन बनाइए। बाईं तरफ़ ढेर? या तो paper बहुत कठिन था, या chapter समझ में नहीं आया। और दो humps, दोनों किनारों पर, मतलब आपका batch दो groups में बँट गया है। तब नीचे वाले group के लिए अलग doubt class सच में काम आती है। हमारा batch ठीक बीच में है, बस एक tail है जिस पर ध्यान देना है।",
+    "raw": "{shape}और इसका shape भी कुछ बताता है। {easy}अगर सब कुछ दाईं तरफ़ इकट्ठा है, तो paper बहुत आसान था। अगला paper थोड़ा कठिन बनाइए। {hard}बाईं तरफ़ ढेर? या तो paper बहुत कठिन था, या chapter समझ में नहीं आया। {split}और दो humps, दोनों किनारों पर, मतलब आपका batch दो groups में बँट गया है। {doubt}तब नीचे वाले group के लिए अलग doubt class सच में काम आती है। {ours}हमारा batch ठीक बीच में है, बस एक tail है जिस पर ध्यान देना है।"
+  },
+  {
+    "id": "L20",
+    "file": "assets/vo-hi/L20.wav",
+    "duration": 2.02575,
+    "text": "और बगल में, यही कहानी सीधे शब्दों में।",
+    "raw": "{plain}और बगल में, यही कहानी सीधे शब्दों में।"
+  },
+  {
+    "id": "L21",
+    "file": "assets/vo-hi/L21.wav",
+    "duration": 15.560458,
+    "text": "नीचे rank list, top three के लिए medals के साथ। Below forty percent पर tap कीजिए, ये रहे आपके ग्यारह। इस हफ़्ते इन्हीं को call कीजिए, या इनके parents को message। Search roll number से भी चलता है, और किसी भी नाम से वही answer sheet खुलती है।",
+    "raw": "{ranklist}नीचे rank list, top three के लिए medals के साथ। {below}Below forty percent पर tap कीजिए, ये रहे आपके ग्यारह। {callthem}इस हफ़्ते इन्हीं को call कीजिए, या इनके parents को message। {roll}Search roll number से भी चलता है, {tap}और किसी भी नाम से वही answer sheet खुलती है।"
+  },
+  {
+    "id": "L22",
+    "file": "assets/vo-hi/L22.wav",
+    "duration": 16.503708,
+    "text": "अब, सच कहूँ तो, पूरे page का सबसे काम का card: Teach these again। हर वो question जो आधे से कम batch ने सही किया, सबसे कठिन पहले। तो सोमवार की discussion class पहले question से शुरू नहीं होती। यहाँ से होती है। पाँच questions, बीस नहीं।",
+    "raw": "{teach}अब, सच कहूँ तो, पूरे page का सबसे काम का card: {again}Teach these again। हर वो question जो आधे से कम batch ने सही किया, सबसे कठिन पहले। {monday}तो सोमवार की discussion class पहले question से शुरू नहीं होती। {five}यहाँ से होती है। पाँच questions, बीस नहीं।"
+  },
+  {
+    "id": "L23",
+    "file": "assets/vo-hi/L23.wav",
+    "duration": 18.449833,
+    "text": "क्वेश्चन तेरह पर click कीजिए। दो successive discounts, बीस और दस percent। सही जवाब: अट्ठाईस। लेकिन देखिए, चौवन percent ने तीस चुना। उन्होंने बस दोनों discounts जोड़ दिए। ये छोटी गलती नहीं, पूरे batch का concept गलत है, और board पर एक example सबका ठीक कर देता है।",
+    "raw": "{q13}क्वेश्चन तेरह पर click कीजिए। दो successive discounts, बीस और दस percent। {answer}सही जवाब: अट्ठाईस। {trap}लेकिन देखिए, चौवन percent ने तीस चुना। {added}उन्होंने बस दोनों discounts जोड़ दिए। {concept}ये छोटी गलती नहीं, पूरे batch का concept गलत है, {example}और board पर एक example सबका ठीक कर देता है।"
+  },
+  {
+    "id": "L24",
+    "file": "assets/vo-hi/L24.wav",
+    "duration": 18.631708,
+    "text": "अब क्वेश्चन पंद्रह, time and work। सिर्फ़ इक्कीस percent ने सही किया। लेकिन grey हिस्सा देखिए: लगभग आधों ने इसे छोड़ दिया। उन्होंने गलत नहीं किया। उन्होंने कोशिश ही नहीं की। तो या तो time खत्म हो गया, या chapter अभी पूरा नहीं हुआ। दो बिल्कुल अलग इलाज, और paper पर आप ये फ़र्क कभी नहीं देख पाते।",
+    "raw": "{q15}अब क्वेश्चन पंद्रह, time and work। सिर्फ़ इक्कीस percent ने सही किया। {grey}लेकिन grey हिस्सा देखिए: लगभग आधों ने इसे छोड़ दिया। {never}उन्होंने गलत नहीं किया। उन्होंने कोशिश ही नहीं की। {two}तो या तो time खत्म हो गया, या chapter अभी पूरा नहीं हुआ। {diff}दो बिल्कुल अलग इलाज, और paper पर आप ये फ़र्क कभी नहीं देख पाते।"
+  },
+  {
+    "id": "L25",
+    "file": "assets/vo-hi/L25.wav",
+    "duration": 12.050688,
+    "text": "और क्वेश्चन नौ, लोकटक झील। Answers चारों options में लगभग बराबर बँटे हैं। Guessing ऐसी ही दिखती है। ठीक से किसी को पता नहीं था, तो ये revision list में जाएगा, पूरे नए lesson में नहीं।",
+    "raw": "{q9}और क्वेश्चन नौ, लोकटक झील। {even}Answers चारों options में लगभग बराबर बँटे हैं। {guess}Guessing ऐसी ही दिखती है। {revise}ठीक से किसी को पता नहीं था, तो ये revision list में जाएगा, पूरे नए lesson में नहीं।"
+  },
+  {
+    "id": "L26",
+    "file": "assets/vo-hi/L26.wav",
+    "duration": 10.827208,
+    "text": "तो: एक गलत option ऊँचा खड़ा है, मतलब trap, concept दोबारा पढ़ाइए। बहुत सारा grey, मतलब time, या अधूरा chapter। और सब बराबर? Guessing। Revise कराइए।",
+    "raw": "{three}तो: एक गलत option ऊँचा खड़ा है, मतलब trap, concept दोबारा पढ़ाइए। {grey2}बहुत सारा grey, मतलब time, या अधूरा chapter। {flat}और सब बराबर? Guessing। Revise कराइए।"
+  },
+  {
+    "id": "L27",
+    "file": "assets/vo-hi/L27.wav",
+    "duration": 16.197875,
+    "text": "Hardest first पर switch कीजिए, पूरा paper difficulty के हिसाब से। और By section, subject-wise। Reasoning, पचहत्तर। English, सत्तर। General Awareness, सत्तावन। और Quant, चौवालीस। तो extra class कहाँ लगानी है, अब पता है।",
+    "raw": "{hardest}Hardest first पर switch कीजिए, पूरा paper difficulty के हिसाब से। {section}और By section, subject-wise। {reasoning}Reasoning, पचहत्तर। {eng2}English, सत्तर। {ga}General Awareness, सत्तावन। {quant2}और Quant, चौवालीस। {extra}तो extra class कहाँ लगानी है, अब पता है।"
+  },
+  {
+    "id": "L28",
+    "file": "assets/vo-hi/L28.wav",
+    "duration": 16.8275,
+    "text": "आखिर में, results भेजना। Send rank list से WhatsApp खुलता है, list पहले से type की हुई, और किसे भेजनी है, आप तय करते हैं। Copy, कहीं और paste करने के लिए। Excel में दो sheets: rank list, और हर question का सबसे ज़्यादा चुना गया गलत option। और Print, file या parents' meeting के लिए।",
+    "raw": "{share}आखिर में, results भेजना। {send}Send rank list से WhatsApp खुलता है, list पहले से type की हुई, {choose}और किसे भेजनी है, आप तय करते हैं। {copyb}Copy, कहीं और paste करने के लिए। {excel2}Excel में दो sheets: rank list, और हर question का सबसे ज़्यादा चुना गया गलत option। {print}और Print, file या parents' meeting के लिए।"
+  },
+  {
+    "id": "L29",
+    "file": "assets/vo-hi/L29.wav",
+    "duration": 23.951083,
+    "text": "एक आखिरी जगह: All Submissions। हर exam जो आपके candidates ने लिखा, नया सबसे पहले। Badge class का average है, और रंगीन bar strong, average और weak दिखाता है। अब इसे नीचे से ऊपर पढ़िए: छियालीस, अड़तालीस, पचास, चौवन। हफ़्ते दर हफ़्ते, आपका batch ऊपर चढ़ रहा है, और ये चीज़ आप किसी parent को सच में दिखा सकते हैं। अगले हफ़्ते का mock वहीं इंतज़ार कर रहा है, live होने से बस एक tap दूर।",
+    "raw": "{allsub}एक आखिरी जगह: All Submissions। {list}हर exam जो आपके candidates ने लिखा, नया सबसे पहले। {badge}Badge class का average है, {bar}और रंगीन bar strong, average और weak दिखाता है। {trend}अब इसे नीचे से ऊपर पढ़िए: {t46}छियालीस, {t48}अड़तालीस, {t50}पचास, {t54}चौवन। {up}हफ़्ते दर हफ़्ते, आपका batch ऊपर चढ़ रहा है, {proof}और ये चीज़ आप किसी parent को सच में दिखा सकते हैं। {next}अगले हफ़्ते का mock वहीं इंतज़ार कर रहा है, live होने से बस एक tap दूर।"
+  },
+  {
+    "id": "L30",
+    "file": "assets/vo-hi/L30.wav",
+    "duration": 26.126708,
+    "text": "तो ये रहा आपका पाँच मिनट का routine, हर सोमवार सुबह। एक: average और spread देखिए। दो: rank list भेजिए। तीन: Teach these again खोलिए। वही आपकी discussion class है। चार: below forty percent filter कीजिए, और उन students को call कीजिए। पाँच: register के लिए Excel download कीजिए। पाँच मिनट। पूरा रविवार नहीं।",
+    "raw": "{routine}तो ये रहा आपका पाँच मिनट का routine, हर सोमवार सुबह। {r1}एक: average और spread देखिए। {r2}दो: rank list भेजिए। {r3}तीन: Teach these again खोलिए। वही आपकी discussion class है। {r4}चार: below forty percent filter कीजिए, और उन students को call कीजिए। {r5}पाँच: register के लिए Excel download कीजिए। {done}पाँच मिनट। पूरा रविवार नहीं।"
+  },
+  {
+    "id": "L31",
+    "file": "assets/vo-hi/L31.wav",
+    "duration": 10.826333,
+    "text": "Paper tests आपको marks देते थे। TestoZa उनके पीछे की वजहें देता है। अपने अगले mock पर try कीजिए, और अगर ये काम का लगा, तो आप जानते हैं subscribe button कहाँ है। अगले video में मिलते हैं।",
+    "raw": "{close}Paper tests आपको marks देते थे। {reasons}TestoZa उनके पीछे की वजहें देता है। {try}अपने अगले mock पर try कीजिए, {sub}और अगर ये काम का लगा, तो आप जानते हैं subscribe button कहाँ है। {bye}अगले video में मिलते हैं।"
+  }
+]

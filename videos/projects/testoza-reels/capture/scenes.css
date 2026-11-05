@@ -1,0 +1,63 @@
+@font-face{font-family:'Outfit';font-weight:400 900;src:url('assets/fonts/Outfit-800.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-weight:400 600;src:url('assets/fonts/Outfit-600.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#020617}
+#root{position:relative;width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
+
+/* Backdrop for the whole film (brand sky + indigo, faint grid) */
+.stage{position:absolute;inset:0;background:radial-gradient(1200px 760px at 28% 62%,rgba(14,165,233,.26),rgba(2,6,23,0) 70%),radial-gradient(1000px 640px at 80% 20%,rgba(99,102,241,.26),rgba(2,6,23,0) 70%),linear-gradient(180deg,#050b1d,#020617)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);background-size:64px 64px}
+.card{position:absolute;inset:0;overflow:hidden}
+
+/* Desktop footage: a full-frame window (it scales up into place when its section starts).
+   2304x1296 frames shown at 1536x864 CSS px; GSAP scales the cam (1.25 = full frame) and pans. */
+.win{position:absolute;border-radius:30px;overflow:hidden;transform-origin:50% 50%;background:#fff;box-shadow:0 0 0 3px rgba(148,163,184,.18),0 50px 110px -30px rgba(0,0,0,.9)}
+.logo{position:absolute;left:0;right:0;margin:0 auto;top:1650px;height:64px;opacity:.9}
+.cam{position:absolute;left:0;top:0;width:1536px;height:864px;transform-origin:0 0;overflow:visible}
+.foot{position:absolute;left:0;top:0;width:1536px;height:864px;display:block}
+.ov{position:absolute;left:0;top:0;width:1536px;height:864px;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;margin:-2px 0 0 -3px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));z-index:5}
+.loupe{position:absolute;left:0;top:0;border-radius:14px;box-shadow:0 0 0 5px #facc15,0 0 30px 6px rgba(250,204,21,.45);z-index:6}
+.rip{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #38bdf8;background:rgba(56,189,248,.18);opacity:0;z-index:4}
+
+/* Phone (the candidate take): 646x1398 footage at 0.7 inside a frame, centred */
+.phonescene{position:absolute;inset:0}
+.phonescene .glow{position:absolute;left:90px;top:200px;width:900px;height:1500px;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),rgba(56,189,248,0));filter:blur(10px)}
+.pcam{position:absolute;inset:0;transform-origin:0 0}
+.phone{position:absolute;padding:16px;border-radius:84px;background:#0b0f19;box-shadow:0 0 0 3px #1e293b,0 60px 120px -30px rgba(0,0,0,.9),inset 0 0 0 2px #334155}
+.screen{position:relative;border-radius:68px;overflow:hidden;background:#fff}
+.pv{position:absolute;left:0;top:0;width:100%;height:100%}
+.pvid{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.chrome{position:absolute;left:0;right:0;top:0;height:219px;background:#f8fafc;border-bottom:1px solid #e2e8f0;z-index:3;opacity:0}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:97px;background:#f8fafc;border-top:1px solid #e2e8f0;z-index:3;display:flex;justify-content:space-around;align-items:center;padding:0 26px 10px;opacity:0}
+.tbar i{width:22px;height:22px;border-radius:6px;border:2.5px solid #64748b;display:block}
+.tbar i:nth-child(3){border-radius:50%}
+.sbar{position:absolute;left:0;right:0;top:0;height:84px;display:flex;align-items:center;justify-content:space-between;padding:10px 60px 0 68px;font:700 26px 'Outfit';color:#0f172a}
+.isl{position:absolute;left:50%;top:20px;width:190px;height:52px;margin-left:-95px;border-radius:20px;background:#000;display:block}
+.sig{display:flex;align-items:flex-end;gap:2px}
+.sig b{width:4px;background:currentColor;border-radius:1px;display:block}
+.sig b:nth-child(1){height:5px}.sig b:nth-child(2){height:8px}.sig b:nth-child(3){height:11px}.sig b:nth-child(4){height:14px}
+.sig em{width:25px;height:12px;border:2px solid currentColor;border-radius:4px;margin-left:8px;display:block;position:relative}
+.sig em::after{content:'';position:absolute;left:1px;top:1px;width:16px;height:6px;background:currentColor;border-radius:1px}
+.purl{position:absolute;left:28px;right:28px;top:110px;height:74px;border-radius:37px;background:#e9eef5;display:flex;align-items:center;justify-content:center;gap:12px;font:600 28px 'Outfit';color:#1e293b}
+.purl .lk{width:15px;height:15px;color:#475569;display:block}
+.purl .lk svg{width:15px;height:15px;display:block}
+.purl .u2{display:none}
+
+
+/* Fast-forward pill (a wait shown faster): an icon and the speed, no words */
+.speed{position:absolute;right:56px;top:150px;height:64px;display:flex;align-items:center;gap:12px;padding:0 26px 0 22px;border-radius:999px;background:rgba(2,6,23,.88);box-shadow:0 0 0 2px rgba(250,204,21,.7);color:#facc15;z-index:9}
+.speed i{width:30px;height:30px;display:block}
+.speed i svg{width:30px;height:30px;display:block}
+.speed b{font:800 30px 'Outfit'}
+
+
+/* End card: logo, testoza.com, a bell (no words) */
+.endcard{background:radial-gradient(900px 600px at 50% 50%,rgba(56,189,248,.18),rgba(2,6,23,0) 70%)}
+.endcard .wm{position:absolute;left:0;right:0;margin:0 auto;top:760px;height:150px}
+.pills{position:absolute;left:0;right:0;top:990px;display:flex;justify-content:center;gap:28px}
+.pill{height:92px;padding:0 48px;border-radius:999px;display:flex;align-items:center;gap:14px;font:700 42px 'Outfit'}
+.pill.url{color:#f8fafc;background:rgba(15,23,42,.7);box-shadow:0 0 0 2px rgba(56,189,248,.65)}
+.pill.subs{padding:0 34px;color:#fff;background:#dc2626;box-shadow:0 20px 40px -14px rgba(220,38,38,.7)}
+.bell{width:30px;height:30px;border-radius:15px 15px 5px 5px;background:#fff;display:block;position:relative}
+.bell::after{content:'';position:absolute;left:11px;bottom:-7px;width:8px;height:7px;border-radius:0 0 4px 4px;background:#fff}

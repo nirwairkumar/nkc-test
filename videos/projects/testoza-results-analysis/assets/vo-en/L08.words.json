@@ -1,0 +1,122 @@
+[
+ {
+  "id": "w0",
+  "text": "Click",
+  "start": 0,
+  "end": 0.29
+ },
+ {
+  "id": "w1",
+  "text": "Results.",
+  "start": 0.348,
+  "end": 1.184
+ },
+ {
+  "id": "w2",
+  "text": "Up",
+  "start": 1.73,
+  "end": 1.904
+ },
+ {
+  "id": "w3",
+  "text": "top:",
+  "start": 1.962,
+  "end": 2.345
+ },
+ {
+  "id": "w4",
+  "text": "the",
+  "start": 2.45,
+  "end": 2.577
+ },
+ {
+  "id": "w5",
+  "text": "exam,",
+  "start": 2.624,
+  "end": 3.332
+ },
+ {
+  "id": "w6",
+  "text": "its",
+  "start": 3.553,
+  "end": 3.727
+ },
+ {
+  "id": "w7",
+  "text": "status",
+  "start": 3.75,
+  "end": 4.214
+ },
+ {
+  "id": "w8",
+  "text": "—",
+  "start": 4.4,
+  "end": 4.458
+ },
+ {
+  "id": "w9",
+  "text": "this",
+  "start": 4.563,
+  "end": 4.737
+ },
+ {
+  "id": "w10",
+  "text": "one",
+  "start": 4.795,
+  "end": 4.911
+ },
+ {
+  "id": "w11",
+  "text": "has",
+  "start": 4.934,
+  "end": 5.027
+ },
+ {
+  "id": "w12",
+  "text": "ended",
+  "start": 5.085,
+  "end": 5.341
+ },
+ {
+  "id": "w13",
+  "text": "—",
+  "start": 5.561,
+  "end": 5.689
+ },
+ {
+  "id": "w14",
+  "text": "twenty",
+  "start": 6.037,
+  "end": 6.362
+ },
+ {
+  "id": "w15",
+  "text": "questions,",
+  "start": 6.409,
+  "end": 6.978
+ },
+ {
+  "id": "w16",
+  "text": "forty",
+  "start": 7.024,
+  "end": 7.314
+ },
+ {
+  "id": "w17",
+  "text": "marks,",
+  "start": 7.361,
+  "end": 7.663
+ },
+ {
+  "id": "w18",
+  "text": "twenty",
+  "start": 7.697,
+  "end": 8.011
+ },
+ {
+  "id": "w19",
+  "text": "minutes.",
+  "start": 8.057,
+  "end": 8.545
+ }
+]

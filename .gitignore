@@ -8,6 +8,7 @@ node_modules/
 *_status.txt
 frontend/node_modules/
 backend/__pycache__/
+**/__pycache__/
 dist/
 build/
 .next/

@@ -12,7 +12,11 @@
  */
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { Share2 } from 'lucide-react';
 import ExamEndFeedback from './ExamEndFeedback';
+import { useAuth } from '@/contexts/AuthContext';
+import { useMyReferrals } from '@/lib/referralsApi';
+import InviteSheet from '@/components/referrals/InviteSheet';
 import {
     ASK_FEEDBACK_EVENT, FEEDBACK_LANDED_EVENT, type AskFeedbackDetail,
 } from '@/lib/platformFeedback';
@@ -43,7 +47,17 @@ function MinimiseGlyph() {
 }
 
 export default function FeedbackDock() {
+    const { user, profile } = useAuth();
+    const { data: referralData } = useMyReferrals(!!user);
     const [ask, setAsk] = useState<AskFeedbackDetail | null>(null);
+    const [canMinimise, setCanMinimise] = useState(false);
+    const [shareSheetOpen, setShareSheetOpen] = useState(false);
+    const shareSheetOpenRef = useRef(false);
+    shareSheetOpenRef.current = shareSheetOpen;
+
+    const referralName = profile?.full_name || user?.user_metadata?.full_name || '';
+    const referralCode = referralData?.code || '';
+
     const leaving = useRef(false);
     const cardRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -56,6 +70,19 @@ export default function FeedbackDock() {
         window.addEventListener(ASK_FEEDBACK_EVENT, onAsk);
         return () => window.removeEventListener(ASK_FEEDBACK_EVENT, onAsk);
     }, []);
+
+    // Enable minimise only after 10 seconds to encourage users to give feedback
+    useEffect(() => {
+        if (!ask) {
+            setCanMinimise(false);
+            return;
+        }
+        setCanMinimise(false);
+        const timer = window.setTimeout(() => {
+            setCanMinimise(true);
+        }, 10000);
+        return () => window.clearTimeout(timer);
+    }, [ask]);
 
     // Rise in from just below, like a sheet.
     useLayoutEffect(() => {
@@ -80,6 +107,7 @@ export default function FeedbackDock() {
     }, []);
 
     const minimise = useCallback(() => {
+        if (!canMinimise) return;
         const card = cardRef.current;
         if (!card || leaving.current) return;
         leaving.current = true;
@@ -110,11 +138,15 @@ export default function FeedbackDock() {
         // Solid while it travels, gone as it reaches the icon.
         card.animate([{ opacity: 1 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration, fill: 'forwards' });
         move.finished.then(() => finish(true), () => finish(true));
-    }, [finish]);
+    }, [canMinimise, finish]);
 
     const fadeAway = useCallback(() => {
-        // Let "Thank you" be read, then go.
-        window.setTimeout(() => {
+        // Let "Thank you" be read, then go (checks if share sheet is currently open)
+        const checkAndDismiss = () => {
+            if (shareSheetOpenRef.current) {
+                window.setTimeout(checkAndDismiss, 1000);
+                return;
+            }
             const card = cardRef.current;
             if (!card || leaving.current) return;
             leaving.current = true;
@@ -122,60 +154,96 @@ export default function FeedbackDock() {
             card.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.96)' }],
                 { duration: 240, easing: 'ease-in', fill: 'forwards' })
                 .finished.then(() => finish(false), () => finish(false));
-        }, 1500);
+        };
+        window.setTimeout(checkAndDismiss, 2000);
     }, [finish]);
 
     return (
-        <Dialog.Root open={!!ask} onOpenChange={(open) => { if (!open) minimise(); }}>
-            <Dialog.Portal>
-                <Dialog.Overlay ref={overlayRef} className="fixed inset-0 z-[70] bg-slate-900/25 backdrop-blur-[2px]" />
-                <Dialog.Content
-                    aria-describedby="feedback-dock-desc"
-                    onEscapeKeyDown={(e) => { e.preventDefault(); minimise(); }}
-                    onInteractOutside={(e) => e.preventDefault()}
-                    onOpenAutoFocus={(e) => {
-                        // Focus the card itself: no ring on a face before they've chosen.
-                        e.preventDefault();
-                        cardRef.current?.focus();
-                    }}
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                    // A tap on the dimmed space around the card minimises it.
-                    onPointerDown={(e) => { if (e.target === e.currentTarget) minimise(); }}
-                    className="fixed inset-0 z-[71] flex items-end justify-center p-3 pb-[max(12px,env(safe-area-inset-bottom))] outline-none sm:items-center sm:p-6"
-                >
-                    <div
-                        ref={cardRef}
-                        tabIndex={-1}
-                        className="w-full max-w-[440px] rounded-[28px] bg-slate-50/95 p-4 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.45),0_0_0_1px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl will-change-transform dark:bg-slate-950/95 sm:p-5"
+        <>
+            <Dialog.Root open={!!ask} onOpenChange={(open) => { if (!open && canMinimise) minimise(); }}>
+                <Dialog.Portal>
+                    <Dialog.Overlay ref={overlayRef} className="fixed inset-0 z-[70] bg-slate-900/25 backdrop-blur-[2px]" />
+                    <Dialog.Content
+                        aria-describedby="feedback-dock-desc"
+                        onEscapeKeyDown={(e) => { e.preventDefault(); if (canMinimise) minimise(); }}
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onOpenAutoFocus={(e) => {
+                            // Focus the card itself: no ring on a face before they've chosen.
+                            e.preventDefault();
+                            cardRef.current?.focus();
+                        }}
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                        // A tap on the dimmed space around the card minimises it only after 10s.
+                        onPointerDown={(e) => { if (e.target === e.currentTarget && canMinimise) minimise(); }}
+                        className="fixed inset-0 z-[71] flex items-end justify-center p-3 pb-[max(12px,env(safe-area-inset-bottom))] outline-none sm:items-center sm:p-6"
                     >
-                        <div className="mb-3.5 flex items-start justify-between gap-3 px-1">
-                            <div className="min-w-0 pt-0.5">
-                                <Dialog.Title className="text-[17px] font-semibold leading-tight tracking-[-0.015em] text-slate-900 dark:text-slate-100">
-                                    Feedback
-                                </Dialog.Title>
-                                <Dialog.Description id="feedback-dock-desc" className="mt-1 text-[13px] leading-snug text-slate-500">
-                                    {ask?.examTitle ? <>“{ask.examTitle}” has ended.</> : 'Your exam has ended.'}
-                                </Dialog.Description>
+                        <div
+                            ref={cardRef}
+                            tabIndex={-1}
+                            className="w-full max-w-[440px] rounded-[28px] bg-slate-50/95 p-4 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.45),0_0_0_1px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl will-change-transform dark:bg-slate-950/95 sm:p-5"
+                        >
+                            <div className="mb-3.5 flex items-start justify-between gap-3 px-1">
+                                <div className="min-w-0 pt-0.5">
+                                    <Dialog.Title className="text-[17px] font-semibold leading-tight tracking-[-0.015em] text-slate-900 dark:text-slate-100">
+                                        Feedback
+                                    </Dialog.Title>
+                                    <Dialog.Description id="feedback-dock-desc" className="mt-1 text-[13px] leading-snug text-slate-500">
+                                        {ask?.examTitle ? <>“{ask.examTitle}” has ended.</> : 'Your exam has ended.'}
+                                    </Dialog.Description>
+                                </div>
+                                {canMinimise && (
+                                    <button
+                                        type="button"
+                                        onClick={minimise}
+                                        aria-label="Minimise to Feedback"
+                                        title="Minimise — it stays in Feedback"
+                                        className="flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-200/80 text-slate-600 transition-[background-color,transform] hover:bg-slate-300/80 motion-safe:active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 dark:bg-slate-800 dark:text-slate-300 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-75 duration-300"
+                                    >
+                                        <MinimiseGlyph />
+                                    </button>
+                                )}
                             </div>
-                            <button
-                                type="button"
-                                onClick={minimise}
-                                aria-label="Minimise to Feedback"
-                                title="Minimise — it stays in Feedback"
-                                className="flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-200/80 text-slate-600 transition-[background-color,transform] hover:bg-slate-300/80 motion-safe:active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 dark:bg-slate-800 dark:text-slate-300"
-                            >
-                                <MinimiseGlyph />
-                            </button>
+                            {ask && (
+                                <ExamEndFeedback
+                                    origin={{ source: 'exam_ended', examId: ask.examId, examTitle: ask.examTitle }}
+                                    onSent={fadeAway}
+                                />
+                            )}
+
+                            {/* Strip: Share with friends or community */}
+                            <div className="mt-3.5 flex items-center justify-between gap-3 rounded-[20px] bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.08] to-indigo-500/[0.08] p-3 ring-1 ring-violet-500/20 dark:from-violet-500/20 dark:to-indigo-500/20 dark:ring-violet-500/30">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+                                        <Share2 className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                                            Share with your friends or in your community
+                                        </p>
+                                        <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5 truncate">
+                                            Invite fellow teachers to TestoZa
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShareSheetOpen(true)}
+                                    className="shrink-0 cursor-pointer rounded-full bg-violet-600 px-3.5 py-1.5 text-[12.5px] font-bold text-white shadow-sm transition-[background-color,transform] hover:bg-violet-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                                >
+                                    Share
+                                </button>
+                            </div>
                         </div>
-                        {ask && (
-                            <ExamEndFeedback
-                                origin={{ source: 'exam_ended', examId: ask.examId, examTitle: ask.examTitle }}
-                                onSent={fadeAway}
-                            />
-                        )}
-                    </div>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+
+            <InviteSheet
+                open={shareSheetOpen}
+                onOpenChange={setShareSheetOpen}
+                code={referralCode}
+                name={referralName}
+            />
+        </>
     );
 }

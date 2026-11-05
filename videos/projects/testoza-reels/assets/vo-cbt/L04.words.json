@@ -1,0 +1,80 @@
+[
+  {
+    "id": "w0",
+    "text": "Jump",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "from",
+    "start": 0.4,
+    "end": 0.56
+  },
+  {
+    "id": "w2",
+    "text": "the",
+    "start": 0.56,
+    "end": 0.72
+  },
+  {
+    "id": "w3",
+    "text": "palette",
+    "start": 0.72,
+    "end": 1.2
+  },
+  {
+    "id": "w4",
+    "text": "and",
+    "start": 1.28,
+    "end": 1.52
+  },
+  {
+    "id": "w5",
+    "text": "before",
+    "start": 1.52,
+    "end": 1.84
+  },
+  {
+    "id": "w6",
+    "text": "submitting",
+    "start": 1.84,
+    "end": 2.4
+  },
+  {
+    "id": "w7",
+    "text": "a",
+    "start": 2.4,
+    "end": 2.56
+  },
+  {
+    "id": "w8",
+    "text": "full",
+    "start": 2.56,
+    "end": 2.88
+  },
+  {
+    "id": "w9",
+    "text": "summary",
+    "start": 2.88,
+    "end": 3.28
+  },
+  {
+    "id": "w10",
+    "text": "just",
+    "start": 3.44,
+    "end": 3.6
+  },
+  {
+    "id": "w11",
+    "text": "like",
+    "start": 3.6,
+    "end": 3.84
+  },
+  {
+    "id": "w12",
+    "text": "NTA.",
+    "start": 3.84,
+    "end": 4.48
+  }
+]

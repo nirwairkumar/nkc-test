@@ -361,13 +361,13 @@ Item 2 & Value B & 200 \\\\
                                 const active = isActive(item);
                                 const Icon = item.icon;
                                 const isAiItem = item.path === '/generate-with-ai';
-                                const disabled = 'disabled' in item && item.disabled;
+                                const disabled = Boolean('disabled' in item && item.disabled);
 
                                 const content = (
                                     <div key={item.title} className="space-y-1">
                                         <button
                                             onClick={() => { if (!disabled) handleItemClick(item.path); }}
-                                            aria-disabled={disabled || undefined}
+                                            aria-disabled={disabled ? true : undefined}
                                             title={disabled ? `${item.title} — coming soon` : undefined}
                                             className={`
                                                 w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium

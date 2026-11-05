@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-base.css">
+<style>
+  .pdf-box {
+    position: absolute;
+    left: 640px;
+    top: 70px;
+    width: 330px;
+    height: 240px;
+    border-radius: 18px;
+    background: #0f172a;
+    border: 2.5px solid rgba(239, 68, 68, 0.6);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.85);
+    transform: rotate(-5deg);
+    overflow: hidden;
+    z-index: 10;
+  }
+  .pdf-box img {
+    width: 330px;
+    display: block;
+  }
+  .pdf-badge {
+    position: absolute;
+    left: 650px;
+    top: 35px;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 24px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    transform: rotate(-5deg);
+    z-index: 25;
+    box-shadow: 0 10px 24px rgba(239, 68, 68, 0.5);
+  }
+  .ai-card {
+    position: absolute;
+    left: 700px;
+    top: 260px;
+    width: 530px;
+    border-radius: 20px;
+    background: #0b1329;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 35px 80px rgba(0,0,0,0.9), 0 0 50px rgba(56, 189, 248, 0.4);
+    transform: rotate(2deg);
+    overflow: hidden;
+    z-index: 20;
+  }
+  .ai-card img {
+    width: 530px;
+    display: block;
+  }
+  .no-typing {
+    position: absolute;
+    left: 740px;
+    top: 590px;
+    background: #facc15;
+    color: #080f1d;
+    font-weight: 900;
+    font-size: 28px;
+    padding: 12px 28px;
+    border-radius: 30px;
+    box-shadow: 0 16px 36px rgba(250, 204, 21, 0.5);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sparkle-icon {
+    font-size: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="copy-box">
+    <div class="kicker">🤖 AI TEST MAKER</div>
+    <h1 class="headline">
+      PDF ➔ TEST<br>
+      <span class="grad">2 मिनट में! ⚡</span>
+    </h1>
+    <div class="pill-action">Typing Ki Zaroorat Nahi! 🚫</div>
+    
+    <div class="sub-features">
+      <div class="feat-item"><span class="icon">✓</span> Any Question Paper PDF Upload karo</div>
+      <div class="feat-item"><span class="icon">✓</span> AI Questions, Options & Key khud padhega</div>
+      <div class="feat-item"><span class="icon">✓</span> 1-Click WhatsApp Share & Instant Live Test</div>
+    </div>
+  </div>
+
+  <div class="pdf-badge">📄 QUESTION PAPER.PDF</div>
+  <div class="ui-card pdf-box">
+    <img src="../assets/upload-1.png" alt="Upload PDF">
+  </div>
+  
+  <div class="ui-card ai-card">
+    <img src="../assets/card-done.png" alt="AI Extracted questions">
+  </div>
+  
+  <div class="no-typing">
+    <span class="sparkle-icon">✨</span> ZERO TYPING · 100% AUTOMATIC
+  </div>
+</div>
+</body>
+</html>
+

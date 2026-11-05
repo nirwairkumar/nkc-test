@@ -1,0 +1,1 @@
+ये Submitted heading एक filter भी है। Test दो दिन में लिखा गया हो, तो एक दिन चुनिए, ranks उसी हिसाब से। Excel पूरी list download करता है: नाम, roll numbers, marks, ranks। यही आपका register है। और search से कोई भी तुरंत मिल जाता है।

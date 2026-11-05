@@ -20,3 +20,26 @@ projects/testoza-branding-short/capture/rec/
 projects/testoza-branding-short/capture/probe/
 projects/testoza-branding-short/assets/cut/
 projects/testoza-branding-short/assets/mix/
+# Understanding Results: raw takes, probes, cut sections, mixes, voice samples (rebuild with capture/record.mjs, build.mjs)
+projects/testoza-results-analysis/capture/rec/
+projects/testoza-results-analysis/capture/probe/
+projects/testoza-results-analysis/assets/cut/
+projects/testoza-results-analysis/assets/mix/
+projects/testoza-results-analysis/assets/voice-samples/
+projects/testoza-results-analysis/.hyperframes/
+# Brand film "First Time": generated stills/footage, composites, rebuilt media, mixes, deliverables (all on disk; rebuild with tools/prep.mjs, mix.mjs, build.mjs)
+projects/testoza-brand-film/gen/img/
+projects/testoza-brand-film/gen/veo/
+projects/testoza-brand-film/gen/vo/
+projects/testoza-brand-film/gen/music/*.mp3
+projects/testoza-brand-film/gen/sfx/
+projects/testoza-brand-film/assets/footage/
+projects/testoza-brand-film/assets/shots/
+projects/testoza-brand-film/assets/ui/
+projects/testoza-brand-film/assets/audio/
+projects/testoza-brand-film/deliver/
+projects/testoza-brand-film/.hyperframes/
+# Reels: raw takes, cut sections, probes (rebuild with capture/record.mjs, build-reel.mjs)
+projects/testoza-reels/capture/rec/
+projects/testoza-reels/capture/probe/
+projects/testoza-reels/assets/cut/

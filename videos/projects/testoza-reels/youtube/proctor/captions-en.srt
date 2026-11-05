@@ -1,0 +1,83 @@
+1
+00:00:00,430 --> 00:00:02,750
+She switched tabs — and the exam caught it.
+
+2
+00:00:02,750 --> 00:00:04,910
+Here's what TestoZa's proctoring stops…
+
+3
+00:00:04,910 --> 00:00:06,052
+and what it can't.
+
+4
+00:00:06,610 --> 00:00:07,970
+Force full screen.
+
+5
+00:00:07,970 --> 00:00:10,130
+Catch every tab or app switch —
+
+6
+00:00:10,130 --> 00:00:12,130
+submit at the very first one,
+
+7
+00:00:12,130 --> 00:00:14,530
+or allow a few warnings, say three.
+
+8
+00:00:14,530 --> 00:00:16,690
+Block copy-paste, right-click,
+
+9
+00:00:16,690 --> 00:00:18,976
+the back button, and the exit button.
+
+10
+00:00:19,850 --> 00:00:21,450
+Leave full screen — warning two.
+
+11
+00:00:21,450 --> 00:00:22,970
+Switch again — three.
+
+12
+00:00:22,970 --> 00:00:23,610
+One more…
+
+13
+00:00:23,610 --> 00:00:25,130
+and the test is submitted.
+
+14
+00:00:25,130 --> 00:00:26,108
+Automatically.
+
+15
+00:00:26,500 --> 00:00:27,940
+Now the honest part.
+
+16
+00:00:27,940 --> 00:00:30,340
+There's no webcam watching — so it can't see
+
+17
+00:00:30,340 --> 00:00:32,180
+a second phone, or a friend in the room.
+
+18
+00:00:32,180 --> 00:00:34,660
+For big exams, add an invigilator,
+
+19
+00:00:34,660 --> 00:00:35,727
+or a computer lab.
+
+20
+00:00:36,263 --> 00:00:37,863
+Proctoring that tells you the truth.
+
+21
+00:00:37,863 --> 00:00:39,150
+testoza dot com.

@@ -1,0 +1,71 @@
+{
+  "L01": {
+    "duration": 5.421833,
+    "cues": {
+      "leave1": 0,
+      "warn1": 1.04
+    },
+    "dist": 1,
+    "words": 17,
+    "missing": [
+      "testozas"
+    ]
+  },
+  "L02": {
+    "duration": 12.16525,
+    "cues": {
+      "fs": 0,
+      "tab": 1.36,
+      "strict": 3.52,
+      "count": 5.52,
+      "threepick": 7.12,
+      "copy": 7.92,
+      "right": 9.28,
+      "back": 10.08,
+      "exit": 11.04
+    },
+    "dist": 0,
+    "words": 34,
+    "missing": []
+  },
+  "L03": {
+    "duration": 6.058083,
+    "cues": {
+      "fsexit": 0,
+      "warn2": 0.72,
+      "leave3": 1.6,
+      "warn3": 2.56,
+      "leave4": 3.12,
+      "auto": 3.76
+    },
+    "dist": 3,
+    "words": 16,
+    "missing": [
+      "two",
+      "three",
+      "one"
+    ]
+  },
+  "L04": {
+    "duration": 9.027125,
+    "cues": {
+      "aitab": 1.44
+    },
+    "dist": 0,
+    "words": 31,
+    "missing": []
+  },
+  "L05": {
+    "duration": 2.766792,
+    "cues": {
+      "endurl": 1.68
+    },
+    "dist": 3,
+    "words": 9,
+    "missing": [
+      "testoza",
+      "dot",
+      "com"
+    ]
+  }
+}

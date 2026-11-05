@@ -1,0 +1,58 @@
+[
+ {
+  "w": "Proctoring,",
+  "r": "proctoring",
+  "start": 0.0,
+  "end": 0.463,
+  "score": 0.623
+ },
+ {
+  "w": "जो",
+  "r": "jo",
+  "start": 0.523,
+  "end": 0.604,
+  "score": 0.992
+ },
+ {
+  "w": "सच",
+  "r": "sac",
+  "start": 0.765,
+  "end": 0.946,
+  "score": 0.998
+ },
+ {
+  "w": "बताती",
+  "r": "bataatii",
+  "start": 1.027,
+  "end": 1.45,
+  "score": 0.991
+ },
+ {
+  "w": "है।",
+  "r": "hai",
+  "start": 1.47,
+  "end": 1.55,
+  "score": 0.987
+ },
+ {
+  "w": "testoza",
+  "r": "testoza",
+  "start": 1.812,
+  "end": 2.255,
+  "score": 0.809
+ },
+ {
+  "w": "dot",
+  "r": "dot",
+  "start": 2.356,
+  "end": 2.456,
+  "score": 0.695
+ },
+ {
+  "w": "com।",
+  "r": "com",
+  "start": 2.476,
+  "end": 2.658,
+  "score": 0.405
+ }
+]

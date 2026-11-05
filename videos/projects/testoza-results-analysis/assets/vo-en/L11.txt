@@ -1,0 +1,1 @@
+Now Submitted, everyone who finished. Average, highest and lowest, right at the top. Then every score, with the percentage under it: blue means forty percent or more, red means below. A tick for right, a cross for wrong, a dash for left blank. Time taken, and when they submitted.

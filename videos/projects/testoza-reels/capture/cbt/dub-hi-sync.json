@@ -1,0 +1,172 @@
+{
+  "lines": [
+    {
+      "id": "L01",
+      "tempo": 1,
+      "start": 0.66,
+      "end": 5.43,
+      "pauses": []
+    },
+    {
+      "id": "L02",
+      "tempo": 1,
+      "start": 5.98,
+      "end": 14.69,
+      "pauses": [
+        0.23
+      ]
+    },
+    {
+      "id": "L03",
+      "tempo": 1.03,
+      "start": 14.91,
+      "end": 24.8,
+      "pauses": [
+        0.14,
+        0.28
+      ]
+    },
+    {
+      "id": "L04",
+      "tempo": 1,
+      "start": 25.02,
+      "end": 30.03,
+      "pauses": []
+    },
+    {
+      "id": "L05",
+      "tempo": 1,
+      "start": 30.25,
+      "end": 35.23,
+      "pauses": []
+    }
+  ],
+  "cues": [
+    {
+      "line": "L01",
+      "cue": "exam",
+      "action": 0.66,
+      "word": 0.76,
+      "lag": 0.1
+    },
+    {
+      "line": "L01",
+      "cue": "timer",
+      "action": 2.5,
+      "word": 2.62,
+      "lag": 0.12
+    },
+    {
+      "line": "L01",
+      "cue": "palette",
+      "action": 3.7,
+      "word": 3.92,
+      "lag": 0.22
+    },
+    {
+      "line": "L02",
+      "cue": "results",
+      "action": 7.36,
+      "word": 8.02,
+      "lag": 0.66
+    },
+    {
+      "line": "L02",
+      "cue": "std",
+      "action": 9.45,
+      "word": 9.55,
+      "lag": 0.1
+    },
+    {
+      "line": "L02",
+      "cue": "strictt",
+      "action": 12.33,
+      "word": 13.07,
+      "lag": 0.74
+    },
+    {
+      "line": "L02",
+      "cue": "save",
+      "action": 13.53,
+      "word": 14.23,
+      "lag": 0.7
+    },
+    {
+      "line": "L03",
+      "cue": "ans1",
+      "action": 14.71,
+      "word": 14.95,
+      "lag": 0.24
+    },
+    {
+      "line": "L03",
+      "cue": "next1",
+      "action": 15.35,
+      "word": 15.61,
+      "lag": 0.26
+    },
+    {
+      "line": "L03",
+      "cue": "ans2",
+      "action": 17.19,
+      "word": 17.29,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "ansrev",
+      "action": 18.07,
+      "word": 18.17,
+      "lag": 0.1
+    },
+    {
+      "line": "L03",
+      "cue": "rev3",
+      "action": 19.43,
+      "word": 19.59,
+      "lag": 0.16
+    },
+    {
+      "line": "L03",
+      "cue": "skip4",
+      "action": 21.19,
+      "word": 21.46,
+      "lag": 0.27
+    },
+    {
+      "line": "L03",
+      "cue": "legend",
+      "action": 22.71,
+      "word": 23.21,
+      "lag": 0.5
+    },
+    {
+      "line": "L04",
+      "cue": "jump",
+      "action": 24.88,
+      "word": 25.08,
+      "lag": 0.2
+    },
+    {
+      "line": "L04",
+      "cue": "submitbtn",
+      "action": 26.16,
+      "word": 26.89,
+      "lag": 0.73
+    },
+    {
+      "line": "L04",
+      "cue": "summary",
+      "action": 27.28,
+      "word": 27.99,
+      "lag": 0.71
+    },
+    {
+      "line": "L05",
+      "cue": "endurl",
+      "action": 32.78,
+      "word": 33.42,
+      "lag": 0.64
+    }
+  ]
+}

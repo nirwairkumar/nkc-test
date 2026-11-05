@@ -1,0 +1,114 @@
+[
+ {
+  "w": "Setup",
+  "r": "setup",
+  "start": 0.08,
+  "end": 0.361,
+  "score": 0.986
+ },
+ {
+  "w": "में",
+  "r": "mem",
+  "start": 0.401,
+  "end": 0.541,
+  "score": 0.664
+ },
+ {
+  "w": "बस",
+  "r": "bas",
+  "start": 0.541,
+  "end": 0.681,
+  "score": 0.726
+ },
+ {
+  "w": "दस",
+  "r": "das",
+  "start": 0.741,
+  "end": 0.862,
+  "score": 0.644
+ },
+ {
+  "w": "second:",
+  "r": "second",
+  "start": 0.902,
+  "end": 1.202,
+  "score": 0.898
+ },
+ {
+  "w": "Settings,",
+  "r": "settings",
+  "start": 1.543,
+  "end": 1.924,
+  "score": 0.906
+ },
+ {
+  "w": "Access",
+  "r": "access",
+  "start": 2.244,
+  "end": 2.505,
+  "score": 0.532
+ },
+ {
+  "w": "and",
+  "r": "and",
+  "start": 2.545,
+  "end": 2.645,
+  "score": 0.952
+ },
+ {
+  "w": "Control,",
+  "r": "control",
+  "start": 2.665,
+  "end": 3.066,
+  "score": 0.979
+ },
+ {
+  "w": "Scheduled",
+  "r": "scheduled",
+  "start": 3.346,
+  "end": 3.687,
+  "score": 0.391
+ },
+ {
+  "w": "Access,",
+  "r": "access",
+  "start": 3.747,
+  "end": 4.088,
+  "score": 0.45
+ },
+ {
+  "w": "start",
+  "r": "start",
+  "start": 4.348,
+  "end": 4.649,
+  "score": 0.916
+ },
+ {
+  "w": "time,",
+  "r": "time",
+  "start": 4.689,
+  "end": 4.91,
+  "score": 0.896
+ },
+ {
+  "w": "end",
+  "r": "end",
+  "start": 4.99,
+  "end": 5.13,
+  "score": 0.759
+ },
+ {
+  "w": "time,",
+  "r": "time",
+  "start": 5.17,
+  "end": 5.39,
+  "score": 0.97
+ },
+ {
+  "w": "save।",
+  "r": "save",
+  "start": 5.451,
+  "end": 5.651,
+  "score": 0.603
+ }
+]

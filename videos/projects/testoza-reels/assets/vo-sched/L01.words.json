@@ -1,0 +1,140 @@
+[
+  {
+    "id": "w0",
+    "text": "Joined",
+    "start": 0.08,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "early?",
+    "start": 0.48,
+    "end": 0.96
+  },
+  {
+    "id": "w2",
+    "text": "Wait",
+    "start": 0.96,
+    "end": 1.36
+  },
+  {
+    "id": "w3",
+    "text": "right",
+    "start": 1.36,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "here.",
+    "start": 1.52,
+    "end": 1.92
+  },
+  {
+    "id": "w5",
+    "text": "The",
+    "start": 1.92,
+    "end": 2
+  },
+  {
+    "id": "w6",
+    "text": "countdowns",
+    "start": 2,
+    "end": 2.64
+  },
+  {
+    "id": "w7",
+    "text": "running.",
+    "start": 2.72,
+    "end": 3.28
+  },
+  {
+    "id": "w8",
+    "text": "The",
+    "start": 3.28,
+    "end": 3.52
+  },
+  {
+    "id": "w9",
+    "text": "moment",
+    "start": 3.52,
+    "end": 3.84
+  },
+  {
+    "id": "w10",
+    "text": "it",
+    "start": 3.84,
+    "end": 4
+  },
+  {
+    "id": "w11",
+    "text": "hits",
+    "start": 4,
+    "end": 4.32
+  },
+  {
+    "id": "w12",
+    "text": "zero,",
+    "start": 4.32,
+    "end": 4.8
+  },
+  {
+    "id": "w13",
+    "text": "tap",
+    "start": 4.8,
+    "end": 5.12
+  },
+  {
+    "id": "w14",
+    "text": "in,",
+    "start": 5.12,
+    "end": 5.44
+  },
+  {
+    "id": "w15",
+    "text": "and",
+    "start": 5.44,
+    "end": 5.6
+  },
+  {
+    "id": "w16",
+    "text": "the",
+    "start": 5.6,
+    "end": 5.76
+  },
+  {
+    "id": "w17",
+    "text": "exam",
+    "start": 5.76,
+    "end": 6.16
+  },
+  {
+    "id": "w18",
+    "text": "opens,",
+    "start": 6.16,
+    "end": 6.72
+  },
+  {
+    "id": "w19",
+    "text": "not",
+    "start": 6.72,
+    "end": 6.88
+  },
+  {
+    "id": "w20",
+    "text": "a",
+    "start": 7.04,
+    "end": 7.2
+  },
+  {
+    "id": "w21",
+    "text": "second",
+    "start": 7.2,
+    "end": 7.52
+  },
+  {
+    "id": "w22",
+    "text": "before.",
+    "start": 7.52,
+    "end": 7.84
+  }
+]

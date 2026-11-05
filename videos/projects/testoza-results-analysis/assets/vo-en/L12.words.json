@@ -1,0 +1,326 @@
+[
+ {
+  "id": "w0",
+  "text": "Want",
+  "start": 0,
+  "end": 0.302
+ },
+ {
+  "id": "w1",
+  "text": "ranks?",
+  "start": 0.348,
+  "end": 0.824
+ },
+ {
+  "id": "w2",
+  "text": "Switch",
+  "start": 0.987,
+  "end": 1.289
+ },
+ {
+  "id": "w3",
+  "text": "on",
+  "start": 1.335,
+  "end": 1.428
+ },
+ {
+  "id": "w4",
+  "text": "Rank.",
+  "start": 1.486,
+  "end": 1.974
+ },
+ {
+  "id": "w5",
+  "text": "Hover",
+  "start": 2.322,
+  "end": 2.659
+ },
+ {
+  "id": "w6",
+  "text": "the",
+  "start": 2.717,
+  "end": 2.786
+ },
+ {
+  "id": "w7",
+  "text": "little",
+  "start": 2.856,
+  "end": 3.204
+ },
+ {
+  "id": "w8",
+  "text": "i",
+  "start": 3.309,
+  "end": 3.529
+ },
+ {
+  "id": "w9",
+  "text": "for",
+  "start": 3.75,
+  "end": 3.913
+ },
+ {
+  "id": "w10",
+  "text": "the",
+  "start": 3.959,
+  "end": 4.029
+ },
+ {
+  "id": "w11",
+  "text": "tie-breakers.",
+  "start": 4.087,
+  "end": 4.957
+ },
+ {
+  "id": "w12",
+  "text": "Same",
+  "start": 5.364,
+  "end": 5.642
+ },
+ {
+  "id": "w13",
+  "text": "as",
+  "start": 5.666,
+  "end": 5.759
+ },
+ {
+  "id": "w14",
+  "text": "the",
+  "start": 5.793,
+  "end": 5.863
+ },
+ {
+  "id": "w15",
+  "text": "real",
+  "start": 5.909,
+  "end": 6.095
+ },
+ {
+  "id": "w16",
+  "text": "exam:",
+  "start": 6.142,
+  "end": 6.687
+ },
+ {
+  "id": "w17",
+  "text": "higher",
+  "start": 6.908,
+  "end": 7.187
+ },
+ {
+  "id": "w18",
+  "text": "marks",
+  "start": 7.245,
+  "end": 7.488
+ },
+ {
+  "id": "w19",
+  "text": "first,",
+  "start": 7.523,
+  "end": 7.802
+ },
+ {
+  "id": "w20",
+  "text": "then",
+  "start": 7.825,
+  "end": 7.976
+ },
+ {
+  "id": "w21",
+  "text": "fewer",
+  "start": 8.034,
+  "end": 8.29
+ },
+ {
+  "id": "w22",
+  "text": "wrong",
+  "start": 8.324,
+  "end": 8.522
+ },
+ {
+  "id": "w23",
+  "text": "answers,",
+  "start": 8.58,
+  "end": 8.963
+ },
+ {
+  "id": "w24",
+  "text": "then",
+  "start": 8.986,
+  "end": 9.114
+ },
+ {
+  "id": "w25",
+  "text": "fewer",
+  "start": 9.172,
+  "end": 9.404
+ },
+ {
+  "id": "w26",
+  "text": "left",
+  "start": 9.451,
+  "end": 9.625
+ },
+ {
+  "id": "w27",
+  "text": "blank,",
+  "start": 9.648,
+  "end": 9.938
+ },
+ {
+  "id": "w28",
+  "text": "then",
+  "start": 9.973,
+  "end": 10.112
+ },
+ {
+  "id": "w29",
+  "text": "whoever",
+  "start": 10.159,
+  "end": 10.461
+ },
+ {
+  "id": "w30",
+  "text": "submitted",
+  "start": 10.507,
+  "end": 10.913
+ },
+ {
+  "id": "w31",
+  "text": "first.",
+  "start": 10.971,
+  "end": 11.459
+ },
+ {
+  "id": "w32",
+  "text": "Look",
+  "start": 11.865,
+  "end": 12.051
+ },
+ {
+  "id": "w33",
+  "text": "at",
+  "start": 12.097,
+  "end": 12.155
+ },
+ {
+  "id": "w34",
+  "text": "Sneha",
+  "start": 12.19,
+  "end": 12.573
+ },
+ {
+  "id": "w35",
+  "text": "and",
+  "start": 12.62,
+  "end": 12.713
+ },
+ {
+  "id": "w36",
+  "text": "Rahul:",
+  "start": 12.759,
+  "end": 13.2
+ },
+ {
+  "id": "w37",
+  "text": "both",
+  "start": 13.247,
+  "end": 13.502
+ },
+ {
+  "id": "w38",
+  "text": "thirty-three,",
+  "start": 13.537,
+  "end": 14.129
+ },
+ {
+  "id": "w39",
+  "text": "both",
+  "start": 14.164,
+  "end": 14.384
+ },
+ {
+  "id": "w40",
+  "text": "two",
+  "start": 14.419,
+  "end": 14.582
+ },
+ {
+  "id": "w41",
+  "text": "wrong,",
+  "start": 14.628,
+  "end": 15.023
+ },
+ {
+  "id": "w42",
+  "text": "both",
+  "start": 15.127,
+  "end": 15.371
+ },
+ {
+  "id": "w43",
+  "text": "one",
+  "start": 15.429,
+  "end": 15.592
+ },
+ {
+  "id": "w44",
+  "text": "blank.",
+  "start": 15.627,
+  "end": 16.126
+ },
+ {
+  "id": "w45",
+  "text": "Sneha",
+  "start": 16.532,
+  "end": 16.834
+ },
+ {
+  "id": "w46",
+  "text": "submitted",
+  "start": 16.892,
+  "end": 17.368
+ },
+ {
+  "id": "w47",
+  "text": "four",
+  "start": 17.473,
+  "end": 17.728
+ },
+ {
+  "id": "w48",
+  "text": "minutes",
+  "start": 17.786,
+  "end": 18.065
+ },
+ {
+  "id": "w49",
+  "text": "earlier,",
+  "start": 18.123,
+  "end": 18.692
+ },
+ {
+  "id": "w50",
+  "text": "so",
+  "start": 18.831,
+  "end": 18.97
+ },
+ {
+  "id": "w51",
+  "text": "Sneha",
+  "start": 19.028,
+  "end": 19.365
+ },
+ {
+  "id": "w52",
+  "text": "is",
+  "start": 19.411,
+  "end": 19.516
+ },
+ {
+  "id": "w53",
+  "text": "second.",
+  "start": 19.574,
+  "end": 20.012
+ }
+]

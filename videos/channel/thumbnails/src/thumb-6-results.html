@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../assets/thumb-base.css">
+<style>
+  .ranked-card {
+    position: absolute;
+    left: 640px;
+    top: 60px;
+    width: 610px;
+    height: 380px;
+    border-radius: 20px;
+    background: #0f172a;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 35px 80px rgba(0,0,0,0.9), 0 0 50px rgba(56, 189, 248, 0.4);
+    transform: perspective(1000px) rotateY(-6deg) rotateX(4deg) rotateZ(-2deg);
+    overflow: hidden;
+    z-index: 15;
+  }
+  .ranked-card img {
+    width: 610px;
+    display: block;
+  }
+  .report-mini-card {
+    position: absolute;
+    left: 770px;
+    top: 290px;
+    width: 480px;
+    border-radius: 18px;
+    background: #080d1a;
+    border: 3px solid #facc15;
+    box-shadow: 0 35px 70px rgba(0,0,0,0.9), 0 0 40px rgba(250, 204, 21, 0.4);
+    transform: rotate(3deg);
+    overflow: hidden;
+    z-index: 20;
+  }
+  .report-mini-card img {
+    width: 480px;
+    display: block;
+  }
+  .rank-badge {
+    position: absolute;
+    left: 740px;
+    top: 30px;
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 26px;
+    padding: 10px 22px;
+    border-radius: 14px;
+    transform: rotate(-3deg);
+    z-index: 25;
+    box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+  }
+  .excel-pill {
+    position: absolute;
+    left: 780px;
+    top: 610px;
+    background: #0f172a;
+    border: 2px solid #34d399;
+    color: #34d399;
+    font-weight: 900;
+    font-size: 26px;
+    padding: 10px 24px;
+    border-radius: 30px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .excel-pill span.icon-excel {
+    background: #10b981;
+    color: #ffffff;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-overlay"></div>
+  <img class="logo-brand" src="../assets/wordmark.png" alt="TestoZa">
+  
+  <div class="copy-box">
+    <div class="kicker emerald">📊 COMPLETE TUTORIAL</div>
+    <h1 class="headline">
+      ANALYSE RESULTS<br>
+      <span class="grad">LIKE A PRO 📈</span>
+    </h1>
+    <div class="pill-action">Rank List · Weak Students ⚡</div>
+    
+    <div class="sub-features">
+      <div class="feat-item"><span class="icon">✓</span> Tie-breaker Ranks & WhatsApp Share</div>
+      <div class="feat-item"><span class="icon">✓</span> "Teach These Again": Batch Trap Questions</div>
+      <div class="feat-item"><span class="icon">✓</span> 1-Click Excel Marks Register Download</div>
+    </div>
+  </div>
+
+  <div class="rank-badge">🏆 RANK 1, 2, 3 + PERCENTILE</div>
+  
+  <div class="ui-card ranked-card">
+    <img src="../assets/panel-ranked.png" alt="Ranked Results">
+  </div>
+  
+  <div class="ui-card report-mini-card">
+    <img src="../assets/report-top.png" alt="Analytics Report">
+  </div>
+  
+  <div class="excel-pill">
+    <span class="icon-excel">XLS</span> 1-CLICK EXCEL DOWNLOAD
+  </div>
+</div>
+</body>
+</html>
+

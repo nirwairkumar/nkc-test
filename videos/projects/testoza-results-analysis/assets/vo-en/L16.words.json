@@ -1,0 +1,122 @@
+[
+ {
+  "id": "w0",
+  "text": "This",
+  "start": 0,
+  "end": 0.267
+ },
+ {
+  "id": "w1",
+  "text": "is",
+  "start": 0.325,
+  "end": 0.441
+ },
+ {
+  "id": "w2",
+  "text": "the",
+  "start": 0.499,
+  "end": 0.58
+ },
+ {
+  "id": "w3",
+  "text": "page",
+  "start": 0.639,
+  "end": 0.964
+ },
+ {
+  "id": "w4",
+  "text": "to",
+  "start": 1.01,
+  "end": 1.103
+ },
+ {
+  "id": "w5",
+  "text": "open",
+  "start": 1.207,
+  "end": 1.463
+ },
+ {
+  "id": "w6",
+  "text": "the",
+  "start": 1.509,
+  "end": 1.579
+ },
+ {
+  "id": "w7",
+  "text": "morning",
+  "start": 1.625,
+  "end": 1.904
+ },
+ {
+  "id": "w8",
+  "text": "after.",
+  "start": 1.962,
+  "end": 2.403
+ },
+ {
+  "id": "w9",
+  "text": "Forty-eight",
+  "start": 2.659,
+  "end": 3.158
+ },
+ {
+  "id": "w10",
+  "text": "candidates,",
+  "start": 3.193,
+  "end": 3.692
+ },
+ {
+  "id": "w11",
+  "text": "the",
+  "start": 3.738,
+  "end": 3.866
+ },
+ {
+  "id": "w12",
+  "text": "day",
+  "start": 3.936,
+  "end": 4.145
+ },
+ {
+  "id": "w13",
+  "text": "it",
+  "start": 4.203,
+  "end": 4.272
+ },
+ {
+  "id": "w14",
+  "text": "was",
+  "start": 4.319,
+  "end": 4.447
+ },
+ {
+  "id": "w15",
+  "text": "written,",
+  "start": 4.493,
+  "end": 5.004
+ },
+ {
+  "id": "w16",
+  "text": "twenty",
+  "start": 5.224,
+  "end": 5.55
+ },
+ {
+  "id": "w17",
+  "text": "questions,",
+  "start": 5.584,
+  "end": 6.002
+ },
+ {
+  "id": "w18",
+  "text": "forty",
+  "start": 6.037,
+  "end": 6.293
+ },
+ {
+  "id": "w19",
+  "text": "marks.",
+  "start": 6.351,
+  "end": 6.756
+ }
+]

@@ -1,0 +1,1 @@
+क्वेश्चन तेरह पर click कीजिए। दो successive discounts, बीस और दस percent। सही जवाब: अट्ठाईस। लेकिन देखिए, चौवन percent ने तीस चुना। उन्होंने बस दोनों discounts जोड़ दिए। ये छोटी गलती नहीं, पूरे batch का concept गलत है, और board पर एक example सबका ठीक कर देता है।
