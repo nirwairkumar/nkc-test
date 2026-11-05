@@ -145,6 +145,9 @@ async function generateSitemap() {
             { url: '/cbse-online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
             { url: '/scholarship-admission-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
             { url: '/online-test-with-negative-marking', changefreq: 'monthly', priority: 0.9, lastmod: '2026-10-30T00:00:00.000Z' },
+            { url: '/blooket-gimkit-alternative', changefreq: 'monthly', priority: 0.9, lastmod: '2026-11-09T00:00:00.000Z', publishAt: '2026-11-09T00:00:00+05:30' },
+            { url: '/best-proctoring-software', changefreq: 'monthly', priority: 0.9, lastmod: '2026-11-08T00:00:00.000Z', publishAt: '2026-11-08T00:00:00+05:30' },
+            { url: '/best-ai-quiz-generator', changefreq: 'monthly', priority: 0.9, lastmod: '2026-11-07T00:00:00.000Z', publishAt: '2026-11-07T00:00:00+05:30' },
         ];
 
         // 1. Fetch Tests from Backend
@@ -233,6 +236,11 @@ async function generateSitemap() {
         if (!fs.existsSync(sitemapSubDir)) fs.mkdirSync(sitemapSubDir, { recursive: true });
 
         // Combined Sitemap
+        // Guides with a future publishAt (src/guides/meta.ts) stay out of this build's files;
+        // the backend's live sitemap adds them on the day, and the next build here does too.
+        for (let i = staticPages.length - 1; i >= 0; i--) {
+            if (staticPages[i].publishAt && Date.parse(staticPages[i].publishAt) > Date.now()) staticPages.splice(i, 1);
+        }
         const allPages = [...staticPages, ...categoryPages, ...testPages];
         fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), buildXml(allPages, BASE_URL));
 

@@ -45,7 +45,11 @@ export type HowtoKey =
     | 'tuition'
     | 'cbse'
     | 'scholarship'
-    | 'negative';
+    | 'negative'
+    // the three comparison pages of 5 November 2026, whose data lives in comparisonData.ts
+    | 'blooketGimkit'
+    | 'proctoring'
+    | 'aiQuiz';
 
 /** A row in a grouped list (hero card, widget lists). */
 export interface HwRow {
@@ -1246,7 +1250,7 @@ const BEST_INDIA: HowtoPage = {
     },
 };
 
-export const HOWTO_PAGES: Record<Exclude<HowtoKey, 'sectional' | 'tuition' | 'cbse' | 'scholarship' | 'negative'>, HowtoPage> = {
+export const HOWTO_PAGES: Record<Exclude<HowtoKey, 'sectional' | 'tuition' | 'cbse' | 'scholarship' | 'negative' | 'blooketGimkit' | 'proctoring' | 'aiQuiz'>, HowtoPage> = {
     mobile: MOBILE,
     embed: EMBED,
     fullLength: FULL_LENGTH,

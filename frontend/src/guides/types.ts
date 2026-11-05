@@ -138,6 +138,12 @@ export interface GuideMeta {
     datePublished: string;
     dateModified: string;
     readMinutes: number;
+    /**
+     * Optional go-live moment (ISO, IST). Before it the guide answers 404 everywhere and is
+     * left out of the footer, /guides and the sitemap; see isGuideLive() in meta.ts. Checked
+     * on every request, so a scheduled guide appears without another deploy.
+     */
+    publishAt?: string;
     cover: { src: string; alt: string; width: number; height: number };
     keywords: string[];
     /** The main call to action (hero button, floating button, crawler link). Defaults to the AI test generator. */

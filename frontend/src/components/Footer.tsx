@@ -35,7 +35,7 @@
  *     than most pages. The links stay in the DOM (hidden with CSS, not removed),
  *     which is how Google expects expandable content to be built.
  *
- * To pin a particular guide into the footer, replace GUIDE_METAS.slice(0, 5)
+ * To pin a particular guide into the footer, replace live.slice(0, 5) in guideLinks()
  * below with an explicit list of slugs.
  */
 
@@ -43,7 +43,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Heart } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { GUIDE_METAS } from '@/guides/meta';
+import { liveGuideMetas } from '@/guides/meta';
 import { whatsAppAppUrl, whatsAppGreeting, YOUTUBE_CHANNEL_URL } from '@/lib/helpContact';
 
 interface FooterLink {
@@ -57,6 +57,9 @@ interface FooterLink {
 
 /** Short labels: a footer column is ~180px wide, and long names wrap to three lines. */
 const GUIDE_LABELS: Record<string, string> = {
+    'blooket-gimkit-alternative': 'Blooket & Gimkit alternative',
+    'best-proctoring-software': 'Best proctoring software',
+    'best-ai-quiz-generator': 'Best AI quiz generators',
     'sectional-test-maker': 'Sectional test maker',
     'online-test-for-tuition-teachers': 'Tests for tuition teachers',
     'cbse-online-test-maker': 'CBSE online test maker',
@@ -92,13 +95,19 @@ const GUIDE_LABELS: Record<string, string> = {
     'best-online-test-platform': 'Best test platform',
 };
 
-/** The five newest guides, then the hub with the rest. GUIDE_METAS is newest first. */
-const GUIDE_LINKS: FooterLink[] = [
-    ...GUIDE_METAS.slice(0, 5).map((g) => ({ label: GUIDE_LABELS[g.slug] ?? g.seoTitle, to: g.path })),
-    { label: `All ${GUIDE_METAS.length} guides`, to: '/guides', hub: true },
-];
+/**
+ * The five newest published guides, then the hub with the rest (newest first). Built per
+ * render, so a guide with a `publishAt` joins the footer at its moment.
+ */
+const guideLinks = (): FooterLink[] => {
+    const live = liveGuideMetas();
+    return [
+        ...live.slice(0, 5).map((g) => ({ label: GUIDE_LABELS[g.slug] ?? g.seoTitle, to: g.path })),
+        { label: `All ${live.length} guides`, to: '/guides', hub: true },
+    ];
+};
 
-const LINK_COLUMNS: { title: string; links: readonly FooterLink[] }[] = [
+const linkColumns = (): { title: string; links: readonly FooterLink[] }[] => [
     {
         title: 'Create',
         links: [
@@ -122,7 +131,7 @@ const LINK_COLUMNS: { title: string; links: readonly FooterLink[] }[] = [
             { label: 'Assessment platform', to: '/assessment-platform' },
         ],
     },
-    { title: 'Guides', links: GUIDE_LINKS },
+    { title: 'Guides', links: guideLinks() },
     {
         title: 'Platform',
         links: [
@@ -329,7 +338,7 @@ export default function Footer() {
 
                 {/* ── Link columns — the orphaned-page fix (audit C3), capped and bounded ── */}
                 <div className="mt-6 grid border-t border-slate-200/80 pt-2 md:mt-10 md:grid-cols-3 md:gap-x-8 md:gap-y-9 md:border-0 md:pt-0 lg:grid-cols-6 lg:gap-x-6 dark:border-white/[0.06]">
-                    {LINK_COLUMNS.map((col) => (
+                    {linkColumns().map((col) => (
                         <FooterColumn key={col.title} title={col.title} links={col.links} />
                     ))}
                 </div>

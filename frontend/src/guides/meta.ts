@@ -1196,8 +1196,132 @@ export const NEGATIVE_MARKING_META: GuideMeta = {
     cta: { label: 'Build a test with negative marking', href: '/create-test' },
 };
 
+// ── Three comparison guides of 5 November 2026 on the "how to" shell (data in comparisonData.ts) ──
+
+export const BLOOKET_GIMKIT_META: GuideMeta = {
+    slug: 'blooket-gimkit-alternative',
+    path: '/blooket-gimkit-alternative',
+    title: 'Blooket and Gimkit alternatives: when the game is over and the test has to count',
+    seoTitle: 'Blooket & Gimkit Alternatives for Tests That Count (2026)',
+    description:
+        'Blooket and Gimkit alternatives compared: other classroom games, and marked tests with a timer, negative marking and a rank list for when the score matters.',
+    dek:
+        'Blooket and Gimkit are two of the best classroom games around. But a game’s winner is decided partly by chests, upgrades and luck, which is fine for a Friday and wrong for a test that goes in the register. This guide covers the other games worth trying, and the moment to switch from a game to a marked test.',
+    author: 'TestoZa Team',
+    datePublished: '2026-11-09T00:00:00+05:30',
+    dateModified: '2026-11-09T00:00:00+05:30',
+    readMinutes: 14,
+    publishAt: '2026-11-09T00:00:00+05:30',
+    cover: {
+        src: '/guides/blooket-gimkit-alternative/cover.png',
+        alt: 'Blooket and Gimkit alternatives: a classroom game decided by chests and upgrades, next to a marked test with a timer and a rank list',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'Blooket alternative',
+        'Gimkit alternative',
+        'Blooket and Gimkit alternatives',
+        'games like Blooket',
+        'sites like Gimkit',
+        'Blooket vs Gimkit',
+        'Blooket free plan limit',
+        'Gimkit Pro price',
+        'classroom quiz game alternative',
+        'online test instead of quiz game',
+        'TestoZa',
+    ],
+    cta: { label: 'Make a marked test, free', href: '/create-test' },
+};
+
+export const PROCTORING_META: GuideMeta = {
+    slug: 'best-proctoring-software',
+    path: '/best-proctoring-software',
+    title: 'Best proctoring software in 2026: 11 tools, matched to the stakes of your exam',
+    seoTitle: 'Best Proctoring Software (2026): 11 Tools Compared',
+    description:
+        'Compare 11 online proctoring tools, from Mettl, Proctorio and Honorlock to Safe Exam Browser and AutoProctor: what each catches, the devices it needs, and cost.',
+    dek:
+        'Proctoring software ranges from a free locked browser to a live human watching every candidate through a webcam. Which one is best depends on what the exam decides and what devices your candidates own. This guide compares eleven tools by those two things, and is honest about what each one can and can’t see.',
+    author: 'TestoZa Team',
+    datePublished: '2026-11-08T00:00:00+05:30',
+    dateModified: '2026-11-08T00:00:00+05:30',
+    readMinutes: 20,
+    publishAt: '2026-11-08T00:00:00+05:30',
+    cover: {
+        src: '/guides/best-proctoring-software/cover.png',
+        alt: 'Best proctoring software: webcam and ID checks for hiring and finals, locked browsers for labs, browser rules for weekly tests on phones',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'best proctoring software',
+        'online proctoring software',
+        'remote proctoring tools',
+        'AI proctoring software',
+        'online exam proctoring India',
+        'Proctorio vs Honorlock',
+        'Respondus LockDown Browser alternative',
+        'Mercer Mettl proctoring',
+        'proctoring software for mobile',
+        'proctoring without webcam',
+        'TestoZa',
+    ],
+    cta: { label: 'Run a test with exam rules', href: '/create-test' },
+};
+
+export const AI_QUIZ_META: GuideMeta = {
+    slug: 'best-ai-quiz-generator',
+    path: '/best-ai-quiz-generator',
+    title: 'Best AI quiz generators in 2026: 12 tools, tested on what teachers actually need',
+    seoTitle: 'Best AI Quiz Generators (2026): 12 Tools for Teachers',
+    description:
+        'Compare 12 AI quiz generators, from ChatGPT and Google Forms to Wayground, Kahoot and TestoZa: what each reads, answer-key accuracy, maths, Hindi and price.',
+    dek:
+        'Every quiz app now says it has AI. They don’t all do the same thing. Some write new questions on any topic, some turn your notes into a game, and some read the papers you already have into a test students can sit tonight. This guide sorts twelve tools by that job and shows you how to test any of them in thirty minutes.',
+    author: 'TestoZa Team',
+    datePublished: '2026-11-07T00:00:00+05:30',
+    dateModified: '2026-11-07T00:00:00+05:30',
+    readMinutes: 18,
+    publishAt: '2026-11-07T00:00:00+05:30',
+    cover: {
+        src: '/guides/best-ai-quiz-generator/cover.png',
+        alt: 'Best AI quiz generators: chatbots that write questions, quiz apps with AI built in, and TestoZa reading a paper into a timed test',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'best AI quiz generator',
+        'AI quiz generator',
+        'AI quiz maker',
+        'AI question generator from PDF',
+        'AI quiz generator for teachers',
+        'free AI quiz generator',
+        'ChatGPT quiz generator',
+        'AI MCQ generator',
+        'AI quiz generator in Hindi',
+        'TestoZa',
+    ],
+    cta: { label: 'Turn a PDF into a test', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [SECTIONAL_META, TUITION_META, CBSE_META, SCHOLARSHIP_META, NEGATIVE_MARKING_META, BEST_EXAM_INDIA_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [BLOOKET_GIMKIT_META, PROCTORING_META, AI_QUIZ_META, SECTIONAL_META, TUITION_META, CBSE_META, SCHOLARSHIP_META, NEGATIVE_MARKING_META, BEST_EXAM_INDIA_META, METTL_META, PROPROFS_META, SOCRATIVE_META, SPEEDEXAM_META, CANVAS_QUIZZES_META, MOBILE_EXAM_META, EMBED_META, FULL_LENGTH_META, WHATSAPP_META, CLASSPLUS_META, TEACHMINT_META, KAHOOT_META, TESTPORTAL_META, BANK_META, SSC_META, JEE_ADVANCED_META, CHEMISTRY_META, MATH_TEST_MAKER_META, PREVENT_CHEATING_META, HINDI_META, CONDUCT_META, MOODLE_META,NEET_META, AI_TEST_GENERATOR_META, JEE_META, CBT_META, BEST_PLATFORM_META];
+
+/**
+ * True once a guide's `publishAt` has passed (or it has none). Call it per request, never at
+ * module load: the worker and the browser keep modules alive for hours, and a scheduled guide
+ * must appear at its moment without a redeploy.
+ */
+export const isGuideLive = (meta: { publishAt?: string }, now: number = Date.now()): boolean =>
+    !meta.publishAt || Date.parse(meta.publishAt) <= now;
+
+/** GUIDE_METAS without the guides still waiting for their `publishAt`. Newest first. */
+export const liveGuideMetas = (now: number = Date.now()): GuideMeta[] => GUIDE_METAS.filter((m) => isGuideLive(m, now));
+
+/** True when `pathname` is (or is under) a guide that isn't published yet. */
+export const isScheduledGuidePath = (pathname: string, now: number = Date.now()): boolean =>
+    GUIDE_METAS.some((m) => !isGuideLive(m, now) && (pathname === m.path || pathname.startsWith(m.path + '/')));
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

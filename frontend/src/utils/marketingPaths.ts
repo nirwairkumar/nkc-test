@@ -10,7 +10,7 @@
  * URL. A 200 page for crawlers that the browser then leaves with a JavaScript
  * redirect reads as cloaking ("Circumventing systems").
  */
-import { GUIDE_METAS } from '../guides/meta';
+import { GUIDE_METAS, isScheduledGuidePath } from '../guides/meta';
 
 export const MAIN_ORIGIN = 'https://testoza.com';
 export const APP_ORIGIN = 'https://app.testoza.com';
@@ -37,7 +37,11 @@ export const MARKETING_PATHS = [
   ...GUIDE_METAS.map(g => g.path)
 ];
 
+// A guide with a future `publishAt` is no page at all until then: not a marketing path, and
+// (its slug not being an APP_SECTION) not a known path either, so testoza.com and
+// app.testoza.com both answer it with a real 404. Checked per call, so it appears on time.
 export const isMarketingPath = (pathname: string): boolean =>
+  !isScheduledGuidePath(pathname) &&
   MARKETING_PATHS.some(p => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(p + '/')));
 
 /** An OAuth sign-in response (?code=… or ?error=…), which always finishes on the app subdomain. */

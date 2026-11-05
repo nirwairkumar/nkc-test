@@ -16,7 +16,7 @@ import {
 } from '../../frontend/src/blog/articles/worker.ts';
 // Guides are long-form pages on testoza.com (e.g. /best-online-test-platform),
 // kept in frontend/src/guides for the same reason.
-import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd, guideUrl } from '../../frontend/src/guides/worker.ts';
+import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd, guideUrl, liveGuides } from '../../frontend/src/guides/worker.ts';
 // Google Ads landing pages (/quiz-creator, /assessment-platform): copy shared with the React page.
 import { ADS_LANDING, adsCrawlerHtml, adsFaqSchema } from '../../frontend/src/landing/adsLanding.ts';
 // /create-mock-test-online has its own content model (frontend/src/guides/mock-test).
@@ -605,12 +605,12 @@ function generateMetaTags(url, testData = null, joinData = null) {
     title = 'Guides to online tests, exams and mock tests | TestoZa';
     description =
       'Long-form, practical guides for teachers and coaching institutes: exam patterns and mock tests, making question papers, and running an exam day without surprises.';
-    image = guideAssetUrl(GUIDES[0].meta.cover.src);
+    image = guideAssetUrl(liveGuides()[0].meta.cover.src);
   }
 
   // ─── GUIDES (frontend/src/guides) ───────────────────────────────────
   // Same title and description the React page sets, so nothing changes when the app loads.
-  const guide = GUIDES.find((g) => g.meta.path === path);
+  const guide = liveGuides().find((g) => g.meta.path === path);
   if (guide) {
     const { meta } = guide;
     title = `${meta.seoTitle} | TestoZa`;
@@ -701,7 +701,9 @@ function generateRouteContent(url, testData = null) {
   // ─── 0b. GUIDES INDEX ───────────────────────────────────────────────────────
   // Generated from GUIDES, like the React page, so a new guide needs no edit here.
   if (path === '/guides') {
-    const items = GUIDES.map(({ meta }) => `
+    // Per request: a guide with a future publishAt joins the list at its moment.
+    const guides = liveGuides();
+    const items = guides.map(({ meta }) => `
       <li>
         <h3><a href="${guideUrl(meta.path)}">${escapeHtml(meta.title)}</a></h3>
         <p>${escapeHtml(meta.description)}</p>
@@ -709,7 +711,7 @@ function generateRouteContent(url, testData = null) {
       </li>`).join('');
     const bodyHtml = `
       <h1>Guides to online tests, exams and mock tests</h1>
-      <p>Long-form, practical guides for teachers, coaching institutes and schools, with TestoZa as the worked example. Each one is practical rather than promotional: real exam patterns, demos that work on the page, and an honest list of what the software still can't do. ${GUIDES.length} guides, newest first.</p>
+      <p>Long-form, practical guides for teachers, coaching institutes and schools, with TestoZa as the worked example. Each one is practical rather than promotional: real exam patterns, demos that work on the page, and an honest list of what the software still can't do. ${guides.length} guides, newest first.</p>
       <ol>${items}</ol>`;
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -724,8 +726,8 @@ function generateRouteContent(url, testData = null) {
           '@type': 'ItemList',
           '@id': 'https://testoza.com/guides#list',
           itemListOrder: 'https://schema.org/ItemListOrderDescending',
-          numberOfItems: GUIDES.length,
-          itemListElement: GUIDES.map(({ meta }, i) => ({
+          numberOfItems: guides.length,
+          itemListElement: guides.map(({ meta }, i) => ({
             '@type': 'ListItem',
             position: i + 1,
             url: guideUrl(meta.path),
@@ -748,7 +750,7 @@ function generateRouteContent(url, testData = null) {
   // ─── 0. GUIDES ──────────────────────────────────────────────────────────────
   // The whole guide as plain HTML, and one JSON-LD graph (Article, FAQPage,
   // BreadcrumbList) that takes the place of the homepage FAQ schema.
-  const guide = GUIDES.find((g) => g.meta.path === path);
+  const guide = liveGuides().find((g) => g.meta.path === path);
   if (guide) {
     return { bodyHtml: guideCrawlerHtml(guide), faqSchema: guideJsonLd(guide) };
   }

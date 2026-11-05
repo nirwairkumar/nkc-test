@@ -22,7 +22,8 @@ import { Helmet } from 'react-helmet-async';
 import { ArrowRight, Check, ChevronRight, List, Sparkles } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { analytics } from '@/lib/analytics/tracker';
-import { guideAssetUrl, guideUrl } from '@/guides/meta';
+import { guideAssetUrl, guideUrl, isGuideLive } from '@/guides/meta';
+import NotFound from '@/pages/NotFound';
 import { formatGuideDate, guideClosingTitle, guideCta, guideJsonLd } from '@/guides/render';
 import type { Guide, GuideBlock } from '@/guides/types';
 import type { HowtoPage } from '@/guides/howtoData';
@@ -136,7 +137,13 @@ export interface HowToPageProps {
     jumpTo: { label: string; id: string };
 }
 
-export default function HowToPage({ guide, page, keyPhrase, jumpTo }: HowToPageProps) {
+/** A guide waiting for its `publishAt` is no page yet: the app shows its 404, as the servers do. */
+export default function HowToPage(props: HowToPageProps) {
+    if (!isGuideLive(props.guide.meta)) return <NotFound />;
+    return <HowToPageBody {...props} />;
+}
+
+function HowToPageBody({ guide, page, keyPhrase, jumpTo }: HowToPageProps) {
     const { meta, body } = guide;
     const canonical = guideUrl(meta.path);
     const cta = guideCta(guide);

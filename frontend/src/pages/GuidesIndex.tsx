@@ -8,7 +8,8 @@
  * tail. It also concentrates the topic in one place for search engines instead
  * of scattering fifteen sitewide boilerplate links across every page.
  *
- * It builds itself from GUIDE_METAS, newest first, so a new guide appears here
+ * It builds itself from liveGuideMetas() (GUIDE_METAS minus guides waiting for their
+ * publishAt), newest first, so a new guide appears here
  * the moment its metadata lands — there is no list to maintain. The Cloudflare
  * worker generates the crawler version from the same array
  * (infrastructure/cloudflare-worker/worker.js, generateRouteContent).
@@ -17,7 +18,8 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowRight, Clock } from 'lucide-react';
 import { SEO } from '@/components/SEO';
-import { GUIDE_METAS, SITE_URL, guideAssetUrl, guideUrl } from '@/guides/meta';
+import { GUIDE_METAS, SITE_URL, guideAssetUrl, guideUrl, liveGuideMetas } from '@/guides/meta';
+import type { GuideMeta } from '@/guides/types';
 import { formatGuideDate } from '@/guides/render';
 
 const CANONICAL = `${SITE_URL}/guides`;
@@ -26,7 +28,7 @@ const DESCRIPTION =
     'Long-form, practical guides for teachers and coaching institutes: exam patterns and mock tests, making question papers, and running an exam day without surprises.';
 
 /** ItemList so search engines see the collection, not fifteen loose pages. */
-const JSON_LD = {
+const jsonLd = (guides: GuideMeta[]) => ({
     '@context': 'https://schema.org',
     '@graph': [
         {
@@ -41,8 +43,8 @@ const JSON_LD = {
             '@type': 'ItemList',
             '@id': `${CANONICAL}#list`,
             itemListOrder: 'https://schema.org/ItemListOrderDescending',
-            numberOfItems: GUIDE_METAS.length,
-            itemListElement: GUIDE_METAS.map((g, i) => ({
+            numberOfItems: guides.length,
+            itemListElement: guides.map((g, i) => ({
                 '@type': 'ListItem',
                 position: i + 1,
                 url: guideUrl(g.path),
@@ -58,7 +60,7 @@ const JSON_LD = {
             ],
         },
     ],
-};
+});
 
 /** The dek is a paragraph; a card shows its first sentence. */
 const firstSentence = (text: string) => {
@@ -108,11 +110,12 @@ function GuideCard({ meta, featured }: { meta: (typeof GUIDE_METAS)[number]; fea
 }
 
 export default function GuidesIndex() {
-    const [newest, ...rest] = GUIDE_METAS;
+    const guides = liveGuideMetas();
+    const [newest, ...rest] = guides;
 
     return (
         <div className="min-h-screen bg-slate-50 font-[Outfit,system-ui,sans-serif] dark:bg-slate-950">
-            <SEO title={TITLE} description={DESCRIPTION} url={CANONICAL} canonicalUrl={CANONICAL} type="website" schemas={[JSON_LD]} />
+            <SEO title={TITLE} description={DESCRIPTION} url={CANONICAL} canonicalUrl={CANONICAL} type="website" schemas={[jsonLd(guides)]} />
             <Helmet>
                 <meta name="robots" content="index, follow, max-image-preview:large" />
                 <meta property="og:image" content={guideAssetUrl(newest.cover.src)} />
@@ -134,7 +137,7 @@ export default function GuidesIndex() {
                         demos you can use on this page, and an honest list of what the software still can’t do.
                     </p>
                     <p className="mt-3 text-sm text-slate-500 dark:text-slate-500">
-                        {GUIDE_METAS.length} guides · newest first
+                        {guides.length} guides · newest first
                     </p>
                 </header>
 

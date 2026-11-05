@@ -81,6 +81,9 @@ STATIC_PAGES = [
     {"loc": "/cbse-online-test-maker", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/scholarship-admission-test-platform", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/online-test-with-negative-marking", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/blooket-gimkit-alternative", "priority": "0.9", "changefreq": "monthly", "publish_at": "2026-11-09T00:00:00+05:30"},
+    {"loc": "/best-proctoring-software", "priority": "0.9", "changefreq": "monthly", "publish_at": "2026-11-08T00:00:00+05:30"},
+    {"loc": "/best-ai-quiz-generator", "priority": "0.9", "changefreq": "monthly", "publish_at": "2026-11-07T00:00:00+05:30"},
     {"loc": "/guides", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
@@ -93,6 +96,16 @@ STATIC_PAGES = [
     {"loc": "/privacy-policy", "priority": "0.4", "changefreq": "yearly"},
     {"loc": "/terms-and-conditions", "priority": "0.4", "changefreq": "yearly"},
 ]
+
+def live_static_pages() -> List[dict]:
+    """STATIC_PAGES without entries whose publish_at is still in the future (key removed)."""
+    now = datetime.now(timezone.utc)
+    return [
+        {k: v for k, v in page.items() if k != "publish_at"}
+        for page in STATIC_PAGES
+        if "publish_at" not in page or datetime.fromisoformat(page["publish_at"]) <= now
+    ]
+
 
 def escape_xml(text: str) -> str:
     if not text:
@@ -209,7 +222,11 @@ async def get_sitemap_index():
 
 @router.get("/static.xml", response_class=XMLResponse)
 def get_static_sitemap():
-    cache_key = "sitemap:static"
+    # Guides with a future publish_at (frontend/src/guides/meta.ts publishAt) stay out until
+    # then. The live count is part of the cache key, so a guide appears at its moment
+    # instead of waiting out yesterday's cached copy.
+    pages = live_static_pages()
+    cache_key = f"sitemap:static:{len(pages)}"
     cached = cache_manager.get(cache_key)
     if cached:
         return XMLResponse(
@@ -218,9 +235,9 @@ def get_static_sitemap():
             headers={"Cache-Control": "public, max-age=86400", "X-Cache": "HIT"}
         )
     
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    urls = [{**page, "lastmod": today} for page in STATIC_PAGES]
     
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    urls = [{**page, "lastmod": today} for page in pages]
     xml_content = build_sitemap_xml(urls)
     cache_manager.set(cache_key, xml_content, ttl=86400)
     
