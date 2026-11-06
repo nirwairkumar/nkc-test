@@ -1,5 +1,12 @@
 import { getUserAppUrl } from '@/utils/subdomain';
 
+/** The link candidates use: the exam link for a conducted test, else the slug, else the id. Same rules as shareTest. */
+export const testShareUrl = (test: any): string => {
+    const isConducted = !!test.settings?.conduct_exam?.enabled;
+    const slug = isConducted ? (test.settings?.conduct_exam?.conduct_slug || test.slug) : test.slug;
+    return slug ? getUserAppUrl(`/test/${slug}`) : getUserAppUrl(`/test-intro/${test.id}`);
+};
+
 export const shareTest = async (test: any) => {
     const isConducted = !!test.settings?.conduct_exam?.enabled;
     const conductSlug = isConducted ? (test.settings?.conduct_exam?.conduct_slug || test.slug) : null;
