@@ -157,3 +157,4 @@ export const ScreenshotCaptureModal: React.FC<ScreenshotCaptureModalProps> = ({
     );
 };
 
+export default ScreenshotCaptureModal;

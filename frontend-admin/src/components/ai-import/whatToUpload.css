@@ -1,0 +1,1196 @@
+/*
+ * "Not sure what to upload?" explainer under the AI import upload card.
+ *
+ * One landscape stage loops three scenes (question paper, class notes, study
+ * material). Each scene: the file lands, AI reads it, an online test fills in.
+ * The component only steps the phase; flags on .wtu-canvas (data-file,
+ * data-scanned, data-built, data-done) drive every movement from here.
+ *
+ * Everything inside the stage is sized in --u (1/640 of its width, 1/360 on
+ * phones), so the scene scales with the column without a transform and text
+ * stays crisp. Paper stays white in dark mode, like a real sheet would.
+ * Dark mode follows the site's .dark class; reduced motion stops everything.
+ */
+
+.wtu {
+    --wtu-accent: #6366f1;
+    --wtu-green: #16a34a;
+    --wtu-green-ink: #15803d;
+    --wtu-green-soft: rgba(22, 163, 74, 0.09);
+    --wtu-ink: #0f172a;
+    --wtu-ink-2: #334155;
+    --wtu-muted: #64748b;
+    --wtu-faint: #94a3b8;
+    --wtu-rule: #e2e8f0;
+    --wtu-fill: #f1f5f9;
+    --wtu-skel: #e2e8f0;
+    --wtu-card: #ffffff;
+    --wtu-stage-top: #ffffff;
+    --wtu-stage-bottom: #f8fafc;
+    --wtu-dot: rgba(100, 116, 139, 0.16);
+    --wtu-extract: #2563eb;
+    --wtu-generate: #9333ea;
+    --wtu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .wtu {
+    --wtu-accent: #818cf8;
+    --wtu-green: #4ade80;
+    --wtu-green-ink: #86efac;
+    --wtu-green-soft: rgba(74, 222, 128, 0.1);
+    --wtu-ink: #f1f5f9;
+    --wtu-ink-2: #cbd5e1;
+    --wtu-muted: #94a3b8;
+    --wtu-faint: #64748b;
+    --wtu-rule: rgba(255, 255, 255, 0.08);
+    --wtu-fill: rgba(255, 255, 255, 0.06);
+    --wtu-skel: rgba(255, 255, 255, 0.07);
+    --wtu-card: #0f172a;
+    --wtu-stage-top: #0f172a;
+    --wtu-stage-bottom: #020617;
+    --wtu-dot: rgba(148, 163, 184, 0.12);
+    --wtu-extract: #60a5fa;
+    --wtu-generate: #c084fc;
+}
+
+/* ── Section rise on first scroll into view ─────────────────────── */
+
+.wtu-rise {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s var(--wtu-ease), transform 0.7s var(--wtu-ease);
+}
+
+.wtu[data-seen='true'] .wtu-rise {
+    opacity: 1;
+    transform: none;
+}
+
+.wtu[data-seen='true'] .wtu-rise--late {
+    transition-delay: 0.12s;
+}
+
+/* ── Stage ───────────────────────────────────────────────────────── */
+
+.wtu-stage {
+    container-type: inline-size;
+}
+
+.wtu-canvas {
+    --u: calc(100cqw / 640);
+    /* sheet, file chip and test card geometry, in --u */
+    --sx: 39;
+    --sy: 64;
+    --sw: 206;
+    --sh: 272;
+    --fy: 350;
+    --tx: 325;
+    --ty: 64;
+    --tw: 276;
+    --th: 322;
+
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--wtu-rule);
+    background:
+        radial-gradient(circle at 1px 1px, var(--wtu-dot) 1px, transparent 0) 0 0 / calc(16 * var(--u)) calc(16 * var(--u)),
+        linear-gradient(180deg, var(--wtu-stage-top), var(--wtu-stage-bottom));
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 18px 40px -26px rgba(15, 23, 42, 0.28);
+    user-select: none;
+}
+
+/* Soft light behind the test card */
+.wtu-canvas::before {
+    content: '';
+    position: absolute;
+    right: -8%;
+    top: 8%;
+    width: 62%;
+    height: 84%;
+    background: radial-gradient(closest-side, rgba(99, 102, 241, 0.12), transparent);
+    pointer-events: none;
+}
+
+/* Between scenes everything snaps back to its start, then animates in. */
+.wtu-canvas[data-phase='idle'] *,
+.wtu-canvas[data-phase='idle'] *::before,
+.wtu-canvas[data-phase='idle'] *::after {
+    transition: none !important;
+}
+
+/* Paused by the user or scrolled away: freeze loops mid-frame. */
+.wtu[data-playing='false'] .wtu-canvas *,
+.wtu[data-playing='false'] .wtu-tab-fill {
+    animation-play-state: paused !important;
+}
+
+/* ── Status pill ─────────────────────────────────────────────────── */
+
+.wtu-pill {
+    position: absolute;
+    z-index: 5;
+    top: calc(16 * var(--u));
+    left: 50%;
+    display: inline-flex;
+    padding: 0.5em 0.95em 0.5em 0.8em;
+    font-size: calc(12 * var(--u));
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--wtu-ink-2);
+    background: var(--wtu-card);
+    border: 1px solid var(--wtu-rule);
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 6px 16px -8px rgba(15, 23, 42, 0.22);
+    opacity: 0;
+    transform: translate(-50%, calc(-6 * var(--u)));
+    transition: opacity 0.35s ease, transform 0.5s var(--wtu-ease), color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.wtu-canvas[data-file] .wtu-pill {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.wtu-canvas[data-done] .wtu-pill {
+    color: var(--wtu-green-ink);
+    border-color: color-mix(in srgb, var(--wtu-green) 35%, transparent);
+    background: color-mix(in srgb, var(--wtu-green) 9%, var(--wtu-card));
+}
+
+.wtu-pill-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    animation: wtu-swap 0.4s var(--wtu-ease) both;
+}
+
+.wtu-pill svg {
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
+    color: var(--wtu-accent);
+}
+
+.wtu-canvas[data-done] .wtu-pill svg {
+    color: var(--wtu-green);
+}
+
+.wtu-canvas[data-phase='read'] .wtu-pill svg,
+.wtu-canvas[data-phase='build'] .wtu-pill svg {
+    animation: wtu-breathe 1.2s ease-in-out infinite;
+}
+
+/* ── Drop zone the file lands on ─────────────────────────────────── */
+
+.wtu-drop {
+    position: absolute;
+    z-index: 1;
+    left: calc(var(--sx) * var(--u));
+    top: calc(var(--sy) * var(--u));
+    width: calc(var(--sw) * var(--u));
+    height: calc(var(--sh) * var(--u));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    font-size: calc(11 * var(--u));
+    font-weight: 600;
+    color: var(--wtu-faint);
+    background: color-mix(in srgb, var(--wtu-card) 55%, transparent);
+    border: 1.5px dashed color-mix(in srgb, var(--wtu-faint) 60%, transparent);
+    border-radius: calc(6 * var(--u));
+    transition: opacity 0.4s ease;
+}
+
+.wtu-drop svg {
+    width: 2em;
+    height: 2em;
+}
+
+.wtu-canvas[data-scanned] .wtu-drop {
+    opacity: 0;
+}
+
+/* ── The uploaded sheet ──────────────────────────────────────────── */
+
+.wtu-sheet {
+    position: absolute;
+    z-index: 2;
+    left: calc(var(--sx) * var(--u));
+    top: calc(var(--sy) * var(--u));
+    width: calc(var(--sw) * var(--u));
+    height: calc(var(--sh) * var(--u));
+    font-size: calc(8 * var(--u));
+    color: #1e293b;
+    background: #ffffff;
+    border-radius: 0.75em;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.06),
+        0 2px 4px rgba(15, 23, 42, 0.04),
+        0 22px 40px -22px rgba(15, 23, 42, 0.42);
+    opacity: 0;
+    transform: translate(calc(-18 * var(--u)), calc(26 * var(--u))) rotate(-8deg) scale(0.94);
+    transition: opacity 0.45s var(--wtu-ease), transform 0.9s var(--wtu-ease);
+}
+
+.dark .wtu-sheet {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 48px -20px rgba(0, 0, 0, 0.85);
+}
+
+.wtu-canvas[data-file] .wtu-sheet {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg));
+}
+
+.wtu-canvas[data-phase='leave'] .wtu-sheet {
+    transform: translateY(calc(-8 * var(--u))) rotate(var(--tilt, 0deg)) scale(0.97);
+    transition-duration: 0.35s;
+}
+
+/* Scan line */
+.wtu-beam {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 22%;
+    background: linear-gradient(to bottom, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.14) 78%, rgba(99, 102, 241, 0.4));
+    border-bottom: 2px solid rgba(99, 102, 241, 0.9);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.45);
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+}
+
+.wtu-canvas[data-phase='read'] .wtu-beam {
+    animation: wtu-scan 1.35s cubic-bezier(0.45, 0, 0.55, 1) 0.15s both;
+}
+
+/* Lines the AI picked up: a highlight that sweeps in left to right */
+.wtu-hl {
+    background-image: linear-gradient(rgba(99, 102, 241, 0.14), rgba(99, 102, 241, 0.14));
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: 0% 100%;
+    border-radius: 0.35em;
+    transition: background-size 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wtu-canvas[data-scanned] .wtu-hl {
+    background-size: 100% 100%;
+}
+
+.wtu-canvas[data-phase='read'] .wtu-hl {
+    transition-delay: var(--d, 0ms);
+}
+
+/* Marker band for handwritten lines */
+.wtu-hl--mark {
+    background-image: linear-gradient(rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.2));
+    background-position: 0 75%;
+    background-size: 0% 40%;
+}
+
+.wtu-canvas[data-scanned] .wtu-hl--mark {
+    background-size: 100% 40%;
+}
+
+.wtu-doc {
+    position: absolute;
+    inset: 0;
+    padding: 1.5em 1.6em;
+    line-height: 1.45;
+}
+
+.wtu-doc p {
+    margin: 0;
+}
+
+.wtu-bar {
+    display: block;
+    height: 0.5em;
+    margin-top: 0.55em;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+/* Question paper */
+.wtu-paper-head {
+    text-align: center;
+}
+
+.wtu-paper-head b {
+    display: block;
+    font-size: 1.1em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.wtu-paper-head span {
+    display: block;
+    color: #64748b;
+}
+
+.wtu-paper-meta {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.7em 0 0.9em;
+    padding-bottom: 0.55em;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.wtu-pq {
+    margin: 0 -0.45em 0.8em;
+    padding: 0.3em 0.45em;
+}
+
+.wtu-pq > p {
+    font-weight: 600;
+}
+
+.wtu-pq-opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0.8em;
+    margin-top: 0.15em;
+    color: #475569;
+}
+
+.wtu-pq-opts .wtu-bar {
+    margin-top: 0.45em;
+}
+
+.wtu-ghost {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
+.wtu-ghost .wtu-bar {
+    margin-top: 0;
+}
+
+.wtu-bar--indent {
+    margin-left: 1.1em;
+}
+
+/* Class notes (a phone photo of a ruled page) */
+.wtu-doc--notes {
+    padding: 1.1em 1em 1em 2.9em;
+    font-family: 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', 'Comic Sans MS', cursive;
+    font-size: 1.12em;
+    line-height: 2em;
+    color: #1e3a8a;
+    background-color: #fffdf5;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(2em - 1px),
+        rgba(59, 130, 246, 0.2) calc(2em - 1px),
+        rgba(59, 130, 246, 0.2) 2em
+    );
+    background-position: 0 0.6em;
+}
+
+.wtu-doc--notes::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2.1em;
+    width: 1px;
+    background: rgba(239, 68, 68, 0.4);
+}
+
+/* Soft daylight across the photo */
+.wtu-doc--notes::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 25% 15%, rgba(255, 255, 255, 0.45), transparent 55%),
+        linear-gradient(135deg, transparent 60%, rgba(15, 23, 42, 0.06));
+    pointer-events: none;
+}
+
+.wtu-n-title,
+.wtu-n-line {
+    width: fit-content;
+    white-space: nowrap;
+}
+
+.wtu-n-title {
+    font-size: 1.3em;
+    line-height: calc(2em / 1.3);
+    font-weight: 700;
+    text-decoration: underline wavy rgba(30, 58, 138, 0.45);
+    text-underline-offset: 0.18em;
+}
+
+.wtu-n-small {
+    font-size: 0.9em;
+    line-height: calc(2em / 0.9);
+}
+
+.wtu-n-imp {
+    color: #dc2626;
+    transform: rotate(-3deg);
+}
+
+.wtu-n-leaf {
+    position: absolute;
+    right: 1.4em;
+    bottom: 2.4em;
+    width: 4.2em;
+    height: 4.2em;
+    color: #16a34a;
+    transform: rotate(-8deg);
+}
+
+/* Textbook chapter */
+.wtu-doc--chapter {
+    padding: 1.6em 1.6em 1.4em;
+}
+
+.wtu-c-kicker {
+    font-size: 0.78em;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: #4f46e5;
+}
+
+.wtu-doc .wtu-c-title {
+    display: inline-block;
+    margin: 0.1em -0.25em 0.2em;
+    padding: 0 0.25em;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.65em;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.wtu-c-fig {
+    margin: 0.9em 0 0;
+    padding: 0.5em 0.5em 0.3em;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5em;
+}
+
+.wtu-c-fig svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.wtu-c-fig figcaption {
+    margin-top: 0.1em;
+    font-size: 0.8em;
+    text-align: center;
+    color: #64748b;
+}
+
+.wtu-doc .wtu-c-ex {
+    margin: 0.8em -0.35em 0;
+    padding: 0.15em 0.35em;
+    font-weight: 600;
+}
+
+.wtu-c-ex b {
+    color: #4f46e5;
+}
+
+.wtu-bar--para {
+    margin-top: 1.3em;
+}
+
+.wtu-c-page {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1em;
+    font-size: 0.8em;
+    text-align: center;
+    color: #94a3b8;
+}
+
+/* ── File chip under the sheet ───────────────────────────────────── */
+
+.wtu-file {
+    position: absolute;
+    z-index: 2;
+    left: calc(var(--sx) * var(--u));
+    top: calc(var(--fy) * var(--u));
+    width: calc(var(--sw) * var(--u));
+    display: flex;
+    align-items: center;
+    gap: 0.65em;
+    padding: 0.5em 0.75em 0.5em 0.5em;
+    font-size: calc(11 * var(--u));
+    background: var(--wtu-card);
+    border: 1px solid var(--wtu-rule);
+    border-radius: 0.9em;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 18px -12px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(calc(10 * var(--u)));
+    transition: opacity 0.4s var(--wtu-ease) 0.2s, transform 0.6s var(--wtu-ease) 0.2s;
+}
+
+.wtu-canvas[data-file] .wtu-file {
+    opacity: 1;
+    transform: none;
+}
+
+.wtu-canvas[data-phase='leave'] .wtu-file {
+    transition-delay: 0s;
+    transition-duration: 0.3s;
+}
+
+.wtu-file-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.2em;
+    height: 2.2em;
+    border-radius: 0.55em;
+    color: #ffffff;
+    background: #ef4444;
+}
+
+.wtu-file-icon--img {
+    background: #0ea5e9;
+}
+
+.wtu-file-icon svg {
+    width: 1.15em;
+    height: 1.15em;
+}
+
+.wtu-file-meta {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.wtu-file-name {
+    display: block;
+    overflow: hidden;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--wtu-ink);
+}
+
+.wtu-file-sub {
+    display: block;
+    font-size: 0.82em;
+    color: var(--wtu-muted);
+}
+
+.wtu-file-check {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    color: #ffffff;
+    background: var(--wtu-green);
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.25s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dark .wtu-file-check {
+    color: #052e16;
+}
+
+.wtu-file-check svg {
+    width: 0.95em;
+    height: 0.95em;
+}
+
+.wtu-canvas[data-scanned] .wtu-file-check {
+    opacity: 1;
+    transform: none;
+}
+
+.wtu-file-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--wtu-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+}
+
+.wtu-canvas[data-phase='upload'] .wtu-file-bar {
+    transform: scaleX(1);
+    transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+}
+
+.wtu-canvas[data-scanned] .wtu-file-bar {
+    transform: scaleX(1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* ── Flow between sheet and test ─────────────────────────────────── */
+
+.wtu-flow {
+    position: absolute;
+    z-index: 1;
+    left: calc(255 * var(--u));
+    top: calc(200 * var(--u));
+    width: calc(60 * var(--u));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--wtu-faint);
+    transform: translateY(-50%);
+    transition: color 0.3s ease;
+}
+
+.wtu-flow i {
+    width: calc(6 * var(--u));
+    height: calc(6 * var(--u));
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.35;
+}
+
+.wtu-flow svg {
+    width: calc(16 * var(--u));
+    height: calc(16 * var(--u));
+}
+
+.wtu-canvas[data-phase='read'] .wtu-flow,
+.wtu-canvas[data-phase='build'] .wtu-flow {
+    color: var(--wtu-accent);
+}
+
+.wtu-canvas[data-phase='read'] .wtu-flow i,
+.wtu-canvas[data-phase='build'] .wtu-flow i {
+    animation: wtu-flow 1.1s ease-in-out infinite;
+}
+
+.wtu-flow i:nth-child(2) {
+    animation-delay: 0.15s !important;
+}
+
+.wtu-flow i:nth-child(3) {
+    animation-delay: 0.3s !important;
+}
+
+/* ── The online test it becomes ──────────────────────────────────── */
+
+.wtu-test {
+    position: absolute;
+    z-index: 3;
+    left: calc(var(--tx) * var(--u));
+    top: calc(var(--ty) * var(--u));
+    width: calc(var(--tw) * var(--u));
+    height: calc(var(--th) * var(--u));
+    display: flex;
+    flex-direction: column;
+    font-size: calc(12 * var(--u));
+    color: var(--wtu-ink);
+    background: var(--wtu-card);
+    border: 1px solid var(--wtu-rule);
+    border-radius: 1.1em;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 28px 56px -28px rgba(79, 70, 229, 0.4);
+    transition: border-color 0.5s ease;
+}
+
+.dark .wtu-test {
+    box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.9);
+}
+
+.wtu-canvas[data-done] .wtu-test {
+    border-color: color-mix(in srgb, var(--wtu-green) 40%, var(--wtu-rule));
+}
+
+.wtu-test-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.85em 1em;
+    border-bottom: 1px solid var(--wtu-rule);
+}
+
+.wtu-test-name {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95em;
+    font-weight: 700;
+}
+
+.wtu-test-name > span {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition: opacity 0.4s ease;
+}
+
+.wtu-test-untitled {
+    color: var(--wtu-faint);
+}
+
+.wtu-test-title {
+    opacity: 0;
+}
+
+.wtu-canvas[data-built] .wtu-test-untitled {
+    opacity: 0;
+}
+
+.wtu-canvas[data-built] .wtu-test-title {
+    opacity: 1;
+}
+
+.wtu-timer {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.3em 0.6em;
+    font-size: 0.78em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--wtu-muted);
+    background: var(--wtu-fill);
+    border-radius: 999px;
+}
+
+.wtu-timer svg {
+    width: 1.05em;
+    height: 1.05em;
+}
+
+.wtu-test-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    padding: 0.9em 1em;
+    overflow: hidden;
+}
+
+/* Empty test, waiting for questions */
+.wtu-skeleton {
+    position: absolute;
+    inset: 0.9em 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+    transition: opacity 0.35s ease;
+}
+
+.wtu-skeleton span {
+    display: block;
+    flex-shrink: 0;
+    height: 0.75em;
+    border-radius: 999px;
+    background: var(--wtu-skel);
+}
+
+.wtu-skeleton span:nth-child(3) {
+    margin-bottom: 0.3em;
+}
+
+.wtu-skeleton span.is-opt {
+    height: 2.3em;
+    border-radius: 0.7em;
+}
+
+.wtu-canvas[data-phase='read'] .wtu-skeleton span {
+    animation: wtu-shimmer 1.1s ease-in-out infinite;
+}
+
+.wtu-canvas[data-built] .wtu-skeleton {
+    opacity: 0;
+}
+
+/* Question content arrives in order */
+.wtu-in {
+    opacity: 0;
+    transform: translateY(calc(8 * var(--u)));
+    transition: opacity 0.45s ease var(--d, 0ms), transform 0.6s var(--wtu-ease) var(--d, 0ms);
+}
+
+.wtu-canvas[data-built] .wtu-in {
+    opacity: 1;
+    transform: none;
+}
+
+.wtu-canvas[data-phase='leave'] .wtu-in {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.wtu-q-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wtu-muted);
+}
+
+.wtu-marks {
+    padding: 0.15em 0.5em;
+    letter-spacing: 0;
+    color: var(--wtu-green-ink);
+    background: var(--wtu-green-soft);
+    border-radius: 999px;
+}
+
+.wtu-q-text {
+    margin: 0.5em 0 0.8em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.wtu-choices {
+    display: grid;
+    gap: 0.45em;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wtu-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.55em 0.7em;
+    font-size: 0.92em;
+    line-height: 1.3;
+    color: var(--wtu-ink-2);
+    border: 1px solid var(--wtu-rule);
+    border-radius: 0.7em;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.wtu-radio {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.1em;
+    height: 1.1em;
+    color: #ffffff;
+    border: 1.5px solid var(--wtu-faint);
+    border-radius: 50%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .wtu-radio {
+    color: #052e16;
+}
+
+.wtu-radio svg {
+    width: 0.72em;
+    height: 0.72em;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Answer key marked, a beat after the options land */
+.wtu-canvas[data-built] .wtu-choice.is-correct {
+    font-weight: 600;
+    color: var(--wtu-green-ink);
+    background: var(--wtu-green-soft);
+    border-color: color-mix(in srgb, var(--wtu-green) 45%, transparent);
+}
+
+.wtu-canvas[data-built] .is-correct .wtu-radio {
+    background: var(--wtu-green);
+    border-color: var(--wtu-green);
+}
+
+.wtu-canvas[data-built] .is-correct .wtu-radio svg {
+    opacity: 1;
+}
+
+.wtu-canvas[data-phase='build'] .wtu-choice.is-correct,
+.wtu-canvas[data-phase='build'] .is-correct .wtu-radio,
+.wtu-canvas[data-phase='build'] .is-correct .wtu-radio svg {
+    transition-delay: 1.35s;
+}
+
+.wtu-canvas[data-phase='build'] .is-correct .wtu-radio {
+    animation: wtu-pop 0.45s ease 1.35s;
+}
+
+/* Exam buttons pinned to the bottom of the question area */
+.wtu-actions {
+    position: absolute;
+    left: 1em;
+    right: 1em;
+    bottom: 0.75em;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5em;
+}
+
+.wtu-act {
+    padding: 0.42em 0.85em;
+    font-size: 0.74em;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--wtu-muted);
+    background: var(--wtu-fill);
+    border-radius: 0.6em;
+}
+
+.wtu-act--primary {
+    color: #ffffff;
+    background: var(--wtu-accent);
+}
+
+.wtu-test-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
+    padding: 0.7em 1em;
+    border-top: 1px solid var(--wtu-rule);
+}
+
+/* Question palette: more numbers appear once the test is ready */
+.wtu-palette {
+    display: flex;
+    gap: 0.3em;
+}
+
+.wtu-palette i {
+    display: grid;
+    place-items: center;
+    width: 2.1em;
+    height: 2.1em;
+    font-size: 0.66em;
+    font-style: normal;
+    font-weight: 700;
+    color: transparent;
+    background: var(--wtu-fill);
+    border-radius: 0.55em;
+    transition: background-color 0.3s ease var(--d, 0ms), color 0.3s ease var(--d, 0ms);
+}
+
+.wtu-canvas[data-built] .wtu-palette i.is-first {
+    color: #ffffff;
+    background: var(--wtu-accent);
+}
+
+.wtu-canvas[data-done] .wtu-palette i:not(.is-first) {
+    color: var(--wtu-muted);
+}
+
+.wtu-canvas[data-phase='leave'] .wtu-palette i {
+    transition-delay: 0ms;
+}
+
+.wtu-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 0.72em;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--wtu-generate);
+    opacity: 0;
+    transform: translateY(0.4em);
+    transition: opacity 0.4s ease 0.35s, transform 0.5s var(--wtu-ease) 0.35s;
+}
+
+.wtu-source[data-mode='extract'] {
+    color: var(--wtu-extract);
+}
+
+.wtu-source svg {
+    width: 1.1em;
+    height: 1.1em;
+}
+
+.wtu-canvas[data-done] .wtu-source {
+    opacity: 1;
+    transform: none;
+}
+
+.wtu-canvas[data-phase='leave'] .wtu-source {
+    transition-delay: 0s;
+}
+
+/* ── Scene tabs ──────────────────────────────────────────────────── */
+
+.wtu-tab-track {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 4px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--wtu-rule);
+}
+
+.wtu-tab-fill {
+    display: block;
+    height: 100%;
+    background: var(--wtu-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: wtu-progress var(--wtu-scene-ms, 7400ms) linear forwards;
+}
+
+/* ── Phones: a taller canvas so the test text stays readable ─────── */
+
+@container (max-width: 519px) {
+    .wtu-canvas {
+        --u: calc(100cqw / 360);
+        --sx: 14;
+        --sy: 56;
+        --sw: 146;
+        --sh: 196;
+        --fy: 262;
+        --tx: 170;
+        --ty: 56;
+        --tw: 176;
+        --th: 235;
+        aspect-ratio: 8 / 7;
+    }
+
+    .wtu-pill {
+        top: calc(14 * var(--u));
+        font-size: calc(10.5 * var(--u));
+    }
+
+    .wtu-drop {
+        font-size: calc(8.5 * var(--u));
+    }
+
+    /* 146/206 of the desktop sheet, so its layout is identical */
+    .wtu-sheet {
+        font-size: calc(5.67 * var(--u));
+    }
+
+    .wtu-file {
+        font-size: calc(8.5 * var(--u));
+    }
+
+    .wtu-file-sub,
+    .wtu-flow,
+    .wtu-actions {
+        display: none;
+    }
+
+    .wtu-test {
+        font-size: calc(9.6 * var(--u));
+    }
+
+    .wtu-choices {
+        gap: 0.35em;
+    }
+
+    .wtu-choice {
+        padding: 0.42em 0.6em;
+    }
+
+    .wtu-palette i:nth-child(n + 5) {
+        display: none;
+    }
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────── */
+
+@keyframes wtu-swap {
+    from {
+        opacity: 0;
+        transform: translateY(calc(4 * var(--u)));
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes wtu-breathe {
+    50% {
+        opacity: 0.45;
+        transform: scale(0.88);
+    }
+}
+
+@keyframes wtu-scan {
+    0% {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+    12%,
+    88% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(460%);
+    }
+}
+
+@keyframes wtu-flow {
+    0%,
+    100% {
+        opacity: 0.25;
+        transform: scale(0.8);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
+@keyframes wtu-shimmer {
+    50% {
+        opacity: 0.45;
+    }
+}
+
+@keyframes wtu-pop {
+    50% {
+        transform: scale(1.35);
+    }
+}
+
+@keyframes wtu-progress {
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wtu *,
+    .wtu *::before,
+    .wtu *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    .wtu-rise {
+        opacity: 1;
+        transform: none;
+    }
+}

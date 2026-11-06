@@ -1,22 +1,78 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useDeferredValue, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import LatexRenderer from '@/components/ui/LatexRenderer';
+import { LatexFixList } from '@/components/ui/LatexFixHints';
+import { fixFlags, useLatexFixes } from '@/hooks/useLatexFixes';
+import { getLanguage } from '@/lib/typingLanguages';
 
 interface IMEInputProps {
     value: string;
     onChange: (value: string) => void;
-    typingMode: 'en' | 'hi';
+    /** 'en', or a language code from lib/typingLanguages ('hi', 'mr', 'ar', …). */
+    typingMode: string;
     as?: 'input' | 'textarea';
     className?: string;
     placeholder?: string;
     enablePreview?: boolean;
+    /** While editing, show the rendered maths under the box, and fixes for maths that won't display (question builder). */
+    livePreview?: boolean;
     [key: string]: any;
 }
 
 export interface IMEInputHandle {
     insertAtCursor: (text: string) => void;
+    /** Switches to editing (if previewing) and puts the caret at the end. */
+    focus: () => void;
+}
+
+/**
+ * Browsers that grow a textarea to its text on their own (Chrome/Edge 123+). There the
+ * box needs no measuring, which otherwise forces a layout of the whole page per keystroke
+ * and once per box when a long paper opens.
+ */
+const NATIVE_AUTOGROW = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('field-sizing', 'content');
+const AUTOGROW_STYLE = { fieldSizing: 'content' } as React.CSSProperties;
+
+/** Suggestions (Google Input Tools) for a word typed in English letters, in the script of `itc`. */
+async function fetchTransliteration(word: string, itc: string): Promise<string[] | null> {
+    try {
+        const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=${itc}&num=5`);
+        const data = await res.json();
+        const entry = data?.[0] === 'SUCCESS' ? data?.[1]?.[0] : null;
+        const list: unknown = entry?.[1];
+        if (!Array.isArray(list) || !list.length) return null;
+        // Chinese and Japanese also offer words for just the start of what was typed ("ni" of
+        // "nihao"); taking one would drop the rest of the letters.
+        const matched: unknown = entry?.[3]?.matched_length;
+        const whole = Array.isArray(matched) ? list.filter((_, i) => matched[i] === undefined || matched[i] === word.length) : list;
+        return whole.length ? whole : null;
+    } catch {
+        return null;
+    }
+}
+
+const LETTER = /[a-zA-Z]/;
+
+/**
+ * Where `word` now stands as a whole word, nearest to where it was typed. Words
+ * converted in the meantime change length, so the original position can be off.
+ * In Chinese and Japanese (`joined`) words touch, so any non-letter bounds a word.
+ */
+function findWord(text: string, word: string, near: number, joined = false): number {
+    const bounds = (ch: string) => (joined ? !LETTER.test(ch) : /\s/.test(ch));
+    let best = -1;
+    let dist = Infinity;
+    for (let i = text.indexOf(word); i !== -1; i = text.indexOf(word, i + 1)) {
+        const startsWord = i === 0 || bounds(text[i - 1]);
+        const endsWord = i + word.length === text.length || bounds(text[i + word.length]);
+        if (startsWord && endsWord && Math.abs(i - near) < dist) {
+            dist = Math.abs(i - near);
+            best = i;
+        }
+    }
+    return best;
 }
 
 export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
@@ -26,6 +82,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     as = 'input',
     className,
     enablePreview = true,
+    livePreview = false,
     ...props
 }, ref) => {
     const Component = as === 'textarea' || props.multiline ? Textarea : Input;
@@ -33,6 +90,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     const [lastWordPos, setLastWordPos] = useState<{ start: number, end: number } | null>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const lastCursorPosRef = useRef<{ start: number, end: number } | null>(null);
+    const caretToEndRef = useRef(false);
 
     React.useImperativeHandle(ref, () => ({
         insertAtCursor: (text: string) => {
@@ -41,7 +99,9 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 const end = lastCursorPosRef.current?.end ?? value.length;
                 const newValue = value.substring(0, start) + text + value.substring(end);
                 onChange(newValue);
-                setIsEditing(true);
+                // Stay in the rendered view so the inserted maths/picture shows as it will to students;
+                // the next insert lands right after this one.
+                lastCursorPosRef.current = { start: start + text.length, end: start + text.length };
                 return;
             }
             const el = inputRef.current;
@@ -54,6 +114,16 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 el.setSelectionRange(newPos, newPos);
                 el.focus();
             }, 0);
+        },
+        focus: () => {
+            const el = inputRef.current;
+            if (el) {
+                el.focus();
+                el.setSelectionRange(el.value.length, el.value.length);
+            } else {
+                caretToEndRef.current = true;
+                setIsEditing(true);
+            }
         }
     }));
 
@@ -68,14 +138,31 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
         if (isEditing && inputRef.current) {
             if (isMounted.current) {
                 inputRef.current.focus();
+                if (caretToEndRef.current) {
+                    const end = inputRef.current.value.length;
+                    inputRef.current.setSelectionRange(end, end);
+                    caretToEndRef.current = false;
+                }
             }
         }
         isMounted.current = true;
     }, [isEditing]);
 
+    // Text changed while nobody is typing here (filled from a photo, Sy Pad insert, import):
+    // show it rendered, the same as after clicking away.
+    useEffect(() => {
+        const el = inputRef.current;
+        if (!enablePreview || !isEditing || !value || !el || document.activeElement === el) return;
+        if (/[$\\{*_`#]|!\[/.test(value)) {
+            lastCursorPosRef.current = { start: el.selectionStart ?? value.length, end: el.selectionEnd ?? value.length };
+            setIsEditing(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
+
     // Auto-resize textarea to fit content height dynamically
     useLayoutEffect(() => {
-        if (as === 'textarea' && inputRef.current) {
+        if (as === 'textarea' && !NATIVE_AUTOGROW && inputRef.current) {
             const el = inputRef.current;
             const scrollPos = window.scrollY;
             el.style.height = 'auto';
@@ -96,50 +183,79 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     // If not enabled or no Formatting, we always stay in "Edit" mode effectively (render input usually)
     // But for consistency, we can just use the toggle logic if enablePreview is true.
     const showPreview = enablePreview && !isEditing && hasFormatting;
+    // The rendered maths under the box can lag a keystroke behind; the typing itself never waits for it.
+    const previewValue = useDeferredValue(value);
+    // Maths fixes: the previews underline what won't display, the list under the box fixes it.
+    const fixes = useLatexFixes(livePreview ? value || '' : '', 700);
+    const flags = useMemo(() => fixFlags(fixes), [fixes]);
+
+    // Typing in another script (Hindi, Marathi, Arabic, Chinese…). A word goes to the
+    // transliteration service when space follows it, and the answer can arrive after more
+    // keys have been typed. So the space goes in at once, every change is written to the
+    // box itself before the parent's state (the next key always lands in the current
+    // text), and the word is found again in the text as it is when the answer arrives.
+    // Earlier, the answer replaced the whole text captured at the key press, losing
+    // letters typed while it was on its way.
+    // Languages without a transliteration engine (Korean, Thai, French…) are typed with
+    // the teacher's own keyboard; the box only takes their `lang` and direction.
+    const language = getLanguage(typingMode);
+    const engine = language?.itc;
+    const joined = !!language?.joined;
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+
+    const emit = (next: string, caret: number | null) => {
+        const el = inputRef.current;
+        if (el && el.value !== next) {
+            el.value = next;
+            if (caret !== null) el.setSelectionRange(caret, caret);
+        }
+        valueRef.current = next;
+        onChangeRef.current(next);
+    };
+
+    const convertWord = (word: string, typedAt: number, itc: string, isJoined: boolean) => {
+        fetchTransliteration(word, itc).then(list => {
+            if (!list) return; // offline or no answer: the word stays in English letters
+            const best = list[0];
+            const el = inputRef.current;
+            const text = el ? el.value : valueRef.current;
+            const start = findWord(text, word, typedAt, isJoined);
+            if (start < 0) return; // the word was changed or deleted meanwhile
+            // Chinese/Japanese: the space only said "convert"; it is not part of the text.
+            const eat = isJoined && text[start + word.length] === ' ' ? 1 : 0;
+            const caret = el && document.activeElement === el ? el.selectionStart : null;
+            const shift = best.length - word.length - eat;
+            emit(text.slice(0, start) + best + text.slice(start + word.length + eat), caret === null ? null : caret > start ? caret + shift : caret);
+            setSuggestions(list);
+            setLastWordPos({ start, end: start + best.length });
+        });
+    };
+
+    /**
+     * The word just typed before `cursor`, if it is plain English letters: the last
+     * space-separated piece, or for Chinese/Japanese the letters right before the cursor
+     * (they follow characters with no space between).
+     */
+    const plainWordBefore = (text: string, cursor: number) => {
+        const before = text.substring(0, cursor);
+        if (joined) return before.match(/[a-zA-Z]+$/)?.[0] ?? null;
+        const lastWord = before.split(/[\s\n]/).pop() || '';
+        return /^[a-zA-Z]+$/.test(lastWord) ? lastWord : null;
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        if (typingMode === 'hi' && e.key === ' ') {
-            const cursor = e.currentTarget.selectionStart || 0;
-            const text = e.currentTarget.value;
-            const textBefore = text.substring(0, cursor);
-            const words = textBefore.split(/[\s\n]/);
-            const lastWord = words[words.length - 1];
-
-            if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
+        if (engine && e.key === ' ' && !e.nativeEvent.isComposing) {
+            const el = e.currentTarget;
+            const cursor = el.selectionStart ?? el.value.length;
+            const lastWord = plainWordBefore(el.value, cursor);
+            if (lastWord) {
                 e.preventDefault();
-                fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
-                            const suggestionsList = data[1][0][1];
-                            const bestMatch = suggestionsList[0];
-                            const newValue = text.substring(0, cursor - lastWord.length) + bestMatch + " " + text.substring(cursor);
-                            onChange(newValue);
-
-                            setTimeout(() => {
-                                if (inputRef.current) {
-                                    const newPos = cursor - lastWord.length + bestMatch.length + 1;
-                                    inputRef.current.setSelectionRange(newPos, newPos);
-                                }
-                            }, 0);
-
-                            setSuggestions(suggestionsList);
-                            setLastWordPos({
-                                start: cursor - lastWord.length,
-                                end: cursor - lastWord.length + bestMatch.length
-                            });
-                        } else {
-                            const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
-                            onChange(newValue);
-                            setTimeout(() => {
-                                if (inputRef.current) inputRef.current.setSelectionRange(cursor + 1, cursor + 1);
-                            }, 0);
-                        }
-                    })
-                    .catch(() => {
-                        const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
-                        onChange(newValue);
-                    });
+                el.setRangeText(' ', cursor, el.selectionEnd ?? cursor, 'end');
+                emit(el.value, null);
+                convertWord(lastWord, cursor - lastWord.length, engine, joined);
             }
             return;
         }
@@ -152,56 +268,24 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
 
     const replaceWord = (word: string) => {
         if (!lastWordPos || !inputRef.current) return;
-        const text = value;
-        const newValue = text.substring(0, lastWordPos.start) + word + text.substring(lastWordPos.end);
-        onChange(newValue);
+        const el = inputRef.current;
+        const text = el.value;
+        el.focus();
+        emit(text.substring(0, lastWordPos.start) + word + text.substring(lastWordPos.end), lastWordPos.start + word.length);
         setSuggestions([]);
         setLastWordPos(null);
-        setTimeout(() => {
-            if (inputRef.current) {
-                const newPos = lastWordPos.start + word.length;
-                inputRef.current.setSelectionRange(newPos, newPos);
-                inputRef.current.focus();
-            }
-        }, 0);
     };
 
+    // Phone keyboards often send no usable key on keydown; the space shows up here instead.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         const newCursor = e.target.selectionStart || 0;
 
-        if (typingMode === 'hi' && newValue.length > value.length) {
-            const charBefore = newValue.charAt(newCursor - 1);
-            if (charBefore === ' ') {
-                const textBefore = newValue.substring(0, newCursor);
-                const words = textBefore.trimEnd().split(/[\s\n]/);
-                const lastWord = words[words.length - 1];
-
-                if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
-                    fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
-                                const suggestionsList = data[1][0][1];
-                                const bestMatch = suggestionsList[0];
-                                const startIdx = newCursor - 1 - lastWord.length;
-                                const finalValue = newValue.substring(0, startIdx) + bestMatch + " " + newValue.substring(newCursor);
-                                onChange(finalValue);
-                                setTimeout(() => {
-                                    if (inputRef.current) {
-                                        const newPos = startIdx + bestMatch.length + 1;
-                                        inputRef.current.setSelectionRange(newPos, newPos);
-                                    }
-                                }, 0);
-                                setSuggestions(suggestionsList);
-                                setLastWordPos({ start: startIdx, end: startIdx + bestMatch.length });
-                                return;
-                            }
-                        })
-                        .catch(err => console.error(err));
-                }
-            }
+        if (engine && newValue.length > valueRef.current.length && newValue.charAt(newCursor - 1) === ' ') {
+            const lastWord = plainWordBefore(newValue, newCursor - 1);
+            if (lastWord) convertWord(lastWord, newCursor - 1 - lastWord.length, engine, joined);
         }
+        valueRef.current = newValue;
         onChange(newValue);
     };
 
@@ -245,7 +329,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         className
                     )}
                 >
-                    <LatexRenderer>{value}</LatexRenderer>
+                    <LatexRenderer flags={flags}>{value}</LatexRenderer>
                 </div>
             ) : (
                 <>
@@ -269,12 +353,24 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         onBlur={handleBlur}
-                        className={cn(className, typingMode === 'hi' ? "border-orange-200 focus-visible:ring-orange-200" : "")}
+                        className={cn(className, engine ? "border-orange-200 focus-visible:ring-orange-200" : "")}
                         autoComplete="off"
+                        lang={language?.code}
+                        dir={language?.rtl ? 'auto' : undefined}
                         {...props}
+                        style={as === 'textarea' && NATIVE_AUTOGROW ? { ...AUTOGROW_STYLE, ...props.style } : props.style}
                     />
+                    {livePreview && value && (value.includes('$') || value.includes('![')) && (
+                        <div className="flex items-start gap-2 border-t border-dashed border-slate-200 px-3 pb-2 pt-1.5 text-left">
+                            <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-slate-500">Preview</span>
+                            <div className="min-w-0 flex-1 overflow-x-auto text-[15px] text-slate-800 [&_.katex-display]:!my-1 [&_.katex-display]:!text-left">
+                                <LatexRenderer flags={previewValue === value ? flags : undefined}>{previewValue}</LatexRenderer>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
+            {livePreview && <LatexFixList issues={fixes} onApply={next => emit(next, null)} className="px-2 pb-1.5 pt-1.5" />}
         </div>
     );
 });

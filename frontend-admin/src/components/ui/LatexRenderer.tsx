@@ -6,6 +6,7 @@ import 'katex/dist/contrib/mhchem'; // Registers \ce{} and \pu{} on this katex i
 import { cn } from '@/lib/utils';
 import { Maximize2 } from 'lucide-react';
 import { katexTrust, sanitizeHtml } from '@/utils/sanitize';
+import { repairOverEscapedMath, restoreDecodedCommands } from '@/lib/latexFixes';
 import {
     Dialog,
     DialogContent,
@@ -14,24 +15,54 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 
+export interface LatexFlag {
+    start: number;
+    end: number;
+}
+
 interface LatexRendererProps {
     children: string;
     className?: string;
+    /**
+     * Stretches to show as written with a red wavy underline (the maths fixes, Grammarly
+     * style). Positions are in the text after restoreDecodedCommands, as findLatexIssues
+     * gives them. The n-th flag gets the classes "tex-flag tex-flag-n".
+     */
+    flags?: readonly LatexFlag[];
 }
+
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// Only real image addresses become <img>; a tag pointing at nothing ("image_4", "fig")
+// would show a broken image.
+const isImageSrc = (src: string) => /^(https?:|data:image\/|blob:|\/)/i.test(src.trim());
 
 /**
  * Custom LaTeX renderer that uses katex directly (not react-latex-next)
  * so that the mhchem extension is properly registered.
  */
-const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) => {
+const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className, flags }) => {
     const [maximizedTable, setMaximizedTable] = useState<string | null>(null);
     const tableDataRef = useRef<Record<string, string>>({});
+    const flagKey = flags?.length ? flags.map(f => `${f.start}-${f.end}`).join(',') : '';
 
     const rendered = useMemo(() => {
         if (!children) return '';
 
         try {
-            let result = children;
+            let result = restoreDecodedCommands(children);
+            // Flagged stretches are swapped out first, so nothing below renders or alters them.
+            const flagHtml: Record<string, string> = {};
+            if (flags?.length) {
+                let floor = result.length;
+                [...flags].map((f, i) => ({ ...f, i })).sort((a, b) => b.start - a.start).forEach(f => {
+                    if (f.start < 0 || f.end > floor || f.end <= f.start) return;
+                    const key = `__FLAG_PH_${f.i}__`;
+                    flagHtml[key] = `<span class="tex-flag tex-flag-${f.i}">${escapeHtml(result.slice(f.start, f.end)).replace(/\n/g, '<br/>')}</span>`;
+                    result = result.slice(0, f.start) + key + result.slice(f.end);
+                    floor = f.start;
+                });
+            }
             // Pre-process & sanitize LaTeX/mhchem input
             // 1. Fix unescaped ce{...} -> \ce{...}
             result = result.replace(/(?<!\\)\bce\{/g, '\\ce{');
@@ -47,6 +78,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             let imgIndex = 0;
 
             const makeImgTag = (src: string, alt: string) => {
+                if (!isImageSrc(src)) return '';
                 const escapedSrc = src.replace(/"/g, '&quot;');
                 const escapedAlt = alt.replace(/"/g, '&quot;');
                 // Using max-height/width in pixels since percentage max-widths collapse inside KaTeX table cells.
@@ -198,7 +230,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
             const processMathBlock = (tex: string, displayMode: boolean): string => {
                 try {
-                    let processedTex = extractImagesFromTex(tex);
+                    let processedTex = extractImagesFromTex(repairOverEscapedMath(tex));
 
                     // Add support for \vspace in math blocks
                     // LaTeX uses \vspace for vertical spacing, but KaTeX requires environments to stack correctly.
@@ -223,12 +255,18 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
                     const isInline = !displayMode;
                     const finalTex = isInline ? `\\displaystyle ${texWithoutArrays.trim()}` : texWithoutArrays.trim();
-                    const html = katex.renderToString(finalTex, {
+                    const options = {
                         displayMode,
-                        throwOnError: false,
                         trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                         strict: false,
-                    });
+                    };
+                    let html: string;
+                    try {
+                        html = katex.renderToString(finalTex, { ...options, throwOnError: true });
+                    } catch {
+                        // The red error shows what the creator wrote, without the \displaystyle added above.
+                        html = katex.renderToString(texWithoutArrays.trim(), { ...options, throwOnError: false });
+                    }
 
                     let finalHtml = swapPlaceholders(html);
                     for (const [key, tableHtml] of Object.entries(arrayMap)) {
@@ -284,11 +322,18 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             // Just in case any IMGPH placeholders leaked out:
             result = swapPlaceholders(result);
 
+            result = result.replace(/__FLAG_PH_\d+__/g, (match) => flagHtml[match] ?? match);
+
             return result;
         } catch (e) {
             return children;
         }
-    }, [children]);
+        // flagKey stands for flags (a new array with the same ranges is the same render).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [children, flagKey]);
+    // DOMPurify parses the whole string into a DOM; doing it on every parent render was
+    // a large share of each keystroke in the test builder (one per formula on the page).
+    const safeHtml = useMemo(() => sanitizeHtml(rendered), [rendered]);
 
     const handleContainerClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
@@ -306,8 +351,10 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             <div
                 className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
                 onClick={handleContainerClick}
+                // Urdu/Arabic/Persian questions read right to left; English ones are unaffected.
+                dir="auto"
             >
-                <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(rendered) }} />
+                <span dangerouslySetInnerHTML={{ __html: safeHtml }} />
             </div>
 
             <Dialog open={!!maximizedTable} onOpenChange={(open) => !open && setMaximizedTable(null)}>
@@ -328,4 +375,5 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
     );
 };
 
-export default LatexRenderer;
+// Output depends only on the text and class, so unchanged formulas skip re-rendering.
+export default React.memo(LatexRenderer);

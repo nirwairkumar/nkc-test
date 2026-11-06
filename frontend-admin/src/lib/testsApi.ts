@@ -1,4 +1,6 @@
 import apiClient from '@/lib/apiClient';
+import { safeSessionStorage, safeLocalStorage } from '@/utils/safeStorage';
+import type { ResultView } from '@/lib/resultView';
 
 export interface TestSection {
     id: string;
@@ -7,6 +9,8 @@ export interface TestSection {
     marks_per_question?: number | string;
     negative_marks?: number | string;
     question_type?: string;
+    /** Timed sections: this section's own minutes (see utils/sectionTiming.ts). */
+    duration_minutes?: number;
     questions: Question[];
     attempt_control?: {
         enabled: boolean;
@@ -77,6 +81,7 @@ export interface TestSettings {
     force_fullscreen?: boolean;
     shuffle_questions?: boolean;
     show_results_immediate?: boolean;
+    result_view?: ResultView; // what the result page shows candidates (lib/resultView.ts)
     violation_limit?: number | null; // null = warn only, number = auto-submit after N violations
     schedule?: {
         enabled: boolean;
@@ -125,7 +130,8 @@ export interface Question {
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
     marks?: number | string;
     negativeMarks?: number | string;
-    typingMode?: 'en' | 'hi';
+    partialMarking?: 'proportional' | 'per_option'; // Multiple correct only; default proportional
+    typingMode?: string; // builder only ('en' | 'second'); stripped before saving
     originalIndex?: number; // Added to strictly track index when shuffling
     topic?: string; // AI generated or manual topic
 }
@@ -185,11 +191,34 @@ export async function importTestJson(file: File) {
     }
 }
 
-export async function fetchAdvancedAnalysis(test: any, answers: Record<number, string>) {
+// Proof that this browser submitted a test, for candidates without a login (most of them).
+// The server only returns the answer key to the creator, an admin, or someone who submitted.
+const RECEIPT_KEY = (testId: string) => `tz_attempt_receipt_${testId}`;
+
+export function rememberAttemptReceipt(testId: string | undefined, attemptId: string | undefined) {
+    if (!testId || !attemptId) return;
+    try { localStorage.setItem(RECEIPT_KEY(testId), attemptId); } catch { /* private mode */ }
+}
+
+function attemptProof(testId: string | undefined, knownAttemptId?: string) {
+    if (!testId) return knownAttemptId ? { attempt_id: knownAttemptId } : {};
+    let attempt_id: string | undefined = knownAttemptId;
+    let candidate_id: string | undefined;
+    try { attempt_id = attempt_id || localStorage.getItem(RECEIPT_KEY(testId)) || undefined; } catch { /* blocked */ }
+    try { candidate_id = sessionStorage.getItem(`anon_user_id_${testId}`) || undefined; } catch { /* blocked */ }
+    return { attempt_id, candidate_id };
+}
+
+export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>, attemptId?: string) {
     try {
         const response = await apiClient.post('results/analyze', {
             test,
-            answers
+            answers,
+            question_times,
+            // C4: the browser no longer receives correctAnswer, so the server reloads
+            // the answer key by id and scores the attempt itself.
+            test_id: test?.id,
+            ...attemptProof(test?.id, attemptId),
         });
         return { data: response.data, error: null };
     } catch (error: any) {
@@ -197,10 +226,20 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, s
     }
 }
 
+export function invalidateTestCache(id: string) {
+    try {
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_true`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_true`);
+    } catch {}
+}
+
 export async function updateTest(id: string, updates: Partial<Test>, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.put(endpoint, updates);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -238,6 +277,7 @@ export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.delete(endpoint);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -349,6 +389,21 @@ export async function fetchTestsByCreator(
 // Alias for compatibility
 export const fetchTestsByUserId = fetchTestsByCreator;
 
+/**
+ * Every test the creator has conducted online (live first, then ended), independent of the
+ * dashboard's 9-per-page grid — so a live exam is never hidden on an unloaded page. The
+ * backend filters in Postgres, so this is typically a handful of small rows.
+ */
+export async function fetchConductedTestsByCreator(userId: string, signal?: AbortSignal) {
+    try {
+        const response = await apiClient.get(`tests/user/${userId}/conducted`, { signal });
+        return { data: (response.data || []) as any[], error: null };
+    } catch (error: any) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') throw error;
+        return { data: null, error };
+    }
+}
+
 let snippetQueue: string[] = [];
 let snippetResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
 let snippetTimeout: any = null;
@@ -441,11 +496,13 @@ const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function _getCachedTest(id: string, excludeQuestions: boolean = false): any | null {
     try {
-        const raw = localStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
+        const raw = safeSessionStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`) ||
+                    safeLocalStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
         if (!raw) return null;
         const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts > TEST_CACHE_TTL) {
-            localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
+            safeSessionStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
+            safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
             return null;
         }
         return data;
@@ -453,14 +510,13 @@ function _getCachedTest(id: string, excludeQuestions: boolean = false): any | nu
 }
 
 function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
-    try {
-        localStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
-    } catch { /* storage full — ignore */ }
+    safeSessionStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
+    safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
 }
 
-export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
-    // Serve stale cache immediately, revalidate in background
-    const cached = _getCachedTest(id, excludeQuestions);
+export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false, bypassCache: boolean = false) {
+    // Serve stale cache immediately, revalidate in background (unless bypassCache is true)
+    const cached = !bypassCache ? _getCachedTest(id, excludeQuestions) : null;
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
