@@ -523,8 +523,20 @@ class AudienceFilter(BaseModel):
     skip_ids: List[uuid.UUID] = Field(default_factory=list, max_length=500)
     # The "Add someone" search: also people who only sat a test.
     everyone: bool = False
+    # "Pick people" (20261106120000_email_direct.sql): only add_ids get it, and the timing
+    # limits (got it, emailed this week, 3 this month) don't apply. For urgent one-off emails.
+    direct: bool = False
 
     def as_json(self) -> Dict[str, Any]:
+        if self.direct:
+            # Nothing else narrows or widens a direct send: just the people picked.
+            out_d: Dict[str, Any] = {"show": self.show, "direct": True,
+                                     "add_ids": list(dict.fromkeys(str(i) for i in self.add_ids))}
+            if self.skip_ids:
+                out_d["skip_ids"] = list(dict.fromkeys(str(i) for i in self.skip_ids))
+            if self.q and self.q.strip():
+                out_d["q"] = self.q.strip()
+            return out_d
         out: Dict[str, Any] = {"show": self.show}
         if self.add_ids:
             out["add_ids"] = list(dict.fromkeys(str(i) for i in self.add_ids))
@@ -795,10 +807,24 @@ def template_restore(db: Client, key: str, admin_id: Optional[str] = None) -> Di
     return (res.data or [{"key": key, **v}])[0]
 
 
+DIRECT_MAX = 50  # people in one "Pick people" send
+NEEDS_DIRECT_SQL = ("Picking people for a direct email needs the SQL "
+                    "supabase/migrations/20261106120000_email_direct.sql. Run it, then try again.")
+
+
+def _direct_ok(data: Optional[Dict[str, Any]]) -> None:
+    """Before the SQL the function ignores `direct`, so the audience would be everyone."""
+    if data is not None and "direct" not in data:
+        raise HTTPException(status_code=409, detail=NEEDS_DIRECT_SQL)
+
+
 def audience_report(db: Client, payload: AudienceRequest) -> Dict[str, Any]:
-    return _rpc(db, "email_report_audience", {
+    data = _rpc(db, "email_report_audience", {
         "p_filter": payload.filter.as_json(), "p_limit": payload.limit, "p_offset": payload.offset, **_guard_params(),
     })
+    if payload.filter.direct:
+        _direct_ok(data)
+    return data
 
 
 @router.post("/audience")
@@ -891,6 +917,15 @@ def campaign_create(db: Client, payload: CampaignCreate, admin_id: Optional[str]
     cid = str(uuid.uuid4())
     filt = payload.filter
     name = payload.name
+    if filt.direct:
+        if payload.template_key:
+            raise HTTPException(status_code=400, detail="A direct email is one you write yourself, not a Library email.")
+        picked = set(filt.add_ids) - set(filt.skip_ids)
+        if not picked:
+            raise HTTPException(status_code=400, detail="Pick at least one person.")
+        if len(picked) > DIRECT_MAX:
+            raise HTTPException(status_code=400, detail=f"A direct email goes to at most {DIRECT_MAX} people. "
+                                                         "For more, send to a group.")
     if payload.template_key:
         tpl = _table(db, "email_templates").select("key, name, archived").eq("key", payload.template_key).limit(1).execute().data
         if not tpl or tpl[0].get("archived"):
@@ -916,6 +951,8 @@ def campaign_create(db: Client, payload: CampaignCreate, admin_id: Optional[str]
             and "added" not in count["rows"][0]:
         raise HTTPException(status_code=409, detail="Picking people by hand needs the SQL "
                             "supabase/migrations/20261028150000_email_pick_people.sql. Run it, then send again.")
+    if filt.direct:
+        _direct_ok(count)
     planned = int(count.get("ready") or 0)
     if planned == 0:
         raise HTTPException(status_code=400, detail="Nobody in this audience can get the email right now.")

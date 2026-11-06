@@ -18,6 +18,8 @@ import { SendProgress, useSender } from './sender';
 
 /** The whole audience is listed with tick boxes. The backend takes at most 200 per request. */
 const LIST_LIMIT = 200;
+/** People in one "Pick people" email (backend DIRECT_MAX). */
+const PICK_MAX = 50;
 
 export interface ComposeStart {
     template?: TemplateSummary | null;
@@ -53,6 +55,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const templates = useQuery({ queryKey: ['email', 'templates'], queryFn: emailApi.templates, enabled: open && !!template, staleTime: 60_000 });
     const [draft, setDraft] = useState<EmailDraft>(EMPTY);
     const [filter, setFilter] = useState<AudienceFilter>({});
+    // "Pick people": only the people searched and added get it (an urgent email to one educator).
+    const [pick, setPick] = useState(false);
     const [fromEmail, setFromEmail] = useState('');
     const [fromName, setFromName] = useState('');
     const [replyTo, setReplyTo] = useState('');
@@ -71,9 +75,10 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     useEffect(() => {
         if (!start) return;
         setFilter(start.filter ?? {});
+        setPick(!template && !!start.filter?.direct);
         setCampaign(null);
         setPreviewAs(null);
-        setAddIds([]);
+        setAddIds(start.filter?.direct ? start.filter.add_ids ?? [] : []);
         setSkipIds([]);
         setDraft(template ? { subject: template.subject, preheader: template.preheader, body: '' } : EMPTY);
     }, [start]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -115,7 +120,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
     const testAddr = testTo.trim().toLowerCase();
     const testAllowed = !!testAddr && (testAddr === myAddress || testAddr.endsWith(`@${testDomain}`));
 
-    const baseFilter: AudienceFilter = template ? { template: template.key } : { ...filter };
+    const picking = !template && pick;
+    const baseFilter: AudienceFilter = template ? { template: template.key } : picking ? { direct: true } : { ...filter, direct: undefined };
     const audFilter: AudienceFilter = addIds.length ? { ...baseFilter, add_ids: addIds } : baseFilter;
     const aud = useQuery({
         queryKey: ['email', 'audience', 'compose', audFilter],
@@ -147,7 +153,7 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
         setSkipIds((s) => s.filter((x) => x !== id));
     };
 
-    const label = [
+    const label = picking ? 'Picked by hand' : [
         audienceLabel(baseFilter, template),
         added ? `+${added} added` : '',
         leftOut ? `${leftOut} unticked` : '',
@@ -249,8 +255,16 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                         <Group title="Who gets it">
                             {template ? (
                                 <TemplateRules t={template} />
-                            ) : (
-                                <div className="space-y-3">
+                            ) : <>
+                                <WhoMode pick={pick} onChange={setPick} />
+                                {picking ? (
+                                    <p className="mt-3 rounded-xl bg-sky-50 px-3 py-2.5 text-[13px] leading-snug text-sky-900 ring-1 ring-inset ring-sky-600/20">
+                                        Only the people you add below get this email, up to {PICK_MAX}. Search anyone: educators,
+                                        students, people who only sat a test. It goes even if they were emailed this week.
+                                        Unsubscribed people and bad addresses still can’t be emailed.
+                                    </p>
+                                ) : (
+                                <div className="mt-3 space-y-3">
                                     <div>
                                         <p className="mb-1.5 text-[13px] font-medium text-slate-600">Stage</p>
                                         <ChoiceChips<Stage> ariaLabel="Stage" value={filter.stages ?? []} onChange={(v) => setFilter((f) => ({ ...f, stages: v }))}
@@ -282,7 +296,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                         </FormField>
                                     </div>
                                 </div>
-                            )}
+                                )}
+                            </>}
 
                             <div className="mt-4 border-t border-slate-100 pt-4">
                                 <p className="text-[32px] font-semibold leading-none tracking-[-0.02em] text-slate-900 tabular-nums">{aud.data ? num(ready) : '–'}</p>
@@ -307,7 +322,8 @@ export default function ComposeSheet({ start, overview, onClose }: { start: Comp
                                     </p>
                                 ) : aud.data && (
                                     <PeoplePicker rows={rows} skip={skip} onToggle={toggle} onSetMany={setMany} addIds={addIds}
-                                        onAdd={addPerson} onRemoveAdded={removeAdded} more={Math.max(0, aud.data.total - rows.length)} />
+                                        onAdd={addPerson} onRemoveAdded={removeAdded} more={Math.max(0, aud.data.total - rows.length)}
+                                        picking={picking} full={picking && addIds.length >= PICK_MAX} />
                                 )}
                             </div>
                         </Group>
@@ -425,6 +441,23 @@ export function TemplateRules({ t }: { t: TemplateSummary }) {
             </div>
             {rules.length > 0 && <p className="text-[13px] text-slate-500">Goes {rules.join(', ')}.</p>}
             {t.why && <p className="text-[13px] leading-snug text-slate-600">{t.why}</p>}
+        </div>
+    );
+}
+
+/** New email: send to a group (filters), or only to people picked by hand. */
+function WhoMode({ pick, onChange }: { pick: boolean; onChange: (pick: boolean) => void }) {
+    const opt = (value: boolean, text: string) => (
+        <button type="button" role="radio" aria-checked={pick === value} onClick={() => onChange(value)}
+            className={cx('h-8 flex-1 rounded-full px-3 text-[13px] font-semibold transition-colors',
+                pick === value ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/[0.08]' : 'text-slate-500 hover:text-slate-800')}>
+            {text}
+        </button>
+    );
+    return (
+        <div role="radiogroup" aria-label="Who gets it" className="flex gap-1 rounded-full bg-slate-100 p-1">
+            {opt(false, 'A group')}
+            {opt(true, 'Pick people')}
         </div>
     );
 }

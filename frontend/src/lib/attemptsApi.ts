@@ -41,6 +41,8 @@ export async function saveAttemptWithRetry(
                 baseDelayMs: 1000,
                 maxDelayMs: 15000,
                 onRetry: (attempt, _err) => onRetry?.(attempt),
+                // 409: a one-attempt test already submitted. Sending again won't change that.
+                giveUp: (err) => err?.response?.status === 409,
             }
         );
         return { data, error: null };
@@ -65,9 +67,10 @@ export async function fetchUserAttempts(user_id: string) {
     }
 }
 
-export async function checkUserTestAttempt(user_id: string, test_id: string) {
+/** `submittedOnly`: count submitted papers only, not a start that was never submitted. */
+export async function checkUserTestAttempt(user_id: string, test_id: string, submittedOnly = false) {
     try {
-        const response = await apiClient.get(`attempts/check/${user_id}/${test_id}`);
+        const response = await apiClient.get(`attempts/check/${user_id}/${test_id}`, submittedOnly ? { params: { submitted_only: true } } : undefined);
         return { hasAttempted: response.data?.hasAttempted, error: null };
     } catch (error: any) {
         // Default to safe false if error, or pass error

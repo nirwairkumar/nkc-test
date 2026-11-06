@@ -880,7 +880,7 @@ export default function TestPage() {
       if (!isConductExam) return; // Skip violations for public/private tests
       const isEnabled = settings.tab_switch_mode && settings.tab_switch_mode !== 'off';
       if (document.hidden && isEnabled) {
-        handleViolation("Tab Switching / Navigation");
+        handleViolationRef.current("Tab Switching / Navigation");
       }
     };
 
@@ -909,7 +909,7 @@ export default function TestPage() {
           isFullScreenViolationLoggedRef.current = true;
           setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
           setShowFullScreenWarning(true);
-          handleViolation("Exited Full Screen");
+          handleViolationRef.current("Exited Full Screen");
         } else if (!isConductExam) {
           // For non-conduct tests: just show the dialog, no violation count
           setShowFullScreenWarning(true);
@@ -958,14 +958,30 @@ export default function TestPage() {
     };
   }, [test, isSubmitting, isTimeUp, warnings, isExamStarted]);
 
+  // Every rule break in order, sent with the paper (user_tests.violation_count / violation_log),
+  // and why the paper was auto-submitted, so the examiner's results say what happened.
+  const violationLogRef = useRef<{ type: string; at: string }[]>([]);
+  const autoSubmitReasonRef = useRef<string | null>(null);
+
   const handleViolation = (reason: string) => {
     if (!test?.settings) return;
+    if (autoSubmitReasonRef.current) return; // already auto-submitting
 
     const isFullScreenReason = reason === "Exited Full Screen";
+    const kind = isFullScreenReason ? 'exited_full_screen' : 'left_exam_screen';
+    violationLogRef.current.push({ type: kind, at: new Date().toISOString() });
+    // The count is a ref, not `warnings`: two events before React re-renders must not
+    // both read the old number.
+    const used = warningsRef.current;
+    const autoSubmit = () => {
+      autoSubmitReasonRef.current = kind;
+      confirmSubmit();
+    };
 
     if (MAX_WARNINGS === null) {
       // No limit — warn only, never auto-submit
-      setWarnings(prev => prev + 1);
+      warningsRef.current = used + 1;
+      setWarnings(used + 1);
       if (!isFullScreenReason) {
         setViolationWarningData({ show: true, title: "⚠️ Violation Detected", message: `${reason} is not allowed!` });
       } else {
@@ -977,27 +993,32 @@ export default function TestPage() {
         setViolationWarningData({ show: true, title: "Strict Mode Violation", message: `${reason} is not allowed. Test Auto-Submitting.` });
       }
       toast.error(`Strict Mode Violation: ${reason}. Test Auto-Submitting.`);
-      confirmSubmit();
+      autoSubmit();
     } else {
       // Has a limit (e.g. 2, 3, 4, 5)
-      if (warnings >= MAX_WARNINGS) {
+      if (used >= MAX_WARNINGS) {
         if (!isFullScreenReason) {
           setViolationWarningData({ show: true, title: "Maximum Violations Reached", message: `You have reached the maximum limit of violations (${reason}). Test Auto-Submitting.` });
         }
         toast.error(`Maximum violations reached (${reason}). Test Auto-Submitting.`);
-        confirmSubmit();
+        autoSubmit();
       } else {
-        setWarnings(prev => prev + 1);
+        warningsRef.current = used + 1;
+        setWarnings(used + 1);
         if (!isFullScreenReason) {
-          setViolationWarningData({ show: true, title: "⚠️ Warning", message: `Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!` });
+          setViolationWarningData({ show: true, title: "⚠️ Warning", message: `Warning ${used + 1}/${MAX_WARNINGS}: ${reason} is not allowed!` });
         } else {
-          toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!`);
+          toast.warning(`Warning ${used + 1}/${MAX_WARNINGS}: ${reason} is not allowed!`);
         }
       }
     }
-
-    // Ideally log this violation to DB (to be implemented in next step)
   };
+  // The proctoring listeners call this ref, so they always reach the newest handleViolation
+  // and through it the newest confirmSubmit. Calling the handleViolation they closed over
+  // sent the paper as it was when their effect last ran, often when the exam opened: no
+  // answers, the full clock, only Q1 visited (blank 0/20 papers, English Grammar, 5 Nov 2026).
+  const handleViolationRef = useRef(handleViolation);
+  handleViolationRef.current = handleViolation;
 
   const enterFullScreen = () => {
     const elem = document.documentElement;
@@ -1505,9 +1526,13 @@ export default function TestPage() {
       },
       question_times: finalQuestionTimes,
       time_spent_per_question: finalQuestionTimes,
+      // Both read from this device's clock: the backend keeps the gap between them (time
+      // taken) and re-bases it on the server clock, so a phone set to the wrong time is fine.
       submittedAt: new Date().toISOString(),
       startedAt: startTimeStr
     };
+    if (violationLogRef.current.length > 0) metadata.violations = violationLogRef.current.slice(-50);
+    if (autoSubmitReasonRef.current) metadata.auto_submit_reason = autoSubmitReasonRef.current;
 
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
     const hasStartForm = !!(test.settings?.start_form?.enabled || startFormData);
@@ -1540,6 +1565,7 @@ export default function TestPage() {
         const problem = problemOf(sessionError);
         toast.error(problem.message, { duration: 10_000 });
         sessionAutoSubmitRef.current = false;
+        autoSubmitReasonRef.current = null; // a resubmit is the student's own
         setIsSubmitting(false);
         if (problem.code === 'device_replaced' || problem.code === 'removed' || problem.code === 'time_over') {
           setSeatProblem(problem.message);
@@ -1582,7 +1608,16 @@ export default function TestPage() {
       metadata.stats = savedAttempt.metadata.stats;
     }
 
-    if (error) {
+    if (error && error?.response?.status === 409) {
+      // A one-attempt test this candidate already submitted (backend attempts.save).
+      toast.error(error.response?.data?.detail || 'You have already submitted this exam.', { duration: 12_000 });
+      autoSubmitReasonRef.current = null;
+      clearLocalTestSession(effectiveUserId, id, test.id);
+      if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch { /* ignore */ }
+      }
+      navigate(exitPath, { replace: true });
+    } else if (error) {
       console.error("Save Attempt Error:", error);
 
       // Detailed error for admin debugging
@@ -1593,6 +1628,7 @@ export default function TestPage() {
 
       window.alert(`Submission Error Log (Take Screenshot):\n\n${JSON.stringify(error?.response?.data || error, null, 2)}\n\nMessage: ${errorMsg}`);
       toast.error('Failed to save results. See popup for details.', { duration: 10000 });
+      autoSubmitReasonRef.current = null; // a resubmit is the student's own
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────

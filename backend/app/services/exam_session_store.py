@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 
 from app.services import exam_sessions as rules
+from app.services.attempt_meta import anchor_times, take_rule_breaks
 from app.services.scoring import score_attempt
 
 logger = logging.getLogger(__name__)
@@ -180,6 +181,8 @@ def submit_attempt(
     batch = class_name(db, session.get("class_id"))
     scored = score_attempt(test, answers)
     meta = dict(metadata or {})
+    anchor_times(meta)
+    violation_count, violation_log = take_rule_breaks(meta)
     if meta.get("stats") is not None:
         meta["client_reported_stats"] = meta["stats"]
     meta.update({
@@ -214,7 +217,9 @@ def submit_attempt(
         "answers": answers,
         "score": scored["score"],
         "metadata": meta,
-        "violation_count": int(participant.get("violations") or 0),
+        # The heartbeat's count, or the page's own log when the last breaks never reached it.
+        "violation_count": max(int(participant.get("violations") or 0), violation_count),
+        "violation_log": violation_log,
         "session_id": session["id"],
         "participant_id": participant["id"],
     }

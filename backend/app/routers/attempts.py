@@ -82,6 +82,36 @@ def _save_session_attempt(payload: SaveAttemptRequest, token: str):
     return {"data": row, "error": None}
 
 
+ALREADY_SUBMITTED = ("You have already submitted this exam, and it allows one attempt. "
+                     "If you are a different student with the same name, go back and type your full name or roll number.")
+RESEND_WINDOW_SECONDS = 600
+
+
+def _one_attempt(settings: Dict[str, Any]) -> bool:
+    return str((settings or {}).get("attempt_limit") or "") == "1"
+
+
+def _latest_paper(test_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+    rows = supabase.table("user_tests").select("*").eq("test_id", test_id).eq("user_id", user_id)\
+        .order("created_at", desc=True).limit(1).execute().data or []
+    return rows[0] if rows else None
+
+
+def _same_paper_again(earlier: Dict[str, Any], answers: Dict[str, Any]) -> bool:
+    """The paper already saved, sent again within a few minutes."""
+    from datetime import datetime, timezone
+    try:
+        saved_at = datetime.fromisoformat(str(earlier.get("created_at")).replace("Z", "+00:00"))
+        if saved_at.tzinfo is None:
+            saved_at = saved_at.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return False
+    if (datetime.now(timezone.utc) - saved_at).total_seconds() > RESEND_WINDOW_SECONDS:
+        return False
+    norm = lambda a: {str(k): v for k, v in (a or {}).items()}  # noqa: E731
+    return norm(earlier.get("answers")) == norm(answers)
+
+
 @router.post("/save")
 def save_attempt(
     payload: SaveAttemptRequest,
@@ -196,6 +226,17 @@ def save_attempt(
         if not effective_user_id:
             effective_user_id = str(uuid.uuid4())
 
+        # One attempt (settings.attempt_limit 1): a second paper from the same person (same
+        # account, or the same phone and name for a guest) is refused. The same paper sent again
+        # soon (a retry after a lost response, a double tap) gets the saved one back instead.
+        # The creator may always try their own test again.
+        if _one_attempt(settings_dict) and test_data and test_data.get("created_by") != effective_user_id:
+            earlier = _latest_paper(target_test_id, effective_user_id)
+            if earlier:
+                if _same_paper_again(earlier, payload.answers):
+                    return {"data": earlier, "error": None}
+                raise HTTPException(status_code=409, detail=ALREADY_SUBMITTED)
+
         # Ensure effective_user_id exists in auth.users to satisfy foreign key constraint fk_user
         try:
             user_exists = False
@@ -224,6 +265,10 @@ def save_attempt(
         metadata = payload.metadata or {}
         if is_conduct_exam or has_start_form or has_form_submission:
             metadata["is_conducted_attempt"] = True
+
+        from app.services.attempt_meta import anchor_times, take_rule_breaks
+        anchor_times(metadata)
+        violation_count, violation_log = take_rule_breaks(metadata)
 
         # C4: the score is computed here from the stored answer key and the client-supplied
         # `payload.score` is discarded. Falling back to the client value would reopen the
@@ -257,7 +302,9 @@ def save_attempt(
             "test_id": target_test_id,
             "answers": payload.answers,
             "score": server_score,
-            "metadata": metadata
+            "metadata": metadata,
+            "violation_count": violation_count,
+            "violation_log": violation_log,
         }).execute()
         
         # Mark the corresponding test_registration as submitted
@@ -487,19 +534,21 @@ def get_batch_status(
 def check_attempt_status(
     user_id: str,
     test_id: str,
+    submitted_only: bool = False,
     db: Client = Depends(get_db)
 ):
     try:
-        # 1. Check registrations
-        reg_res = db.table("test_registrations")\
+        # 1. Check registrations. `submitted_only` (a guest on a test link) skips this: a phone
+        # that died mid-exam left a registration, and that student must be able to start again.
+        reg_res = None if submitted_only else db.table("test_registrations")\
             .select("id")\
             .eq("user_id", user_id)\
             .eq("test_id", test_id)\
             .limit(1)\
             .execute()
-            
+
         has_attempted = False
-        if reg_res.data and len(reg_res.data) > 0:
+        if reg_res is not None and reg_res.data and len(reg_res.data) > 0:
             has_attempted = True
         else:
              # 2. Check user_tests

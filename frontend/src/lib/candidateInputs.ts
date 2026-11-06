@@ -12,7 +12,9 @@ export const CANDIDATE_INPUTS_TITLE = 'Candidate inputs';
 
 const NAME: CandidateInput = { label: 'Name', required: true };
 
-const SUGGESTIONS = ['Roll No', 'Batch', 'Phone', 'Email', 'School', 'City'];
+// The first one names what any examiner (school, coaching, company) uses to tell people apart.
+const ID_SUGGESTION = 'Roll no./unique code/email';
+const SUGGESTIONS = [ID_SUGGESTION, 'Batch', 'Phone', 'School', 'City'];
 
 /**
  * A test that never saved candidate inputs asks for Name: that is what the Settings panel
@@ -31,7 +33,9 @@ export function inputFields(settings?: TestSettings | null): CandidateInput[] {
 /** Placeholder for a blank field: the next sensible label not already asked for. */
 export function suggestLabel(taken: CandidateInput[], skip = 0): string {
     const used = new Set(taken.map(f => f.label.trim().toLowerCase()).filter(Boolean));
-    const free = SUGGESTIONS.filter(l => !used.has(l.toLowerCase()));
+    // Already asking for a roll no., code or email: don't suggest the ID field again.
+    const hasId = [...used].some(l => /roll|code|email|e-mail|\bid\b/.test(l));
+    const free = SUGGESTIONS.filter(l => !used.has(l.toLowerCase()) && !(l === ID_SUGGESTION && hasId));
     return free[skip] ?? 'Field name';
 }
 

@@ -14,7 +14,7 @@ import { emailApi, type Person } from './api';
 import { STAGE, STATUS, WHO } from './model';
 import { INPUT } from './parts';
 
-export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, onAdd, onRemoveAdded, more }: {
+export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, onAdd, onRemoveAdded, more, picking = false, full = false }: {
     rows: Person[];
     skip: Set<string>;
     onToggle: (id: string) => void;
@@ -24,6 +24,10 @@ export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, 
     onRemoveAdded: (id: string) => void;
     /** People in the audience beyond the ones loaded (shown as a note). */
     more: number;
+    /** "Pick people": the list is only who was added, so search comes first. */
+    picking?: boolean;
+    /** No room for more people in this send. */
+    full?: boolean;
 }) {
     const [q, setQ] = useState('');
     const shown = useMemo(() => {
@@ -33,8 +37,10 @@ export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, 
     const readyIds = shown.filter((r) => r.status === 'ready').map((r) => r.id);
     const allTicked = readyIds.length > 0 && readyIds.every((id) => !skip.has(id));
 
+    const add = <AddSomeone inList={new Set(rows.map((r) => r.id))} addIds={addIds} onAdd={onAdd} full={full} />;
     return (
         <div className="mt-4 border-t border-slate-100 pt-4">
+            {picking && <div className="mb-3">{add}</div>}
             <div className="flex flex-wrap items-center gap-2">
                 <p className="mr-auto text-[13px] font-semibold text-slate-700">People</p>
                 <label className="relative">
@@ -50,10 +56,12 @@ export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, 
 
             <ul className="mt-2 max-h-96 divide-y divide-slate-100 overflow-y-auto rounded-xl bg-white ring-1 ring-slate-900/[0.06]">
                 {shown.length === 0 && (
-                    <li className="px-3 py-4 text-center text-[13px] text-slate-500">{rows.length ? 'Nobody matches.' : 'Nobody in this audience yet.'}</li>
+                    <li className="px-3 py-4 text-center text-[13px] text-slate-500">
+                        {rows.length ? 'Nobody matches.' : picking ? 'Nobody picked yet. Search above to add someone.' : 'Nobody in this audience yet.'}
+                    </li>
                 )}
                 {shown.map((r) => (
-                    <PersonRow key={r.id} r={r} ticked={r.status === 'ready' && !skip.has(r.id)}
+                    <PersonRow key={r.id} r={r} ticked={r.status === 'ready' && !skip.has(r.id)} picking={picking}
                         onToggle={() => onToggle(r.id)} onRemove={r.added ? () => onRemoveAdded(r.id) : undefined} />
                 ))}
                 {more > 0 && !q && (
@@ -61,12 +69,12 @@ export default function PeoplePicker({ rows, skip, onToggle, onSetMany, addIds, 
                 )}
             </ul>
 
-            <AddSomeone inList={new Set(rows.map((r) => r.id))} addIds={addIds} onAdd={onAdd} />
+            {!picking && <div className="mt-3">{add}</div>}
         </div>
     );
 }
 
-function PersonRow({ r, ticked, onToggle, onRemove }: { r: Person; ticked: boolean; onToggle: () => void; onRemove?: () => void }) {
+function PersonRow({ r, ticked, picking, onToggle, onRemove }: { r: Person; ticked: boolean; picking: boolean; onToggle: () => void; onRemove?: () => void }) {
     const can = r.status === 'ready';
     return (
         <li className={cn('flex items-center gap-3 px-3 py-2', !can && 'bg-slate-50/60')}>
@@ -88,7 +96,7 @@ function PersonRow({ r, ticked, onToggle, onRemove }: { r: Person; ticked: boole
                     {r.last_emailed_at ? ` · emailed ${relative(r.last_emailed_at)}` : ''}
                 </span>
             </span>
-            {r.added && <Chip tone="violet" title="Added by hand for this send">Added</Chip>}
+            {r.added && !picking && <Chip tone="violet" title="Added by hand for this send">Added</Chip>}
             {!can && <Chip tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Chip>}
             {onRemove && (
                 <button type="button" onClick={onRemove} aria-label={`Remove ${r.full_name || r.email}`}
@@ -101,7 +109,7 @@ function PersonRow({ r, ticked, onToggle, onRemove }: { r: Person; ticked: boole
 }
 
 /** Search anyone by name or email and add them to this send. */
-function AddSomeone({ inList, addIds, onAdd }: { inList: Set<string>; addIds: string[]; onAdd: (id: string) => void }) {
+function AddSomeone({ inList, addIds, onAdd, full }: { inList: Set<string>; addIds: string[]; onAdd: (id: string) => void; full: boolean }) {
     const [q, setQ] = useState('');
     const [term, setTerm] = useState('');
     useEffect(() => {
@@ -118,7 +126,7 @@ function AddSomeone({ inList, addIds, onAdd }: { inList: Set<string>; addIds: st
     const results = term.length >= 2 ? found.data?.rows ?? [] : [];
 
     return (
-        <div className="mt-3">
+        <div>
             <label className="relative block">
                 <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Add someone: search any name or email"
@@ -145,6 +153,8 @@ function AddSomeone({ inList, addIds, onAdd }: { inList: Set<string>; addIds: st
                                 </span>
                                 {already ? (
                                     <span className="text-[12px] font-semibold text-slate-400">In the list</span>
+                                ) : full ? (
+                                    <span className="text-[12px] font-semibold text-slate-400">List is full</span>
                                 ) : (
                                     <button type="button" onClick={() => { onAdd(p.id); setQ(''); }}
                                         className="h-8 shrink-0 rounded-full bg-sky-600 px-3 text-[12px] font-semibold text-white hover:bg-sky-700">

@@ -93,6 +93,8 @@ export interface AudienceFilter {
     add_ids?: string[];
     skip_ids?: string[];
     everyone?: boolean;
+    /** "Pick people": only add_ids get it, even if emailed this week (not unsubscribed ones). */
+    direct?: boolean;
 }
 
 export interface Person {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -9,6 +9,8 @@ import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
 import { inputsOn } from '@/lib/candidateInputs';
 import { getExamUrl, examWhatsAppUrl } from '@/lib/conductExam';
+import { formatTaken, ruleBreakNote, secondsTaken, type PaperTimes } from '@/lib/attemptTiming';
+import { duplicateNotes } from '@/lib/duplicatePapers';
 import { isLiveTest, WRITING_WINDOW_MS } from '@/lib/teacherDashboardApi';
 import StudentDetailedResultModal from './StudentDetailedResultModal';
 import HelpHoverCard from './help/HelpHoverCard';
@@ -182,22 +184,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const usersRef = useRef(new Map<string, Person | undefined>());
     const refreshingRef = useRef(false);
 
-    const calculateDuration = (startedAt?: string, createdAt?: string) => {
-        if (!startedAt || !createdAt) return '—';
-        const start = new Date(startedAt).getTime();
-        const end = new Date(createdAt).getTime();
-        const diffMs = end - start;
-        if (isNaN(diffMs) || diffMs < 0) return '—';
-        
-        const diffSecs = Math.floor(diffMs / 1000);
-        const mins = Math.floor(diffSecs / 60);
-        const secs = diffSecs % 60;
-        
-        if (mins > 0) {
-            return `${mins}m ${secs}s`;
-        }
-        return `${secs}s`;
-    };
+    const timeTaken = (attempt: PaperTimes) => formatTaken(secondsTaken(attempt));
     const [loading, setLoading] = useState(true);
     const [loadingAnalysisId, setLoadingAnalysisId] = useState<string | null>(null);
     // Off until the creator asks for it: newest submissions first.
@@ -334,6 +321,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     // Use fullTest if loaded, otherwise fall back to test prop
     const currentTest = fullTest || test;
+    // One-attempt tests: papers that may be the same student's (lib/duplicatePapers.ts).
+    const sameStudent = useMemo(
+        () => duplicateNotes(results, Number(currentTest?.settings?.attempt_limit) === 1),
+        [results, currentTest?.settings?.attempt_limit],
+    );
 
     const modeOf = (attempt: any): Mode => {
         const visibility = attempt.metadata?.visibility || attempt.metadata?.test_visibility || (attempt.metadata?.conduct_exam ? 'conduct' : (currentTest?.visibility || (currentTest?.is_public ? 'public' : 'private')));
@@ -834,7 +826,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             rowData.push(
                 format(dateObj, 'yyyy-MM-dd'),
                 format(dateObj, 'hh:mm:ss a'),
-                calculateDuration(attempt.metadata?.startedAt, attempt.created_at)
+                timeTaken(attempt)
             );
 
             let overallQuestions = 0;
@@ -1191,6 +1183,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
                                                 {details && <p className="text-[10px] text-slate-400 truncate mt-0.5">{details}</p>}
+                                                {ruleBreakNote(attempt) && (
+                                                    <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">{ruleBreakNote(attempt)}</p>
+                                                )}
+                                                {sameStudent.get(attempt.id) && (
+                                                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">{sameStudent.get(attempt.id)}</p>
+                                                )}
                                                 {isAdmin && attempt.user?.email && (
                                                     <p className="text-[10px] text-slate-400 truncate mt-0.5">{attempt.user.email}</p>
                                                 )}
@@ -1223,7 +1221,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                 <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1.5">
                                                     <span className="inline-flex items-center gap-0.5 font-medium text-slate-500">
                                                         <Clock className="h-2.5 w-2.5 text-indigo-500" />
-                                                        {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                        {timeTaken(attempt)}
                                                     </span>
                                                     <span>·</span>
                                                     {clock(Date.parse(attempt.created_at))}
@@ -1321,6 +1319,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                 <TableCell>
                                                     <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{name}</div>
                                                     {details && <div className="text-xs text-slate-400 mt-0.5">{details}</div>}
+                                                    {ruleBreakNote(attempt) && (
+                                                        <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-0.5">{ruleBreakNote(attempt)}</div>
+                                                    )}
+                                                    {sameStudent.get(attempt.id) && (
+                                                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{sameStudent.get(attempt.id)}</div>
+                                                    )}
                                                     {isAdmin && attempt.user?.email && (
                                                         <div className="text-xs text-slate-400">{attempt.user.email}</div>
                                                     )}
@@ -1341,7 +1345,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     ) : '—'}
                                                 </TableCell>
                                                 <TableCell className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                                                    {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                    {timeTaken(attempt)}
                                                 </TableCell>
                                                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                                                     {clock(Date.parse(attempt.created_at))}

@@ -1,5 +1,6 @@
 import { isNumericalCorrect } from '@/utils/numericalAnswer';
 import { multiPartialScore } from '@/utils/multiCorrect';
+import { secondsTaken as paperSecondsTaken } from '@/lib/attemptTiming';
 import {
     ScoredAttempt, TestResultSummary, WEAK_PCT, readStudent, summariseByTest, toAttemptRow,
 } from '@/lib/teacherDashboardApi';
@@ -168,12 +169,9 @@ const median = (xs: number[]) => {
 };
 
 function secondsTaken(raw: any): number | null {
-    const start = Date.parse(raw?.metadata?.startedAt || '');
-    const end = Date.parse(raw?.created_at || '');
-    if (isNaN(start) || isNaN(end) || end <= start) return null;
-    const s = Math.round((end - start) / 1000);
-    // Longer than a day is a start time from an earlier, unfinished sitting.
-    return s > 24 * 3600 ? null : s;
+    const s = paperSecondsTaken(raw);
+    // Nothing, or longer than a day (a start time from an earlier, unfinished sitting).
+    return !s || s > 24 * 3600 ? null : s;
 }
 
 function detailsLine(sf: Record<string, unknown> | null | undefined, shown: string): string {

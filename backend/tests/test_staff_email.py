@@ -193,3 +193,42 @@ def test_stopping_an_address_works_but_only_the_owner_can_undo_it(mail):
     # Settings and on/off switches aren't on the team site at all.
     assert c.get("/api/email-broadcast/smtp-status").status_code == 401
     assert c.post("/api/staff/email/smtp-config", json={}).status_code in (404, 405)
+
+
+# ── "Pick people": a direct email to hand-picked people (20261106120000_email_direct.sql) ──
+
+def test_direct_email_needs_its_sql_and_goes_only_to_the_people_picked(mail):
+    c, _, _ = sign_in_fully(mail, permissions=SEND)
+    direct = {"direct": True, "add_ids": [ASHA["id"]], "stages": ["active"], "whos": ["educator"]}
+
+    # Before the SQL the function ignores `direct` (its result has no "direct"): refuse, never email everyone.
+    r = c.post("/api/staff/email/audience", json={"filter": direct})
+    assert r.status_code == 409 and "20261106120000_email_direct.sql" in r.json()["detail"]
+    assert c.post("/api/staff/email/campaigns", json={**draft(), "filter": direct}).status_code == 409
+    assert mail["db"].tables["email_campaigns"] == []
+
+    seen = []
+
+    def audience(d, p):
+        seen.append(p["p_filter"])
+        return {"direct": True, "total": 1, "ready": 1, "shown": 1, "skipped": {}, "rows": [dict(ASHA, added=True)]}
+
+    mail["db"].rpcs["email_report_audience"] = audience
+    assert c.post("/api/staff/email/audience", json={"filter": direct}).status_code == 200
+    r = c.post("/api/staff/email/campaigns", json={**draft(), "filter": direct})
+    assert r.status_code == 200, r.text
+    camp = mail["db"].tables["email_campaigns"][-1]
+    # Only the picked people: group filters are dropped, never widened to a group.
+    assert camp["filter"] == {"direct": True, "add_ids": [ASHA["id"]]}
+    assert all("stages" not in f and "whos" not in f for f in seen)
+
+
+def test_direct_email_is_your_own_email_to_one_to_fifty_people(mail):
+    c, _, _ = sign_in_fully(mail, permissions=SEND)
+    mail["db"].rpcs["email_report_audience"] = lambda d, p: {"direct": True, "total": 1, "ready": 1, "shown": 1,
+                                                             "skipped": {}, "rows": [dict(ASHA, added=True)]}
+    nobody = c.post("/api/staff/email/campaigns", json={**draft(), "filter": {"direct": True}})
+    assert nobody.status_code == 400 and "at least one" in nobody.json()["detail"]
+    many = [f"00000000-0000-4000-8000-{i:012d}" for i in range(51)]
+    too_many = c.post("/api/staff/email/campaigns", json={**draft(), "filter": {"direct": True, "add_ids": many}})
+    assert too_many.status_code == 400 and "at most 50" in too_many.json()["detail"]

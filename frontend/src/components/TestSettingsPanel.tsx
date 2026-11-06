@@ -548,6 +548,27 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         />
                     </div>
                 </div>
+                {settings.attempt_limit === 1 && (() => {
+                    // One attempt but only a name asked: two students with one name can't be told
+                    // apart on different phones (results only note it, lib/duplicatePapers.ts).
+                    const fields = cleanInputs(settings.start_form?.fields || []);
+                    if (settings.start_form?.enabled === false || fields.length > 1) return null;
+                    return (
+                        <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg bg-sky-50 px-4 py-2.5 text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+                            <span className="flex-1 min-w-[12rem]">Only a name is asked. Add a roll no. so students with the same name aren’t mixed up.</span>
+                            <button
+                                type="button"
+                                className="font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900 dark:text-sky-300"
+                                onClick={() => updateSetting('start_form', {
+                                    enabled: true,
+                                    fields: [...(fields.length ? fields : [{ label: 'Name', required: true }]), { label: 'Roll no./unique code/email', required: true }],
+                                })}
+                            >
+                                Add it
+                            </button>
+                        </div>
+                    );
+                })()}
 
                 {/* Require Login Toggle */}
                 <div className="flex flex-col gap-2 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-900/50">

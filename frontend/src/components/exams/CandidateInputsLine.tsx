@@ -157,7 +157,8 @@ export default function CandidateInputsLine({ settings, onChange, locked = false
                         const blank = !field.label.trim();
                         const placeholder = idx === 0 ? 'Name' : suggestLabel(shown, blank ? blanksSoFar++ : 0);
                         const isGhost = idx === 1 && draft.length <= 1;
-                        const width = Math.min(Math.max(blank ? placeholder.length : field.label.length, 3), 22) + 1;
+                        // A blank box shows its whole hint ("Roll no./unique code/email").
+                        const width = Math.min(Math.max(blank ? placeholder.length : field.label.length, 3), blank ? 27 : 22) + 1;
                         return (
                             <div
                                 key={idx}

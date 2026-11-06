@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
 import { inputFields, inputsOn } from '@/lib/candidateInputs';
-import { beginGuestAttempt } from '@/lib/guestIdentity';
+import { beginGuestAttempt, knownGuestUserId } from '@/lib/guestIdentity';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
@@ -151,6 +151,8 @@ export default function TestIntroPage() {
     const [checklistDiff, setChecklistDiff] = useState(true); // Default checked for 1-click start
     const [isTimerDisabled, setIsTimerDisabled] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
+    // One-attempt test, no login: this phone already sent a paper under the name typed.
+    const [guestSubmitted, setGuestSubmitted] = useState(false);
     const [schedulingStatus, setSchedulingStatus] = useState<'upcoming' | 'ended' | 'live' | null>(null);
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [hasSolutions, setHasSolutions] = useState(false);
@@ -353,12 +355,33 @@ export default function TestIntroPage() {
         return () => clearInterval(interval);
     }, [loading]);
 
+    // One attempt, no login: has this phone already sent a paper under the name being typed?
+    // The Guest ID is per phone and name (lib/guestIdentity.ts), so the same student coming
+    // back on the same phone is stopped here; a different student with the same name types
+    // a fuller name. The server refuses a second paper too (attempts.save).
+    const oneAttempt = Number(test?.settings?.attempt_limit) === 1;
+    const guestFormKey = !user && oneAttempt && test && inputsOn(test.settings) ? JSON.stringify(startFormValues) : '';
+    useEffect(() => {
+        setGuestSubmitted(false);
+        if (!guestFormKey || !test) return;
+        const id = knownGuestUserId(JSON.parse(guestFormKey));
+        if (!id) return; // never started a test on this phone under this name
+        let live = true;
+        const t = window.setTimeout(() => {
+            import('@/lib/attemptsApi')
+                .then(({ checkUserTestAttempt }) => checkUserTestAttempt(id, test.id, true))
+                .then(({ hasAttempted: sent }) => { if (live && sent) setGuestSubmitted(true); })
+                .catch(() => { /* the server still refuses a second paper */ });
+        }, 400);
+        return () => { live = false; window.clearTimeout(t); };
+    }, [guestFormKey, test?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // ─────────────────────────────────────────────────────────────────────────
     // 1-STEP START TEST HANDLER
     // ─────────────────────────────────────────────────────────────────────────
     const handleStartFlow = () => {
         if (!test) return;
-        if (hasAttempted || schedulingStatus === 'ended') return;
+        if (hasAttempted || guestSubmitted || schedulingStatus === 'ended') return;
 
         // 1. Check Login Requirement if enabled by Creator
         if (test.settings?.login_required && !user) {
@@ -1039,6 +1062,11 @@ export default function TestIntroPage() {
                         ) : hasAttempted ? (
                             <div className="w-full p-4 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 rounded-2xl text-center font-bold text-xs sm:text-sm border border-amber-200 dark:border-amber-900/50 shadow-sm">
                                 You have already attempted this exam.
+                            </div>
+                        ) : guestSubmitted ? (
+                            <div className="w-full p-4 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 rounded-2xl text-center text-xs sm:text-sm border border-amber-200 dark:border-amber-900/50 shadow-sm">
+                                <p className="font-bold">This exam was already submitted from this phone under this name.</p>
+                                <p className="mt-1 font-medium">It allows one attempt. A different student? Type your full name or roll number above.</p>
                             </div>
                         ) : isLoginGateActive ? (
                             <Button

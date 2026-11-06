@@ -15,6 +15,8 @@ export interface RetryOptions {
     baseDelayMs?: number;   // default 1000 ms
     maxDelayMs?: number;    // default 15000 ms
     onRetry?: (attempt: number, error: any) => void;
+    /** True for an error that retrying can't fix (stop at once). */
+    giveUp?: (error: any) => boolean;
 }
 
 /**
@@ -33,7 +35,7 @@ export async function withExponentialRetry<T>(
             return await fn();
         } catch (err) {
             lastError = err;
-            if (attempt === maxAttempts) break;
+            if (attempt === maxAttempts || options.giveUp?.(err)) break;
 
             const delay = Math.min(baseDelayMs * Math.pow(2, attempt - 1), maxDelayMs);
             onRetry?.(attempt, err);

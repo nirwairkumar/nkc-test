@@ -41,6 +41,17 @@ export function deviceGuestUserId(form?: Record<string, unknown> | null): string
     }
 }
 
+/** This device's guest id for this name if it has one already; never makes one. */
+export function knownGuestUserId(form?: Record<string, unknown> | null): string | null {
+    try {
+        const ids: Record<string, string> = JSON.parse(localStorage.getItem(DEVICE_KEY) || '{}') || {};
+        const id = ids[nameKey(form)];
+        return typeof id === 'string' && id ? id : null;
+    } catch {
+        return null;
+    }
+}
+
 /** Start of a test: this test's guest id for this tab, from the device's id for this name. */
 export function beginGuestAttempt(testId: string, form?: Record<string, unknown> | null): string {
     const id = deviceGuestUserId(form);
