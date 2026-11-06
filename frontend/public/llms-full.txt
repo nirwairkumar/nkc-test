@@ -40,6 +40,18 @@ Full step-by-step with screenshots: https://testoza.com/user-guide/quick-start
 - [Bulk test upload](https://testoza.com/user-guide/bulk-test-upload): uploading hundreds of questions as JSON
 - [All docs](https://testoza.com/user-guide): the user guide's front page and every page in it
 
+## Video tutorials (TestoZa's own YouTube channel, https://www.youtube.com/@TestoZaOfficial)
+
+Each one is a real screen recording of TestoZa, and each user-guide page above plays the matching video.
+
+- [How to conduct a cheat-proof online exam: setup, join code and live results](https://www.youtube.com/watch?v=rOQ1OGA2lk4) (5:48): going live, every anti-cheating setting, name and roll number, sharing on WhatsApp, the 6-digit join code, the candidate's phone and live results. Written steps: https://testoza.com/user-guide/quick-start
+- [How to create an online test: Hindi + English, diagrams, chemistry and JEE maths](https://www.youtube.com/watch?v=lGjJF5zKLhU) (6:38); in Hindi: https://www.youtube.com/watch?v=INv5Sn2dkyI
+- [How to analyse online test results](https://www.youtube.com/watch?v=RWaYA4YlRYY) (6:55): the Results panel, the Full report, questions to teach again and All submissions. Written steps: https://testoza.com/user-guide/view-results-guide
+- [Question paper to online exam with results, in minutes](https://www.youtube.com/watch?v=M3U_xDQ4To8) (1:43): the AI reading a paper, going live, sharing and results. Written steps: https://testoza.com/user-guide/ai-test-generation
+- [Top 10 TestoZa features for teachers](https://www.youtube.com/watch?v=rY8kNkg8LZ0) (4:46)
+- [Chemistry equations in TestoZa: reactions, ions and Match List questions](https://www.youtube.com/watch?v=YXhVCBvIrRE) (5:40)
+- Shorts: [DPP photos to a timed test](https://www.youtube.com/shorts/4xKXBG6W9Ug), [what the anti-cheating settings stop, and what they can't](https://www.youtube.com/shorts/SsvByTgk-QA), [Scheduled Access](https://www.youtube.com/shorts/lG0tHZCOqjY), [NTA-style exam screen](https://www.youtube.com/shorts/lavITk04xgM), [your institute's logo on every test](https://www.youtube.com/shorts/WbfSM_kKqec)
+
 ## Free PDF Tools (Panna)
 
 Panna (https://pdf.testoza.com) is TestoZa's free set of PDF tools. Every tool runs in the browser, so files are processed on the user's device and never uploaded. There is no sign-up and no watermark.

@@ -1579,7 +1579,8 @@ function securityHeaders() {
       "img-src 'self' data: blob: https:",
       "media-src 'self' blob: https:",
       `connect-src ${connectSrc}`,
-      "frame-src https://challenges.cloudflare.com",
+      // youtube-nocookie: the tutorial video on /user-guide pages (components/docs/DocVideoCard.tsx).
+      "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com",
       // Nothing here embeds plugins or sets a <base> tag, and no form should post
       // off-origin. These cost nothing and block common XSS escalations.
       "object-src 'none'",

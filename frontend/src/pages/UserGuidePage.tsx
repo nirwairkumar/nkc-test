@@ -9,9 +9,10 @@ import {
 } from 'lucide-react';
 import {
     AI_GENERATION_INTRO, AI_GENERATION_STEPS, CONDUCT_EXAM_STEPS, DOC_GROUPS, QUICK_START,
-    docGroupTitle, docItem, docSeoDescription, docSeoTitle, docUrl, resolveDocSlug,
+    docGroupTitle, docItem, docSeoDescription, docSeoTitle, docUrl, docVideos, resolveDocSlug,
     type DocStep,
 } from '@/docs/userGuide';
+import DocVideoCard from '@/components/docs/DocVideoCard';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide'));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide'));
 const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide'));
@@ -298,6 +299,8 @@ export default function UserGuidePage() {
     const currentIndex = useMemo(() => {
         return flatItems.findIndex(item => item.slug === activeSlug);
     }, [flatItems, activeSlug]);
+
+    const pageVideos = activeSlug === 'view-results-guide' ? null : docVideos(activeSlug);
 
     const prevItem = currentIndex > 0 ? flatItems[currentIndex - 1] : null;
     const nextItem = currentIndex < flatItems.length - 1 ? flatItems[currentIndex + 1] : null;
@@ -1009,6 +1012,9 @@ export default function UserGuidePage() {
                                 {activeInfo.item.description}
                             </p>
                         </div>
+
+                        {/* The page's YouTube video. Understanding Results has its own card inside ResultsGuide. */}
+                        {pageVideos && <DocVideoCard key={activeSlug} videos={pageVideos} />}
 
                         {/* Main Body content renderer */}
                         <div className="prose prose-slate dark:prose-invert max-w-none">

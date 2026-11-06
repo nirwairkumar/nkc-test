@@ -248,6 +248,286 @@ const SHOT_JOIN: DocImage = {
     alt: 'A candidate’s phone at testoza.com/join: Join your exam, six boxes for the 6-digit code, Continue, and See your result',
 };
 
+// ─── Videos (youtube.com/@TestoZaOfficial) ──────────────────────────────────────
+// Each docs page shows the video that covers the same ground: on the page (UserGuidePage
+// plays it in place) and to crawlers (a link, the chapters and VideoObject JSON-LD), so an
+// assistant that answers "how do I conduct a test on TestoZa?" can point to TestoZa’s own
+// video. Times and chapters are copied from each video’s YouTube description; when a video
+// is replaced, change the id here. The results video also lives in lib/helpVideos.ts (the
+// (?) help cards), which keeps its own copy so the app doesn’t bundle this file.
+
+export interface DocVideoChapter {
+    /** Seconds from the start. */
+    at: number;
+    label: string;
+}
+
+export interface DocVideo {
+    id: string;
+    title: string;
+    /** One or two sentences: what the video shows. */
+    description: string;
+    /** ISO 8601, as YouTube reports it (PT5M48S). */
+    duration: string;
+    /** When it went public on YouTube (ISO 8601 with time zone). */
+    uploadDate: string;
+    /** Spoken language; '' for music only. */
+    lang: 'en' | 'hi' | '';
+    /** A YouTube Short (vertical, under 3 minutes). */
+    short?: boolean;
+    chapters?: DocVideoChapter[];
+}
+
+export const VIDEOS: Record<string, DocVideo> = {
+    conductExam: {
+        id: 'rOQ1OGA2lk4',
+        title: 'How to conduct a cheat-proof online exam: setup, join code and live results',
+        description:
+            'A JEE Main mock conducted live on TestoZa: every anti-cheating setting, collecting name and roll number, sharing the link on WhatsApp, a 6-digit join code on the board, the candidate’s phone, and results as they arrive.',
+        duration: 'PT5M48S',
+        uploadDate: '2026-10-21T11:30:01Z',
+        lang: 'en',
+        chapters: [
+            { at: 0, label: 'Intro' },
+            { at: 13, label: 'Go live' },
+            { at: 39, label: 'Anti-cheating settings' },
+            { at: 191, label: 'Name, roll number and share' },
+            { at: 214, label: 'Join code and the board' },
+            { at: 231, label: 'The candidate’s phone' },
+            { at: 248, label: 'Join with a code on a computer' },
+            { at: 277, label: 'Live results' },
+            { at: 307, label: 'Why TestoZa' },
+        ],
+    },
+    results: {
+        id: 'RWaYA4YlRYY',
+        title: 'How to analyse online test results: rank list, question analysis and weak students',
+        description:
+            'Every number on TestoZa’s two result pages, read on a real SSC CGL mock written by 48 candidates: the Results panel, the Full report, the questions to teach again, and All submissions.',
+        duration: 'PT6M55S',
+        uploadDate: '2026-10-28T11:30:28Z',
+        lang: 'en',
+        chapters: [
+            { at: 0, label: 'Sunday night, 48 answer sheets' },
+            { at: 40, label: 'Nothing from paper is lost' },
+            { at: 64, label: 'Where your results live' },
+            { at: 75, label: 'Page 1: the Results panel' },
+            { at: 190, label: 'Page 2: the Full report' },
+            { at: 265, label: 'Teach these again' },
+            { at: 360, label: 'All submissions: the long view' },
+            { at: 381, label: 'Your five-minute routine' },
+        ],
+    },
+    topTen: {
+        id: 'rY8kNkg8LZ0',
+        title: 'Top 10 TestoZa features for teachers',
+        description:
+            'The ten features educators use every week, each shown for real: AI test generation, Sy Pad equations, Hindi typing, exam patterns, going live with anti-cheating, sharing, candidate details, the exam on a phone, the live view and instant results.',
+        duration: 'PT4M46S',
+        uploadDate: '2026-10-27T11:30:18Z',
+        lang: 'en',
+        chapters: [
+            { at: 0, label: 'Intro' },
+            { at: 19, label: 'Generate a test with AI' },
+            { at: 53, label: 'Maths and science equations (Sy Pad)' },
+            { at: 83, label: 'Type in Hindi and 119 languages' },
+            { at: 103, label: 'Exam patterns: marking and timed sections' },
+            { at: 132, label: 'Go live in one click, with anti-cheating' },
+            { at: 170, label: 'Share by link, WhatsApp or join code' },
+            { at: 187, label: 'Collect candidate details' },
+            { at: 199, label: 'Exam on any phone, no app' },
+            { at: 230, label: 'Watch the exam live' },
+            { at: 247, label: 'Instant results, ranks and Excel' },
+        ],
+    },
+    createTest: {
+        id: 'lGjJF5zKLhU',
+        title: 'How to create an online test: Hindi + English, diagrams, chemistry and JEE maths',
+        description:
+            'A complete JEE-level test built step by step on the Create Test page: one question in two languages, a diagram from the paper, chemistry structures, maths with Sy Pad, Match the list, sections, and saving.',
+        duration: 'PT6M38S',
+        uploadDate: '2026-10-20T09:25:18Z',
+        lang: 'en',
+        chapters: [
+            { at: 0, label: 'The finished paper' },
+            { at: 34, label: 'Test details' },
+            { at: 73, label: 'One question, two languages' },
+            { at: 125, label: 'A diagram from the paper' },
+            { at: 161, label: 'Chemistry structures' },
+            { at: 194, label: 'Maths with Sy Pad' },
+            { at: 241, label: 'The big reaction' },
+            { at: 293, label: 'Match the list' },
+            { at: 312, label: 'Sections' },
+            { at: 374, label: 'Save' },
+        ],
+    },
+    createTestHindi: {
+        id: 'INv5Sn2dkyI',
+        title: 'Online test कैसे बनाएँ? Create Test का पूरा tutorial (Hindi)',
+        description: 'The Create Test tutorial in Hindi: questions in Hindi and English, diagrams, chemistry structures, Sy Pad maths and sections.',
+        duration: 'PT6M11S',
+        uploadDate: '2026-10-20T09:51:04Z',
+        lang: 'hi',
+    },
+    chemistry: {
+        id: 'YXhVCBvIrRE',
+        title: 'Chemistry equations in TestoZa: reactions, ions and Match List questions',
+        description:
+            'Real JEE Main and JEE Advanced 2026 chemistry questions typed in the builder: formulas and ions, equilibrium and state symbols, conditions on the arrow, Match List tables, structures, and Fill from photo.',
+        duration: 'PT5M40S',
+        uploadDate: '2026-10-22T02:30:25Z',
+        lang: 'en',
+        chapters: [
+            { at: 0, label: 'Intro' },
+            { at: 27, label: 'Formulas and ions' },
+            { at: 77, label: 'Equilibrium and states' },
+            { at: 109, label: 'Reaction conditions' },
+            { at: 171, label: 'Match-the-list tables' },
+            { at: 217, label: 'Structures in questions' },
+            { at: 280, label: 'Fill from photo' },
+            { at: 318, label: 'Save' },
+        ],
+    },
+    paperToExam: {
+        id: 'M3U_xDQ4To8',
+        title: 'Question paper to online exam with results, in minutes',
+        description:
+            'The whole flow in under two minutes, with music and no voice: upload a paper, the AI reads every question, check and edit, go live with anti-cheating, share on WhatsApp or with a join code, and results.',
+        duration: 'PT1M43S',
+        uploadDate: '2026-10-15T20:17:46Z',
+        lang: '',
+        chapters: [
+            { at: 0, label: 'Drop in a question paper' },
+            { at: 14, label: 'AI reads every question' },
+            { at: 24, label: 'Check, edit, add a question' },
+            { at: 34, label: 'Go live with anti-cheating' },
+            { at: 46, label: 'Share one link on WhatsApp' },
+            { at: 60, label: 'Exam on any phone, instant results' },
+            { at: 70, label: 'No link? Use a 6-digit join code' },
+            { at: 86, label: 'Same proctoring, same results' },
+        ],
+    },
+    dppToTest: {
+        id: '4xKXBG6W9Ug',
+        title: 'Turn a DPP into a timed online test from two photos',
+        description: 'Photos of the DPP pages and the answer key become a timed test with +4/−1 marking and an instant result, on a phone.',
+        duration: 'PT1M17S',
+        uploadDate: '2026-10-23T12:10:41Z',
+        lang: 'en',
+        short: true,
+    },
+    dppToTestHindi: {
+        id: 'Jd-AYSjA9F8',
+        title: 'DPP को 2 मिनट में online test बनाइए (Hindi)',
+        description: 'The DPP-to-test Short in Hindi: two photos become a timed test with an instant result.',
+        duration: 'PT1M17S',
+        uploadDate: '2026-10-30T00:42:45Z',
+        lang: 'hi',
+        short: true,
+    },
+    pdfToTestHindi: {
+        id: '6uLrstwyL1g',
+        title: 'PDF से online test, 2 मिनट में (Hindi)',
+        description: 'A PDF question paper becomes a live test: 30 questions read in 1 minute 14 seconds, then shared with a 6-digit code.',
+        duration: 'PT47S',
+        uploadDate: '2026-10-19T11:30:07Z',
+        lang: 'hi',
+        short: true,
+    },
+    photoToTestHindi: {
+        id: 'J41o0W63udA',
+        title: 'Book की photo से online test, 17 सेकंड में (Hindi)',
+        description: 'One photo of a textbook page becomes a test: 10 questions with options and the answer key in 17 seconds.',
+        duration: 'PT42S',
+        uploadDate: '2026-10-19T10:30:32Z',
+        lang: 'hi',
+        short: true,
+    },
+    cheating: {
+        id: 'SsvByTgk-QA',
+        title: 'Can students cheat in an online exam? What TestoZa stops, and what it can’t',
+        description: 'Full screen, tab and app switch detection, copy-paste and back-button blocks, and the honest limit: no webcam.',
+        duration: 'PT41S',
+        uploadDate: '2026-11-03T13:00:23Z',
+        lang: 'en',
+        short: true,
+    },
+    scheduledAccess: {
+        id: 'lG0tHZCOqjY',
+        title: 'Make an online exam open and close on time (Scheduled Access)',
+        description: 'Early joiners wait with a countdown, the exam opens at the start time and closes itself at the end time.',
+        duration: 'PT28S',
+        uploadDate: '2026-11-05T13:00:28Z',
+        lang: 'en',
+        short: true,
+    },
+    ntaScreen: {
+        id: 'lavITk04xgM',
+        title: 'NTA-style CBT practice for your students, with one setting',
+        description: 'The NTA-style question palette, answer colours, server timer and summary before submitting: Settings → Results & Timing → Standard Mode.',
+        duration: 'PT37S',
+        uploadDate: '2026-11-04T13:00:00Z',
+        lang: 'en',
+        short: true,
+    },
+    branding: {
+        id: 'WbfSM_kKqec',
+        title: 'Put your institute’s logo on every online test',
+        description: 'Institution branding in the builder: logo, name, colour and font, shown on laptops and phones.',
+        duration: 'PT48S',
+        uploadDate: '2026-10-26T15:45:23Z',
+        lang: 'en',
+        short: true,
+    },
+};
+
+export interface DocVideos {
+    main: DocVideo;
+    /** Play from here (a chapter start), when only part of the video is about this page. */
+    start?: number;
+    more: DocVideo[];
+}
+
+const V = VIDEOS;
+const DOC_VIDEO_MAP: Record<string, { main: DocVideo; start?: number; more?: DocVideo[] }> = {
+    'quick-start': { main: V.conductExam, more: [V.createTest, V.createTestHindi, V.dppToTest] },
+    intro: { main: V.topTen, more: [V.paperToExam, V.createTest, V.createTestHindi, V.branding] },
+    'ai-test-generation': { main: V.paperToExam, more:[V.dppToTest, V.pdfToTestHindi, V.photoToTestHindi, V.dppToTestHindi] },
+    'live-exam-sessions': { main: V.conductExam, start: 214, more: [V.scheduledAccess, V.cheating] },
+    'conduct-exam': { main: V.conductExam, more: [V.cheating, V.scheduledAccess, V.ntaScreen] },
+    'view-results-guide': { main: V.results },
+    'chemistry-notation': { main: V.chemistry },
+    'notation-math': { main: V.createTest, start: 194 },
+    'notation-matching': { main: V.chemistry, start: 171, more: [V.createTest] },
+};
+
+export function docVideos(slug: string): DocVideos | null {
+    const v = DOC_VIDEO_MAP[slug];
+    return v ? { main: v.main, start: v.start || undefined, more: v.more || [] } : null;
+}
+
+export const youtubeWatchUrl = (id: string, at?: number) => `https://www.youtube.com/watch?v=${id}${at ? `&t=${at}s` : ''}`;
+export const youtubeShortUrl = (id: string) => `https://www.youtube.com/shorts/${id}`;
+/** Privacy-enhanced player: YouTube sets no cookies until the video plays. */
+export const youtubeEmbedUrl = (id: string, start?: number) =>
+    `https://www.youtube-nocookie.com/embed/${id}?rel=0${start ? `&start=${start}` : ''}`;
+/** hq is 480×360 (every video has it), maxres 1280×720. */
+export const youtubeThumbUrl = (id: string, size: 'hq' | 'maxres' = 'maxres') => `https://i.ytimg.com/vi/${id}/${size}default.jpg`;
+
+function videoSeconds(iso: string): number {
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    return m ? Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3] || 0) : 0;
+}
+
+export function clockOfSeconds(total: number): string {
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** PT5M48S → 5:48 */
+export const videoClock = (iso: string) => clockOfSeconds(videoSeconds(iso));
+
+export const VIDEO_LANG_LABEL: Record<DocVideo['lang'], string> = { en: 'English', hi: 'Hindi', '': 'No voice' };
+
 // ─── Quick start: conduct a test ────────────────────────────────────────────────
 
 export interface QuickStart {
@@ -893,6 +1173,28 @@ function pdfToolsBodyHtml(): string {
     ].join('\n');
 }
 
+/** The page’s video: a linked thumbnail, the chapters and the other videos on the topic. */
+function videosHtml(slug: string): string {
+    const v = docVideos(slug);
+    if (!v) return '';
+    const m = v.main;
+    const lang = m.lang ? `, in ${VIDEO_LANG_LABEL[m.lang]}` : '';
+    const from = v.start ? ` The part about this page starts at ${clockOfSeconds(v.start)}.` : '';
+    const moreItem = (x: DocVideo) =>
+        `<li><a href="${x.short ? youtubeShortUrl(x.id) : youtubeWatchUrl(x.id)}">${esc(x.title)}</a> (${videoClock(x.duration)}${x.short ? ', Short' : ''}${x.lang ? `, ${VIDEO_LANG_LABEL[x.lang]}` : ''}): ${esc(x.description)}</li>`;
+    return [
+        '<section id="video">',
+        `<h2>Video: ${esc(m.title)}</h2>`,
+        `<p><a href="${youtubeWatchUrl(m.id, v.start)}"><img src="${youtubeThumbUrl(m.id)}" alt="${esc(`TestoZa video: ${m.title}`)}" width="1280" height="720" loading="lazy" decoding="async"></a></p>`,
+        `<p>${esc(m.description)} ${videoClock(m.duration)} on TestoZa’s YouTube channel${lang}.${from}</p>`,
+        m.chapters
+            ? `<p>Chapters:</p><ul>${m.chapters.map((c) => `<li><a href="${youtubeWatchUrl(m.id, c.at)}">${clockOfSeconds(c.at)} ${esc(c.label)}</a></li>`).join('')}</ul>`
+            : '',
+        v.more.length ? `<h3>More TestoZa videos on this</h3><ul>${v.more.map(moreItem).join('')}</ul>` : '',
+        '</section>',
+    ].join('');
+}
+
 function docBodyHtml(slug: string): string {
     switch (slug) {
         case 'quick-start':
@@ -927,6 +1229,7 @@ export function docCrawlerHtml(slug: string): string {
         `<h1>${esc(title)}</h1>`,
         `<p><em>${esc(docSeoDescription(slug))}</em></p>`,
         docBodyHtml(slug),
+        videosHtml(slug),
         item ? `<p>Last updated ${esc(item.updated)}.</p>` : '',
         '</article>',
         docsNavHtml(slug),
@@ -969,11 +1272,33 @@ function howToSteps(steps: DocStep[], base: string) {
     }));
 }
 
-/** One JSON-LD graph: TechArticle, HowTo where the page is a procedure, FAQPage, BreadcrumbList. */
+/**
+ * The video the page plays. No Clip/key-moment markup: the clips would point at youtube.com
+ * rather than this page, which Search Console reports as invalid; YouTube’s own chapters
+ * already give Google the key moments.
+ */
+function videoObject(v: DocVideo, pageUrl: string) {
+    return {
+        '@type': 'VideoObject',
+        '@id': `${pageUrl}#video`,
+        name: v.title,
+        description: v.description,
+        thumbnailUrl: [youtubeThumbUrl(v.id, 'maxres'), youtubeThumbUrl(v.id, 'hq')],
+        uploadDate: v.uploadDate,
+        duration: v.duration,
+        embedUrl: `https://www.youtube.com/embed/${v.id}`,
+        url: youtubeWatchUrl(v.id),
+        ...(v.lang ? { inLanguage: v.lang } : {}),
+        publisher: { '@id': `${SITE}/#organization` },
+    };
+}
+
+/** One JSON-LD graph: TechArticle, HowTo where the page is a procedure, FAQPage, BreadcrumbList, VideoObject. */
 export function docJsonLd(slug: string) {
     const url = docUrl(slug);
     const item = docItem(slug);
     const images = docImages(slug).map((i) => abs(i.src));
+    const video = docVideos(slug)?.main;
     const graph: Record<string, unknown>[] = [
         {
             '@type': 'TechArticle',
@@ -984,6 +1309,7 @@ export function docJsonLd(slug: string) {
             inLanguage: 'en',
             ...(item ? { dateModified: item.updated } : {}),
             ...(images.length ? { image: images } : {}),
+            ...(video ? { video: { '@id': `${url}#video` } } : {}),
             author: { '@id': `${SITE}/#organization` },
             publisher: { '@id': `${SITE}/#organization` },
             isPartOf: { '@type': 'WebSite', '@id': `${SITE}/#website`, name: 'TestoZa', url: `${SITE}/` },
@@ -1000,6 +1326,7 @@ export function docJsonLd(slug: string) {
             ],
         },
     ];
+    if (video) graph.push(videoObject(video, url));
     if (slug === 'quick-start') {
         graph.push({
             '@type': 'HowTo',
