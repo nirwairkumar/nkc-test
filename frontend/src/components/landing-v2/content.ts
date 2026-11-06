@@ -20,10 +20,10 @@ export const HERO = {
     h1: 'Free online test maker',
     // Keep this in sync with index.html's #seo-fallback so crawlers and users
     // see substantially the same page (audit T3).
-    sub: 'Create and conduct exams with AI. Generate quizzes from PDFs, YouTube videos, or plain text in minutes — auto-graded, proctored, and free for unlimited students.',
+    sub: 'Create and conduct exams with AI. Turn a PDF or photos of a question paper, notes or a chapter into a test in minutes — auto-graded, proctored, and free for unlimited students.',
     rotating: [
         'from a PDF',
-        'from a YouTube video',
+        'from a photo of a page',
         'from your notes',
         'from a question bank',
     ],
@@ -73,7 +73,7 @@ export const VALUE_PROPS = [
     {
         icon: 'sparkles',
         title: 'Turn any source into a paper',
-        body: 'Upload a PDF, paste a YouTube link, or drop in raw text. AI writes MCQs, numericals, true/false and multi-select questions with explanations — then hands you an editable draft, not a locked export.',
+        body: 'Upload a PDF or photos of a paper, notes or a chapter. AI extracts the questions exactly, or writes new MCQs, multiple-correct and numerical questions — then hands you an editable draft, not a locked export.',
         href: '/pdf-to-quiz',
         linkLabel: 'See PDF to quiz',
     },
@@ -100,7 +100,7 @@ export const STEPS = [
     {
         n: '01',
         title: 'Bring your material',
-        body: 'A chapter PDF, a lecture recording on YouTube, an old question paper, or nothing at all — start from a blank builder if you prefer.',
+        body: 'A chapter PDF, photos of your notes, an old question paper, or nothing at all — start from a blank builder if you prefer.',
     },
     {
         n: '02',
@@ -166,7 +166,7 @@ export const COMPARISON = {
         { feature: 'Built for formal assessment', values: [true, false, true, 'partial'] },
         { feature: 'Ready to use without setup', values: [true, true, false, true] },
         { feature: 'No server or hosting to maintain', values: [true, true, false, true] },
-        { feature: 'AI questions from PDF / YouTube', values: [true, false, false, 'partial'] },
+        { feature: 'AI questions from a PDF or photos', values: [true, false, false, 'partial'] },
         { feature: 'Negative marking', values: [true, false, true, false] },
         { feature: 'Tab-switch and full-screen proctoring', values: [true, false, 'partial', false] },
         { feature: 'Section-wise papers with timers', values: [true, false, 'partial', false] },
@@ -205,19 +205,19 @@ export const TESTIMONIALS = [
 export const FAQS = [
     {
         q: 'How do I create a test from a PDF?',
-        a: 'You can create a test from a PDF on TestoZa in under two minutes using our AI importer. Navigate to the AI Test Generator, upload your PDF (lecture notes, textbook chapters, or question banks), select your desired question count and difficulty, and click Generate. The AI extracts key concepts, creates multiple-choice or short-answer questions with detailed explanations, and loads them directly into your editable test builder.',
+        a: 'Open Generate with AI (app.testoza.com/generate-with-ai) and choose the PDF, or photos of the pages. Press Extract Questions to keep an existing paper’s questions, options and answer key exactly, or Generate New Questions to write new ones from a chapter or notes at Easy, Moderate or Tough. Review the questions, set any answer marked orange, and press Save & continue: the test opens in your editable builder. Save Word and PowerPoint files as PDF first.',
     },
     {
-        q: 'Can I turn a YouTube video into a quiz?',
-        a: 'Yes. Paste the YouTube video URL into the AI quiz generator and the system analyses the video transcript to generate relevant questions with correct answers and explanations. It is an ideal tool for flipped classrooms, homework assignments, and checking comprehension after video lessons.',
+        q: 'Can I make a test from a photo of a page?',
+        a: 'Yes. Generate with AI reads photos (PNG, JPG or WEBP) as well as PDFs: a textbook page, an old question paper or handwritten notes, including maths, chemistry and Hindi. In the test builder, Fill from photo reads a single question from a picture. TestoZa does not make tests from YouTube videos.',
     },
     {
         q: 'How do I add negative marking to an online test?',
-        a: 'Negative marking is set in the Test Settings panel while creating or editing any test. Under Scoring Settings, enable Negative Marking and specify the deduction per incorrect answer — such as -0.25, -0.33, -0.5, or -1. The platform applies it automatically on submission, matching competitive examination scoring rules.',
+        a: 'Every question in the test builder has a Marks and a Wrong field, for example +4 and −1 for JEE Main and NEET, or +2 and −0.5 for SSC; decimals such as 0.25 or 0.3333 work. Multiple-correct questions can also give partial marks (Proportional or JEE Advanced). TestoZa applies the marking automatically when the paper is submitted.',
     },
     {
         q: 'How do I stop students from cheating in an online test?',
-        a: 'TestoZa prevents cheating through layered exam controls. When setting up your test you can enable full-screen enforcement, tab-switch monitoring, copy-paste disabling, and question and option randomisation. If a student leaves the exam tab or attempts unauthorised navigation, TestoZa logs the infraction and can automatically submit or lock the test after a threshold you choose.',
+        a: 'TestoZa prevents cheating through layered exam controls. When setting up your test you can enable full-screen enforcement, tab-switch monitoring, copy-paste disabling, and question and option randomisation. If a candidate leaves the exam screen, TestoZa warns them, counts it, and can submit the paper automatically after the number of warnings you choose. There is no camera or microphone proctoring.',
     },
     {
         q: 'Can students take the test on a mobile phone?',
@@ -225,7 +225,7 @@ export const FAQS = [
     },
     {
         q: 'How do I share a test with my students?',
-        a: 'Copy the unique test URL or generate a QR code from your dashboard. Distribute it via WhatsApp, email, Google Classroom, or your LMS. Students click the link, enter their name or roll number, and begin immediately — no downloads, no accounts required unless you want them.',
+        a: 'In My Tests press Conduct exam on the test, then Share link to send it on WhatsApp, or let students scan its QR code. You can also get a 6-digit join code: students type it at testoza.com/join. They enter their name or roll number and start: no app, no account. Step by step: testoza.com/user-guide/quick-start.',
     },
     {
         q: 'Is TestoZa better than Google Forms for conducting tests?',
@@ -233,7 +233,7 @@ export const FAQS = [
     },
     {
         q: 'What is a free alternative to Quizizz for teachers?',
-        a: 'TestoZa is a free alternative to Quizizz for educators who need formal, exam-grade assessments rather than gamified trivia. It offers unlimited test creation, AI question generation from PDFs and YouTube, customisable timers, negative marking and leaderboards — with no student limits or paywalled question types.',
+        a: 'TestoZa is a free alternative to Quizizz for educators who need formal, exam-grade assessments rather than gamified trivia. It offers unlimited test creation, AI question generation from PDFs and photos, customisable timers, negative marking and leaderboards — with no student limits or paywalled question types.',
     },
 ] as const;
 

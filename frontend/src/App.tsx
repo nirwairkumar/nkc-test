@@ -330,7 +330,8 @@ const App = () => (
                     <Route path="/mcq-test-maker" element={<UseCaseLandingPage />} />
                     <Route path="/ai-question-generator" element={<UseCaseLandingPage />} />
                     <Route path="/pdf-to-quiz" element={<UseCaseLandingPage />} />
-                    <Route path="/youtube-to-quiz" element={<UseCaseLandingPage />} />
+                    {/* Retired: TestoZa doesn't make tests from videos (the edge 301s it too). */}
+                    <Route path="/youtube-to-quiz" element={<Navigate to="/ai-test-generator" replace />} />
                     <Route path="/online-test-for-coaching" element={<UseCaseLandingPage />} />
                     <Route path="/exam-software-for-schools" element={<UseCaseLandingPage />} />
                     <Route path="/white-label-test-platform" element={<UseCaseLandingPage />} />

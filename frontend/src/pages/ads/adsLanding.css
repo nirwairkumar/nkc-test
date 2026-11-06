@@ -404,7 +404,7 @@
     background: var(--red);
 }
 .qcl-tile[data-src='photo'] svg { background: var(--blue); }
-.qcl-tile[data-src='youtube'] svg { background: #ff2d55; }
+.qcl-tile[data-src='notes'] svg { background: #ff9500; }
 .qcl-tile[data-src='text'] svg { background: #8e8e93; }
 [data-on='true'] .qcl-tile.is-pick {
     animation: qcl-tap 0.6s var(--spring) 0.6s both;
@@ -769,9 +769,9 @@
     background: linear-gradient(160deg, #4aa3ff, var(--blue));
     box-shadow: 0 12px 22px -12px rgba(0, 122, 255, 0.8), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
 }
-.qcl-source[data-src='youtube'] .qcl-appicon {
-    background: linear-gradient(160deg, #ff5f7e, #ff2d55);
-    box-shadow: 0 12px 22px -12px rgba(255, 45, 85, 0.8), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+.qcl-source[data-src='notes'] .qcl-appicon {
+    background: linear-gradient(160deg, #ffb340, #ff9500);
+    box-shadow: 0 12px 22px -12px rgba(255, 149, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
 }
 .qcl-source[data-src='text'] .qcl-appicon {
     background: linear-gradient(160deg, #a0a0a8, #6e6e73);

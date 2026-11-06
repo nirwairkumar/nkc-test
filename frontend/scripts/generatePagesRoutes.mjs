@@ -41,9 +41,20 @@ if (missing.size) {
 }
 
 // --- 2. dist/_routes.json -------------------------------------------------------
+// Folders that are also page paths: /user-guide/<slug> are pages, and their screenshots
+// live in public/user-guide/<folder>/. Excluding "/user-guide/*" kept the catch-all off
+// those pages, so app.testoza.com/user-guide/… never got its 301 to testoza.com. Exclude
+// the picture folders and loose files inside instead (no folder may share a page's slug).
+const PAGE_FOLDERS = new Set(['user-guide']);
 const exclude = ['/cdn-cgi/*'];
 for (const entry of fs.readdirSync(dist, { withFileTypes: true })) {
   if (entry.name.startsWith('_')) continue; // _redirects, _headers: config, never served
+  if (entry.isDirectory() && PAGE_FOLDERS.has(entry.name)) {
+    for (const inner of fs.readdirSync(path.join(dist, entry.name), { withFileTypes: true })) {
+      exclude.push(inner.isDirectory() ? `/${entry.name}/${inner.name}/*` : `/${entry.name}/${inner.name}`);
+    }
+    continue;
+  }
   exclude.push(entry.isDirectory() ? `/${entry.name}/*` : `/${entry.name}`);
 }
 const routes = { version: 1, include: ['/*'], exclude };

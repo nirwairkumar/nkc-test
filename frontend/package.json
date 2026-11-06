@@ -19,7 +19,8 @@
         "dev:pdf": "vite --config vite.pdf.config.ts",
         "build:pdf": "vite build --config vite.pdf.config.ts && vite build --config vite.pdf.config.ts --ssr src/pdf/site/entry-server.tsx && node scripts/prerender-pdf.mjs",
         "preview:pdf": "node scripts/serve-pdf.mjs",
-        "indexnow:pdf": "node scripts/indexnow-pdf.mjs"
+        "indexnow:pdf": "node scripts/indexnow-pdf.mjs",
+        "indexnow": "node scripts/indexnow.mjs"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",

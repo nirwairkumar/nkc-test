@@ -51,7 +51,7 @@ export const ADS_CTA = { href: '/generate-with-ai' } as const;
 export const ADS_SOURCES = [
     { id: 'pdf', label: 'PDF', caption: 'Chapters, notes, papers', href: '/pdf-to-quiz' },
     { id: 'photo', label: 'Photo', caption: 'Snap a textbook page', href: '/create-mock-test-online' },
-    { id: 'youtube', label: 'YouTube', caption: 'Any lesson video', href: '/youtube-to-quiz' },
+    { id: 'notes', label: 'Notes', caption: 'Class notes or a chapter', href: '/ai-test-generator' },
     { id: 'text', label: 'Text', caption: 'Paste or type', href: '/ai-question-generator' },
 ] as const;
 
@@ -95,7 +95,7 @@ const SHARED_FAQS: AdsFaq[] = [
     },
     {
         q: 'What can I make a quiz from?',
-        a: 'A PDF, Word or PowerPoint file, photos of a textbook or question paper, a YouTube lesson, or text you paste or type.',
+        a: 'A PDF, or photos of a textbook page, your notes or a question paper (save Word or PowerPoint files as PDF first). You can also type or paste questions into the builder.',
     },
     {
         q: 'Do students need an account?',
@@ -116,7 +116,7 @@ export const ADS_LANDING: Record<'quiz' | 'assessment', AdsLandingCopy> = {
         path: '/quiz-creator',
         seoTitle: 'Free AI Quiz & Test Generator for Teachers | TestoZa',
         description:
-            'Create quizzes and tests in minutes with AI. Turn PDFs, photos, notes or YouTube lessons into auto-graded quizzes and share them with one link. Free to start.',
+            'Create quizzes and tests in minutes with AI. Turn PDFs, photos or notes into auto-graded quizzes and share them with one link. Free to start.',
         keywords: ['quiz creator', 'ai quiz generator', 'free quiz maker', 'create quiz online', 'quiz maker for teachers', 'pdf to quiz'],
         eyebrow: 'Free AI quiz creator',
         h1Lead: 'Create a quiz in minutes.',

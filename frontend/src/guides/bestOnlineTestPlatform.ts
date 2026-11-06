@@ -266,7 +266,7 @@ export const BEST_ONLINE_TEST_PLATFORM: Guide = {
 <a class="gd-path" href="/online-test-for-coaching"><span class="gd-path-who">I run a coaching institute</span><span class="gd-path-what">Set up locked-down mocks for my batches</span></a>
 <a class="gd-path" href="/generate-with-ai"><span class="gd-path-who">I'm a student</span><span class="gd-path-what">Turn a textbook photo into a timed mock</span></a>
 </div>
-<p>Also worth a look: <a href="/online-proctoring-software">exam security on TestoZa</a>, <a href="/youtube-to-quiz">YouTube to quiz</a>, <a href="/exam-software-for-schools">TestoZa for schools</a> and the full <a href="/user-guide">user guide</a>.</p>
+<p>Also worth a look: <a href="/online-proctoring-software">exam security on TestoZa</a>, <a href="/user-guide/quick-start">how to conduct a test on TestoZa</a>, <a href="/exam-software-for-schools">TestoZa for schools</a> and the full <a href="/user-guide">user guide</a>.</p>
 `),
         ],
 

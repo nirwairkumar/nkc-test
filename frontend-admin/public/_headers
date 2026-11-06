@@ -1,3 +1,7 @@
+# 0. A private tool: no page of admin.testoza.com belongs in search results or AI answers.
+/*
+  X-Robots-Tag: noindex, nofollow
+
 # Caching rules for static assets on Cloudflare Pages
 
 # 1. Vite hashed assets inside /assets/ (JS, CSS, images) - 1 year cache (immutable)

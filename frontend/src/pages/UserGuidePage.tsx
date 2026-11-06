@@ -5,8 +5,13 @@ import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
     Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
-    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink, KeyRound
+    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink, KeyRound, Rocket
 } from 'lucide-react';
+import {
+    AI_GENERATION_INTRO, AI_GENERATION_STEPS, CONDUCT_EXAM_STEPS, DOC_GROUPS, QUICK_START,
+    docGroupTitle, docItem, docSeoDescription, docSeoTitle, docUrl, resolveDocSlug,
+    type DocStep,
+} from '@/docs/userGuide';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide'));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide'));
 const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide'));
@@ -31,146 +36,39 @@ interface DocSection {
     items: SubSection[];
 }
 
-const DOC_SECTIONS: DocSection[] = [
-    {
-        title: "Start with TestoZa",
-        items: [
-            {
-                slug: "intro",
-                title: "Introduction",
-                description: "Get started with the TestoZa question creator and doc formatting tools.",
-                icon: <Layout className="h-4 w-4" />
-            },
-            {
-                slug: "bulk-test-upload",
-                title: "Bulk Test Upload",
-                description: "Learn how to format and upload massive tests in bulk using JSON formats.",
-                icon: <UploadIcon className="h-4 w-4" />
-            },
-            {
-                slug: "solution-upload-guide",
-                title: "Solution Upload Guide",
-                description: "Learn how to format and bulk upload detailed step-by-step solutions for tests.",
-                icon: <BookOpen className="h-4 w-4" />
-            },
-            {
-                slug: "ai-test-generation",
-                title: "AI Test Generation",
-                description: "Understand how to harness AI models to auto-generate complete tests from text, PDFs or images.",
-                icon: <Sparkles className="h-4 w-4" />
-            },
-        ]
-    },
-    {
-        title: "Platform Overview",
-        items: [
-            {
-                slug: "live-exam-sessions",
-                title: "Live Exams with a Join Code",
-                description: "Let candidates join with a 6-digit code: a quick code for any live exam, or a full exam room with candidate lists, PINs, a live monitor, rank lists and report cards.",
-                icon: <KeyRound className="h-4 w-4" />
-            },
-            {
-                slug: "conduct-exam",
-                title: "Conduct Exams",
-                description: "Step-by-step guide with screenshots on how to activate, configure, and conduct exams on TestoZa.",
-                icon: <Radio className="h-4 w-4" />
-            },
-            {
-                slug: "view-results-guide",
-                title: "Understanding Results",
-                description: "Read every number on the Results panel, the Full report and All submissions: who wrote, ranks, each answer sheet, what to teach again, and the Excel file.",
-                icon: <BarChart2 className="h-4 w-4" />
-            }
-        ]
-    },
-    {
-        title: "Free PDF Tools",
-        items: [
-            {
-                slug: "pdf-tools",
-                title: "Panna PDF Tools",
-                description: "Edit PDF text in its own font, erase for real, sign, and turn ChatGPT or LaTeX maths into a PDF. Free, and your file never leaves your device.",
-                icon: <PenLine className="h-4 w-4" />
-            }
-        ]
-    },
-    {
-        title: "JSON Schema Reference",
-        items: [
-            {
-                slug: "schema-flat",
-                title: "Standard Test Format",
-                description: "Complete JSON reference for single-section flat tests.",
-                icon: <FileText className="h-4 w-4" />
-            },
-            {
-                slug: "schema-section",
-                title: "Section-wise Format",
-                description: "JSON format schema for JEE, NEET and multiple sections exams with attempt controls.",
-                icon: <Terminal className="h-4 w-4" />
-            },
-            {
-                slug: "schema-solutions",
-                title: "Solutions JSON Format",
-                description: "JSON format reference for mapping detailed answers and explanations to question IDs.",
-                icon: <BookOpen className="h-4 w-4" />
-            },
-        ]
-    },
-    {
-        title: "Formatting & Syntax",
-        items: [
-            {
-                slug: "chemistry-notation",
-                title: "Chemistry (mhchem)",
-                description: "Chemical equations, redox reactions, equilibrium arrows, radioactive decays, skeletal organic structures.",
-                icon: <FlaskConical className="h-4 w-4" />
-            },
-            {
-                slug: "notation-math",
-                title: "Mathematics (KaTeX)",
-                description: "Definite integrals, summations, fractions, limits, matrices, binomial equations.",
-                icon: <CalculatorIcon className="h-4 w-4" />
-            },
-            {
-                slug: "notation-tables",
-                title: "Tables & LaTeX Arrays",
-                description: "Convert visual grids and matrix equations into professional KaTeX arrays.",
-                icon: <GridIcon className="h-4 w-4" />
-            },
-            {
-                slug: "notation-matching",
-                title: "Match Column System",
-                description: "Format double list column match questions using LaTeX array formatting.",
-                icon: <ArrowRightLeft className="h-4 w-4" />
-            }
-        ]
-    },
-    {
-        title: "AI Extractor Prompts",
-        items: [
-            {
-                slug: "ai-prompt-guide",
-                title: "AI OCR Parsing Prompt",
-                description: "Complete prompts and backslash escape instructions for Gemini / ChatGPT parsers.",
-                icon: <Sparkles className="h-4 w-4" />
-            },
-            {
-                slug: "prompt-sections",
-                title: "Multi-Section OCR Prompt",
-                description: "Optimized prompt for extracting multi-section papers with marking overrides.",
-                icon: <Terminal className="h-4 w-4" />
-            },
-            {
-                slug: "prompt-solutions",
-                title: "Solutions OCR Prompt",
-                description: "Specialized prompt to OCR scan step-by-step solutions.",
-                icon: <BookOpen className="h-4 w-4" />
-            },
-        ]
-    }
-];
+// Titles, descriptions and order live in src/docs/userGuide.ts, which the SEO worker also
+// reads, so the sidebar, the browser tab and what crawlers see always match. Icons stay here.
+const DOC_ICONS: Record<string, React.ReactNode> = {
+    'quick-start': <Rocket className="h-4 w-4" />,
+    'intro': <Layout className="h-4 w-4" />,
+    'bulk-test-upload': <UploadIcon className="h-4 w-4" />,
+    'solution-upload-guide': <BookOpen className="h-4 w-4" />,
+    'ai-test-generation': <Sparkles className="h-4 w-4" />,
+    'live-exam-sessions': <KeyRound className="h-4 w-4" />,
+    'conduct-exam': <Radio className="h-4 w-4" />,
+    'view-results-guide': <BarChart2 className="h-4 w-4" />,
+    'pdf-tools': <PenLine className="h-4 w-4" />,
+    'schema-flat': <FileText className="h-4 w-4" />,
+    'schema-section': <Terminal className="h-4 w-4" />,
+    'schema-solutions': <BookOpen className="h-4 w-4" />,
+    'chemistry-notation': <FlaskConical className="h-4 w-4" />,
+    'notation-math': <CalculatorIcon className="h-4 w-4" />,
+    'notation-tables': <GridIcon className="h-4 w-4" />,
+    'notation-matching': <ArrowRightLeft className="h-4 w-4" />,
+    'ai-prompt-guide': <Sparkles className="h-4 w-4" />,
+    'prompt-sections': <Terminal className="h-4 w-4" />,
+    'prompt-solutions': <BookOpen className="h-4 w-4" />,
+};
+
+const DOC_SECTIONS: DocSection[] = DOC_GROUPS.map(group => ({
+    title: group.title,
+    items: group.items.map(item => ({
+        slug: item.slug,
+        title: item.title,
+        description: item.description,
+        icon: DOC_ICONS[item.slug] ?? <FileText className="h-4 w-4" />,
+    })),
+}));
 
 // --- Panna (free PDF tools on pdf.testoza.com) ---
 const PANNA_URL = 'https://pdf.testoza.com/';
@@ -350,12 +248,9 @@ export default function UserGuidePage() {
         return () => clearInterval(interval);
     }, [isDark]);
 
-    // Backward-compatibility and default slugs
-    const activeSlug = useMemo(() => {
-        if (!slug) return 'intro';
-        if (slug === 'json-test-upload-guide') return 'bulk-test-upload';
-        return slug;
-    }, [slug]);
+    // Backward-compatibility and default slugs (same rule as the SEO worker: src/docs/userGuide.ts).
+    // A slug with no page falls through to the default case below, which sends the reader to the guide's front page.
+    const activeSlug = useMemo(() => resolveDocSlug(slug) ?? slug ?? 'intro', [slug]);
 
     // Find current active subsection and category name
     const activeInfo = useMemo(() => {
@@ -368,12 +263,13 @@ export default function UserGuidePage() {
                 };
             }
         }
+        const intro = docItem('intro');
         return {
-            category: "Getting Started",
+            category: docGroupTitle('intro'),
             item: {
                 slug: "intro",
-                title: "Introduction",
-                description: "Getting started with TestoZa docs.",
+                title: intro?.title ?? "Introduction",
+                description: intro?.description ?? "Getting started with TestoZa docs.",
                 icon: <Layout className="h-4 w-4" />
             }
         };
@@ -409,12 +305,22 @@ export default function UserGuidePage() {
     // Render contents based on active slugs
     const renderContent = () => {
         switch (activeSlug) {
+            case 'quick-start':
+                return <QuickStartGuide />;
+
             case 'intro':
                 return (
                     <div className="space-y-6">
                         <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
                             Welcome to the TestoZa Creator Documentation. Whether you are creating competitive exams like JEE/NEET, academic mock papers, or custom student assessments, this guide will help you build and format your content efficiently.
                         </p>
+
+                        <AlertBlock type="tip" title="New to TestoZa?">
+                            <button type="button" onClick={() => navigate('/user-guide/quick-start')} className="font-semibold underline underline-offset-2">
+                                Quick Start: conduct your first online test
+                            </button>{' '}
+                            takes you from an empty account to a marked rank list in nine steps, with the exact buttons to press.
+                        </AlertBlock>
 
                         <AlertBlock type="info" title="No-Code Test Creation">
                             You do not need to write raw JSON schemas or LaTeX syntax manually. You can copy our optimized AI prompts, drop your PDFs or handwritten notes into ChatGPT/Gemini, and paste the generated questions directly into TestoZa.
@@ -589,14 +495,12 @@ export default function UserGuidePage() {
                 return (
                     <div className="space-y-6">
                         <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                            The AI test generator turns a PDF or photos (PNG, JPG or WEBP) into a test. Save Word and PowerPoint files as PDF first. You need to be signed in.
+                            {AI_GENERATION_INTRO}
                         </p>
                         <ol className="list-decimal pl-5 space-y-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                            <li>Open <button type="button" onClick={() => navigate('/generate-with-ai')} className="font-semibold underline underline-offset-2">Generate with AI</button> and choose your file. Add an answer key if you have one.</li>
-                            <li>Pick the language (same as the material, English, Hindi or both), the difficulty and any instructions such as marks or the number of questions.</li>
-                            <li>Choose <strong>Extract Questions</strong> to keep an existing paper exactly, or <strong>Generate New Questions</strong> to write new ones from a chapter or notes.</li>
-                            <li>Watch the questions arrive, then review them. Set any answer marked orange before you save.</li>
-                            <li>Press <strong>Save &amp; continue</strong>, or <strong>Edit</strong> to fine-tune the test in the builder first.</li>
+                            {AI_GENERATION_STEPS.map((html, i) => (
+                                <li key={i} className={DOC_HTML_CLS} dangerouslySetInnerHTML={{ __html: html }} />
+                            ))}
                         </ol>
 
                         <AlertBlock type="info" title="The full guide">
@@ -883,199 +787,7 @@ export default function UserGuidePage() {
             case 'conduct-exam':
                 return (
                     <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
-                        {/* Step 1 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8 first:pt-0">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-1.png" alt="Step 1: Go to Your Tests" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 1
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Access Your Dashboard & Creator Area</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Go to the user dropdown menu in the top navigation bar and click on <strong>Your Tests</strong>.
-                                </p>
-                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
-                                    <li>You will land on the <strong>Creator Dashboard</strong>.</li>
-                                    <li>You will find all the tests you have created so far.</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {/* Step 2 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-2.png" alt="Step 2: Choose Test" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 2
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Choose the Test to Conduct</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Find the test-card of the exam that you are going to conduct among your candidates.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Click on the <strong>Conduct</strong> button of the test-card.
-                                </p>
-                                <AlertBlock type="tip" title="Verify Before Conducting">
-                                    You can click on &quot;View&quot; to see your final live test view to recheck questions, options, timing, and sections. If you want to make changes, select &quot;edit test&quot; from the three-dot menu of the test card.
-                                </AlertBlock>
-                            </div>
-                        </div>
-
-                        {/* Step 3 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-3.png" alt="Step 3: Start Conducting" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 3
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Activate the Test & Get Unlisted Link</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    A popup window will open where you can view and copy the unlisted link of the test card.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Select <strong>Start Conducting</strong> to activate the test.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 4 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-4.png" alt="Step 4: Active Exam Controls" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 4
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Manage the Active Exam Mode</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Now your test is live and accessible via the unique link. The test card displays four primary management options:
-                                </p>
-                                <ul className="list-decimal pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
-                                    <li><strong>Settings</strong>: Apply proctoring, schedules, and custom settings.</li>
-                                    <li><strong>Results</strong>: View responses submitted under Active Exam mode.</li>
-                                    <li><strong>Copy Link</strong>: Copy the exam link to clipboard.</li>
-                                    <li><strong>Remove</strong>: Stop the exam.</li>
-                                </ul>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pt-2">
-                                    Click on <strong>Settings</strong> to configure the exam environment.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 5 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-5.png" alt="Step 5: Test Environment Settings" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 5
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Configure Proctoring & Security</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    You will land on the <strong>Test Environment Settings</strong> panel.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Choose your desired proctoring preferences (e.g. Full Screen, Tab Switch Detection).
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Click on the <strong>Access & Control</strong> section header to view more configurations.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 6 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-6.png" alt="Step 6: Customize Access & Verification" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 6
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Customize Access & Student Verification</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Turn on the <strong>Attempt Limit</strong> toggles to restrict students to a single attempt.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Turn on <strong>Candidate inputs</strong> to ask for details (e.g. Name, Roll No) before the exam starts. You can also edit them straight from a live exam's card on My Tests.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Now expand the <strong>Result & Timing</strong> section header.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 7 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-7.png" alt="Step 7: Enforce Timer & Save" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 7
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Enable Server-Side Timer & Save Settings</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Under the Results & Timing configurations, activate <strong>Server side timing</strong> and disable <strong>Flexible Timer</strong> to enforce a strict, synchronized countdown.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Click the <strong>Save Settings</strong> button at the bottom of the panel to apply your proctoring and timing rules.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 8 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-8.png" alt="Step 8: Distribute Link" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 8
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Distribute Exam Link</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    Copy the active exam link and share it with your candidates via messaging apps or email.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    You can monitor student submissions in real-time by clicking the <strong>Results</strong> tab/button.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Step 9 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
-                            <div className="w-full lg:w-1/2 shrink-0">
-                                <img src="/user-guide/conduct-exams/step-9.png" alt="Step 9: Conclude Exam" className="w-full h-auto object-contain mx-auto block" />
-                            </div>
-                            <div className="w-full lg:w-1/2 space-y-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                    Step 9
-                                </span>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Deactivate or Conclude the Exam</h3>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    To stop accepting candidate responses, click the <strong>Remove</strong> button on the test card. This takes the test out of Active Exam mode.
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                    You will be prompted with two closure modes:
-                                </p>
-                                <ol className="list-decimal pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
-                                    <li><strong>Stop &amp; Make Public</strong>: Allows candidates to analyze the exam and results; anonymous practice will be enabled.</li>
-                                    <li><strong>Stop &amp; Make Private</strong>: Restricts all further student access. Results and analysis are hidden from candidates.</li>
-                                </ol>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pt-2">
-                                    After selecting either option, your test will return to the inactive state.
-                                </p>
-                            </div>
-                        </div>
+                        <DocStepRows steps={CONDUCT_EXAM_STEPS} />
 
                         <div className="pt-8">
                             <AlertBlock type="info" title="Running a computer-based test (CBT)?">
@@ -1097,20 +809,16 @@ export default function UserGuidePage() {
                 );
 
             default:
-                return <Navigate to="/user-guide/intro" replace />;
+                return <Navigate to="/user-guide" replace />;
         }
     };
 
     return (
         <div className="min-h-screen bg-white dark:bg-[#0c0d0e] transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
             <SEO
-                title={activeSlug === 'intro'
-                    ? "How to Create a Test Online \u2013 TestoZa User Guide for Teachers"
-                    : `${activeInfo.item.title} \u2013 TestoZa Docs`}
-                description={activeSlug === 'intro'
-                    ? "Step-by-step guide on how to create a test online using TestoZa. Learn to make exams, quizzes, and mock tests with our free online test creator for teachers. Covers AI generation, bulk upload, and LaTeX formatting."
-                    : activeInfo.item.description}
-                canonicalUrl={`https://testoza.com/user-guide/${activeSlug}`}
+                title={docSeoTitle(activeInfo.item.slug)}
+                description={docSeoDescription(activeInfo.item.slug)}
+                canonicalUrl={docUrl(activeInfo.item.slug)}
                 keywords={[
                     "how to create a test online",
                     "how to create a test",
@@ -1425,3 +1133,114 @@ STRICT JSON FORMAT:
     "Sequential solution 2 text..."
   ]
 }`;
+
+
+/* ── Step-by-step pages drawn from src/docs/userGuide.ts ─────────────────────────────── */
+
+/** Links and bold text inside the shared HTML strings. */
+const DOC_HTML_CLS = '[&_a]:font-semibold [&_a]:text-emerald-600 dark:[&_a]:text-emerald-400 [&_a]:underline [&_a]:underline-offset-2 [&_strong]:font-semibold [&_strong]:text-slate-800 dark:[&_strong]:text-slate-200';
+
+function DocHtml({ html, className }: { html: string; className?: string }) {
+    return <p className={cn('text-slate-600 dark:text-slate-400 text-sm leading-relaxed', DOC_HTML_CLS, className)} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+/** One row per step: the screenshot on the left (when there is one), the words on the right. */
+function DocStepRows({ steps }: { steps: DocStep[] }) {
+    return (
+        <>
+            {steps.map((step, i) => (
+                <div key={step.id} id={step.id} className="flex flex-col lg:flex-row gap-8 items-center py-8 first:pt-0 scroll-mt-20">
+                    {step.image && (
+                        <div className="w-full lg:w-1/2 shrink-0">
+                            <img
+                                src={step.image.src}
+                                alt={step.image.alt}
+                                width={step.image.width}
+                                height={step.image.height}
+                                loading="lazy"
+                                className="w-full h-auto object-contain mx-auto block"
+                            />
+                        </div>
+                    )}
+                    <div className={cn('w-full space-y-3', step.image && 'lg:w-1/2')}>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            Step {i + 1}
+                        </span>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{step.title}</h3>
+                        {step.body.map((html, j) => <DocHtml key={j} html={html} />)}
+                        {step.list && (step.list.ordered ? (
+                            <ol className={cn('list-decimal pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1', DOC_HTML_CLS)}>
+                                {step.list.items.map((html, j) => <li key={j} dangerouslySetInnerHTML={{ __html: html }} />)}
+                            </ol>
+                        ) : (
+                            <ul className={cn('list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1', DOC_HTML_CLS)}>
+                                {step.list.items.map((html, j) => <li key={j} dangerouslySetInnerHTML={{ __html: html }} />)}
+                            </ul>
+                        ))}
+                        {(step.after || []).map((html, j) => <DocHtml key={j} html={html} className="pt-2" />)}
+                        {step.tip && (
+                            <AlertBlock type="tip" title={step.tip.title}>
+                                {step.tip.text}
+                            </AlertBlock>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </>
+    );
+}
+
+/** /user-guide/quick-start: the whole job, from an empty account to a marked rank list. */
+function QuickStartGuide() {
+    const q = QUICK_START;
+    const h2 = 'text-xl font-bold mt-10 mb-2 text-slate-800 dark:text-slate-200';
+    return (
+        <div className="space-y-6">
+            {q.intro.map((html, i) => (
+                <DocHtml key={i} html={html} className="text-base" />
+            ))}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {q.ways.map((w, i) => (
+                    <div key={w.name} className="p-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121316] rounded-xl">
+                        <p className="text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Way {i + 1}</p>
+                        <h4 className="font-bold text-slate-800 dark:text-slate-200 mt-1">{w.name}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{w.when}</p>
+                        <DocHtml html={w.how} className="text-xs mt-2" />
+                    </div>
+                ))}
+            </div>
+
+            <h2 className={h2}>Way 1: conduct a test with a link</h2>
+            <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
+                <DocStepRows steps={q.linkSteps} />
+            </div>
+
+            <h2 className={h2}>Way 2: an exam room with a join code, lobby and rank list</h2>
+            <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
+                <DocStepRows steps={q.roomSteps} />
+            </div>
+
+            <h2 className={h2}>What candidates do</h2>
+            <ol className={cn('list-decimal pl-5 space-y-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed', DOC_HTML_CLS)}>
+                {q.candidateSteps.map((html, i) => <li key={i} dangerouslySetInnerHTML={{ __html: html }} />)}
+            </ol>
+
+            <AlertBlock type="warning" title="What TestoZa does not do">
+                <ul className="list-disc pl-5 space-y-1">
+                    {q.notSupported.map(t => <li key={t}>{t}</li>)}
+                </ul>
+            </AlertBlock>
+
+            <h2 className={h2}>Questions</h2>
+            <div className="space-y-4">
+                {q.faqs.map(f => (
+                    <div key={f.q}>
+                        <h4 className="font-bold text-slate-800 dark:text-slate-200">{f.q}</h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-1">{f.a}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}

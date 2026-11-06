@@ -10,6 +10,9 @@ from app.core.database import get_db
 from datetime import datetime, timezone
 from typing import List, Optional, Dict
 import xml.etree.ElementTree as ET
+
+# Write image entries as <image:image> (ElementTree's default prefix was "ns0").
+ET.register_namespace("image", "http://www.google.com/schemas/sitemap-image/1.1")
 import os
 import time
 import logging
@@ -41,6 +44,49 @@ class MemoryCacheManager:
         self._cache.clear()
 
 cache_manager = MemoryCacheManager()
+
+# The user guide (frontend/src/docs/userGuide.ts — keep the slugs and pictures in step with
+# DOC_GROUPS and docImages there). The SEO worker serves each page's full text to crawlers;
+# listing the screenshots lets image search show TestoZa's own screens for "TestoZa …"
+# questions instead of other products' (ChatGPT's answers did, November 2026).
+_UG = "/user-guide"
+_QS = f"{_UG}/screens"
+_SHOT_GENERATE = f"{_QS}/testoza-generate-with-ai-upload-pdf-or-photos.webp"
+_SHOT_TEST_CARD = f"{_QS}/testoza-my-tests-card-conduct-exam.webp"
+_SHOT_CONDUCT = f"{_QS}/testoza-conduct-online-exam-start-conducting.webp"
+_SHOT_SETTINGS = f"{_QS}/testoza-test-environment-settings-anti-cheating.webp"
+_SHOT_LIVE = f"{_QS}/testoza-live-exam-link-join-code-qr.webp"
+_SHOT_EXAMS = f"{_QS}/testoza-exams-run-exam-with-6-digit-code.webp"
+_SHOT_JOIN = f"{_QS}/testoza-join-exam-6-digit-code-phone.webp"
+_CONDUCT_SHOTS = [
+    f"{_UG}/conduct-exams/step-1.png", _SHOT_TEST_CARD, _SHOT_CONDUCT, _SHOT_LIVE, _SHOT_SETTINGS,
+    *[f"{_UG}/conduct-exams/step-{n}.png" for n in range(6, 10)],
+]
+_RESULTS_SHOTS = [
+    f"{_UG}/results/{name}.webp"
+    for name in ("open-results", "panel", "panel-dropped", "answer-sheet", "report", "all-submissions", "report-ranklist")
+]
+USER_GUIDE_PAGES = [
+    {"loc": f"{_UG}/quick-start", "priority": "0.9", "changefreq": "monthly",
+     "images": [_SHOT_GENERATE, _SHOT_TEST_CARD, _SHOT_CONDUCT, _SHOT_SETTINGS, _SHOT_LIVE, _SHOT_JOIN,
+                f"{_UG}/results/panel.webp", _SHOT_EXAMS, f"{_UG}/results/report-ranklist.webp"]},
+    {"loc": f"{_UG}/live-exam-sessions", "priority": "0.8", "changefreq": "monthly",
+     "images": [_SHOT_LIVE, _SHOT_EXAMS, f"{_UG}/results/report-ranklist.webp", _SHOT_JOIN]},
+    {"loc": f"{_UG}/conduct-exam", "priority": "0.8", "changefreq": "monthly", "images": _CONDUCT_SHOTS},
+    {"loc": f"{_UG}/view-results-guide", "priority": "0.8", "changefreq": "monthly", "images": _RESULTS_SHOTS},
+    {"loc": f"{_UG}/ai-test-generation", "priority": "0.8", "changefreq": "monthly"},
+    {"loc": f"{_UG}/pdf-tools", "priority": "0.6", "changefreq": "monthly"},
+    {"loc": f"{_UG}/bulk-test-upload", "priority": "0.6", "changefreq": "monthly"},
+    {"loc": f"{_UG}/solution-upload-guide", "priority": "0.5", "changefreq": "monthly"},
+    *[
+        {"loc": f"{_UG}/{slug}", "priority": "0.4", "changefreq": "monthly"}
+        for slug in (
+            "schema-flat", "schema-section", "schema-solutions",
+            "chemistry-notation", "notation-math", "notation-tables", "notation-matching",
+            "ai-prompt-guide", "prompt-sections", "prompt-solutions",
+        )
+    ],
+]
 
 STATIC_PAGES = [
     {"loc": "/", "priority": "1.0", "changefreq": "daily"},
@@ -92,7 +138,8 @@ STATIC_PAGES = [
     {"loc": "/premium", "priority": "0.8", "changefreq": "monthly"},
     {"loc": "/about", "priority": "0.7", "changefreq": "monthly"},
     {"loc": "/support", "priority": "0.7", "changefreq": "monthly"},
-    {"loc": "/user-guide", "priority": "0.7", "changefreq": "monthly"},
+    {"loc": "/user-guide", "priority": "0.8", "changefreq": "monthly"},
+    *USER_GUIDE_PAGES,
     {"loc": "/privacy-policy", "priority": "0.4", "changefreq": "yearly"},
     {"loc": "/terms-and-conditions", "priority": "0.4", "changefreq": "yearly"},
 ]
@@ -143,14 +190,21 @@ def generate_url_element(url_data: dict) -> ET.Element:
         if "image_title" in url_data and url_data["image_title"]:
             image_title = ET.SubElement(image, "{http://www.google.com/schemas/sitemap-image/1.1}title")
             image_title.text = escape_xml(url_data["image_title"])
-    
+
+    # Several pictures on one page (the user guide's screenshots). Only <image:loc> is read
+    # today; Google retired image:title and image:caption in 2022.
+    for src in url_data.get("images", []):
+        image = ET.SubElement(url_elem, "{http://www.google.com/schemas/sitemap-image/1.1}image")
+        image_loc = ET.SubElement(image, "{http://www.google.com/schemas/sitemap-image/1.1}loc")
+        image_loc.text = src if src.startswith("http") else f"{SITE_URL}{src}"
+
     return url_elem
 
 def build_sitemap_xml(urls: List[dict]) -> str:
     root = ET.Element("urlset")
     root.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
-    root.set("xmlns:image", "http://www.google.com/schemas/sitemap-image/1.1")
-    
+    # xmlns:image is declared by ElementTree itself (register_namespace above) when an image is present.
+
     for url_data in urls:
         url_elem = generate_url_element(url_data)
         root.append(url_elem)

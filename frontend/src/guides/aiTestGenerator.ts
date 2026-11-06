@@ -84,7 +84,7 @@ export const AI_TEST_GENERATOR: Guide = {
 <li><strong>A textbook chapter or class notes:</strong> Generate new questions from it.</li>
 <li><strong>Photos of book pages:</strong> Generate, or Extract if the pages are exercise questions you want kept as they are.</li>
 <li><strong>One question on paper, printed or handwritten:</strong> Fill from photo in the test builder.</li>
-<li><strong>A YouTube lecture:</strong> YouTube to quiz.</li>
+<li><strong>A YouTube lecture:</strong> the generator can’t read videos or links; upload the lecture’s slides or notes as a PDF, or photos of the board, and Generate.</li>
 <li><strong>A Word or PowerPoint file:</strong> save it as a PDF, then Extract or Generate.</li>
 </ul>`,
                     },
@@ -425,7 +425,7 @@ export const AI_TEST_GENERATOR: Guide = {
 <a class="atg-path" href="/generate-with-ai"><span class="atg-path-who">Have a chapter or notes?</span><span class="atg-path-what">Generate new questions from them</span></a>
 <a class="atg-path" href="/create-test"><span class="atg-path-who">Have one question on paper?</span><span class="atg-path-what">Use Fill from photo in the builder</span></a>
 </div>
-<p>Related reading: <a href="/create-mock-test-online">how to create a mock test online</a>, <a href="/jee-mock-test-platform">JEE mock test platform</a>, <a href="/cbt-exam-software">CBT exam software</a>, <a href="/best-online-test-platform">how to choose an online test platform</a>, <a href="/youtube-to-quiz">YouTube to quiz</a> and <a href="/pricing">pricing</a>.</p>
+<p>Related reading: <a href="/create-mock-test-online">how to create a mock test online</a>, <a href="/jee-mock-test-platform">JEE mock test platform</a>, <a href="/cbt-exam-software">CBT exam software</a>, <a href="/best-online-test-platform">how to choose an online test platform</a> and <a href="/pricing">pricing</a>.</p>
 `),
         ],
 

@@ -75,7 +75,7 @@ export const useCasePages: UseCasePageData[] = [
       {
         icon: 'Sparkles',
         title: 'AI-Powered Question Generation',
-        description: 'Upload a PDF, paste text, or share a YouTube link — AI creates MCQ, fill-in-the-blank, true/false, and multiple-select questions automatically.',
+        description: 'Upload a PDF or photos of a paper, notes or a chapter — AI extracts the questions, or writes new single-correct, multiple-correct and numerical questions.',
         color: 'indigo'
       },
       {
@@ -95,7 +95,7 @@ export const useCasePages: UseCasePageData[] = [
     benefitDescription: 'Creating tests manually takes hours of planning, typing, and grading. TestoZa compresses this entire cycle into minutes, so you can focus on teaching.',
     benefits: [
       'Create unlimited tests and quizzes for free',
-      'Support for MCQ, multiple-select, fill-in-the-blank, and true/false',
+      'Single-correct MCQ, multiple-correct (with partial marks) and numerical questions',
       'Question shuffle and option randomisation for each student',
       'Timer controls, section-wise time limits, and scheduled access',
       'White-label branding with your institute logo and colours',
@@ -110,7 +110,7 @@ export const useCasePages: UseCasePageData[] = [
       },
       {
         question: 'Can I create tests from my existing study material?',
-        answer: 'Absolutely. Upload PDFs, paste text, or share YouTube video links — our AI analyses the content and generates relevant questions automatically. You can review and edit every question before publishing.'
+        answer: 'Absolutely. Upload a PDF or photos of a question paper, notes or a chapter — our AI extracts the questions or writes new ones. You can review and edit every question before publishing.'
       },
       {
         question: 'Do students need to create an account to take a test?',
@@ -178,7 +178,7 @@ export const useCasePages: UseCasePageData[] = [
   {
     slug: 'online-quiz-maker',
     seoTitle: 'Online Quiz Maker for Teachers – Create Quizzes Free',
-    seoDescription: 'Free online quiz maker for teachers. Create engaging quizzes from PDFs, text, or YouTube videos using AI. Auto-grading, instant results, and student analytics.',
+    seoDescription: 'Free online quiz maker for teachers. Create quizzes from PDFs, photos or notes using AI. Auto-grading, instant results, and student analytics.',
     canonicalPath: '/online-quiz-maker',
     keywords: ['online quiz maker', 'quiz maker for teachers', 'free quiz maker', 'create quiz online', 'quiz creator for teachers'],
     heroBadge: 'Quiz Maker for Teachers',
@@ -189,13 +189,13 @@ export const useCasePages: UseCasePageData[] = [
       {
         icon: 'Sparkles',
         title: 'AI Quiz Generation',
-        description: 'Paste your lesson notes, upload a chapter PDF, or share a YouTube lecture — AI generates a complete quiz with answer keys and explanations.',
+        description: 'Upload a chapter PDF or photos of your lesson notes — AI generates a complete quiz with answer keys, ready for you to review.',
         color: 'indigo'
       },
       {
         icon: 'Palette',
         title: 'Multiple Question Formats',
-        description: 'MCQ, multiple-select, fill-in-the-blank, and true/false. Mix question types in a single quiz for thorough assessment.',
+        description: 'Single-correct MCQ, multiple-correct and numerical answers. Mix question types in a single quiz for thorough assessment.',
         color: 'purple'
       },
       {
@@ -208,7 +208,7 @@ export const useCasePages: UseCasePageData[] = [
     benefitHeadline: 'The Quiz Maker Built for Educators',
     benefitDescription: 'Unlike generic form builders, TestoZa is purpose-built for education. Every feature — from question shuffling to score analytics — is designed for teaching and assessment.',
     benefits: [
-      'Create quizzes from PDFs, images, text, or YouTube videos',
+      'Create quizzes from PDFs, photos and notes',
       'Students take quizzes on any device — no app required',
       'Instant auto-grading with detailed explanations per question',
       'Share via link, QR code, email, or WhatsApp',
@@ -246,7 +246,7 @@ export const useCasePages: UseCasePageData[] = [
       {
         icon: 'Sparkles',
         title: 'AI MCQ Generator',
-        description: 'Paste any text, upload a PDF, or share a YouTube link — AI generates high-quality MCQs with correct answers and plausible distractors automatically.',
+        description: 'Upload a PDF or photos — AI generates high-quality MCQs with correct answers and plausible distractors automatically.',
         color: 'indigo'
       },
       {
@@ -265,7 +265,7 @@ export const useCasePages: UseCasePageData[] = [
     benefitHeadline: 'The Smartest Way to Create MCQ Tests',
     benefitDescription: 'Writing MCQs manually is tedious — crafting good distractors, ensuring answer keys are correct, and formatting everything takes hours. TestoZa automates the entire process.',
     benefits: [
-      'Generate MCQs from PDFs, text, images, or YouTube videos',
+      'Generate MCQs from PDFs and photos of notes, chapters or papers',
       'Support for 4, 5, or 6 options per question',
       'Negative marking for competitive exam-style tests',
       'Add images, LaTeX equations, and code snippets to questions',
@@ -292,7 +292,7 @@ export const useCasePages: UseCasePageData[] = [
   {
     slug: 'ai-question-generator',
     seoTitle: 'AI Question Generator – Generate Quiz Questions from Any Content',
-    seoDescription: 'Generate quiz questions automatically using AI. Upload PDFs, paste text, or share YouTube videos — get MCQ, fill-in-the-blank, and true/false questions instantly. Free for teachers.',
+    seoDescription: 'Generate quiz questions automatically using AI. Upload a PDF or photos of notes or a chapter — get single-correct, multiple-correct and numerical questions to review. Free for teachers.',
     canonicalPath: '/ai-question-generator',
     keywords: ['ai question generator', 'ai quiz generator', 'generate questions from text', 'ai test generator', 'automatic question generator'],
     heroBadge: 'AI Question Generator',
@@ -303,13 +303,13 @@ export const useCasePages: UseCasePageData[] = [
       {
         icon: 'FileText',
         title: 'Multi-Source Input',
-        description: 'Generate questions from PDFs, images, pasted text, YouTube videos, or any combination. AI understands context across all formats.',
+        description: 'Generate questions from PDFs and photos of question papers, notes or chapters, printed or handwritten, including maths, chemistry and Hindi.',
         color: 'indigo'
       },
       {
         icon: 'Layers',
         title: 'Multiple Question Types',
-        description: 'AI generates MCQ, multiple-select, fill-in-the-blank, and true/false questions. Choose your preferred mix or let AI decide the best format.',
+        description: 'AI generates single-correct MCQs, multiple-correct and numerical questions, at Easy, Moderate or Tough.',
         color: 'purple'
       },
       {
@@ -334,7 +334,7 @@ export const useCasePages: UseCasePageData[] = [
     faqItems: [
       {
         question: 'What types of content can AI generate questions from?',
-        answer: 'TestoZa AI can generate questions from PDF documents (textbooks, slides, notes), pasted text, YouTube video transcripts, and images. It supports OCR for scanned documents and handwritten notes.'
+        answer: 'TestoZa AI can generate questions from PDF documents (textbooks, slides, notes) and images (PNG, JPG, WEBP). It does not read videos. It supports OCR for scanned documents and handwritten notes.'
       },
       {
         question: 'How accurate are AI-generated questions?',
@@ -380,7 +380,7 @@ export const useCasePages: UseCasePageData[] = [
     benefitDescription: 'Teachers spend hours converting study material into test papers. TestoZa automates this entire workflow — just upload, review, and publish.',
     benefits: [
       'Supports text-based and scanned PDFs with OCR',
-      'Generates MCQ, fill-in-the-blank, and true/false questions',
+      'Generates single-correct, multiple-correct and numerical questions',
       'AI creates answer keys and solution explanations automatically',
       'Works with textbooks, slides, notes, and research papers',
       'Handles mathematical content with LaTeX rendering',
@@ -400,63 +400,6 @@ export const useCasePages: UseCasePageData[] = [
       {
         question: 'Can I edit the questions after AI generates them?',
         answer: 'Yes, absolutely. Every question, option, answer, and explanation is fully editable. You maintain complete control over the final quiz content.'
-      }
-    ]
-  },
-  {
-    slug: 'youtube-to-quiz',
-    seoTitle: 'YouTube to Quiz Generator – Create Quizzes from YouTube Videos',
-    seoDescription: 'Create quizzes from YouTube videos using AI. Share a YouTube link and get a complete quiz with MCQs, answers, and explanations. Perfect for flipped classrooms. Free for teachers.',
-    canonicalPath: '/youtube-to-quiz',
-    keywords: ['youtube to quiz', 'youtube quiz generator', 'create quiz from youtube', 'video to quiz', 'youtube test maker'],
-    heroBadge: 'YouTube to Quiz',
-    heroTitle: 'Create Quizzes from',
-    heroHighlight: 'YouTube Videos Instantly',
-    heroDescription: 'Share a YouTube video link and TestoZa AI extracts the transcript, identifies key concepts, and generates a complete quiz — perfect for flipped classrooms and video-based learning.',
-    features: [
-      {
-        icon: 'Play',
-        title: 'Paste Any YouTube Link',
-        description: 'Share a YouTube URL from any educational video — lectures, tutorials, documentaries, explainers. AI extracts and analyses the transcript automatically.',
-        color: 'indigo'
-      },
-      {
-        icon: 'Sparkles',
-        title: 'AI-Powered Comprehension Questions',
-        description: 'AI doesn\'t just pull facts — it creates questions that test comprehension, application, and analysis of the video content.',
-        color: 'purple'
-      },
-      {
-        icon: 'BookOpen',
-        title: 'Flipped Classroom Ready',
-        description: 'Assign a video as homework, then use the AI-generated quiz as a class warm-up. Check if students actually watched and understood the material.',
-        color: 'cyan'
-      }
-    ],
-    benefitHeadline: 'Make Every YouTube Video Assessable',
-    benefitDescription: 'Teachers increasingly use YouTube videos in their teaching. But how do you know students actually watched and understood the content? TestoZa turns any video into an accountable learning experience.',
-    benefits: [
-      'Works with any YouTube video that has a transcript',
-      'Generates questions covering the entire video, not just the beginning',
-      'Supports educational lectures, tutorials, and explainers',
-      'Questions test comprehension, not just surface-level recall',
-      'Perfect for flipped classrooms and blended learning',
-      'Share the quiz link alongside the video assignment'
-    ],
-    ctaHeadline: 'Try YouTube to Quiz — It\'s Free',
-    ctaDescription: 'Paste a YouTube link and get a complete quiz in under a minute.',
-    faqItems: [
-      {
-        question: 'Does this work with any YouTube video?',
-        answer: 'It works with any YouTube video that has subtitles/captions (auto-generated or manual). Most educational videos have these enabled by default.'
-      },
-      {
-        question: 'How many questions can AI generate from one video?',
-        answer: 'The number depends on the video length and content density. A typical 15-minute lecture generates 10-20 high-quality questions.'
-      },
-      {
-        question: 'Can I combine YouTube quiz with other content?',
-        answer: 'Yes. You can generate questions from a YouTube video and a PDF in the same test, creating a comprehensive assessment from multiple sources.'
       }
     ]
   },
@@ -676,7 +619,7 @@ export const useCasePages: UseCasePageData[] = [
     faqItems: [
       {
         question: 'What question types support auto-grading?',
-        answer: 'All objective question types — MCQ, multiple-select, fill-in-the-blank, and true/false — are auto-graded instantly. Subjective questions are not currently supported.'
+        answer: 'All question types — single-correct MCQ, multiple-correct (with optional partial marks) and numerical answers — are auto-graded instantly. Subjective questions are not currently supported.'
       },
       {
         question: 'Can I override or adjust auto-graded scores?',
@@ -758,7 +701,7 @@ export const subjectPages: SubjectPageData[] = [
     keywords: ['create physics test', 'physics quiz maker', 'physics mcq generator', 'online physics test', 'physics question generator'],
     icon: 'Atom',
     color: 'blue',
-    heroDescription: 'Create physics assessments from your lecture notes, textbook chapters, or YouTube lectures. AI generates conceptual, numerical, and application-based questions with LaTeX equation support.',
+    heroDescription: 'Create physics assessments from your lecture notes, textbook chapters or old question papers (PDF or photos). AI generates conceptual, numerical, and application-based questions with LaTeX equation support.',
     sampleTopics: ['Mechanics', 'Thermodynamics', 'Electromagnetism', 'Optics', 'Modern Physics', 'Waves', 'Fluid Dynamics', 'Quantum Physics'],
     questionTypes: ['Conceptual MCQs', 'Numerical problems', 'Assertion-reason', 'Diagram-based questions']
   },
@@ -808,7 +751,7 @@ export const subjectPages: SubjectPageData[] = [
     color: 'amber',
     heroDescription: 'Generate English assessments covering grammar, vocabulary, comprehension, and literature. AI creates contextual questions that test language skills, not just memorisation.',
     sampleTopics: ['Grammar', 'Vocabulary', 'Reading Comprehension', 'Literature', 'Creative Writing', 'Sentence Correction', 'Idioms & Phrases', 'Essay Structure'],
-    questionTypes: ['Grammar MCQs', 'Comprehension questions', 'Fill-in-the-blank', 'Error identification']
+    questionTypes: ['Grammar MCQs', 'Comprehension questions', 'Error identification', 'Vocabulary MCQs']
   },
   {
     slug: 'computer-science',
@@ -868,7 +811,7 @@ export const subjectPages: SubjectPageData[] = [
     color: 'rose',
     heroDescription: 'Generate GK assessments covering current affairs, static GK, science & technology, sports, awards, and general awareness. Perfect for coaching institutes preparing students for competitive exams.',
     sampleTopics: ['Current Affairs', 'Static GK', 'Science & Technology', 'Sports', 'Awards & Honours', 'Indian Polity', 'Art & Culture', 'Environment'],
-    questionTypes: ['Factual MCQs', 'Match-the-following', 'Chronological ordering', 'True/False questions']
+    questionTypes: ['Factual MCQs', 'Match-the-following', 'Chronological ordering', 'Assertion–reason questions']
   },
   {
     slug: 'reasoning',
@@ -895,9 +838,9 @@ export const comparisonPages: ComparisonPageData[] = [
     keywords: ['testmoz alternative', 'testmoz vs testoza', 'better than testmoz', 'testmoz replacement'],
     heroDescription: 'Testmoz is a simple test creator, but it lacks AI question generation, detailed analytics, and white-label branding. TestoZa gives you everything Testmoz offers and much more.',
     comparisonRows: [
-      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs, YouTube, text', competitor: 'No', testozaWins: true },
+      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs and photos', competitor: 'No', testozaWins: true },
       { feature: 'Auto-Grading', testoza: 'Yes, instant', competitor: 'Yes, basic', testozaWins: true },
-      { feature: 'Question Types', testoza: 'MCQ, Multiple-Select, Fill-in-Blank, True/False', competitor: 'MCQ, True/False, Fill-in-Blank', testozaWins: true },
+      { feature: 'Question Types', testoza: 'MCQ, multiple-correct (partial marks), numerical', competitor: 'MCQ, True/False, Fill-in-Blank', testozaWins: true },
       { feature: 'Student Analytics', testoza: 'Detailed — percentile, question-level, difficulty index', competitor: 'Basic score only', testozaWins: true },
       { feature: 'White-Label Branding', testoza: 'Yes (Premium)', competitor: 'No', testozaWins: true },
       { feature: 'Focus Tracking / Proctoring', testoza: 'Yes — tab-switch detection, full-screen mode', competitor: 'No', testozaWins: true },
@@ -920,10 +863,10 @@ export const comparisonPages: ComparisonPageData[] = [
     keywords: ['classmarker alternative', 'classmarker vs testoza', 'better than classmarker', 'classmarker replacement'],
     heroDescription: 'ClassMarker is a capable test platform, but its pricing model charges per test taken. TestoZa offers unlimited tests and students on the free plan, plus AI-powered question generation.',
     comparisonRows: [
-      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs, YouTube, text', competitor: 'No', testozaWins: true },
+      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs and photos', competitor: 'No', testozaWins: true },
       { feature: 'Pricing Model', testoza: 'Flat monthly — unlimited tests', competitor: 'Per-test pricing', testozaWins: true },
       { feature: 'Free Plan', testoza: 'Unlimited tests, unlimited students', competitor: 'Very limited free tier', testozaWins: true },
-      { feature: 'Question Import', testoza: 'AI from PDF, YouTube, text + manual', competitor: 'CSV import + manual', testozaWins: true },
+      { feature: 'Question Import', testoza: 'AI from PDFs and photos + manual', competitor: 'CSV import + manual', testozaWins: true },
       { feature: 'White-Label Branding', testoza: 'Yes (Premium)', competitor: 'Yes (paid)', testozaWins: false },
       { feature: 'Student Analytics', testoza: 'Detailed — percentile, question-level analysis', competitor: 'Good reporting', testozaWins: true },
       { feature: 'Focus Tracking', testoza: 'Yes — built-in', competitor: 'Limited', testozaWins: true },
@@ -945,7 +888,7 @@ export const comparisonPages: ComparisonPageData[] = [
     keywords: ['google forms alternative for tests', 'google forms vs testoza', 'better than google forms for quizzes', 'google forms exam alternative'],
     heroDescription: 'Google Forms is a general-purpose form builder. It lacks focus tracking, question shuffling, negative marking, timed sections, and student analytics. TestoZa is purpose-built for educational assessments.',
     comparisonRows: [
-      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs, YouTube, text', competitor: 'No', testozaWins: true },
+      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs and photos', competitor: 'No', testozaWins: true },
       { feature: 'Focus Tracking / Proctoring', testoza: 'Yes — tab detection, full-screen', competitor: 'No', testozaWins: true },
       { feature: 'Question Shuffle', testoza: 'Questions + options independently', competitor: 'Basic shuffle', testozaWins: true },
       { feature: 'Negative Marking', testoza: 'Yes, configurable per question', competitor: 'No', testozaWins: true },
@@ -971,7 +914,7 @@ export const comparisonPages: ComparisonPageData[] = [
     keywords: ['quizizz alternative', 'quizizz vs testoza', 'better than quizizz', 'quizizz alternative for teachers'],
     heroDescription: 'Quizizz is designed for gamified, informal quizzes. TestoZa is built for serious assessments that need exam security, negative marking, timed sections, and institutional branding.',
     comparisonRows: [
-      { feature: 'AI Question Generation from PDFs', testoza: 'Yes — PDF, YouTube, text, images', competitor: 'Limited', testozaWins: true },
+      { feature: 'AI Question Generation from PDFs', testoza: 'Yes — PDFs and photos', competitor: 'Limited', testozaWins: true },
       { feature: 'Exam-Grade Security', testoza: 'Focus tracking, full-screen, shuffle', competitor: 'Basic (designed for fun quizzes)', testozaWins: true },
       { feature: 'Negative Marking', testoza: 'Yes, fully configurable', competitor: 'No', testozaWins: true },
       { feature: 'Timed Sections', testoza: 'Yes — per-section time limits', competitor: 'Overall time only', testozaWins: true },
@@ -996,7 +939,7 @@ export const comparisonPages: ComparisonPageData[] = [
     keywords: ['typeform alternative for quizzes', 'typeform vs testoza', 'better than typeform for tests', 'typeform quiz alternative'],
     heroDescription: 'Typeform is a beautiful survey tool, but it\'s not designed for educational assessments. It lacks auto-grading, negative marking, exam security, and the analytics teachers need.',
     comparisonRows: [
-      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs, YouTube, text', competitor: 'No', testozaWins: true },
+      { feature: 'AI Question Generation', testoza: 'Yes — from PDFs and photos', competitor: 'No', testozaWins: true },
       { feature: 'Auto-Grading', testoza: 'Yes, instant with analytics', competitor: 'Basic scoring only', testozaWins: true },
       { feature: 'Exam Security', testoza: 'Focus tracking, shuffle, full-screen', competitor: 'None', testozaWins: true },
       { feature: 'Negative Marking', testoza: 'Yes', competitor: 'No', testozaWins: true },

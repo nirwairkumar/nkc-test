@@ -136,7 +136,7 @@ export default function LandingPage() {
         <>
             <SEO
                 title="Free Online Test Maker – Create & Conduct Exams with AI"
-                description="Create and conduct online exams with AI. Generate quizzes from PDFs, YouTube videos, or plain text in minutes — auto-graded, proctored, and free for unlimited students."
+                description="Create and conduct online exams with AI. Turn a PDF or photos of a question paper, notes or a chapter into a test in minutes — auto-graded, proctored, and free for unlimited students."
                 canonicalUrl="https://testoza.com/"
                 schemas={[homepageFAQSchema, softwareSchema]}
             />

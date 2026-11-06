@@ -420,7 +420,7 @@ export default function PricingPage() {
                             Free Forever for Individual Teachers
                         </h2>
                         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
-                            Create unlimited tests, generate quizzes with AI from PDFs or YouTube, and share test links with as many students as you want. Zero credit card required.
+                            Create unlimited tests, generate quizzes with AI from PDFs or photos, and share test links with as many students as you want. Zero credit card required.
                         </p>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-600 dark:text-slate-300">
                             <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Unlimited Tests</span>

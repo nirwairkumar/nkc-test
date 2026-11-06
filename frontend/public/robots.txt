@@ -1,151 +1,42 @@
-# TestoZa Production SEO Robots Configuration
-# Domain: https://testoza.com
-# Last Updated: 2026-08-20
+# robots.txt for https://app.testoza.com (Cloudflare Pages static file)
+# Updated 2026-11-06.
+#
+# Public pages (shared tests, test categories, creator pages, pricing, the test maker)
+# may be crawled and cited by search engines and AI assistants. Signed-in screens and
+# candidates' results are not for indexing. One group for everyone, on purpose: a
+# separate "User-agent: Googlebot" group would make Google ignore every rule below.
 
-# ============================================
-# SITEMAP DECLARATIONS
-# ============================================
-Sitemap: https://testoza.com/sitemap.xml
-Sitemap: https://testoza.com/sitemap/index.xml
-Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap/tests.xml
-Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/creators.xml
-
-# ============================================
-# DEFAULT CRAWLER RULES
-# ============================================
 User-agent: *
 Allow: /
 
-# Crawl rate optimization
-Crawl-delay: 0.5
-
-# Private Routes - Do Not Index
-Disallow: /live/
-Disallow: /test-session/
-Disallow: /attempt/
+Disallow: /api/
+Disallow: /auth/
 Disallow: /admin
-Disallow: /admin-*
-Disallow: /manage-tests
-Disallow: /admin-migration
-Disallow: /admin-pricing
-Disallow: /admin-promo-codes
+Disallow: /dashboard
 Disallow: /my-tests
+Disallow: /manage-tests
+Disallow: /exams
+Disallow: /batches
+Disallow: /all-submissions
+Disallow: /analytics
 Disallow: /history
 Disallow: /results
-Disallow: /profile
-Disallow: /settings
-Disallow: /notifications
 Disallow: /edit-test/
+Disallow: /settings
+Disallow: /profile
+Disallow: /notifications
 Disallow: /update-password
 Disallow: /onboarding
+Disallow: /rewards
 Disallow: /test-submitted
+Disallow: /test-session/
+Disallow: /attempt/
+Disallow: /live/
+Disallow: /join/result
 Disallow: /payment/
 Disallow: /checkout/
-
-# Block API and build files
-Disallow: /api/
-Disallow: /api/*
 Disallow: /*.js.map$
 Disallow: /*.css.map$
-Disallow: /*.json$
-Disallow: /_next/
-Disallow: /static/internal/
 
-# Allow all XML and sitemaps
-Allow: /sitemap*.xml$
-Allow: /sitemap/*.xml$
-Allow: /*.xml$
-
-# ============================================
-# GOOGLE SPECIFIC RULES
-# ============================================
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0.5
-
-User-agent: Googlebot-Image
-Allow: /assets/
-Allow: /images/
-Allow: /*.png$
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.gif$
-Allow: /*.webp$
-Allow: /*.svg$
-
-User-agent: Googlebot-Video
-Allow: /videos/
-Allow: /*.mp4$
-
-User-agent: Googlebot-News
-Allow: /blog/
-Allow: /news/
-Allow: /articles/
-
-User-agent: Googlebot-Mobile
-Allow: /
-
-# ============================================
-# BING SPECIFIC RULES
-# ============================================
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 0.5
-
-User-agent: BingPreview
-Allow: /
-
-# ============================================
-# SOCIAL MEDIA CRAWLERS
-# ============================================
-User-agent: facebookexternalhit
-Allow: /
-Crawl-delay: 0
-
-User-agent: Facebot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-Crawl-delay: 0
-
-User-agent: LinkedInBot
-Allow: /
-Crawl-delay: 0
-
-User-agent: WhatsApp
-Allow: /
-Crawl-delay: 0
-
-User-agent: TelegramBot
-Allow: /
-Crawl-delay: 0
-
-User-agent: Discordbot
-Allow: /
-Crawl-delay: 0
-
-# ============================================
-# AI & SEARCH CRAWLERS
-# ============================================
-User-agent: GPTBot
-Allow: /
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-User-agent: OAI-SearchBot
-Allow: /
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-User-agent: Claude-Web
-Allow: /
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-User-agent: PerplexityBot
-Allow: /
-Allow: /llms.txt
-Allow: /llms-full.txt
+# The sitemap index on testoza.com lists this host's public pages too.
+Sitemap: https://testoza.com/sitemap.xml

@@ -31,6 +31,17 @@ import {
 // The app's in-browser redirect and canonical tags use the same rule.
 import { APP_ORIGIN, isAuthReturn, isMarketingPath, publicUrl } from '../../frontend/src/utils/marketingPaths.ts';
 import { APP_SECTIONS as KNOWN_APP_SECTIONS, isKnownPath } from '../../frontend/src/utils/knownPaths.ts';
+// The user guide (testoza.com/user-guide/*): titles, descriptions and full text shared with
+// UserGuidePage.tsx, so crawlers and AI assistants read the real how-to, not the homepage.
+import {
+  docCrawlerHtml,
+  docImages,
+  docJsonLd,
+  docSeoDescription,
+  docSeoTitle,
+  docUrl,
+  resolveDocSlug
+} from '../../frontend/src/docs/userGuide.ts';
 import { nearMissRedirect, notFoundPage } from '../../frontend/functions/_shared/notFound.js';
 
 // Configuration
@@ -110,6 +121,44 @@ function joinCodeFromPath(pathname) {
   const m = pathname.match(/^\/join\/(\d{4,8})(?:\/|$)/);
   return m ? m[1] : null;
 }
+
+/**
+ * The user-guide page a path shows ('intro' for /user-guide itself), or null when the
+ * path is not a user-guide page that exists. Old names are left to userGuideRedirect.
+ */
+function userGuideSlug(pathname) {
+  const m = pathname.match(/^\/user-guide(?:\/([^/]+))?\/?$/);
+  if (!m) return null;
+  return m[1] === undefined ? 'intro' : (m[1] === resolveDocSlug(m[1]) ? m[1] : null);
+}
+
+/**
+ * Where a user-guide URL that isn't a page goes: an old name to its new one
+ * (/user-guide/json-test-upload-guide → bulk-test-upload, which Bing still lists), a
+ * trailing slash off, and an unknown or nested slug to the guide's front page — rather
+ * than a 200 copy of something else, which is what crawlers got before.
+ */
+function userGuideRedirect(url) {
+  const path = url.pathname;
+  if (path !== '/user-guide' && !path.startsWith('/user-guide/')) return null;
+  const m = path.match(/^\/user-guide(?:\/([^/]+))?(\/?)$/);
+  if (!m) return `${CONFIG.FRONTEND_URL}/user-guide`;
+  const [, raw, slash] = m;
+  if (raw === undefined) return slash ? `${CONFIG.FRONTEND_URL}/user-guide` : null;
+  const slug = resolveDocSlug(raw);
+  if (slug === null) return `${CONFIG.FRONTEND_URL}/user-guide`;
+  if (slug !== raw || slash) return `${CONFIG.FRONTEND_URL}/user-guide/${slug}`;
+  return null;
+}
+
+/**
+ * Pages that described something TestoZa doesn't do. /youtube-to-quiz promised quizzes
+ * from YouTube videos; the product reads PDFs and pictures, so the URL now leads to the
+ * page about the AI that exists.
+ */
+const RETIRED_PAGES = {
+  '/youtube-to-quiz': '/ai-test-generator'
+};
 
 /**
  * Check if request is from a search crawler
@@ -378,13 +427,15 @@ function generateMetaTags(url, testData = null, joinData = null) {
 
   // Default meta - matching high quality educational branding
   let title = 'TestoZa – Free Online Test Maker for Teachers | Create Exam Online with AI';
-  let description = 'Create, conduct, and manage online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers, educators, coaching institutes, and content creators — generate quizzes from PDFs, YouTube videos, or text. Auto-grading, analytics, white-label branding & exam integrity tools.';
+  let description = 'Create, conduct, and manage online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers, educators, coaching institutes, and content creators — turn a PDF or photos of a paper, notes or a chapter into a test with AI. Auto-grading, rank lists, analytics, institute branding & exam integrity tools.';
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
   let keywords = 'online test maker for teachers, ai test generator, quiz creator for educators, exam builder, conduct online exam, assessment platform for coaching institutes, online examination software';
   let siteName = 'TestoZa';
   let card = 'summary_large_image';
   let imageMeta = '';
+  // A page whose canonical differs from its own path (the user guide's front page).
+  let canonicalOverride = null;
 
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
@@ -504,14 +555,23 @@ function generateMetaTags(url, testData = null, joinData = null) {
     description = 'Easily build custom online tests, quizzes, and exams. Customize settings including timer, negative marking, section rules, and proctoring.';
   } else if (path === '/generate-with-ai') {
     title = 'Free AI Quiz & Test Generator | Create Exams in Minutes | TestoZa';
-    description = 'Generate comprehensive quizzes and tests in seconds using AI. Import PDFs, YouTube videos, or text prompts to create ready-to-take exams.';
-  } else if (path === '/user-guide/pdf-tools') {
-    // Same title and description as UserGuidePage.tsx, so nothing changes when the app loads.
-    title = 'Panna PDF Tools – TestoZa Docs | TestoZa';
-    description = 'Edit PDF text in its own font, erase for real, sign, and turn ChatGPT or LaTeX maths into a PDF. Free, and your file never leaves your device.';
-  } else if (path.startsWith('/user-guide')) {
-    title = 'TestoZa User Guide & Tutorials for Teachers | TestoZa';
-    description = 'Learn how to use TestoZa to create exams, invite students, and analyze test results with our step-by-step documentation.';
+    description = 'Make a test from a PDF or photos of a question paper, notes or a chapter: AI extracts the questions or writes new ones, ready to review and share.';
+  } else if (userGuideSlug(path)) {
+    // Same title, description and canonical as UserGuidePage.tsx (both read
+    // src/docs/userGuide.ts), so nothing changes when the app loads.
+    const slug = userGuideSlug(path);
+    title = `${docSeoTitle(slug)} | TestoZa`;
+    description = docSeoDescription(slug);
+    type = 'article';
+    canonicalOverride = docUrl(slug);
+    const [picture] = docImages(slug);
+    if (picture) {
+      image = `${siteUrl}${picture.src}`;
+      imageMeta = `
+    <meta property="og:image:width" content="${picture.width}">
+    <meta property="og:image:height" content="${picture.height}">
+    <meta property="og:image:alt" content="${escapeHtml(picture.alt)}">`;
+    }
   } else if (path === '/about') {
     title = 'Why TestoZa - Best Free Online Test Maker for Teachers | TestoZa';
     description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading.';
@@ -542,14 +602,13 @@ function generateMetaTags(url, testData = null, joinData = null) {
   const useCaseMetaMap = {
     '/online-test-maker': { title: 'Online Test Maker – Create Tests Online in Minutes | TestoZa', description: 'Create online tests instantly with TestoZa. The easiest online test maker for teachers, educators, and coaching institutes. Auto-grading, analytics, and secure test delivery — all free.' },
     '/online-exam-software': { title: 'Online Exam Software – Conduct Secure Online Exams | TestoZa', description: 'Secure online exam software for educators and coaching institutes. Conduct proctored exams with auto-grading, focus tracking, and detailed analytics. Start free.' },
-    '/online-quiz-maker': { title: 'Online Quiz Maker for Teachers – Create Quizzes Free | TestoZa', description: 'Free online quiz maker for teachers. Create engaging quizzes from PDFs, text, or YouTube videos using AI. Auto-grading, instant results, and student analytics.' },
+    '/online-quiz-maker': { title: 'Online Quiz Maker for Teachers – Create Quizzes Free | TestoZa', description: 'Free online quiz maker for teachers. Create quizzes from PDFs, photos or notes using AI. Auto-grading, instant results, and student analytics.' },
     '/mcq-test-maker': { title: 'MCQ Test Maker Online – Create Multiple Choice Tests Free | TestoZa', description: 'Create MCQ tests online in minutes. Free MCQ test maker for teachers with AI question generation, auto-grading, and detailed analytics.' },
-    '/ai-question-generator': { title: 'AI Question Generator – Generate Quiz Questions from Any Content | TestoZa', description: 'Generate quiz questions automatically using AI. Upload PDFs, paste text, or share YouTube videos — get MCQ, fill-in-the-blank, and true/false questions instantly.' },
+    '/ai-question-generator': { title: 'AI Question Generator – Generate Quiz Questions from Any Content | TestoZa', description: 'Generate quiz questions automatically using AI. Upload a PDF or photos of notes or a chapter and get single-correct, multiple-correct and numerical questions to review.' },
     '/pdf-to-quiz': { title: 'PDF to Quiz Converter – Turn PDFs into Online Quizzes with AI | TestoZa', description: 'Convert any PDF into an online quiz instantly using AI. Upload textbook chapters, lecture slides, or study notes — get a ready-to-take quiz with auto-grading.' },
-    '/youtube-to-quiz': { title: 'YouTube to Quiz Generator – Create Quizzes from YouTube Videos | TestoZa', description: 'Create quizzes from YouTube videos using AI. Share a YouTube link and get a complete quiz with MCQs, answers, and explanations. Perfect for flipped classrooms.' },
     '/online-test-for-coaching': { title: 'Online Test Platform for Coaching Institutes | TestoZa', description: 'Online test platform built for coaching institutes. Conduct mock tests, track student performance, and manage batches with white-label branding. Start free.' },
     '/exam-software-for-schools': { title: 'Online Exam Software for Schools – Conduct School Exams Online | TestoZa', description: 'Online exam software designed for schools. Conduct class tests, mid-terms, and final exams online with auto-grading, secure delivery, and detailed student reports.' },
-    '/white-label-test-platform': { title: 'White Label Test Platform – Your Brand, Our Technology | TestoZa', description: 'White-label online test platform for coaching institutes and schools. Custom logo, colours, domain, and certificates. Your brand, powered by TestoZa technology.' },
+    '/white-label-test-platform': { title: 'White Label Test Platform – Your Brand, Our Technology | TestoZa', description: 'White-label online test platform for coaching institutes and schools. Your institute’s name and logo on every test, link preview and report card. Your brand, powered by TestoZa technology.' },
     '/auto-grading-software': { title: 'Auto Grading Software – Instant Test Grading for Teachers | TestoZa', description: 'Auto-grade tests and quizzes instantly. Eliminates manual correction. Instant scores, analytics, and detailed student reports. Free for teachers.' },
     '/online-proctoring-software': { title: 'Online Proctoring Software – Secure Online Exam Monitoring | TestoZa', description: 'Conduct secure proctored online exams. Focus tracking, tab-switch detection, full-screen enforcement, and detailed activity logs. Free for educators.' },
   };
@@ -629,7 +688,7 @@ function generateMetaTags(url, testData = null, joinData = null) {
   // The host that actually serves this URL. `${siteUrl}${path}` named testoza.com for
   // every path, including the ones testoza.com 301s to app.testoza.com — so canonical
   // tags and og:url pointed at a redirect, and WhatsApp showed the wrong address.
-  const canonicalUrl = publicUrl(path);
+  const canonicalUrl = canonicalOverride || publicUrl(path);
 
   // Build meta tag HTML
   return `
@@ -755,6 +814,15 @@ function generateRouteContent(url, testData = null) {
     return { bodyHtml: guideCrawlerHtml(guide), faqSchema: guideJsonLd(guide) };
   }
 
+  // ─── 0c. USER GUIDE (frontend/src/docs/userGuide.ts) ─────────────────────────
+  // The how-to pages in full: steps with exact button names, links to the pages they
+  // happen on and screenshots, plus TechArticle / HowTo / FAQPage JSON-LD. Without this
+  // every /user-guide URL showed crawlers the homepage's marketing copy.
+  const docSlug = userGuideSlug(path);
+  if (docSlug) {
+    return { bodyHtml: docCrawlerHtml(docSlug), faqSchema: docJsonLd(docSlug) };
+  }
+
   // ─── 1. PRICING PAGE ────────────────────────────────────────────────────────
   if (path === '/pricing') {
     const faqs = [
@@ -799,7 +867,7 @@ function generateRouteContent(url, testData = null) {
         <ul>
           <li>Unlimited online tests and quizzes</li>
           <li>Unlimited student test takers</li>
-          <li>AI Question Generator (from PDF, YouTube, or text)</li>
+          <li>AI test maker (from a PDF or photos of a paper, notes or a chapter)</li>
           <li>Manual Question Builder with full math & LaTeX support</li>
           <li>Instant auto-grading, student scorecards, and class leaderboards</li>
         </ul>
@@ -833,8 +901,7 @@ function generateRouteContent(url, testData = null) {
           <li>4,000 Student Result Submissions per year</li>
           <li>Full White-Label Institute Branding & Custom Certificate Generation</li>
           <li>Unlimited Timed Exam Scheduling and Batch Management</li>
-          <li>Custom Domain & Portal Integration Ready</li>
-          <li>24/7 Dedicated Priority Support</li>
+                    <li>24/7 Dedicated Priority Support</li>
         </ul>
       </div>
 
@@ -886,7 +953,7 @@ function generateRouteContent(url, testData = null) {
     const faqs = [
       {
         q: "What question types does TestoZa support?",
-        a: "TestoZa supports multiple question formats including Single-Choice Multiple Choice Questions (MCQs), Multiple-Select Questions (MSQs), Numerical Value Questions, True or False, Fill-in-the-Blanks, and Short Answer questions. You can combine different question types within a single test or organize them into distinct subject sections to mirror standard competitive and school exam formats."
+        a: "TestoZa supports multiple question formats including Single-Choice Multiple Choice Questions (MCQs), Multiple-Select Questions (MSQs), and Numerical Value questions (exact or within a range); assertion–reason, match-the-column and passage questions are written as single-correct questions. You can combine different question types within a single test or organize them into distinct subject sections to mirror standard competitive and school exam formats."
       },
       {
         q: "Can I import questions from Word or Excel?",
@@ -923,8 +990,6 @@ function generateRouteContent(url, testData = null) {
         <li><strong>Single-Choice Multiple Choice Questions (MCQ):</strong> Standard 4-option questions with one correct answer and detailed explanations.</li>
         <li><strong>Multiple-Select Questions (MSQ):</strong> Advanced questions with multiple correct options and optional partial marking.</li>
         <li><strong>Numerical & Integer Value Questions:</strong> Exact value, decimal, or range-based numerical input questions.</li>
-        <li><strong>Fill in the Blanks:</strong> Single or multi-blank sentences with case-sensitive validation options.</li>
-        <li><strong>True or False Questions:</strong> Rapid concept-check questions.</li>
         <li><strong>LaTeX & Formula Support:</strong> Full LaTeX equation editor support for mathematical symbols and scientific notations.</li>
         <li><strong>Rich Media:</strong> Upload diagrams, charts, and images directly into questions and answer explanations.</li>
       </ul>
@@ -975,7 +1040,7 @@ function generateRouteContent(url, testData = null) {
     const faqs = [
       {
         q: "How does TestoZa generate tests using AI?",
-        a: "TestoZa uses advanced AI models to analyze educational content—such as PDF documents, lecture notes, textbook chapters, text prompts, or YouTube video transcripts. The AI extracts core learning concepts, formulates accurate multiple-choice and short-answer questions, specifies correct answers, and generates step-by-step explanations automatically in under two minutes."
+        a: "TestoZa uses advanced AI models to analyze educational content—such as PDF documents and photos of question papers, class notes or textbook chapters. The AI extracts core learning concepts, formulates accurate multiple-choice and short-answer questions, specifies correct answers, and generates step-by-step explanations automatically in under two minutes."
       },
       {
         q: "Can I edit AI-generated questions before publishing?",
@@ -983,18 +1048,18 @@ function generateRouteContent(url, testData = null) {
       },
       {
         q: "What content formats can I upload for AI test generation?",
-        a: "TestoZa supports PDF documents (including textbooks and lecture slides), pasted plain text, topic prompts, and YouTube video URLs with transcripts. The AI parses the uploaded material and formats questions tailored to your chosen grade level and difficulty."
+        a: "TestoZa reads PDF files and pictures (PNG, JPG, WEBP) of question papers, notes and textbook pages; save Word and PowerPoint files as PDF first. The AI parses the uploaded material and formats questions tailored to your chosen grade level and difficulty."
       }
     ];
 
     const bodyHtml = `
       <h1>Free AI Quiz & Test Generator – Create Online Exams from Any Content</h1>
-      <p>Transform PDFs, textbook chapters, lecture notes, text prompts, and YouTube videos into ready-to-take online tests in seconds using TestoZa's AI test generator. Free for teachers and educators.</p>
+      <p>Turn PDFs and photos of question papers, textbook chapters and lecture notes into ready-to-take online tests in seconds using TestoZa's AI test generator. Free for teachers and educators.</p>
 
       <h2>How AI Test Generation Works</h2>
       <ol>
-        <li><strong>Upload Content:</strong> Upload a PDF document, paste lecture notes, or share a YouTube video link.</li>
-        <li><strong>Configure Preferences:</strong> Select your desired number of questions, question types (MCQ, MSQ, True/False, Fill-in-the-blank), and difficulty level.</li>
+        <li><strong>Upload Content:</strong> Upload a PDF or photos of a question paper, notes or a chapter.</li>
+        <li><strong>Configure Preferences:</strong> Select your desired number of questions, language (English, Hindi or both) and difficulty level, then choose Extract Questions or Generate New Questions.</li>
         <li><strong>Instant Generation:</strong> Our AI extracts key concepts, formulates questions, creates plausible distractors, and writes detailed solution explanations.</li>
         <li><strong>Review & Customize:</strong> Edit questions in our visual test builder, configure timer and marking settings, and publish.</li>
       </ol>
@@ -1024,11 +1089,11 @@ function generateRouteContent(url, testData = null) {
     '/online-test-maker': {
       h1: 'Online Test Maker – Create Tests Online in Minutes',
       overview: 'Create online tests instantly with TestoZa. The easiest online test maker for teachers, educators, and coaching institutes. Auto-grading, analytics, and secure test delivery — all free.',
-      features: ['AI Question Generation from PDFs, YouTube & Text', 'Instant Auto-Grading & Performance Reports', 'One-Click Test Sharing via Link or QR Code', 'Anti-Cheat Proctoring & Focus Tracking'],
+      features: ['AI Question Generation from PDFs & Photos', 'Instant Auto-Grading & Performance Reports', 'One-Click Test Sharing via Link or QR Code', 'Anti-Cheat Proctoring & Focus Tracking'],
       faqs: [
         { q: 'Is this online test maker free?', a: 'Yes, TestoZa is completely free for teachers, educators, and creators. You can create unlimited tests and assess unlimited students without any fee or subscription.' },
         { q: 'Can students take tests on mobile phones?', a: 'Yes, tests are fully responsive and work on any smartphone, tablet, or laptop browser without installing any app.' },
-        { q: 'What question formats are supported?', a: 'TestoZa supports Single-Choice MCQs, Multiple-Select questions, Numerical values, Fill-in-the-blank, and True/False questions.' }
+        { q: 'What question formats are supported?', a: 'TestoZa supports Single-Choice MCQs, Multiple-Select questions, and Numerical answers (exact or within a range).' }
       ]
     },
     '/online-exam-software': {
@@ -1043,7 +1108,7 @@ function generateRouteContent(url, testData = null) {
     },
     '/online-quiz-maker': {
       h1: 'Online Quiz Maker for Teachers – Create Quizzes Free',
-      overview: 'Free online quiz maker for teachers. Create engaging quizzes from PDFs, text, or YouTube videos using AI. Auto-grading, instant results, and student analytics.',
+      overview: 'Free online quiz maker for teachers. Create quizzes from PDFs, photos or notes using AI. Auto-grading, instant results, and student analytics.',
       features: ['Create Quizzes in 60 Seconds with AI', 'Instant Results & Student Scorecards', 'Classroom Leaderboards', 'No Account Required for Students'],
       faqs: [
         { q: 'How do I share a quiz with my class?', a: 'Copy the unique quiz link or display the QR code in class. Students can open it in any mobile or desktop browser immediately.' },
@@ -1063,8 +1128,8 @@ function generateRouteContent(url, testData = null) {
     },
     '/ai-question-generator': {
       h1: 'AI Question Generator – Generate Quiz Questions from Any Content',
-      overview: 'Generate quiz questions automatically using AI. Upload PDFs, paste text, or share YouTube videos — get MCQ, fill-in-the-blank, and true/false questions instantly.',
-      features: ['Extract Questions from PDFs & Textbooks', 'Convert YouTube Videos into Quizzes', 'Accurate Distractor Generation', 'Full Explanations for Every Question'],
+      overview: 'Generate quiz questions automatically using AI. Upload a PDF or photos of notes or a chapter and get single-correct, multiple-correct and numerical questions to review.',
+      features: ['Extract Questions from PDFs & Textbooks', 'Generate New Questions from a Chapter or Notes', 'Accurate Distractor Generation', 'Full Explanations for Every Question'],
       faqs: [
         { q: 'How accurate is the AI question generator?', a: 'The AI analyzes the provided source text directly, extracting factual concepts and generating contextually sound questions with correct answer keys.' },
         { q: 'Can I modify questions after AI generation?', a: 'Yes, every question is fully editable in TestoZa’s visual test editor before publishing.' },
@@ -1074,21 +1139,11 @@ function generateRouteContent(url, testData = null) {
     '/pdf-to-quiz': {
       h1: 'PDF to Quiz Converter – Turn PDFs into Online Quizzes with AI',
       overview: 'Convert any PDF into an online quiz instantly using AI. Upload textbook chapters, lecture slides, or study notes — get a ready-to-take quiz with auto-grading.',
-      features: ['Direct PDF Upload & Parsing', 'Automatic MCQ & Fill-in-the-Blank Creation', 'Difficulty Level Selection', 'Instant Student Delivery'],
+      features: ['Direct PDF Upload & Parsing', 'Automatic MCQ Extraction & Generation', 'Difficulty Level Selection', 'Instant Student Delivery'],
       faqs: [
         { q: 'What size PDF can I upload?', a: 'You can upload standard PDF documents including textbook chapters, slide decks, and lecture notes.' },
         { q: 'How long does conversion take?', a: 'Most PDF documents are analyzed and converted into ready-to-use tests in under two minutes.' },
         { q: 'Can I choose how many questions to generate?', a: 'Yes, you can choose the desired question count (e.g., 5, 10, 20, or custom) before generation.' }
-      ]
-    },
-    '/youtube-to-quiz': {
-      h1: 'YouTube to Quiz Generator – Create Quizzes from YouTube Videos',
-      overview: 'Create quizzes from YouTube videos using AI. Share a YouTube link and get a complete quiz with MCQs, answers, and explanations. Perfect for flipped classrooms.',
-      features: ['Automatic Transcript Extraction', 'Comprehension Concept Testing', 'Ideal for Flipped Classrooms', 'One-Click Publishing'],
-      faqs: [
-        { q: 'Does any YouTube video work?', a: 'Any public YouTube video with English subtitles or transcripts can be converted into a quiz.' },
-        { q: 'How does it help flipped classrooms?', a: 'Students watch the assigned video, then complete the quiz immediately to demonstrate concept mastery.' },
-        { q: 'Can students rewatch the video during the quiz?', a: 'You can embed the video right alongside the quiz questions or keep the quiz strictly separate.' }
       ]
     },
     '/online-test-for-coaching': {
@@ -1113,7 +1168,7 @@ function generateRouteContent(url, testData = null) {
     },
     '/white-label-test-platform': {
       h1: 'White Label Test Platform – Your Brand, Our Technology',
-      overview: 'White-label online test platform for coaching institutes and schools. Custom logo, colours, domain, and certificates. Your brand, powered by TestoZa technology.',
+      overview: 'White-label online test platform for coaching institutes and schools. Your institute’s name and logo on every test, link preview and report card. Your brand, powered by TestoZa technology.',
       features: ['Custom Logo & Organization Identity', 'Branded Test URLs & Portals', 'Custom Completion Certificates', 'Private Question Banks'],
       faqs: [
         { q: 'What elements can be white-labeled?', a: 'Your organization logo, institute name, test portal headers, result pages, and certificates can be branded.' },
@@ -1126,7 +1181,7 @@ function generateRouteContent(url, testData = null) {
       overview: 'Auto-grade tests and quizzes instantly. Eliminates manual correction. Instant scores, analytics, and detailed student reports. Free for teachers.',
       features: ['Instant Auto-Grading upon Submission', 'Zero Manual Paper Checking', 'Negative Marking Support', 'Accuracy & Time-Spent Metrics'],
       faqs: [
-        { q: 'Which question types are auto-graded?', a: 'MCQs, MSQs, Numerical questions, Fill-in-the-blanks, and True/False questions are graded automatically.' },
+        { q: 'Which question types are auto-graded?', a: 'Single-correct MCQs, multiple-correct questions (with optional partial marks) and numerical answers are graded automatically.' },
         { q: 'Do students see their scores immediately?', a: 'You can choose whether students view scores immediately or after the test window closes.' },
         { q: 'Can I export grading sheets to Excel?', a: 'Yes, complete score sheets with sectional marks and time stamps export to Excel with one click.' }
       ]
@@ -1200,7 +1255,7 @@ function generateRouteContent(url, testData = null) {
 
       <h2>Capabilities for ${escapeHtml(subjectName)} Assessments</h2>
       <ul>
-        <li>AI question generation from ${escapeHtml(subjectName)} notes, textbooks, and YouTube videos</li>
+        <li>AI question generation from ${escapeHtml(subjectName)} notes, textbook pages and old question papers (PDF or photos)</li>
         <li>Full LaTeX formula and scientific notation editor</li>
         <li>Image, diagram, and graph embedding in questions and solutions</li>
         <li>Instant auto-grading with detailed scorecards and explanations</li>
@@ -1243,7 +1298,7 @@ function generateRouteContent(url, testData = null) {
     const faqs = [
       {
         q: `Why is TestoZa better than ${compName} for online tests?`,
-        a: `TestoZa is purpose-built for academic and exam assessments. Unlike ${compName}, TestoZa offers native AI test generation from PDFs and YouTube videos, built-in countdown timers, negative marking, anti-cheating tab-switch detection, and student leaderboards—completely free with zero student limits.`
+        a: `TestoZa is purpose-built for academic and exam assessments. Unlike ${compName}, TestoZa offers AI that turns PDFs and photos into tests, built-in countdown timers, negative marking, anti-cheating tab-switch detection, and student leaderboards—completely free with zero student limits.`
       },
       {
         q: `Can I migrate my tests from ${compName} to TestoZa?`,
@@ -2220,6 +2275,23 @@ export default {
         return fetch(request);
       }
 
+      // Doubled slashes ("//wordpress/") would otherwise be served as a copy of the app.
+      if (url.pathname.includes('//')) {
+        return Response.redirect(`${url.origin}${url.pathname.replace(/\/{2,}/g, '/')}${url.search}`, 301);
+      }
+
+      // Pages retired because they described a feature TestoZa doesn't have.
+      const retired = RETIRED_PAGES[url.pathname.replace(/\/+$/, '')];
+      if (retired) {
+        return Response.redirect(`${CONFIG.FRONTEND_URL}${retired}`, 301);
+      }
+
+      // User guide: old names, trailing slashes and unknown pages → a real page.
+      const docTarget = userGuideRedirect(url);
+      if (docTarget) {
+        return Response.redirect(`${docTarget}${url.search}`, 301);
+      }
+
       // A path no page answers, often an AI assistant's guess ("/inputs.php"): a near
       // miss 301s to the real page, the rest is a real 404 here — not a 301 to a second
       // missing page on app.testoza.com, which Pages would answer with a 200.
@@ -2265,81 +2337,41 @@ export default {
 /**
  * Complete Robots.txt content with all declared sitemaps
  */
-const ROBOTS_TXT = `# TestoZa SEO Robots Configuration
-# Domain: https://testoza.com
-# Last Updated: 2026-08-20
+const ROBOTS_TXT = `# robots.txt for https://testoza.com (served by the SEO worker)
+# Updated 2026-11-06.
+#
+# Search engines and AI assistants (ChatGPT, Gemini, Claude, Perplexity, Copilot and
+# others) are welcome to read, index and cite every public page: the guides, the user
+# guide and llms.txt. One group for everyone, on purpose: a separate "User-agent:
+# Googlebot" or "Bingbot" group would make that crawler ignore every rule below.
+#
+# Note: Cloudflare's "managed robots.txt" (AI Crawl Control) can add its own block
+# above this file; that is a dashboard setting, not this text.
 
 User-agent: *
 Allow: /
 
-# Sitemap Declarations
-Sitemap: https://testoza.com/sitemap.xml
-Sitemap: https://testoza.com/sitemap/index.xml
-Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap/tests.xml
-Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/creators.xml
-
-# Crawl rate
-Crawl-delay: 0.5
-
-# Private Routes - Do Not Index
-Disallow: /live/
+# App screens; testoza.com sends these to app.testoza.com anyway.
+Disallow: /api/
 Disallow: /admin
 Disallow: /manage-tests
+Disallow: /my-tests
 Disallow: /history
 Disallow: /results
 Disallow: /edit-test/
 Disallow: /settings
+Disallow: /profile
 Disallow: /notifications
 Disallow: /update-password
 Disallow: /onboarding
 Disallow: /test-submitted
 Disallow: /test-session/
 Disallow: /attempt/
+Disallow: /live/
 Disallow: /payment/
 Disallow: /checkout/
-
-# Block internal/build files
-Disallow: /api/
-Disallow: /_next/
 Disallow: /*.js.map$
 Disallow: /*.css.map$
-Disallow: /*.json$
 
-# Allow all XML and sitemaps
-Allow: /sitemap*.xml$
-Allow: /sitemap/*.xml$
-Allow: /*.xml$
-
-# Google-specific
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0.5
-
-User-agent: Googlebot-Image
-Allow: /assets/
-Allow: /images/
-
-# Bing-specific
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 0.5
-
-# Social Media Crawlers
-User-agent: facebookexternalhit
-Allow: /
-Crawl-delay: 0
-
-User-agent: Twitterbot
-Allow: /
-Crawl-delay: 0
-
-User-agent: LinkedInBot
-Allow: /
-Crawl-delay: 0
-
-User-agent: WhatsApp
-Allow: /
-Crawl-delay: 0
+Sitemap: https://testoza.com/sitemap.xml
 `;

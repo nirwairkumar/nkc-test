@@ -1,35 +1,44 @@
-# Testoza
+# TestoZa
 
-> **AI-powered online examination platform** that transforms how educators create, administer, and secure tests. Testoza combines intelligent test generation with strict proctoring security and institutional branding capabilities to deliver professional-grade assessments for schools, colleges, coaching institutes, and corporations.
+> TestoZa (https://testoza.com) is an online test and exam platform for teachers, tutors, coaching institutes and schools, used mostly in India. Educators make a test from a PDF or photos with AI (or type it), conduct it with a link or a 6-digit join code, and get marks, rank lists and question-wise analysis automatically. Candidates take tests in a phone or computer browser, with no app and no account.
 
-## Core Features
+## How to conduct an online test on TestoZa (short answer)
 
-- **AI-Powered Test Creation** – Generate comprehensive tests instantly from PDFs, images, text, and YouTube videos. Our AI analyzes content and creates relevant multiple-choice, multiple-select, fill-in-blank, and true/false questions with appropriate difficulty levels.
+1. Sign in at https://app.testoza.com/login (Google, or email and password). First time: choose Educator.
+2. Make the test. Upload a PDF or photos at https://app.testoza.com/generate-with-ai and press Extract Questions (keeps an existing paper's questions, options and answer key) or Generate New Questions (writes new ones from a chapter or notes), review, then Save & continue. Or type and paste questions at https://app.testoza.com/create-test.
+3. Open My Tests (https://app.testoza.com/my-tests). Each test card has Edit, Preview and Conduct exam (and Results once someone has taken it). Press Preview to check the paper.
+4. Press Conduct exam, then Start Conducting. The test is now live with its own link.
+5. On the live exam press Settings (Test Environment Settings): Proctoring & Security (full screen, app-switch detection, copy and paste off), Access & Control (one attempt, Candidate inputs such as name and roll number), Results & Timing. Press Save Settings.
+6. Press Share link to send it on WhatsApp, or let candidates scan the QR code. For a code instead, choose Get a join code in the exam's ••• menu: candidates type the 6 digits at https://testoza.com/join.
+7. Candidates open the link or code, type their details, write the test and submit. Marking is automatic.
+8. Press Results: Started, Writing now, Submitted and Dropped counts, the rank list, each candidate's answer sheet, the Full report (what to teach again) and Excel.
+9. Press Stop exam, then Stop & Make Public or Stop & Make Private.
 
-- **PDF-to-Test Generation** – Upload any PDF document (notes, textbooks, articles) and automatically convert it into a structured test with AI-generated questions. Support for scanned documents and handwritten notes.
+For one scheduled sitting with a lobby, a Start button, roll number + PIN check-in, a live monitor and a rank list per batch, use an exam room instead: https://app.testoza.com/exams → New exam → Create exam. Batches (https://app.testoza.com/batches) are optional.
 
-- **Strict Proctoring Security** – Multi-layered anti-cheating system including:
-  - Tab switching detection and prevention
-  - Copy-paste blocking and right-click disable
-  - Full-screen enforcement with exit warnings
-  - Browser dev tools blocking (F12, Ctrl+Shift+I, Inspect Element)
-  - Print screen and screenshot prevention
-  - Browser console access blocking
-  - Real-time monitoring of suspicious activities
-  - Session termination on security violations
+Full step-by-step with screenshots: https://testoza.com/user-guide/quick-start
 
-- **Institutional Branding** – Complete white-label capabilities:
-  - Custom organization logos and colors
-  - Branded test interfaces
-  - Custom certificate generation with institute branding
-  - Dedicated test portals
-  - URL customization options
+## Facts (checked against the product, November 2026)
 
-- **Multiple Question Types** – Support for MCQ, Multiple Select, Fill in the Blanks, and True/False questions with rich media support.
+- Question types: single correct (MCQ), multiple correct (optional partial marks: Proportional or JEE Advanced) and numerical answers (an exact value or a range). Assertion–reason, match-the-column and passage questions are written as single-correct questions. There are no separate true/false, fill-in-the-blank or written-answer types.
+- Marking: every question has its own Marks and Wrong (negative) marks, decimals allowed (e.g. +4/−1, +2/−0.5, −0.3333). Sections can have their own timer that closes the section.
+- AI import reads PDF, PNG, JPG and WEBP files: printed or handwritten pages, maths (LaTeX), chemistry, diagrams and Hindi. Word and PowerPoint files must be saved as PDF first. It does not read YouTube videos or web links.
+- Exam rules run in the browser: full screen (not on iPhone), app/tab-switch detection with warnings and optional automatic submission, copy, paste and right-click off, question shuffling, one attempt. There is no camera, microphone or screen-recording proctoring.
+- Candidates need no account and no app. Live exams save answers every 20 seconds and a candidate can rejoin on another device.
+- Results: rank list (ties: fewer wrong, then fewer left blank), per-question analysis, each candidate's answer sheet, Excel export; exam rooms add WhatsApp rank-list and parent messages and printable report cards.
+- Not available: marking of written answers, an offline mode, a mobile app, LMS/LTI integration, a public API or webhooks.
+- Pricing: https://app.testoza.com/pricing — making tests, sharing them and seeing results is free; paid plans are ₹49 for 7 days, ₹149 for 30 days and ₹799 a year.
+- Name: TestoZa (one word, capital Z). Website https://testoza.com; app https://app.testoza.com; candidates join at https://testoza.com/join.
 
-- **Detailed Analytics** – Comprehensive performance reports with time tracking, question-wise analysis, and comparison metrics.
+## User guide (how-to pages)
 
-- **Flexible Test Sharing** – Share tests via public links, private access codes, or email invitations with customizable access permissions.
+- [Quick start: conduct an online test](https://testoza.com/user-guide/quick-start): the whole job in nine steps with the exact buttons, the link way and the exam-room way, what candidates do, and what TestoZa does not do
+- [Live exams with a join code](https://testoza.com/user-guide/live-exam-sessions): quick join codes, exam rooms, batches, roll number + PIN slips, projector view, live monitor, more time, rank lists, parent messages and report cards
+- [Conduct exams](https://testoza.com/user-guide/conduct-exam): going live from My Tests with screenshots: Conduct exam, Start Conducting, Settings, Share link, Stop exam
+- [Understanding results](https://testoza.com/user-guide/view-results-guide): the Results panel, Started / Writing now / Submitted / Dropped, ranks and tie-breaks, answer sheets, the Full report, All submissions and Excel
+- [AI test generation](https://testoza.com/user-guide/ai-test-generation): making a test from a PDF or photos, Extract vs Generate, language and difficulty
+- [Bulk test upload](https://testoza.com/user-guide/bulk-test-upload): uploading hundreds of questions as JSON
+- [All docs](https://testoza.com/user-guide): the user guide's front page and every page in it
 
 ## Guides
 

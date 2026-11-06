@@ -4,7 +4,7 @@
  * on screen, and prefers-reduced-motion shows each piece at rest.
  */
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from 'react';
-import { Camera, Check, FileText, GraduationCap, Link2, Mail, MessageCircle, Smartphone, Type, X, Youtube } from 'lucide-react';
+import { Camera, Check, FileText, GraduationCap, Link2, Mail, MessageCircle, NotebookPen, Smartphone, Type, X } from 'lucide-react';
 import { analytics } from '@/lib/analytics/tracker';
 import { ADS_AUDIENCES, ADS_SAMPLE } from '@/landing/adsLanding';
 
@@ -29,9 +29,10 @@ function useInView(ref: RefObject<Element>) {
     return inView;
 }
 
-const SOURCE_ICONS = { pdf: FileText, photo: Camera, youtube: Youtube, text: Type } as const;
+// No YouTube tile: the AI reads PDFs and pictures only (it showed one until November 2026).
+const SOURCE_ICONS = { pdf: FileText, photo: Camera, notes: NotebookPen, text: Type } as const;
 
-/** The app-icon glyph for a material source (pdf, photo, youtube, text). */
+/** The app-icon glyph for a material source (pdf, photo, notes, text). */
 export function SourceIcon({ id }: { id: keyof typeof SOURCE_ICONS }) {
     const Icon = SOURCE_ICONS[id];
     return <Icon />;
@@ -86,12 +87,12 @@ export function QuizPhone() {
                     <div className="qcl-scene" data-on={scene === 0}>
                         <p className="qcl-appbar">New quiz</p>
                         <div className="qcl-tiles">
-                            {(['pdf', 'photo', 'youtube', 'text'] as const).map((id, i) => {
+                            {(['pdf', 'photo', 'notes', 'text'] as const).map((id, i) => {
                                 const Icon = SOURCE_ICONS[id];
                                 return (
                                     <span key={id} className={`qcl-tile${i === 0 ? ' is-pick' : ''}`} data-src={id}>
                                         <Icon />
-                                        {id === 'pdf' ? 'PDF' : id === 'photo' ? 'Photo' : id === 'youtube' ? 'YouTube' : 'Text'}
+                                        {id === 'pdf' ? 'PDF' : id === 'photo' ? 'Photo' : id === 'notes' ? 'Notes' : 'Text'}
                                     </span>
                                 );
                             })}
