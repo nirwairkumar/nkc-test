@@ -6,7 +6,7 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    BadgeCheck, BarChart3, Check, Copy, ExternalLink, Flag, KeyRound, Mail, Pencil, Settings2, Share2, ShieldCheck,
+    BadgeCheck, BarChart3, Check, Copy, ExternalLink, Flag, KeyRound, ListChecks, Mail, Pencil, Settings2, Share2, ShieldCheck,
     Trash2, Upload, UserPlus, Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -33,7 +33,7 @@ import { roleLabel } from '../users/roles';
 const SECTION = 'mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400';
 
 /** Results and Settings are full panels of their own; the page opens them. */
-export type PanelRequest = { kind: 'results' | 'settings'; test: any };
+export type PanelRequest = { kind: 'results' | 'settings' | 'questions'; test: any };
 
 export default function TestSheet({ testId, preview, onClose, onShowCreator, onPanel }: {
     testId: string | null;
@@ -144,7 +144,8 @@ export default function TestSheet({ testId, preview, onClose, onShowCreator, onP
                     </section>
 
                     {/* ── Main actions ── */}
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                        <ActionTile icon={ListChecks} label="Questions" onClick={() => onPanel({ kind: 'questions', test: { id: t.id, title: t.title } })} />
                         <ActionTile icon={BarChart3} label="Results" onClick={() => onPanel({ kind: 'results', test: { id: t.id, title: t.title } })} />
                         <ActionTile icon={ExternalLink} label="Open test" href={getUserAppUrl(`/test-intro/${t.id}`)} />
                         <ActionTile icon={Pencil} label="Edit" onClick={() => navigate(`/edit-test/${t.id}`)} />

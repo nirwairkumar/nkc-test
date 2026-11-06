@@ -8,7 +8,7 @@
  * draw this list.
  */
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, BarChart3, ChevronRight, ExternalLink, FileText, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { BadgeCheck, BarChart3, ChevronRight, ExternalLink, FileText, ListChecks, Plus, RefreshCw, Search, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TestResultsPanel from '@/components/TestResultsPanel';
@@ -21,6 +21,7 @@ import { ErrorState, usePersisted } from '../analytics/shared';
 import { CARD, Empty, GroupedList, PILL_BTN, Segmented, Skeleton } from '../analytics/ui';
 import { testsApi, type TestRow, type TestSort, type TestsReport, type TestView } from './api';
 import { CreatorAvatar, factsLine, pctText, StateChips, StateIcon } from './display';
+import QuestionsPanel from './QuestionsPanel';
 import TestSheet, { type PanelRequest } from './TestSheet';
 
 const VIEWS: readonly TestView[] = ['all', 'live', 'exams', 'public', 'link', 'private', 'unused', 'reported', 'examples', 'team'];
@@ -175,6 +176,7 @@ export default function TestsPanel() {
                     <GroupedList className={cn(list.isPlaceholderData && 'opacity-60')}>
                         {rows.map((r) => (
                             <Row key={r.id} r={r} onOpen={() => open(r)}
+                                onQuestions={() => setPanel({ kind: 'questions', test: { id: r.id, title: r.title } })}
                                 onResults={() => setPanel({ kind: 'results', test: { id: r.id, title: r.title } })} />
                         ))}
                     </GroupedList>
@@ -196,6 +198,9 @@ export default function TestsPanel() {
                 onPanel={(p) => { setOpenId(null); setPanel(p); }}
             />
 
+            {panel?.kind === 'questions' && (
+                <QuestionsPanel test={panel.test} onClose={closePanel} />
+            )}
             {panel?.kind === 'results' && (
                 <TestResultsPanel test={panel.test} onClose={closePanel} />
             )}
@@ -289,7 +294,7 @@ function Tile({ label, value, hint, onClick, tone, bar }: {
     );
 }
 
-function Row({ r, onOpen, onResults }: { r: TestRow; onOpen: () => void; onResults: () => void }) {
+function Row({ r, onOpen, onQuestions, onResults }: { r: TestRow; onOpen: () => void; onQuestions: () => void; onResults: () => void }) {
     return (
         <li className="group flex items-stretch">
             <button type="button" onClick={onOpen}
@@ -321,8 +326,9 @@ function Row({ r, onOpen, onResults }: { r: TestRow; onOpen: () => void; onResul
                 </span>
                 <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden="true" />
             </button>
-            {/* One-click Results and Open, as on the old cards (desktop). */}
+            {/* One-click Questions (read the paper without opening the exam), Results and Open (desktop). */}
             <span className="hidden shrink-0 items-center gap-1 pr-3 md:flex">
+                <IconButton label="Questions and answers (view only)" onClick={onQuestions}><ListChecks className="h-4 w-4" /></IconButton>
                 <IconButton label="Results" onClick={onResults}><BarChart3 className="h-4 w-4" /></IconButton>
                 <a href={getUserAppUrl(`/test-intro/${r.id}`)} target="_blank" rel="noopener noreferrer" title="Open the test" aria-label="Open the test"
                     className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
