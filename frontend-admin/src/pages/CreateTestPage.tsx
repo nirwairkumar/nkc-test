@@ -32,6 +32,7 @@ export default function CreateTestPage() {
 
     if (showImporter) {
         return (
+            <div className="min-h-screen bg-background">
             <div className="container mx-auto py-6">
                 <button
                     type="button"
@@ -44,11 +45,14 @@ export default function CreateTestPage() {
                     <AITestImporter onImport={handleImport} />
                 </Suspense>
             </div>
+            </div>
         );
     }
 
     return (
-        <div className="relative min-h-screen">
+        // Admin's <body> is bg-slate-950 (index.html); the builder is designed for the user app's
+        // light page, so paint that background here or /edit-test/:id shows black around the cards.
+        <div className="relative min-h-screen bg-background">
             <TestBuilder
                 key={importedData ? 'imported-test' : (paramId ? `edit-${paramId}` : 'new-test')}
                 initialData={importedData}
