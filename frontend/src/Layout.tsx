@@ -171,6 +171,7 @@ export default function Layout() {
         location.pathname === '/' ||
         location.pathname === '/support' ||
         location.pathname === '/about' ||
+        location.pathname === '/pricing' ||
         location.pathname === '/convert' ||
         location.pathname === '/privacy-policy' ||
         location.pathname === '/terms-and-conditions' ||

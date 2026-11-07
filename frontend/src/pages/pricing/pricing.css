@@ -1,0 +1,741 @@
+/*
+ * Pricing page (pages/PricingPage.tsx). Everything is scoped under .pz.
+ *
+ * Look: warm paper, ink-black type, the brand's sky blue for actions, the logo's gold as a
+ * highlighter, and one "red pen" ink used only for marking (ticks, crossed-out prices, the
+ * stamp), the way an educator marks a paper. The bill is printed on thermal-receipt paper.
+ */
+
+.pz {
+    --pz-paper: #f8f6f1;
+    --pz-tint: #f2efe7;
+    --pz-card: #ffffff;
+    --pz-ink: #1b1a17;
+    --pz-ink-2: #3d3a34;
+    --pz-muted: #6c675d;
+    --pz-line: #e5e0d5;
+    --pz-line-2: #d6cfc0;
+    --pz-rule: rgba(37, 99, 235, 0.075);
+    --pz-sky: #0284c7;
+    --pz-sky-hover: #0369a1;
+    --pz-sky-ink: #0369a1;
+    --pz-amber: #fde68a;
+    --pz-pen: #cc3a2b;
+    --pz-receipt: #fffdf7;
+    --pz-receipt-ink: #2a2622;
+    --pz-close: #0b1220;
+
+    background: var(--pz-paper);
+    color: var(--pz-ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.dark .pz {
+    --pz-paper: #0d1117;
+    --pz-tint: #111722;
+    --pz-card: #151c27;
+    --pz-ink: #ecebe6;
+    --pz-ink-2: #cfcbc2;
+    --pz-muted: #9a958a;
+    --pz-line: #222a37;
+    --pz-line-2: #2f3847;
+    --pz-rule: rgba(148, 163, 184, 0.06);
+    --pz-sky: #0ea5e9;
+    --pz-sky-hover: #38bdf8;
+    --pz-sky-ink: #7dd3fc;
+    --pz-amber: rgba(253, 224, 71, 0.3);
+    --pz-pen: #ff7d6e;
+    --pz-receipt: #f1ede4;
+    --pz-receipt-ink: #24211d;
+    --pz-close: #080c14;
+}
+
+.pz-display {
+    font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    letter-spacing: -0.025em;
+}
+
+.pz-section {
+    scroll-margin-top: 84px;
+}
+
+.pz-tint {
+    background: var(--pz-tint);
+    border-top: 1px solid var(--pz-line);
+    border-bottom: 1px solid var(--pz-line);
+}
+
+.pz-eyebrow {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pz-muted);
+}
+
+.pz-muted {
+    color: var(--pz-muted);
+}
+
+.pz-ink-2 {
+    color: var(--pz-ink-2);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+
+.pz-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--pz-line);
+}
+
+/* Faint ruled lines, like an answer sheet, fading out towards the edges. */
+.pz-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 35px, var(--pz-rule) 35px 36px);
+    -webkit-mask-image: radial-gradient(110% 85% at 68% 32%, #000 28%, transparent 78%);
+    mask-image: radial-gradient(110% 85% at 68% 32%, #000 28%, transparent 78%);
+}
+
+.pz-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 10px;
+    border: 1px solid var(--pz-line-2);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pz-card) 80%, transparent);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--pz-ink-2);
+}
+
+.pz-dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #16a34a;
+}
+
+.pz-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid #16a34a;
+    opacity: 0;
+}
+
+.pz-h1 {
+    font-size: clamp(2.15rem, 1.55rem + 2.6vw, 2.75rem);
+    line-height: 1.06;
+    font-weight: 650;
+}
+
+/* A highlighter stroke in the logo's gold. Background-based so it follows line breaks. */
+.pz-mark {
+    background-image: linear-gradient(transparent 56%, var(--pz-amber) 56%, var(--pz-amber) 90%, transparent 90%);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    padding: 0 0.06em;
+    margin: 0 -0.06em;
+}
+
+.pz-lede {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--pz-ink-2);
+}
+
+.pz-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: var(--pz-sky);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 6px 16px -8px rgba(2, 132, 199, 0.75);
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.pz-btn:hover {
+    background: var(--pz-sky-hover);
+}
+
+.pz-btn:active {
+    transform: translateY(1px);
+}
+
+.pz-btn:focus-visible,
+.pz-link:focus-visible,
+.pz-faq summary:focus-visible {
+    outline: 2px solid var(--pz-sky);
+    outline-offset: 3px;
+}
+
+.pz-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--pz-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--pz-line-2);
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1.5px;
+    transition: text-decoration-color 160ms ease;
+    border-radius: 4px;
+}
+
+.pz-link:hover {
+    text-decoration-color: currentColor;
+}
+
+/* Hand-drawn tick in red pen. */
+.pz-tick {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--pz-pen);
+}
+
+/* ── The bill ─────────────────────────────────────────────────────────── */
+
+.pz-bill-wrap {
+    position: relative;
+    filter: drop-shadow(0 1px 1px rgba(40, 30, 10, 0.08)) drop-shadow(0 22px 30px rgba(60, 45, 20, 0.17));
+    transform: rotate(1.6deg);
+}
+
+.dark .pz-bill-wrap {
+    filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.55));
+}
+
+.pz-bill {
+    --z: 7px;
+    position: relative;
+    width: min(340px, calc(100vw - 56px));
+    padding: 24px 22px calc(20px + var(--z));
+    background: var(--pz-receipt);
+    color: var(--pz-receipt-ink);
+    font: 500 12.5px/1.6 ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+    /* Torn zig-zag bottom edge. */
+    -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--z)) 100%;
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--z)) 100%;
+}
+
+.pz-bill-brand {
+    font-family: 'Ribeye', 'Outfit', serif;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    color: #1b1916;
+}
+
+.pz-bill-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pz-bill-row > span:last-child {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.pz-bill-dash {
+    margin: 12px 0;
+    border: 0;
+    border-top: 1.5px dashed rgba(42, 38, 34, 0.32);
+}
+
+.pz-bill-double {
+    margin: 12px 0 10px;
+    border: 0;
+    border-top: 3px double rgba(42, 38, 34, 0.55);
+}
+
+.pz-bill-faint {
+    color: rgba(42, 38, 34, 0.62);
+}
+
+.pz-bill-total {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.pz-bill-bars {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 2px;
+    height: 34px;
+    margin-top: 14px;
+}
+
+.pz-bill-bars span {
+    background: #2a2622;
+}
+
+/* Blank space under the total where the stamp lands, a little right of centre. */
+.pz-stamp-zone {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 30px 4px 0;
+}
+
+/* Rubber stamp in red ink, a little uneven like a real one. */
+.pz-stamp {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 12px 5px;
+    border: 2.5px solid #c8352a;
+    border-radius: 8px;
+    color: #c8352a;
+    transform: rotate(-12deg);
+    opacity: 0.88;
+    mix-blend-mode: multiply;
+    filter: url(#pz-ink);
+    pointer-events: none;
+}
+
+.pz-stamp b {
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    margin-right: -0.16em;
+}
+
+.pz-stamp small {
+    font: 700 9.5px/1.2 ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+/* ── Included ─────────────────────────────────────────────────────────── */
+
+.pz-h2 {
+    font-size: clamp(1.6rem, 1.3rem + 1.2vw, 1.95rem);
+    line-height: 1.15;
+    font-weight: 650;
+}
+
+.pz-num {
+    font: 600 12px/1 ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+    color: var(--pz-muted);
+    letter-spacing: 0.04em;
+}
+
+.pz-h3 {
+    font-size: 19px;
+    line-height: 1.25;
+    font-weight: 650;
+}
+
+.pz-list {
+    margin-top: 18px;
+    border-top: 1px solid var(--pz-line);
+}
+
+.pz-list li {
+    display: flex;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--pz-line);
+}
+
+.pz-list li .pz-tick {
+    margin-top: 3px;
+}
+
+.pz-item-title {
+    display: block;
+    font-weight: 600;
+    font-size: 15.5px;
+    line-height: 1.4;
+    color: var(--pz-ink);
+}
+
+.pz-item-text {
+    display: block;
+    margin-top: 2px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--pz-muted);
+}
+
+/* ── After December ───────────────────────────────────────────────────── */
+
+.pz-steps {
+    position: relative;
+    margin-top: 30px;
+}
+
+.pz-step {
+    position: relative;
+    padding: 0 0 30px 34px;
+}
+
+.pz-step:last-child {
+    padding-bottom: 0;
+}
+
+/* The line joining the dots. */
+.pz-step::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 20px;
+    bottom: -2px;
+    width: 1.5px;
+    background: var(--pz-line-2);
+}
+
+.pz-step:last-child::before {
+    display: none;
+}
+
+.pz-step-dot {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--pz-line-2);
+    background: var(--pz-paper);
+}
+
+.pz-tint .pz-step-dot {
+    background: var(--pz-tint);
+}
+
+.pz-step-now .pz-step-dot {
+    border-color: var(--pz-sky);
+    background: var(--pz-sky);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--pz-sky) 18%, transparent);
+}
+
+.pz-step-when {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pz-muted);
+}
+
+.pz-step-now .pz-step-when {
+    color: var(--pz-sky-ink);
+}
+
+.pz-step-title {
+    margin-top: 2px;
+    font-size: 17px;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.pz-step-text {
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--pz-ink-2);
+    max-width: 34rem;
+}
+
+.pz-card {
+    background: var(--pz-card);
+    border: 1px solid var(--pz-line);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(30, 25, 15, 0.04), 0 10px 30px -18px rgba(30, 25, 15, 0.18);
+}
+
+.dark .pz-card {
+    box-shadow: none;
+}
+
+.pz-price-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--pz-line);
+}
+
+.pz-price-row:last-child {
+    border-bottom: 0;
+}
+
+.pz-strike {
+    position: relative;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    color: var(--pz-muted);
+}
+
+/* Crossed out with the red pen. */
+.pz-strike::after {
+    content: '';
+    position: absolute;
+    left: -6%;
+    right: -6%;
+    top: 50%;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--pz-pen);
+    transform: rotate(-9deg);
+}
+
+.pz-zero {
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--pz-ink);
+}
+
+/* ── Founder's note ───────────────────────────────────────────────────── */
+
+.pz-letter {
+    position: relative;
+    padding: 34px 30px 30px;
+    background: var(--pz-card);
+    border: 1px solid var(--pz-line);
+    border-radius: 6px;
+    box-shadow: 0 1px 0 var(--pz-line), 0 18px 40px -26px rgba(30, 25, 15, 0.3);
+}
+
+.dark .pz-letter {
+    box-shadow: none;
+}
+
+.pz-letter-body p {
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, ui-serif, serif;
+    font-size: 18.5px;
+    line-height: 1.7;
+    color: var(--pz-ink-2);
+}
+
+.pz-letter-body p + p {
+    margin-top: 16px;
+}
+
+.pz-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--pz-sky) 12%, var(--pz-card));
+    border: 1px solid color-mix(in srgb, var(--pz-sky) 30%, transparent);
+    color: var(--pz-sky-ink);
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────────────── */
+
+.pz-faq {
+    border-top: 1px solid var(--pz-line-2);
+}
+
+.pz-faq details {
+    border-bottom: 1px solid var(--pz-line-2);
+}
+
+.pz-faq summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 0;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    font-size: 16.5px;
+    line-height: 1.45;
+    border-radius: 4px;
+}
+
+.pz-faq summary::-webkit-details-marker {
+    display: none;
+}
+
+.pz-faq-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    color: var(--pz-muted);
+    transition: transform 200ms ease;
+}
+
+.pz-faq details[open] .pz-faq-icon {
+    transform: rotate(45deg);
+}
+
+.pz-faq-answer {
+    padding: 0 36px 20px 0;
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--pz-ink-2);
+}
+
+/* ── Closing band ─────────────────────────────────────────────────────── */
+
+.pz-close {
+    background: var(--pz-close);
+    color: #f8fafc;
+}
+
+.pz-close .pz-close-sub {
+    color: #a7b0bf;
+}
+
+.pz-close .pz-btn {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 8px 22px -8px rgba(14, 165, 233, 0.8);
+}
+
+/* ── Plans view (after the launch offer ends) ─────────────────────────── */
+
+.pz-plan-price {
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.pz-input {
+    height: 38px;
+    width: 100%;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--pz-line-2);
+    background: var(--pz-paper);
+    color: var(--pz-ink);
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.pz-input:focus {
+    outline: 2px solid var(--pz-sky);
+    outline-offset: 1px;
+}
+
+/* ── Motion (only when the reader hasn't asked for less) ──────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+    .pz-dot::after {
+        animation: pz-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .pz-mark {
+        animation: pz-swipe 750ms cubic-bezier(0.25, 0.8, 0.25, 1) 250ms both;
+    }
+
+    .pz-bill-wrap {
+        animation: pz-print 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
+    }
+
+    .pz-stamp {
+        animation: pz-thump 380ms cubic-bezier(0.3, 1.4, 0.5, 1) 950ms both;
+    }
+
+    @keyframes pz-ping {
+        0% {
+            transform: scale(0.6);
+            opacity: 0.7;
+        }
+        80%,
+        100% {
+            transform: scale(1.6);
+            opacity: 0;
+        }
+    }
+
+    @keyframes pz-swipe {
+        from {
+            background-size: 0% 100%;
+        }
+        to {
+            background-size: 100% 100%;
+        }
+    }
+
+    @keyframes pz-print {
+        from {
+            opacity: 0;
+            transform: translateY(-14px) rotate(1.6deg);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) rotate(1.6deg);
+        }
+    }
+
+    @keyframes pz-thump {
+        from {
+            opacity: 0;
+            transform: rotate(-12deg) scale(1.5);
+        }
+        to {
+            opacity: 0.88;
+            transform: rotate(-12deg) scale(1);
+        }
+    }
+}
+
+@media (max-width: 640px) {
+    .pz-bill-wrap {
+        transform: rotate(0.8deg);
+    }
+
+    .pz-letter {
+        padding: 26px 20px 22px;
+    }
+
+    .pz-letter-body p {
+        font-size: 17px;
+    }
+
+    .pz-faq-answer {
+        padding-right: 8px;
+    }
+}
+
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+    @keyframes pz-print {
+        from {
+            opacity: 0;
+            transform: translateY(-14px) rotate(0.8deg);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) rotate(0.8deg);
+        }
+    }
+}
