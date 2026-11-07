@@ -20,6 +20,17 @@ import { strictness } from './proctoring';
 
 const SIX_HOURS = 6 * 3600 * 1000;
 
+/** IST calendar day, used to drop the date from a window's end when it matches the start. */
+const istDay = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+/** "in 25 min" / "in 3 h" / "in 2 d" for a future time. */
+function untilLabel(iso: string): string {
+    const s = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 1000));
+    if (s < 3600) return `in ${Math.max(1, Math.round(s / 60))} min`;
+    if (s < 86400) return `in ${Math.round(s / 3600)} h`;
+    return `in ${Math.round(s / 86400)} d`;
+}
+
 /** A link counts as busy if a paper came in recently, or if it only just went live. */
 function isBusy(exam: LiveExam, code?: CodeSitting): boolean {
     if (exam.is_example) return false; // seeded for every account; never an exam someone is running
@@ -140,7 +151,19 @@ export default function LiveNow({
                                 {exam.made_live_at ? <>Live since <b className="font-semibold text-slate-700">{istDateTime(exam.made_live_at)}</b> ({relative(exam.made_live_at)})</>
                                     : 'Live since an unknown time — the link predates this tracking'}
                             </span>
-                            {exam.end_time && <span>Closes <b className="font-semibold text-slate-700">{istTime(exam.end_time)}</b></span>}
+                            {exam.is_scheduled ? (
+                                <span>
+                                    Scheduled{' '}
+                                    <b className="font-semibold text-slate-700">{exam.start_time ? istDateTime(exam.start_time) : 'any time'}</b>
+                                    {' → '}
+                                    <b className="font-semibold text-slate-700">
+                                        {exam.end_time
+                                            ? (exam.start_time && istDay(exam.start_time) === istDay(exam.end_time) ? istTime(exam.end_time) : istDateTime(exam.end_time))
+                                            : 'no end'}
+                                    </b>
+                                    {exam.start_time && new Date(exam.start_time).getTime() > Date.now() && ` (opens ${untilLabel(exam.start_time)})`}
+                                </span>
+                            ) : exam.end_time && <span>Closes <b className="font-semibold text-slate-700">{istTime(exam.end_time)}</b></span>}
                             {exam.last_submission_at && <span>Last paper {relative(exam.last_submission_at)}</span>}
                             {exam.duration ? <span>{exam.duration} min · {exam.total_questions ?? '—'} questions</span> : null}
                         </div>
